@@ -334,17 +334,28 @@ export function SettingsModal() {
   // PWA Install detection
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true
     setIsInstalled(isStandalone)
 
+    // Listen for future beforeinstallprompt events
     const handleInstallAvailable = () => setCanInstallPWA(true)
     window.addEventListener('pwaInstallAvailable', handleInstallAvailable)
 
+    // Listen for successful installation
+    const handleAppInstalled = () => {
+      setIsInstalled(true)
+      setCanInstallPWA(false)
+    }
+    window.addEventListener('appinstalled', handleAppInstalled)
+
+    // Check if install prompt was already captured before this component mounted
     if ((window as Window & { installPWA?: () => Promise<boolean> }).installPWA) {
       setCanInstallPWA(true)
     }
 
     return () => {
       window.removeEventListener('pwaInstallAvailable', handleInstallAvailable)
+      window.removeEventListener('appinstalled', handleAppInstalled)
     }
   }, [])
 

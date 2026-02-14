@@ -64,16 +64,20 @@ interface BeforeInstallPromptEvent extends Event {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault()
   deferredPrompt = e as BeforeInstallPromptEvent
+
+  // Only expose installPWA when a prompt is actually available
+  ;(window as Window & { installPWA?: () => Promise<boolean> }).installPWA = async () => {
+    if (!deferredPrompt) return false
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    deferredPrompt = null
+    // Remove the function so UI updates correctly
+    delete (window as Window & { installPWA?: () => Promise<boolean> }).installPWA
+    return outcome === 'accepted'
+  }
+
   window.dispatchEvent(new CustomEvent('pwaInstallAvailable'))
 })
-
-;(window as Window & { installPWA?: () => Promise<boolean> }).installPWA = async () => {
-  if (!deferredPrompt) return false
-  deferredPrompt.prompt()
-  const { outcome } = await deferredPrompt.userChoice
-  deferredPrompt = null
-  return outcome === 'accepted'
-}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
