@@ -11,8 +11,8 @@ const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg',
-  '/icons/icon-192.svg',
+  '/favicon.png',
+  '/icons/icon-192.png',
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css',
 ]
 
