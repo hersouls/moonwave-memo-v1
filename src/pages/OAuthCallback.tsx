@@ -15,9 +15,9 @@ export function OAuthCallback() {
   }, [user, isLoading, isSigningIn, navigate])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-gray-900">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-zinc-900">
       <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary-500" />
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
         로그인 처리 중...
       </p>
     </div>

@@ -5,14 +5,17 @@ import { useUndoStore } from '@/stores/undoStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useNavigate } from 'react-router-dom'
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified'
+
 interface EditorHeaderProps {
   isStarred: boolean
   onBack: () => void
   onToggleStar: () => void
   memoId?: number
+  saveStatus?: SaveStatus
 }
 
-export function EditorHeader({ isStarred, onBack, onToggleStar, memoId }: EditorHeaderProps) {
+export function EditorHeader({ isStarred, onBack, onToggleStar, memoId, saveStatus }: EditorHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const softDelete = useMemoStore((s) => s.softDelete)
   const pushUndo = useUndoStore((s) => s.pushUndo)
@@ -45,13 +48,31 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, memoId }: Editor
 
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-900 sticky top-0 z-10">
-      <button
-        onClick={onBack}
-        className="p-2 -ml-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        aria-label="뒤로가기"
-      >
-        <ArrowLeft className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onBack}
+          className="p-2 -ml-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label="뒤로가기"
+        >
+          <ArrowLeft className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+        </button>
+
+        {saveStatus && saveStatus !== 'idle' && (
+          <span
+            className={`text-xs font-medium transition-all duration-300 ${
+              saveStatus === 'saving'
+                ? 'text-primary-500'
+                : saveStatus === 'saved'
+                  ? 'text-success-500'
+                  : 'text-zinc-400 dark:text-zinc-500'
+            }`}
+          >
+            {saveStatus === 'saving' && '저장 중...'}
+            {saveStatus === 'saved' && '저장됨'}
+            {saveStatus === 'modified' && '•'}
+          </span>
+        )}
+      </div>
 
       <div className="flex items-center gap-1">
         <button

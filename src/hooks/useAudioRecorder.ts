@@ -1,0 +1,194 @@
+import { useState, useRef, useCallback, useEffect } from 'react'
+
+export type RecorderStatus = 'idle' | 'requesting-permission' | 'recording' | 'paused' | 'stopped' | 'error'
+
+const MAX_DURATION = 600 // 10 minutes in seconds
+
+function getSupportedMimeType(): string {
+  const types = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+  ]
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) return type
+  }
+  return 'audio/webm'
+}
+
+export function useAudioRecorder() {
+  const [status, setStatus] = useState<RecorderStatus>('idle')
+  const [duration, setDuration] = useState(0)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [audioLevel, setAudioLevel] = useState(0)
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const startTimeRef = useRef(0)
+  const pausedDurationRef = useRef(0)
+  const rafRef = useRef<number | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+
+  const cleanup = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    if (audioContextRef.current?.state !== 'closed') {
+      audioContextRef.current?.close().catch(() => {})
+    }
+    audioContextRef.current = null
+    analyserRef.current = null
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+    mediaRecorderRef.current = null
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => cleanup, [cleanup])
+
+  const updateDurationAndLevel = useCallback(() => {
+    if (status !== 'recording') return
+
+    const elapsed = pausedDurationRef.current + (Date.now() - startTimeRef.current) / 1000
+    setDuration(Math.floor(elapsed))
+
+    // Auto-stop at max duration
+    if (elapsed >= MAX_DURATION) {
+      mediaRecorderRef.current?.stop()
+      return
+    }
+
+    // Audio level
+    if (analyserRef.current) {
+      const data = new Uint8Array(analyserRef.current.frequencyBinCount)
+      analyserRef.current.getByteFrequencyData(data)
+      let sum = 0
+      for (let i = 0; i < data.length; i++) sum += data[i]
+      const avg = sum / data.length / 255
+      setAudioLevel(avg)
+    }
+
+    rafRef.current = requestAnimationFrame(updateDurationAndLevel)
+  }, [status])
+
+  // Start RAF loop when recording
+  useEffect(() => {
+    if (status === 'recording') {
+      rafRef.current = requestAnimationFrame(updateDurationAndLevel)
+    } else {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      setAudioLevel(0)
+    }
+  }, [status, updateDurationAndLevel])
+
+  const start = useCallback(async () => {
+    setError(null)
+    setAudioBlob(null)
+    setDuration(0)
+    pausedDurationRef.current = 0
+    chunksRef.current = []
+    setStatus('requesting-permission')
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
+
+      // Set up audio analysis
+      const audioContext = new AudioContext()
+      const source = audioContext.createMediaStreamSource(stream)
+      const analyser = audioContext.createAnalyser()
+      analyser.fftSize = 256
+      source.connect(analyser)
+      audioContextRef.current = audioContext
+      analyserRef.current = analyser
+
+      // Set up MediaRecorder
+      const mimeType = getSupportedMimeType()
+      const recorder = new MediaRecorder(stream, { mimeType })
+      mediaRecorderRef.current = recorder
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mimeType })
+        setAudioBlob(blob)
+        setStatus('stopped')
+        cleanup()
+      }
+
+      recorder.start(250) // Collect data every 250ms
+      startTimeRef.current = Date.now()
+      setStatus('recording')
+    } catch (err) {
+      cleanup()
+      if (err instanceof DOMException) {
+        if (err.name === 'NotAllowedError') {
+          setError('마이크 권한이 필요합니다. 브라우저 설정에서 마이크를 허용해 주세요.')
+        } else if (err.name === 'NotFoundError') {
+          setError('마이크를 찾을 수 없습니다.')
+        } else {
+          setError('마이크 접근 중 오류가 발생했습니다.')
+        }
+      } else {
+        setError('이 브라우저에서는 녹음을 지원하지 않습니다.')
+      }
+      setStatus('error')
+    }
+  }, [cleanup])
+
+  const pause = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.pause()
+      pausedDurationRef.current += (Date.now() - startTimeRef.current) / 1000
+      setStatus('paused')
+    }
+  }, [])
+
+  const resume = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'paused') {
+      mediaRecorderRef.current.resume()
+      startTimeRef.current = Date.now()
+      setStatus('recording')
+    }
+  }, [])
+
+  const stop = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+  }, [])
+
+  const reset = useCallback(() => {
+    cleanup()
+    chunksRef.current = []
+    pausedDurationRef.current = 0
+    setStatus('idle')
+    setDuration(0)
+    setAudioBlob(null)
+    setError(null)
+    setAudioLevel(0)
+  }, [cleanup])
+
+  return {
+    status,
+    duration,
+    audioBlob,
+    error,
+    audioLevel,
+    start,
+    pause,
+    resume,
+    stop,
+    reset,
+  }
+}

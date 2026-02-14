@@ -1,46 +1,74 @@
-import { Home, FileText, Settings } from 'lucide-react'
-import clsx from 'clsx'
+import { useNavigate } from 'react-router-dom'
+import { AlignJustify, Home, StickyNote, Settings } from 'lucide-react'
+import { clsx } from 'clsx'
 import { useUIStore, type CurrentView } from '@/stores/uiStore'
 
-interface NavItem {
-  view: CurrentView
-  label: string
-  icon: typeof Home
-}
-
-const navItems: NavItem[] = [
-  { view: 'dashboard', label: '홈', icon: Home },
-  { view: 'memos', label: '메모', icon: FileText },
-  { view: 'settings', label: '설정', icon: Settings },
-]
-
 export function BottomNav() {
-  const { currentView, setCurrentView } = useUIStore()
+  const navigate = useNavigate()
+  const currentView = useUIStore((state) => state.currentView)
+  const setCurrentView = useUIStore((state) => state.setCurrentView)
+  const toggleMobileMenu = useUIStore((state) => state.openMobileMenu)
+  const openSettingsModal = useUIStore((state) => state.openSettingsModal)
+
+  const handleNavigate = (target: CurrentView | 'menu' | 'settings') => {
+    if (target === 'menu') {
+      toggleMobileMenu()
+      return
+    }
+    if (target === 'settings') {
+      openSettingsModal()
+      return
+    }
+    if (target === 'dashboard') {
+      setCurrentView('dashboard')
+      navigate('/')
+      return
+    }
+    if (target === 'memos') {
+      setCurrentView('memos')
+      navigate('/memos')
+      return
+    }
+  }
+
+  const navItems = [
+    { id: 'menu' as const, label: '메뉴', icon: AlignJustify },
+    { id: 'dashboard' as const, label: '홈', icon: Home },
+    { id: 'memos' as const, label: '메모', icon: StickyNote },
+    { id: 'settings' as const, label: '설정', icon: Settings },
+  ]
 
   return (
-    <nav className="bottom-nav fixed inset-x-0 bottom-0 z-30 border-t border-gray-100 bg-white/95 pb-safe backdrop-blur-sm md:hidden dark:border-gray-800 dark:bg-gray-900/95">
-      <div className="flex h-14 items-stretch">
-        {navItems.map(({ view, label, icon: Icon }) => {
-          const isActive = currentView === view
+    <nav
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 pb-safe"
+      aria-label="하단 메인 네비게이션"
+    >
+      <ul className="flex items-center justify-around h-16" role="menubar">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const isActive = item.id !== 'menu' && item.id !== 'settings' && currentView === item.id
+
           return (
-            <button
-              key={view}
-              onClick={() => setCurrentView(view)}
-              className={clsx(
-                'flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors',
-                isActive
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-gray-400 dark:text-gray-500'
-              )}
-              aria-label={label}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              <Icon className={clsx('h-5 w-5', isActive && 'stroke-[2.5]')} />
-              <span className="text-[10px] font-medium">{label}</span>
-            </button>
+            <li key={item.id} className="flex-1" role="none">
+              <button
+                onClick={() => handleNavigate(item.id)}
+                className={clsx(
+                  'w-full flex flex-col items-center justify-center gap-1 py-2 transition-colors min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500',
+                  isActive
+                    ? 'text-primary-600 dark:text-primary-400'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-primary-600 dark:hover:text-primary-400'
+                )}
+                role="menuitem"
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={`${item.label}${isActive ? ' (현재 페이지)' : ''}`}
+              >
+                <Icon className="w-5 h-5" aria-hidden="true" />
+                <span className="text-[10px] font-medium">{item.label}</span>
+              </button>
+            </li>
           )
         })}
-      </div>
+      </ul>
     </nav>
   )
 }

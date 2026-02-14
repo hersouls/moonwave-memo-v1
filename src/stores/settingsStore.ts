@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile } from '@/lib/types'
+import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, AIProvider, STTLanguage } from '@/lib/types'
 import { FONT_FAMILIES, FONT_SIZES } from '@/utils/constants'
 
 interface SettingsState {
@@ -18,6 +18,9 @@ interface SettingsState {
   setHasCompletedOnboarding: (completed: boolean) => void
   updateProfile: (profile: Partial<UserProfile>) => void
   setLastBackupDate: (date: Date) => void
+  setAIProvider: (provider: AIProvider) => void
+  setAPIKey: (apiKey: string) => void
+  setSTTLanguage: (language: STTLanguage) => void
 }
 
 export function applyTheme(theme: ThemeMode) {
@@ -72,6 +75,12 @@ export const useSettingsStore = create<SettingsState>()(
         googleDrive: {
           isConnected: false,
           autoBackup: false,
+        },
+        ai: {
+          provider: 'openai',
+          apiKey: '',
+          whisperModel: 'whisper-1',
+          language: 'ko',
         },
       },
 
@@ -181,6 +190,33 @@ export const useSettingsStore = create<SettingsState>()(
       setLastBackupDate: (date) => {
         set((state) => ({
           settings: { ...state.settings, lastBackupDate: date.toISOString() },
+        }))
+      },
+
+      setAIProvider: (provider) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            ai: { ...state.settings.ai, provider },
+          },
+        }))
+      },
+
+      setAPIKey: (apiKey) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            ai: { ...state.settings.ai, apiKey },
+          },
+        }))
+      },
+
+      setSTTLanguage: (language) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            ai: { ...state.settings.ai, language },
+          },
         }))
       },
     }),

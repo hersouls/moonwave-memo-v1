@@ -40,3 +40,5 @@ coverage/
 # Reference files
 .TDL_v1.0/
 Screenshot_*
+
+.vercel

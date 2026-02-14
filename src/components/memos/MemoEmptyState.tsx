@@ -1,17 +1,49 @@
-import { FileText } from 'lucide-react'
+import { FileText, Search, Trash2 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { useUIStore } from '@/stores/uiStore'
+import { useFolderStore } from '@/stores/folderStore'
+
+function getTimeGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour <= 11) return '좋은 아침이에요!'
+  if (hour >= 12 && hour <= 17) return '좋은 오후에요!'
+  if (hour >= 18 && hour <= 21) return '좋은 저녁이에요!'
+  return '편안한 밤 되세요!'
+}
 
 export function MemoEmptyState() {
+  const searchQuery = useUIStore((s) => s.searchQuery)
+  const activeFolderId = useUIStore((s) => s.activeFolderId)
+  const getTrashFolder = useFolderStore((s) => s.getTrashFolder)
+
+  const trashFolder = getTrashFolder()
+  const isTrashView = trashFolder != null && activeFolderId === trashFolder.id
+
+  if (searchQuery.trim().length > 0) {
+    return (
+      <EmptyState
+        icon={<Search className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+        title="검색 결과가 없습니다"
+        description={`"${searchQuery}"에 대한 결과를 찾을 수 없습니다`}
+      />
+    )
+  }
+
+  if (isTrashView) {
+    return (
+      <EmptyState
+        icon={<Trash2 className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+        title="휴지통이 비어 있습니다"
+        description="삭제된 메모가 이곳에 표시됩니다"
+      />
+    )
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-20">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-        <FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-      </div>
-      <p className="mt-4 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-        메모가 없습니다
-      </p>
-      <p className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500">
-        새 메모를 작성해보세요
-      </p>
-    </div>
+    <EmptyState
+      icon={<FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+      title={getTimeGreeting()}
+      description="새 메모를 작성해보세요"
+    />
   )
 }

@@ -1,44 +1,126 @@
-import { Menu, Search, MoreVertical } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Menu, Moon, Sun, Monitor, StickyNote, Settings } from 'lucide-react'
+import { useSettingsStore } from '@/stores/settingsStore'
+import type { ThemeMode } from '@/lib/types'
 import { useUIStore } from '@/stores/uiStore'
+import { useAuthStore } from '@/stores/authStore'
+import { IconButton } from '@/components/ui/IconButton'
+import { Tooltip } from '@/components/ui/Tooltip'
 
 export function Header() {
-  const { openMobileMenu, setSearchQuery, searchQuery } = useUIStore()
+  const theme = useSettingsStore((state) => state.settings.theme)
+  const setTheme = useSettingsStore((state) => state.setTheme)
+  const openSettingsModal = useUIStore((state) => state.openSettingsModal)
+  const openMobileMenu = useUIStore((state) => state.openMobileMenu)
+  const user = useAuthStore((state) => state.user)
+  const displayName = user?.displayName || useSettingsStore.getState().settings.userProfile.name
+
+  const cycleTheme = () => {
+    const themeOrder: ThemeMode[] = ['light', 'dark', 'system']
+    const currentIndex = themeOrder.indexOf(theme)
+    const nextIndex = (currentIndex + 1) % themeOrder.length
+    setTheme(themeOrder[nextIndex])
+  }
+
+  const getThemeIcon = () => {
+    switch (theme) {
+      case 'light':
+        return <Sun className="w-5 h-5" />
+      case 'dark':
+        return <Moon className="w-5 h-5" />
+      default:
+        return <Monitor className="w-5 h-5" />
+    }
+  }
+
+  const themeLabels: Record<ThemeMode, string> = {
+    light: '라이트 모드',
+    dark: '다크 모드',
+    system: '시스템 설정',
+  }
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-100 bg-white/95 px-4 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/95">
-      {/* Left: hamburger for mobile */}
-      <button
-        onClick={openMobileMenu}
-        className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 md:hidden dark:text-gray-300 dark:hover:bg-gray-800"
-        aria-label="메뉴 열기"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
+    <header className="sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800">
+      <nav className="flex items-center justify-between h-16 px-4 lg:px-6">
+        {/* Left: Mobile menu + Logo */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openMobileMenu}
+            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            aria-label="메뉴 열기"
+          >
+            <Menu className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+          </button>
 
-      {/* Center spacer on mobile, hidden on desktop where sidebar handles branding */}
-      <div className="flex-1 md:hidden" />
+          <Link to="/" className="lg:hidden flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+              <StickyNote className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-zinc-900 dark:text-zinc-100">Memo</span>
+          </Link>
+        </div>
 
-      {/* Right: search + more */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => {
-            // Toggle search — focus the search input or open search view
-            const nextQuery = searchQuery ? '' : searchQuery
-            setSearchQuery(nextQuery)
-          }}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-          aria-label="검색"
-        >
-          <Search className="h-5 w-5" />
-        </button>
+        {/* Greeting */}
+        {user && (
+          <p className="hidden sm:block text-sm text-zinc-600 dark:text-zinc-400 ml-4 truncate max-w-[200px]">
+            안녕하세요, <span className="font-semibold text-zinc-900 dark:text-zinc-100">{displayName}</span>님!
+          </p>
+        )}
 
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-          aria-label="더보기"
-        >
-          <MoreVertical className="h-5 w-5" />
-        </button>
-      </div>
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1">
+          {/* User avatar */}
+          {user && (
+            <Tooltip content={user.displayName || user.email} placement="bottom">
+              <button
+                type="button"
+                className="mr-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                aria-label="프로필"
+              >
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt=""
+                    className="w-8 h-8 rounded-full ring-2 ring-white dark:ring-zinc-800 shadow-sm object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 text-sm font-bold ring-2 ring-white dark:ring-zinc-800 shadow-sm">
+                    {user.displayName?.[0] || user.email?.[0] || '?'}
+                  </div>
+                )}
+              </button>
+            </Tooltip>
+          )}
+
+          {/* Settings button */}
+          <Tooltip content="설정" placement="bottom">
+            <IconButton
+              plain
+              color="secondary"
+              onClick={openSettingsModal}
+              aria-label="설정 열기"
+            >
+              <Settings className="w-5 h-5" />
+            </IconButton>
+          </Tooltip>
+
+          {/* Theme toggle */}
+          <Tooltip content={themeLabels[theme]} placement="bottom">
+            <IconButton
+              plain
+              color="secondary"
+              onClick={cycleTheme}
+              aria-label={`테마 변경 (현재: ${themeLabels[theme]})`}
+            >
+              {getThemeIcon()}
+            </IconButton>
+          </Tooltip>
+        </div>
+      </nav>
     </header>
   )
 }

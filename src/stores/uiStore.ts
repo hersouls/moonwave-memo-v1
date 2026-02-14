@@ -18,10 +18,13 @@ interface UIState {
   viewMode: ViewMode
 
   // Modals
-  isSettingsOpen: boolean
+  isSettingsModalOpen: boolean
+  isTermsModalOpen: boolean
+  isFAQModalOpen: boolean
   isFolderSelectOpen: boolean
   isFolderSelectMemoId: number | null
   isContextMenuOpen: boolean
+  isVoiceModalOpen: boolean
 
   // Selection
   isSelectionMode: boolean
@@ -41,10 +44,19 @@ interface UIState {
   setSortBy: (sort: SortBy) => void
   setViewMode: (mode: ViewMode) => void
 
+  openSettingsModal: () => void
+  closeSettingsModal: () => void
+  openTermsModal: () => void
+  closeTermsModal: () => void
+  openFAQModal: () => void
+  closeFAQModal: () => void
+
   openFolderSelect: (memoId?: number | null) => void
   closeFolderSelect: () => void
   openContextMenu: () => void
   closeContextMenu: () => void
+  openVoiceModal: () => void
+  closeVoiceModal: () => void
 
   toggleSelectionMode: () => void
   toggleMemoSelection: (id: number) => void
@@ -66,10 +78,13 @@ export const useUIStore = create<UIState>()(
       sortBy: 'updatedAt',
       viewMode: 'list',
 
-      isSettingsOpen: false,
+      isSettingsModalOpen: false,
+      isTermsModalOpen: false,
+      isFAQModalOpen: false,
       isFolderSelectOpen: false,
       isFolderSelectMemoId: null,
       isContextMenuOpen: false,
+      isVoiceModalOpen: false,
 
       isSelectionMode: false,
       selectedMemoIds: [],
@@ -87,10 +102,19 @@ export const useUIStore = create<UIState>()(
       setSortBy: (sort) => set({ sortBy: sort }),
       setViewMode: (mode) => set({ viewMode: mode }),
 
+      openSettingsModal: () => set({ isSettingsModalOpen: true }),
+      closeSettingsModal: () => set({ isSettingsModalOpen: false }),
+      openTermsModal: () => set({ isTermsModalOpen: true }),
+      closeTermsModal: () => set({ isTermsModalOpen: false }),
+      openFAQModal: () => set({ isFAQModalOpen: true }),
+      closeFAQModal: () => set({ isFAQModalOpen: false }),
+
       openFolderSelect: (memoId) => set({ isFolderSelectOpen: true, isFolderSelectMemoId: memoId ?? null }),
       closeFolderSelect: () => set({ isFolderSelectOpen: false, isFolderSelectMemoId: null }),
       openContextMenu: () => set({ isContextMenuOpen: true }),
       closeContextMenu: () => set({ isContextMenuOpen: false }),
+      openVoiceModal: () => set({ isVoiceModalOpen: true }),
+      closeVoiceModal: () => set({ isVoiceModalOpen: false }),
 
       toggleSelectionMode: () =>
         set((s) => ({

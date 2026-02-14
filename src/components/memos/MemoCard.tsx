@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Star, CheckCircle } from 'lucide-react'
 import clsx from 'clsx'
 import type { Memo } from '@/lib/types'
@@ -8,10 +8,12 @@ import { formatMemoDate } from '@/utils/format'
 
 interface MemoCardProps {
   memo: Memo
+  viewMode?: 'list' | 'grid'
 }
 
-export function MemoCard({ memo }: MemoCardProps) {
+export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const folders = useFolderStore((s) => s.folders)
   const isSelectionMode = useUIStore((s) => s.isSelectionMode)
   const selectedMemoIds = useUIStore((s) => s.selectedMemoIds)
@@ -22,6 +24,8 @@ export function MemoCard({ memo }: MemoCardProps) {
     : null
 
   const isSelected = selectedMemoIds.includes(memo.id!)
+  const isActive = location.pathname === `/memo/${memo.id}`
+  const isGrid = viewMode === 'grid'
 
   const handleClick = () => {
     if (isSelectionMode) {
@@ -35,21 +39,29 @@ export function MemoCard({ memo }: MemoCardProps) {
     <button
       onClick={handleClick}
       className={clsx(
-        'memo-card relative flex w-full gap-0 overflow-hidden rounded-2xl bg-white text-left shadow-sm transition-all dark:bg-zinc-800',
+        'memo-card relative flex w-full overflow-hidden rounded-2xl bg-white text-left shadow-sm transition-all dark:bg-zinc-800',
         isSelectionMode && 'hover:bg-zinc-50 dark:hover:bg-zinc-750',
         !isSelectionMode && 'hover:shadow-md active:scale-[0.99]',
-        isSelected && 'ring-2 ring-primary-500'
+        isSelected && 'ring-2 ring-primary-500',
+        isActive && 'lg:ring-2 lg:ring-primary-500 lg:bg-primary-50 lg:dark:bg-primary-900/20',
+        isGrid ? 'flex-col' : 'flex-row gap-0'
       )}
     >
-      {/* Left color bar */}
+      {/* Color bar: top for grid, left for list */}
       {folder && (
         <div
-          className="w-[3px] shrink-0"
+          className={clsx(
+            'shrink-0',
+            isGrid ? 'h-[3px] w-full' : 'w-[3px]'
+          )}
           style={{ backgroundColor: folder.color }}
         />
       )}
 
-      <div className="flex flex-1 flex-col gap-1.5 px-4 py-3.5 min-w-0">
+      <div className={clsx(
+        'flex flex-1 flex-col min-w-0',
+        isGrid ? 'gap-2 p-3' : 'gap-1.5 px-4 py-3.5'
+      )}>
         {/* Title row */}
         <div className="flex items-start gap-2">
           {isSelectionMode && (
@@ -62,7 +74,10 @@ export function MemoCard({ memo }: MemoCardProps) {
               )}
             />
           )}
-          <h3 className="flex-1 truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">
+          <h3 className={clsx(
+            'flex-1 font-bold text-zinc-900 dark:text-zinc-100',
+            isGrid ? 'text-xs line-clamp-2' : 'text-sm truncate'
+          )}>
             {memo.title || '제목 없음'}
           </h3>
           {memo.isStarred && (
@@ -72,13 +87,19 @@ export function MemoCard({ memo }: MemoCardProps) {
 
         {/* Body preview */}
         {memo.body && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          <p className={clsx(
+            'text-xs leading-relaxed text-zinc-500 dark:text-zinc-400',
+            isGrid ? 'line-clamp-3' : 'line-clamp-2'
+          )}>
             {memo.body}
           </p>
         )}
 
         {/* Footer */}
-        <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+        <div className={clsx(
+          'flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500',
+          isGrid ? 'text-[10px] mt-auto pt-1' : 'text-[11px]'
+        )}>
           {folder && (
             <>
               <span className="truncate">{folder.name}</span>

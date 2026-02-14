@@ -12,8 +12,8 @@ export function UndoToast() {
 
   return (
     <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 md:bottom-8">
-      <div className="flex items-center gap-3 rounded-lg bg-gray-900 px-4 py-3 shadow-lg dark:bg-gray-100">
-        <span className="text-sm text-white dark:text-gray-900">{message}</span>
+      <div className="flex items-center gap-3 rounded-lg bg-zinc-900 px-4 py-3 shadow-lg dark:bg-zinc-100">
+        <span className="text-sm text-white dark:text-zinc-900">{message}</span>
 
         <button
           onClick={undo}
@@ -24,7 +24,7 @@ export function UndoToast() {
 
         <button
           onClick={dismiss}
-          className="ml-1 rounded-full p-0.5 text-gray-400 hover:text-gray-300 dark:text-gray-500 dark:hover:text-gray-600"
+          className="ml-1 rounded-full p-0.5 text-zinc-400 hover:text-zinc-300 dark:text-zinc-500 dark:hover:text-zinc-600"
           aria-label="닫기"
         >
           <X className="h-4 w-4" />

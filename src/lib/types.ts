@@ -36,6 +36,15 @@ export type SortBy = 'updatedAt' | 'createdAt' | 'title'
 export type ViewMode = 'list' | 'grid'
 export type InputStartPosition = 'title' | 'body'
 export type ColorPalette = 'default' | 'ocean' | 'rose' | 'purple' | 'forest'
+export type AIProvider = 'openai' | 'google'
+export type STTLanguage = 'ko' | 'en' | 'ja' | 'zh'
+
+export interface AISettings {
+  provider: AIProvider
+  apiKey: string
+  whisperModel: 'whisper-1'
+  language: STTLanguage
+}
 
 export interface MemoSettings {
   defaultColor: MemoColor
@@ -64,6 +73,7 @@ export interface Settings {
     lastSyncDate?: string
   }
   lastBackupDate?: string
+  ai: AISettings
 }
 
 // ─── View/Filter Types ─────────────────────────────
@@ -90,6 +100,17 @@ export interface UndoAction {
   type: 'delete-memo' | 'delete-memos' | 'move-memo'
   data: unknown
   timestamp: number
+}
+
+// ─── Palette Types ─────────────────────────────────
+export interface PaletteDefinition {
+  id: ColorPalette
+  name: string
+  nameKo: string
+  colors: {
+    primary: string
+    secondary: string
+  }
 }
 
 // ─── Backup Types ──────────────────────────────────

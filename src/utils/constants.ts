@@ -1,4 +1,4 @@
-import type { MemoColor } from '@/lib/types'
+import type { MemoColor, ColorPalette, PaletteDefinition } from '@/lib/types'
 
 export const DEFAULT_FOLDERS = [
   { name: '내 메모', color: '#F59E0B', isDefault: true, isSystem: false },
@@ -37,6 +37,39 @@ export const FONT_SIZES = [
   { id: 'xl' as const, label: '매우 크게', scale: 1.2 },
   { id: 'xxl' as const, label: '최대', scale: 1.35 },
 ] as const
+
+export const COLOR_PALETTES: Record<ColorPalette, PaletteDefinition> = {
+  default: {
+    id: 'default',
+    name: 'Default',
+    nameKo: '기본',
+    colors: { primary: '#6366F1', secondary: '#4338CA' },
+  },
+  ocean: {
+    id: 'ocean',
+    name: 'Ocean',
+    nameKo: '오션',
+    colors: { primary: '#3B82F6', secondary: '#1D4ED8' },
+  },
+  rose: {
+    id: 'rose',
+    name: 'Rose',
+    nameKo: '로즈',
+    colors: { primary: '#F472B6', secondary: '#DB2777' },
+  },
+  purple: {
+    id: 'purple',
+    name: 'Purple',
+    nameKo: '퍼플',
+    colors: { primary: '#A78BFA', secondary: '#7C3AED' },
+  },
+  forest: {
+    id: 'forest',
+    name: 'Forest',
+    nameKo: '포레스트',
+    colors: { primary: '#34D399', secondary: '#059669' },
+  },
+}
 
 export const BACKUP_CONFIG = {
   CURRENT_VERSION: '1.0.0',

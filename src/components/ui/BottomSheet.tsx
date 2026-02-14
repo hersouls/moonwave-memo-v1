@@ -36,14 +36,14 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
             leaveFrom="translate-y-0"
             leaveTo="translate-y-full"
           >
-            <DialogPanel className="w-full max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white pb-safe dark:bg-gray-900">
+            <DialogPanel className="w-full max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white pb-safe dark:bg-zinc-900">
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-2">
-                <div className="h-1 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+                <div className="h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-600" />
               </div>
 
               {title && (
-                <DialogTitle className="border-b border-gray-100 px-5 pb-3 text-base font-semibold text-gray-900 dark:border-gray-800 dark:text-gray-100">
+                <DialogTitle className="border-b border-zinc-100 px-5 pb-3 text-base font-semibold text-zinc-900 dark:border-zinc-800 dark:text-zinc-100">
                   {title}
                 </DialogTitle>
               )}
