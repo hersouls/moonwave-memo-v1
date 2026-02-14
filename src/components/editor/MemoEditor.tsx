@@ -248,7 +248,7 @@ export function MemoEditor() {
               value={body}
               onChange={(e) => handleBodyChange(e.target.value)}
               placeholder="메모를 입력하세요. 마크다운 문법을 사용할 수 있습니다."
-              className="w-full flex-1 min-h-[300px] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed font-mono text-sm"
+              className="w-full flex-1 min-h-[300px] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed"
             />
           </>
         ) : (
