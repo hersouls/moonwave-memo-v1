@@ -282,12 +282,11 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'memo-settings',
-      version: 1,
+      version: 2,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as { settings: Record<string, unknown> & { ai?: Record<string, unknown> } }
-        if (version === 0 && state?.settings?.ai) {
+        if (version < 1 && state?.settings?.ai) {
           const ai = state.settings.ai
-          // Migrate old single-key format to multi-key format
           if ('apiKey' in ai && !('openaiApiKey' in ai)) {
             const oldKey = (ai.apiKey as string) || ''
             const oldProvider = (ai.provider as string) || 'openai'
@@ -299,6 +298,29 @@ export const useSettingsStore = create<SettingsState>()(
               ocrProvider: 'openai',
               aiAutocomplete: false,
             }
+          }
+        }
+        // v1→v2: add gamification + highContrastMode + editorMode
+        if (version < 2 && state?.settings) {
+          if (!state.settings.gamification) {
+            state.settings.gamification = {
+              currentStreak: 0,
+              longestStreak: 0,
+              totalMemosCreated: 0,
+              lastActiveDate: '',
+              badges: [],
+            }
+          }
+          if (state.settings.highContrastMode === undefined) {
+            state.settings.highContrastMode = false
+          }
+          const memo = state.settings.memoSettings as Record<string, unknown> | undefined
+          if (memo && memo.editorMode === undefined) {
+            memo.editorMode = 'tabs'
+          }
+          const ai = state.settings.ai as Record<string, unknown> | undefined
+          if (ai && ai.aiAutocomplete === undefined) {
+            ai.aiAutocomplete = false
           }
         }
         return state

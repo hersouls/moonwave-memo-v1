@@ -3,7 +3,8 @@ import { useSettingsStore } from '@/stores/settingsStore'
 
 export function StreakCounter() {
   const gamification = useSettingsStore((s) => s.settings.gamification)
-  const { currentStreak, longestStreak } = gamification
+  const currentStreak = gamification?.currentStreak ?? 0
+  const longestStreak = gamification?.longestStreak ?? 0
 
   return (
     <div className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm">
