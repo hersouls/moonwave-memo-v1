@@ -42,6 +42,8 @@ export function MemoEditor() {
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasCreated = useRef(false)
+  const latestDataRef = useRef({ memoId, title, body, folderId })
+  latestDataRef.current = { memoId, title, body, folderId }
 
   // Focus on mount
   useEffect(() => {
@@ -83,11 +85,19 @@ export function MemoEditor() {
     saveTimerRef.current = setTimeout(autoSave, 500)
   }, [autoSave])
 
-  // Save on unmount
+  // Flush pending save on unmount (e.g., switching memos in split view)
   useEffect(() => {
     return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
+      }
+      const { memoId: id, title: t, body: b, folderId: f } = latestDataRef.current
+      if (id && (t.trim() || b.trim())) {
+        updateMemo(id, { title: t, body: b, folderId: f })
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleTitleChange = (value: string) => {
