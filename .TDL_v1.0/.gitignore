@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.vercel/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.ZZ_v1.0/
+public_old/
+.vercel
+nul
+.firebase/

@@ -1,0 +1,325 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode for Tailwind CSS 4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Amber/Yellow Primary */
+  --color-primary-50: oklch(0.98 0.02 85);
+  --color-primary-100: oklch(0.95 0.05 80);
+  --color-primary-200: oklch(0.90 0.10 75);
+  --color-primary-300: oklch(0.83 0.14 72);
+  --color-primary-400: oklch(0.78 0.16 70);
+  --color-primary-500: oklch(0.75 0.18 70);
+  --color-primary-600: oklch(0.65 0.18 55);
+  --color-primary-700: oklch(0.55 0.15 50);
+  --color-primary-800: oklch(0.45 0.12 48);
+  --color-primary-900: oklch(0.35 0.09 45);
+
+  --color-success-50: oklch(0.97 0.03 145);
+  --color-success-500: oklch(0.62 0.18 145);
+  --color-success-600: oklch(0.52 0.16 145);
+
+  --color-warning-50: oklch(0.98 0.04 85);
+  --color-warning-500: oklch(0.75 0.18 70);
+  --color-warning-600: oklch(0.65 0.18 55);
+
+  --color-danger-50: oklch(0.97 0.02 25);
+  --color-danger-500: oklch(0.58 0.22 25);
+  --color-danger-600: oklch(0.50 0.20 25);
+
+  /* Fonts */
+  --font-sans: var(--memo-font-family, 'Pretendard'), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+}
+
+/* Base styles */
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: calc(1rem * var(--memo-font-scale, 1));
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0 0 / 0.5);
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ========================================
+   Color Palettes (Light Mode Only)
+   ======================================== */
+
+html:not(.dark)[data-palette="ocean"] {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+}
+
+html:not(.dark)[data-palette="rose"] {
+  --color-primary-50: #fdf2f8;
+  --color-primary-100: #fce7f3;
+  --color-primary-200: #fbcfe8;
+  --color-primary-300: #f9a8d4;
+  --color-primary-400: #f472b6;
+  --color-primary-500: #ec4899;
+  --color-primary-600: #db2777;
+  --color-primary-700: #be185d;
+  --color-primary-800: #9d174d;
+  --color-primary-900: #831843;
+}
+
+html:not(.dark)[data-palette="purple"] {
+  --color-primary-50: #faf5ff;
+  --color-primary-100: #f3e8ff;
+  --color-primary-200: #e9d5ff;
+  --color-primary-300: #d8b4fe;
+  --color-primary-400: #c084fc;
+  --color-primary-500: #a855f7;
+  --color-primary-600: #9333ea;
+  --color-primary-700: #7c3aed;
+  --color-primary-800: #6b21a8;
+  --color-primary-900: #581c87;
+}
+
+html:not(.dark)[data-palette="forest"] {
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+}
+
+/* ========================================
+   Dark Mode Palettes
+   ======================================== */
+
+html.dark[data-palette="ocean"] {
+  --color-primary-50: oklch(0.15 0.03 250);
+  --color-primary-100: oklch(0.20 0.05 250);
+  --color-primary-200: oklch(0.28 0.08 250);
+  --color-primary-300: oklch(0.38 0.12 250);
+  --color-primary-400: oklch(0.50 0.16 250);
+  --color-primary-500: oklch(0.60 0.18 250);
+  --color-primary-600: oklch(0.68 0.16 250);
+  --color-primary-700: oklch(0.75 0.13 250);
+  --color-primary-800: oklch(0.82 0.10 250);
+  --color-primary-900: oklch(0.90 0.06 250);
+}
+
+html.dark[data-palette="rose"] {
+  --color-primary-50: oklch(0.15 0.03 350);
+  --color-primary-100: oklch(0.20 0.05 350);
+  --color-primary-200: oklch(0.28 0.08 350);
+  --color-primary-300: oklch(0.38 0.14 350);
+  --color-primary-400: oklch(0.50 0.18 350);
+  --color-primary-500: oklch(0.60 0.20 350);
+  --color-primary-600: oklch(0.68 0.18 350);
+  --color-primary-700: oklch(0.75 0.14 350);
+  --color-primary-800: oklch(0.82 0.10 350);
+  --color-primary-900: oklch(0.90 0.06 350);
+}
+
+html.dark[data-palette="purple"] {
+  --color-primary-50: oklch(0.15 0.03 300);
+  --color-primary-100: oklch(0.20 0.05 300);
+  --color-primary-200: oklch(0.28 0.08 300);
+  --color-primary-300: oklch(0.38 0.14 300);
+  --color-primary-400: oklch(0.50 0.18 300);
+  --color-primary-500: oklch(0.60 0.20 300);
+  --color-primary-600: oklch(0.68 0.18 300);
+  --color-primary-700: oklch(0.75 0.14 300);
+  --color-primary-800: oklch(0.82 0.10 300);
+  --color-primary-900: oklch(0.90 0.06 300);
+}
+
+html.dark[data-palette="forest"] {
+  --color-primary-50: oklch(0.15 0.03 160);
+  --color-primary-100: oklch(0.20 0.05 160);
+  --color-primary-200: oklch(0.28 0.08 160);
+  --color-primary-300: oklch(0.38 0.14 160);
+  --color-primary-400: oklch(0.50 0.18 160);
+  --color-primary-500: oklch(0.60 0.20 160);
+  --color-primary-600: oklch(0.68 0.16 160);
+  --color-primary-700: oklch(0.75 0.12 160);
+  --color-primary-800: oklch(0.82 0.08 160);
+  --color-primary-900: oklch(0.90 0.04 160);
+}
+
+/* ========================================
+   Animation Utilities
+   ======================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInFromBottom {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.slide-in-from-bottom {
+  animation-name: slideInFromBottom;
+}
+
+.slide-up {
+  animation: slideUp 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.duration-150 {
+  animation-duration: 150ms;
+}
+
+.duration-200 {
+  animation-duration: 200ms;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+/* ========================================
+   Reduced Motion Support
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+  nav,
+  .bottom-nav,
+  .fab-button,
+  .batch-action-bar,
+  [role="dialog"],
+  .sidebar {
+    display: none !important;
+  }
+
+  body,
+  html {
+    background: white !important;
+    color: black !important;
+  }
+
+  .memo-card {
+    break-inside: avoid;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    margin-bottom: 4px;
+  }
+
+  .truncate {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+}
+
+/* ========================================
+   Accessibility
+   ======================================== */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-primary-600);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border-radius: 0 0 0.5rem 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Safe Area Utilities
+   ======================================== */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

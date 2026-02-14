@@ -1,0 +1,118 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import type { SortBy, ViewMode } from '@/lib/types'
+
+export type CurrentView = 'dashboard' | 'memos' | 'settings'
+
+interface UIState {
+  isSidebarOpen: boolean
+  currentView: CurrentView
+  isMobileMenuOpen: boolean
+
+  // Filter
+  activeFolderId: number | null
+  activeFilter: 'all' | 'starred'
+  activeTag: string | null
+  searchQuery: string
+  sortBy: SortBy
+  viewMode: ViewMode
+
+  // Modals
+  isSettingsOpen: boolean
+  isFolderSelectOpen: boolean
+  isFolderSelectMemoId: number | null
+  isContextMenuOpen: boolean
+
+  // Selection
+  isSelectionMode: boolean
+  selectedMemoIds: number[]
+
+  // Actions
+  toggleSidebar: () => void
+  setSidebarOpen: (open: boolean) => void
+  setCurrentView: (view: CurrentView) => void
+  openMobileMenu: () => void
+  closeMobileMenu: () => void
+
+  setActiveFolderId: (id: number | null) => void
+  setActiveFilter: (filter: 'all' | 'starred') => void
+  setActiveTag: (tag: string | null) => void
+  setSearchQuery: (query: string) => void
+  setSortBy: (sort: SortBy) => void
+  setViewMode: (mode: ViewMode) => void
+
+  openFolderSelect: (memoId?: number | null) => void
+  closeFolderSelect: () => void
+  openContextMenu: () => void
+  closeContextMenu: () => void
+
+  toggleSelectionMode: () => void
+  toggleMemoSelection: (id: number) => void
+  selectAllMemos: (ids: number[]) => void
+  clearSelection: () => void
+}
+
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      isSidebarOpen: true,
+      currentView: 'dashboard',
+      isMobileMenuOpen: false,
+
+      activeFolderId: null,
+      activeFilter: 'all',
+      activeTag: null,
+      searchQuery: '',
+      sortBy: 'updatedAt',
+      viewMode: 'list',
+
+      isSettingsOpen: false,
+      isFolderSelectOpen: false,
+      isFolderSelectMemoId: null,
+      isContextMenuOpen: false,
+
+      isSelectionMode: false,
+      selectedMemoIds: [],
+
+      toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
+      setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+      setCurrentView: (view) => set({ currentView: view }),
+      openMobileMenu: () => set({ isMobileMenuOpen: true }),
+      closeMobileMenu: () => set({ isMobileMenuOpen: false }),
+
+      setActiveFolderId: (id) => set({ activeFolderId: id, activeFilter: 'all', activeTag: null }),
+      setActiveFilter: (filter) => set({ activeFilter: filter, activeFolderId: null, activeTag: null }),
+      setActiveTag: (tag) => set({ activeTag: tag, activeFolderId: null, activeFilter: 'all' }),
+      setSearchQuery: (query) => set({ searchQuery: query }),
+      setSortBy: (sort) => set({ sortBy: sort }),
+      setViewMode: (mode) => set({ viewMode: mode }),
+
+      openFolderSelect: (memoId) => set({ isFolderSelectOpen: true, isFolderSelectMemoId: memoId ?? null }),
+      closeFolderSelect: () => set({ isFolderSelectOpen: false, isFolderSelectMemoId: null }),
+      openContextMenu: () => set({ isContextMenuOpen: true }),
+      closeContextMenu: () => set({ isContextMenuOpen: false }),
+
+      toggleSelectionMode: () =>
+        set((s) => ({
+          isSelectionMode: !s.isSelectionMode,
+          selectedMemoIds: s.isSelectionMode ? [] : s.selectedMemoIds,
+        })),
+      toggleMemoSelection: (id) =>
+        set((s) => ({
+          selectedMemoIds: s.selectedMemoIds.includes(id)
+            ? s.selectedMemoIds.filter((i) => i !== id)
+            : [...s.selectedMemoIds, id],
+        })),
+      selectAllMemos: (ids) => set({ selectedMemoIds: ids }),
+      clearSelection: () => set({ selectedMemoIds: [], isSelectionMode: false }),
+    }),
+    {
+      name: 'memo-ui',
+      partialize: (state) => ({
+        isSidebarOpen: state.isSidebarOpen,
+        viewMode: state.viewMode,
+        sortBy: state.sortBy,
+      }),
+    }
+  )
+)
