@@ -1,4 +1,4 @@
-import { Bold, Italic, Code, Link2, List, Heading2, Mic } from 'lucide-react'
+import { Bold, Italic, Code, Link2, List, Heading2, Mic, Camera } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -34,10 +34,10 @@ export function EditorToolbar({ textareaRef, onContentChange }: EditorToolbarPro
   }
 
   const handleMicClick = () => {
-    const apiKey = useSettingsStore.getState().settings.ai?.apiKey
+    const apiKey = useSettingsStore.getState().settings.ai?.openaiApiKey
     if (!apiKey) {
       useToastStore.getState().showToast(
-        'AI 설정에서 API 키를 입력해 주세요',
+        'AI 서비스 설정에서 OpenAI API 키를 입력해 주세요',
         'warning',
         {
           action: {
@@ -49,6 +49,26 @@ export function EditorToolbar({ textareaRef, onContentChange }: EditorToolbarPro
       return
     }
     useUIStore.getState().openVoiceModal()
+  }
+
+  const handleCameraClick = () => {
+    const ai = useSettingsStore.getState().settings.ai
+    const provider = ai?.ocrProvider || 'openai'
+    const apiKey = provider === 'anthropic' ? ai?.anthropicApiKey : ai?.openaiApiKey
+    if (!apiKey) {
+      useToastStore.getState().showToast(
+        `AI 서비스 설정에서 ${provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} API 키를 입력해 주세요`,
+        'warning',
+        {
+          action: {
+            label: '설정',
+            onClick: () => useUIStore.getState().openSettingsModal(),
+          },
+        }
+      )
+      return
+    }
+    useUIStore.getState().openImageOCRModal()
   }
 
   const tools = [
@@ -86,6 +106,16 @@ export function EditorToolbar({ textareaRef, onContentChange }: EditorToolbarPro
           aria-label="음성 입력"
         >
           <Mic className="w-5 h-5" />
+        </button>
+
+        {/* Image OCR button */}
+        <button
+          onClick={handleCameraClick}
+          className="p-2.5 rounded-lg text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors active:scale-95"
+          title="이미지 OCR"
+          aria-label="이미지 OCR"
+        >
+          <Camera className="w-5 h-5" />
         </button>
       </div>
     </div>

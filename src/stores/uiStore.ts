@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { SortBy, ViewMode } from '@/lib/types'
+import type { SortBy, ViewMode, SearchFilters } from '@/lib/types'
 
 export type CurrentView = 'dashboard' | 'memos' | 'settings'
 
@@ -25,6 +25,11 @@ interface UIState {
   isFolderSelectMemoId: number | null
   isContextMenuOpen: boolean
   isVoiceModalOpen: boolean
+  isImageOCRModalOpen: boolean
+  isCommandPaletteOpen: boolean
+  isKeyboardShortcutsOpen: boolean
+  isFocusMode: boolean
+  searchFilters: SearchFilters
 
   // Selection
   isSelectionMode: boolean
@@ -57,6 +62,15 @@ interface UIState {
   closeContextMenu: () => void
   openVoiceModal: () => void
   closeVoiceModal: () => void
+  openImageOCRModal: () => void
+  closeImageOCRModal: () => void
+  openCommandPalette: () => void
+  closeCommandPalette: () => void
+  openKeyboardShortcuts: () => void
+  closeKeyboardShortcuts: () => void
+  toggleFocusMode: () => void
+  setSearchFilters: (filters: Partial<SearchFilters>) => void
+  resetSearchFilters: () => void
 
   toggleSelectionMode: () => void
   toggleMemoSelection: (id: number) => void
@@ -85,6 +99,11 @@ export const useUIStore = create<UIState>()(
       isFolderSelectMemoId: null,
       isContextMenuOpen: false,
       isVoiceModalOpen: false,
+      isImageOCRModalOpen: false,
+      isCommandPaletteOpen: false,
+      isKeyboardShortcutsOpen: false,
+      isFocusMode: false,
+      searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null },
 
       isSelectionMode: false,
       selectedMemoIds: [],
@@ -115,6 +134,15 @@ export const useUIStore = create<UIState>()(
       closeContextMenu: () => set({ isContextMenuOpen: false }),
       openVoiceModal: () => set({ isVoiceModalOpen: true }),
       closeVoiceModal: () => set({ isVoiceModalOpen: false }),
+      openImageOCRModal: () => set({ isImageOCRModalOpen: true }),
+      closeImageOCRModal: () => set({ isImageOCRModalOpen: false }),
+      openCommandPalette: () => set({ isCommandPaletteOpen: true }),
+      closeCommandPalette: () => set({ isCommandPaletteOpen: false }),
+      openKeyboardShortcuts: () => set({ isKeyboardShortcutsOpen: true }),
+      closeKeyboardShortcuts: () => set({ isKeyboardShortcutsOpen: false }),
+      toggleFocusMode: () => set((s) => ({ isFocusMode: !s.isFocusMode })),
+      setSearchFilters: (filters) => set((s) => ({ searchFilters: { ...s.searchFilters, ...filters } })),
+      resetSearchFilters: () => set({ searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null } }),
 
       toggleSelectionMode: () =>
         set((s) => ({

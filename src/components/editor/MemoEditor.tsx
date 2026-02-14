@@ -5,9 +5,18 @@ import { EditorHeader } from './EditorHeader'
 import { FolderSelector } from './FolderSelector'
 import { EditorToolbar } from './EditorToolbar'
 import { MarkdownPreview } from './MarkdownPreview'
+import { FloatingToolbar } from './FloatingToolbar'
+import { SlashCommandMenu } from './SlashCommandMenu'
+import { AISummaryPanel } from './AISummaryPanel'
+import { BacklinksPanel } from './BacklinksPanel'
+import { VersionHistory } from './VersionHistory'
+import { useAITagSuggestions } from '@/hooks/useAIFeatures'
+import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useUIStore } from '@/stores/uiStore'
+import { setLastViewedMemo } from '@/components/ui/ContinueBanner'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified'
 type EditorTab = 'edit' | 'preview'
@@ -22,8 +31,10 @@ export function MemoEditor() {
   const defaultFolderId = useSettingsStore((s) => s.settings.memoSettings.defaultFolderId)
   const defaultColor = useSettingsStore((s) => s.settings.memoSettings.defaultColor)
   const inputStartPosition = useSettingsStore((s) => s.settings.memoSettings.inputStartPosition)
+  const editorMode = useSettingsStore((s) => s.settings.memoSettings.editorMode)
   const folders = useFolderStore((s) => s.folders)
   const getDefaultFolder = useFolderStore((s) => s.getDefaultFolder)
+  const isFocusMode = useUIStore((s) => s.isFocusMode)
 
   const isNew = !id || id === 'new'
   const memo = isNew ? null : memos.find((m) => m.id === Number(id))
@@ -38,6 +49,27 @@ export function MemoEditor() {
   const [activeTab, setActiveTab] = useState<EditorTab>('edit')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
 
+  // Slash command state
+  const [slashOpen, setSlashOpen] = useState(false)
+  const [slashQuery, setSlashQuery] = useState('')
+  const [slashPos, setSlashPos] = useState({ top: 0, left: 0 })
+  const slashStartRef = useRef<number | null>(null)
+
+  // Version history
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+
+  // Split view
+  const [isLg, setIsLg] = useState(false)
+  const isSplit = editorMode === 'split' && isLg && !isFocusMode
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)')
+    setIsLg(mql.matches)
+    const handler = (e: MediaQueryListEvent) => setIsLg(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -45,7 +77,11 @@ export function MemoEditor() {
   const latestDataRef = useRef({ memoId, title, body, folderId })
   latestDataRef.current = { memoId, title, body, folderId }
 
-  // Focus on mount
+  // AI features
+  const { tags: aiTags, isLoading: aiTagsLoading } = useAITagSuggestions(body)
+  const { ghostText, acceptSuggestion, dismissSuggestion } = useAIAutocomplete(body, bodyRef)
+
+  // Focus on mount + track last viewed memo
   useEffect(() => {
     if (isNew) {
       setTimeout(() => {
@@ -56,7 +92,10 @@ export function MemoEditor() {
         }
       }, 100)
     }
-  }, [isNew, inputStartPosition])
+    if (memoId) {
+      setLastViewedMemo(memoId)
+    }
+  }, [isNew, inputStartPosition, memoId])
 
   // Auto-save with debounce
   const autoSave = useCallback(async () => {
@@ -85,7 +124,7 @@ export function MemoEditor() {
     saveTimerRef.current = setTimeout(autoSave, 500)
   }, [autoSave])
 
-  // Flush pending save on unmount (e.g., switching memos in split view)
+  // Flush pending save on unmount
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) {
@@ -110,6 +149,7 @@ export function MemoEditor() {
     setBody(value)
     setSaveStatus('modified')
     scheduleAutoSave()
+    dismissSuggestion()
   }
 
   const handleFolderChange = (newFolderId: number) => {
@@ -132,7 +172,7 @@ export function MemoEditor() {
     navigate('/memos')
   }
 
-  // Markdown insertion helper (shared with EditorToolbar)
+  // Markdown insertion helper
   const insertMarkdown = useCallback((before: string, after: string = '') => {
     const textarea = bodyRef.current
     if (!textarea) return
@@ -158,18 +198,95 @@ export function MemoEditor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Slash command detection
+  const handleBodyInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value
+    handleBodyChange(value)
+
+    const textarea = bodyRef.current
+    if (!textarea) return
+
+    const pos = textarea.selectionStart
+    const textBefore = value.substring(0, pos)
+    const lineStart = textBefore.lastIndexOf('\n') + 1
+    const lineText = textBefore.substring(lineStart)
+
+    if (lineText.startsWith('/')) {
+      const query = lineText.substring(1)
+      if (!slashOpen) {
+        slashStartRef.current = lineStart
+      }
+      setSlashQuery(query)
+      setSlashOpen(true)
+
+      const rect = textarea.getBoundingClientRect()
+      setSlashPos({
+        top: rect.top + 24 + window.scrollY,
+        left: rect.left + 16,
+      })
+    } else if (slashOpen) {
+      setSlashOpen(false)
+    }
+  }
+
+  const handleSlashSelect = (insert: string) => {
+    const textarea = bodyRef.current
+    if (!textarea || slashStartRef.current === null) return
+
+    const text = textarea.value
+    const pos = textarea.selectionStart
+    const lineStart = slashStartRef.current
+    const newText = text.substring(0, lineStart) + insert + text.substring(pos)
+    handleBodyChange(newText)
+    setSlashOpen(false)
+    slashStartRef.current = null
+
+    requestAnimationFrame(() => {
+      textarea.focus()
+      const cursorPos = lineStart + insert.length
+      textarea.setSelectionRange(cursorPos, cursorPos)
+    })
+  }
+
+  // Handle Tab key for AI autocomplete
+  const handleBodyKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab' && ghostText) {
+      e.preventDefault()
+      const suggestion = acceptSuggestion()
+      if (suggestion) {
+        const textarea = bodyRef.current
+        if (textarea) {
+          const pos = textarea.selectionStart
+          const newBody = body.slice(0, pos) + suggestion + body.slice(pos)
+          handleBodyChange(newBody)
+          requestAnimationFrame(() => {
+            const newPos = pos + suggestion.length
+            textarea.setSelectionRange(newPos, newPos)
+          })
+        }
+      }
+    }
+  }
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape: go back
       if (e.key === 'Escape') {
+        if (slashOpen) {
+          setSlashOpen(false)
+          return
+        }
+        if (ghostText) {
+          dismissSuggestion()
+          return
+        }
+        if (isFocusMode) return // handled by App.tsx
         e.preventDefault()
         handleBack()
         return
       }
 
-      // Only handle editor shortcuts in edit tab when textarea is focused
-      if (activeTab !== 'edit') return
+      if (activeTab !== 'edit' && !isSplit) return
       const textarea = bodyRef.current
       if (!textarea || document.activeElement !== textarea) return
 
@@ -183,8 +300,8 @@ export function MemoEditor() {
           insertMarkdown('*', '*')
         }
         if (e.key === 'k') {
-          e.preventDefault()
-          insertMarkdown('[', '](url)')
+          // Don't intercept Ctrl+K if it's for command palette
+          return
         }
       }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') {
@@ -196,85 +313,216 @@ export function MemoEditor() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab])
+  }, [activeTab, isSplit, slashOpen, isFocusMode, ghostText])
+
+  // Version restore handler
+  const handleVersionRestore = (restoredTitle: string, restoredBody: string) => {
+    setTitle(restoredTitle)
+    setBody(restoredBody)
+    setSaveStatus('modified')
+    scheduleAutoSave()
+  }
 
   const currentFolder = folders.find((f) => f.id === folderId)
 
-  return (
-    <div className="flex flex-col h-full min-h-[calc(100vh-4rem)] lg:min-h-0">
-      <EditorHeader
-        isStarred={isStarred}
-        onBack={handleBack}
-        onToggleStar={handleToggleStar}
-        memoId={memoId}
-        saveStatus={saveStatus}
+  // Focus mode: char count + reading time
+  const charCount = body.length
+  const readingTime = Math.max(1, Math.ceil(charCount / 400)) // Korean: ~400 chars/min
+
+  // Handle AI tag click → insert as hashtag
+  const handleAITagClick = (tag: string) => {
+    const hashtag = `#${tag} `
+    if (!body.includes(`#${tag}`)) {
+      handleBodyChange(body + (body.endsWith('\n') || !body ? '' : '\n') + hashtag)
+    }
+  }
+
+  const editContent = (
+    <>
+      <input
+        ref={titleRef}
+        type="text"
+        value={title}
+        onChange={(e) => handleTitleChange(e.target.value)}
+        placeholder="제목"
+        className="w-full text-2xl font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none mb-3"
       />
 
-      <div className="flex-1 px-4 lg:px-8 max-w-4xl mx-auto w-full">
-        <FolderSelector
-          currentFolder={currentFolder}
-          onFolderChange={handleFolderChange}
+      <div className="relative flex-1">
+        <textarea
+          ref={bodyRef}
+          value={body}
+          onChange={handleBodyInput}
+          onKeyDown={handleBodyKeyDown}
+          placeholder="메모를 입력하세요. 마크다운 문법을 사용할 수 있습니다."
+          className={clsx(
+            'w-full flex-1 min-h-[300px] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed',
+            isFocusMode && 'min-h-[60vh]'
+          )}
         />
-
-        {/* Tab bar */}
-        <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
-          <button
-            onClick={() => setActiveTab('edit')}
-            className={clsx(
-              'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-              activeTab === 'edit'
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-            )}
-          >
-            편집
-          </button>
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={clsx(
-              'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-              activeTab === 'preview'
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-            )}
-          >
-            미리보기
-          </button>
-        </div>
-
-        {activeTab === 'edit' ? (
-          <>
-            <input
-              ref={titleRef}
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="제목"
-              className="w-full text-2xl font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none mb-3"
-            />
-
-            <textarea
-              ref={bodyRef}
-              value={body}
-              onChange={(e) => handleBodyChange(e.target.value)}
-              placeholder="메모를 입력하세요. 마크다운 문법을 사용할 수 있습니다."
-              className="w-full flex-1 min-h-[300px] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed"
-            />
-          </>
-        ) : (
-          <div className="flex-1 min-h-[300px] pb-8">
-            {title && (
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-                {title}
-              </h1>
-            )}
-            <MarkdownPreview content={body} />
+        {/* AI Autocomplete ghost text */}
+        {ghostText && (
+          <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-zinc-400 dark:text-zinc-600 italic truncate max-w-full px-1">
+            Tab을 눌러 수락: <span className="text-zinc-500 dark:text-zinc-500">{ghostText.slice(0, 80)}{ghostText.length > 80 ? '...' : ''}</span>
           </div>
         )}
       </div>
 
-      {activeTab === 'edit' && (
+      {/* AI Tag suggestions */}
+      {aiTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">AI 태그</span>
+          {aiTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => handleAITagClick(tag)}
+              className="px-2 py-0.5 text-xs rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+            >
+              #{tag}
+            </button>
+          ))}
+          {aiTagsLoading && (
+            <span className="text-[10px] text-zinc-400 animate-pulse">분석 중...</span>
+          )}
+        </div>
+      )}
+    </>
+  )
+
+  const previewContent = (
+    <div className="flex-1 min-h-[300px] pb-8">
+      {title && (
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+          {title}
+        </h1>
+      )}
+      <MarkdownPreview content={body} />
+    </div>
+  )
+
+  return (
+    <div className={clsx(
+      'flex flex-col h-full min-h-[calc(100vh-4rem)] lg:min-h-0',
+      isFocusMode && 'min-h-screen'
+    )}>
+      {!isFocusMode && (
+        <EditorHeader
+          isStarred={isStarred}
+          onBack={handleBack}
+          onToggleStar={handleToggleStar}
+          onOpenVersionHistory={memoId ? () => setShowVersionHistory(true) : undefined}
+          memoId={memoId}
+          saveStatus={saveStatus}
+        />
+      )}
+
+      <div className={clsx(
+        'flex-1',
+        isFocusMode
+          ? 'max-w-2xl mx-auto w-full px-6 pt-12'
+          : 'px-4 lg:px-8 max-w-4xl mx-auto w-full'
+      )}>
+        {!isFocusMode && (
+          <FolderSelector
+            currentFolder={currentFolder}
+            onFolderChange={handleFolderChange}
+          />
+        )}
+
+        {isSplit ? (
+          /* Split view: side-by-side edit + preview */
+          <div className="flex gap-0 flex-1 min-h-[300px] border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+            <div className="flex-1 flex flex-col p-4 overflow-auto">
+              {editContent}
+            </div>
+            <div className="w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+            <div className="flex-1 p-4 overflow-auto">
+              {previewContent}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Tab bar (hidden in focus mode) */}
+            {!isFocusMode && (
+              <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
+                <button
+                  onClick={() => setActiveTab('edit')}
+                  className={clsx(
+                    'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
+                    activeTab === 'edit'
+                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  )}
+                >
+                  편집
+                </button>
+                <button
+                  onClick={() => setActiveTab('preview')}
+                  className={clsx(
+                    'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
+                    activeTab === 'preview'
+                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  )}
+                >
+                  미리보기
+                </button>
+              </div>
+            )}
+
+            {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
+          </>
+        )}
+
+        {/* AI Summary + Backlinks panels (below editor, not in focus mode) */}
+        {!isFocusMode && memoId && (
+          <div className="mt-4 space-y-3 pb-4">
+            <AISummaryPanel content={body} />
+            <BacklinksPanel memoId={memoId} title={title} />
+          </div>
+        )}
+      </div>
+
+      {/* Focus mode footer */}
+      {isFocusMode && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
+          <span>{charCount}자</span>
+          <span>·</span>
+          <span>읽기 약 {readingTime}분</span>
+          <span>·</span>
+          <span className="text-zinc-300 dark:text-zinc-600">ESC로 나가기</span>
+        </div>
+      )}
+
+      {/* Editor toolbar (mobile only, not in focus/split mode) */}
+      {(activeTab === 'edit' || isSplit) && !isFocusMode && (
         <EditorToolbar textareaRef={bodyRef} onContentChange={handleBodyChange} />
+      )}
+
+      {/* Floating toolbar for text selection */}
+      {(activeTab === 'edit' || isSplit) && (
+        <FloatingToolbar textareaRef={bodyRef} onInsert={insertMarkdown} />
+      )}
+
+      {/* Slash command menu */}
+      {slashOpen && (
+        <SlashCommandMenu
+          query={slashQuery}
+          position={slashPos}
+          onSelect={handleSlashSelect}
+          onClose={() => setSlashOpen(false)}
+        />
+      )}
+
+      {/* Version history panel */}
+      {showVersionHistory && memoId && (
+        <VersionHistory
+          memoId={memoId}
+          currentTitle={title}
+          currentBody={body}
+          onRestore={handleVersionRestore}
+          onClose={() => setShowVersionHistory(false)}
+        />
       )}
     </div>
   )

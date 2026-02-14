@@ -13,8 +13,11 @@ import { UndoToast } from './components/ui/UndoToast'
 import { ToastContainer } from './components/ui/Toast'
 import { UpdateBanner } from './components/ui/UpdateBanner'
 import { AppLoadingScreen } from './components/ui/AppLoadingScreen'
+import { CommandPalette } from './components/ui/CommandPalette'
+import { KeyboardShortcutsModal } from './components/ui/KeyboardShortcutsModal'
 import { FolderSelectModal } from './components/folders/FolderSelectModal'
 import { VoiceUploadModal } from './components/voice/VoiceUploadModal'
+import { ImageOCRModal } from './components/ocr/ImageOCRModal'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from './stores/settingsStore'
@@ -30,6 +33,7 @@ export default function App() {
   const initializeFolders = useFolderStore((state) => state.initialize)
   const initSettings = useSettingsStore((state) => state.initialize)
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen)
+  const isFocusMode = useUIStore((state) => state.isFocusMode)
 
   useEffect(() => {
     const initApp = async () => {
@@ -61,16 +65,42 @@ export default function App() {
     initApp()
   }, [initializeMemos, initializeFolders, initSettings])
 
-  // Global keyboard shortcuts: Ctrl+Z (undo), Ctrl+N (new memo)
+  // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Z: Undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         useUndoStore.getState().undo()
       }
+      // Ctrl+N: New memo
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault()
         navigate('/memo/new')
+      }
+      // Ctrl+K: Command palette
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        const ui = useUIStore.getState()
+        if (ui.isCommandPaletteOpen) {
+          ui.closeCommandPalette()
+        } else {
+          ui.openCommandPalette()
+        }
+      }
+      // Escape: Exit focus mode
+      if (e.key === 'Escape') {
+        const ui = useUIStore.getState()
+        if (ui.isCommandPaletteOpen) {
+          ui.closeCommandPalette()
+        } else if (ui.isFocusMode) {
+          ui.toggleFocusMode()
+        }
+      }
+      // Ctrl+/: Keyboard shortcuts help
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault()
+        useUIStore.getState().openKeyboardShortcuts()
       }
     }
 
@@ -99,28 +129,31 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex flex-col">
-      <Sidebar />
+      {!isFocusMode && <Sidebar />}
 
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
-        }`}
+        className={clsx(
+          'flex-1 flex flex-col transition-all duration-300',
+          !isFocusMode && (isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16')
+        )}
       >
-        <Header />
+        {!isFocusMode && <Header />}
         <main
           id="main-content"
+          aria-live="polite"
           className={clsx(
-            'flex-1 pb-20',
-            isMemoRoute ? 'lg:pb-0 lg:overflow-hidden' : 'lg:pb-6'
+            'flex-1',
+            isFocusMode ? '' : 'pb-20',
+            !isFocusMode && (isMemoRoute ? 'lg:pb-0 lg:overflow-hidden' : 'lg:pb-6')
           )}
         >
           <Outlet />
         </main>
-        {!isMemoRoute && <Footer />}
+        {!isMemoRoute && !isFocusMode && <Footer />}
       </div>
 
-      <BottomNav />
-      <MobileNav />
+      {!isFocusMode && <BottomNav />}
+      {!isFocusMode && <MobileNav />}
 
       {/* Global Modals */}
       <SettingsModal />
@@ -128,6 +161,9 @@ export default function App() {
       <FAQModal />
       <FolderSelectModal />
       <VoiceUploadModal />
+      <ImageOCRModal />
+      <CommandPalette />
+      <KeyboardShortcutsModal />
 
       <UndoToast />
       <ToastContainer />

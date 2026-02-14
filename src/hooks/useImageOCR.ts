@@ -2,19 +2,25 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUIStore } from '@/stores/uiStore'
-import { validateAudioFile, transcribeAudio, formatTranscription, type STTResult } from '@/services/speechToText'
+import { validateImageFile, extractTextFromImage, type OCRResult } from '@/services/imageOCR'
+import { compressImage, type CompressedImage } from '@/utils/imageCompression'
+import { addMemoImage } from '@/services/database'
+import { generateSyncId } from '@/utils/id'
+import { nowISO } from '@/lib/dateUtils'
 
-export type TranscriptionStatus = 'idle' | 'validating' | 'transcribing' | 'completed' | 'error'
+export type OCRStatus = 'idle' | 'validating' | 'compressing' | 'extracting' | 'completed' | 'error'
 
-export function useVoiceTranscription() {
-  const [status, setStatus] = useState<TranscriptionStatus>('idle')
-  const [result, setResult] = useState<STTResult | null>(null)
+export function useImageOCR() {
+  const [status, setStatus] = useState<OCRStatus>('idle')
+  const [result, setResult] = useState<OCRResult | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [compressedData, setCompressedData] = useState<CompressedImage | null>(null)
+  const [originalFile, setOriginalFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const abortRef = useRef<AbortController | null>(null)
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       abortRef.current?.abort()
@@ -26,10 +32,10 @@ export function useVoiceTranscription() {
     setProgress(10)
     let current = 10
     progressTimerRef.current = setInterval(() => {
-      current += Math.random() * 8
+      current += Math.random() * 6
       if (current > 90) current = 90
       setProgress(Math.round(current))
-    }, 500)
+    }, 600)
   }, [])
 
   const stopProgressSimulation = useCallback(() => {
@@ -39,10 +45,13 @@ export function useVoiceTranscription() {
     }
   }, [])
 
-  const uploadAndTranscribe = useCallback(async (file: File) => {
+  const processImage = useCallback(async (file: File) => {
     const ai = useSettingsStore.getState().settings.ai
-    if (!ai?.openaiApiKey) {
-      setError('설정 > AI 서비스에서 OpenAI API 키를 먼저 입력해주세요')
+    const provider = ai?.ocrProvider || 'openai'
+    const apiKey = provider === 'anthropic' ? ai?.anthropicApiKey : ai?.openaiApiKey
+
+    if (!apiKey) {
+      setError(`설정 > AI 서비스에서 ${provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} API 키를 먼저 입력해주세요`)
       setStatus('error')
       return
     }
@@ -50,33 +59,49 @@ export function useVoiceTranscription() {
     // Validate
     setStatus('validating')
     setError(null)
-    const validation = validateAudioFile(file)
+    const validation = validateImageFile(file)
     if (!validation.valid) {
       setError(validation.error || '유효하지 않은 파일입니다')
       setStatus('error')
       return
     }
 
-    // Transcribe
-    setStatus('transcribing')
+    // Compress
+    setStatus('compressing')
+    setOriginalFile(file)
+    let compressed: CompressedImage
+    try {
+      compressed = await compressImage(file)
+      setCompressedData(compressed)
+      setImagePreview(compressed.dataUrl)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '이미지 처리 중 오류가 발생했습니다'
+      setError(msg)
+      setStatus('error')
+      return
+    }
+
+    // Extract text
+    setStatus('extracting')
     abortRef.current = new AbortController()
     startProgressSimulation()
 
     try {
-      const sttResult = await transcribeAudio(
-        file,
-        ai.openaiApiKey,
+      const ocrResult = await extractTextFromImage(
+        compressed.dataUrl,
+        provider,
+        apiKey,
         ai.language || 'ko',
         abortRef.current.signal
       )
       stopProgressSimulation()
       setProgress(100)
-      setResult(sttResult)
+      setResult(ocrResult)
       setStatus('completed')
     } catch (err) {
       stopProgressSimulation()
       setProgress(0)
-      const msg = err instanceof Error ? err.message : '음성 변환 중 오류가 발생했습니다'
+      const msg = err instanceof Error ? err.message : '텍스트 추출 중 오류가 발생했습니다'
       setError(msg)
       setStatus('error')
     }
@@ -95,15 +120,34 @@ export function useVoiceTranscription() {
       day: 'numeric',
     })
 
+    // Create memo first
     const newId = await addMemo({
-      title: `음성 메모 — ${dateStr}`,
+      title: `이미지 OCR 메모 — ${dateStr}`,
       body: editedText,
       folderId: activeFolderId ?? defaultFolderId ?? null,
       color: defaultColor,
     })
 
+    // Save image to memoImages table and update body with image reference
+    if (compressedData && originalFile && newId) {
+      const imageId = await addMemoImage({
+        memoId: newId,
+        syncId: generateSyncId(),
+        data: compressedData.dataUrl,
+        filename: originalFile.name,
+        width: compressedData.width,
+        height: compressedData.height,
+        size: compressedData.originalSize,
+        createdAt: nowISO(),
+      })
+
+      const imageMarkdown = `\n\n![OCR 이미지](memo-image:${imageId})`
+      const updateMemo = useMemoStore.getState().updateMemo
+      await updateMemo(newId, { body: editedText + imageMarkdown })
+    }
+
     return newId
-  }, [])
+  }, [compressedData, originalFile])
 
   const appendToCurrentMemo = useCallback(async (memoId: number, editedText: string) => {
     const updateMemo = useMemoStore.getState().updateMemo
@@ -119,9 +163,24 @@ export function useVoiceTranscription() {
       minute: '2-digit',
     })
 
-    const appendedBody = `${memo.body}\n\n---\n음성 텍스트 (${dateStr})\n${editedText}`
+    let imageMarkdown = ''
+    if (compressedData && originalFile) {
+      const imageId = await addMemoImage({
+        memoId,
+        syncId: generateSyncId(),
+        data: compressedData.dataUrl,
+        filename: originalFile.name,
+        width: compressedData.width,
+        height: compressedData.height,
+        size: compressedData.originalSize,
+        createdAt: nowISO(),
+      })
+      imageMarkdown = `\n![OCR 이미지](memo-image:${imageId})`
+    }
+
+    const appendedBody = `${memo.body}\n\n---\nOCR 텍스트 (${dateStr})\n${editedText}${imageMarkdown}`
     await updateMemo(memoId, { body: appendedBody })
-  }, [])
+  }, [compressedData, originalFile])
 
   const cancel = useCallback(() => {
     abortRef.current?.abort()
@@ -136,6 +195,9 @@ export function useVoiceTranscription() {
     stopProgressSimulation()
     setStatus('idle')
     setResult(null)
+    setImagePreview(null)
+    setCompressedData(null)
+    setOriginalFile(null)
     setError(null)
     setProgress(0)
   }, [stopProgressSimulation])
@@ -143,13 +205,13 @@ export function useVoiceTranscription() {
   return {
     status,
     result,
+    imagePreview,
     error,
     progress,
-    uploadAndTranscribe,
+    processImage,
     saveAsNewMemo,
     appendToCurrentMemo,
     cancel,
     reset,
-    formatTranscription,
   }
 }

@@ -9,11 +9,14 @@ import {
   Download,
   Eye,
   EyeOff,
+  FolderOpen,
   HardDrive,
   Loader2,
   Mic,
   Monitor,
   Moon,
+  Pencil,
+  Plus,
   Settings,
   Shield,
   Smartphone,
@@ -42,7 +45,7 @@ import {
   type BackupValidationResult,
 } from '@/services/backup'
 import { useToastStore } from '@/stores/toastStore'
-import type { ThemeMode, ColorPalette, MemoColor, InputStartPosition, AIProvider, STTLanguage } from '@/lib/types'
+import type { ThemeMode, ColorPalette, MemoColor, InputStartPosition, STTLanguage } from '@/lib/types'
 import type { SyncStatus } from '@/lib/types'
 
 // ─── Theme Options ──────────────────────────────────
@@ -282,12 +285,16 @@ export function SettingsModal() {
   const toggleHashtagToTag = useSettingsStore((s) => s.toggleHashtagToTag)
   const toggleLinkPreview = useSettingsStore((s) => s.toggleLinkPreview)
   const setLastBackupDate = useSettingsStore((s) => s.setLastBackupDate)
-  const setAIProvider = useSettingsStore((s) => s.setAIProvider)
-  const setAPIKey = useSettingsStore((s) => s.setAPIKey)
+  const setOpenAIApiKey = useSettingsStore((s) => s.setOpenAIApiKey)
+  const setAnthropicApiKey = useSettingsStore((s) => s.setAnthropicApiKey)
   const setSTTLanguage = useSettingsStore((s) => s.setSTTLanguage)
   const showToast = useToastStore((s) => s.showToast)
+  const openTermsModal = useUIStore((state) => state.openTermsModal)
   const user = useAuthStore((s) => s.user)
   const folders = useFolderStore((s) => s.folders).filter((f) => !f.isSystem)
+  const addFolder = useFolderStore((s) => s.addFolder)
+  const updateFolder = useFolderStore((s) => s.updateFolder)
+  const deleteFolder = useFolderStore((s) => s.deleteFolder)
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
   const [localTheme, setLocalTheme] = useState<ThemeMode>(settings.theme)
@@ -307,6 +314,16 @@ export function SettingsModal() {
     file: File
     validation: BackupValidationResult
   } | null>(null)
+
+  // Folder management state
+  const [isAddingFolder, setIsAddingFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+  const [newFolderColor, setNewFolderColor] = useState('#3B82F6')
+  const [editingFolderId, setEditingFolderId] = useState<number | null>(null)
+  const [editFolderName, setEditFolderName] = useState('')
+  const [editFolderColor, setEditFolderColor] = useState('')
+
+  const FOLDER_COLORS = ['#F59E0B', '#84CC16', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444']
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -584,6 +601,13 @@ export function SettingsModal() {
             <span className="text-zinc-500 dark:text-zinc-400">버전</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">1.0.0</span>
           </div>
+          <div className="border-t border-zinc-100 dark:border-zinc-800 my-3" />
+          <button
+            onClick={() => { closeModal(); setTimeout(() => openTermsModal(), 200) }}
+            className="text-sm text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
+          >
+            서비스 약관 · 개인정보처리방침
+          </button>
         </div>
       </section>
     </div>
@@ -818,46 +842,257 @@ export function SettingsModal() {
           />
         </div>
       </section>
+
+      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+
+      {/* Folder Management */}
+      <section>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            폴더 관리
+          </h3>
+          {!isAddingFolder && (
+            <button
+              onClick={() => { setIsAddingFolder(true); setNewFolderName(''); setNewFolderColor('#3B82F6') }}
+              className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              새 폴더
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          {/* Add folder form */}
+          {isAddingFolder && (
+            <div className="p-3 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10 space-y-3">
+              <input
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="폴더 이름"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newFolderName.trim()) {
+                    addFolder(newFolderName.trim(), newFolderColor)
+                    setIsAddingFolder(false)
+                    setNewFolderName('')
+                  }
+                  if (e.key === 'Escape') setIsAddingFolder(false)
+                }}
+              />
+              <div className="flex items-center gap-1.5">
+                {FOLDER_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setNewFolderColor(c)}
+                    className={clsx(
+                      'w-6 h-6 rounded-full transition-all',
+                      newFolderColor === c ? 'ring-2 ring-offset-1 ring-primary-500 scale-110' : ''
+                    )}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setIsAddingFolder(false)}
+                  className="px-3 py-1.5 text-xs font-medium text-zinc-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    if (newFolderName.trim()) {
+                      addFolder(newFolderName.trim(), newFolderColor)
+                      setIsAddingFolder(false)
+                      setNewFolderName('')
+                    }
+                  }}
+                  disabled={!newFolderName.trim()}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 disabled:opacity-50"
+                >
+                  만들기
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Folder list */}
+          {folders.length === 0 && !isAddingFolder && (
+            <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-center">
+              <FolderOpen className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">폴더가 없습니다</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">새 폴더를 추가하여 메모를 정리하세요</p>
+            </div>
+          )}
+
+          {folders.map((folder) => (
+            <div
+              key={folder.id}
+              className="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50"
+            >
+              {editingFolderId === folder.id ? (
+                <>
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={editFolderName}
+                      onChange={(e) => setEditFolderName(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && editFolderName.trim()) {
+                          updateFolder(folder.id!, { name: editFolderName.trim(), color: editFolderColor })
+                          setEditingFolderId(null)
+                        }
+                        if (e.key === 'Escape') setEditingFolderId(null)
+                      }}
+                    />
+                    <div className="flex items-center gap-1.5">
+                      {FOLDER_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => setEditFolderColor(c)}
+                          className={clsx(
+                            'w-5 h-5 rounded-full transition-all',
+                            editFolderColor === c ? 'ring-2 ring-offset-1 ring-primary-500 scale-110' : ''
+                          )}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => {
+                        if (editFolderName.trim()) {
+                          updateFolder(folder.id!, { name: editFolderName.trim(), color: editFolderColor })
+                          setEditingFolderId(null)
+                        }
+                      }}
+                      className="px-2 py-1 text-xs font-medium text-white bg-primary-500 rounded hover:bg-primary-600"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={() => setEditingFolderId(null)}
+                      className="px-2 py-1 text-xs font-medium text-zinc-500 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: folder.color }}
+                  />
+                  <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    {folder.name}
+                  </span>
+                  {!folder.isDefault && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setEditingFolderId(folder.id!)
+                          setEditFolderName(folder.name)
+                          setEditFolderColor(folder.color)
+                        }}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        aria-label={`${folder.name} 편집`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          deleteFolder(folder.id!)
+                          showToast(`'${folder.name}' 폴더가 삭제되었습니다`, 'info')
+                        }}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        aria-label={`${folder.name} 삭제`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 
   // ─── Tab Content: AI ────────────────────────────────
-  const [showApiKey, setShowApiKey] = useState(false)
-  const [localApiKey, setLocalApiKey] = useState(settings.ai?.apiKey || '')
-  const [apiKeySaved, setApiKeySaved] = useState(false)
-  const [isTesting, setIsTesting] = useState(false)
+  const [showOpenAIKey, setShowOpenAIKey] = useState(false)
+  const [showAnthropicKey, setShowAnthropicKey] = useState(false)
+  const [localOpenAIKey, setLocalOpenAIKey] = useState(settings.ai?.openaiApiKey || '')
+  const [localAnthropicKey, setLocalAnthropicKey] = useState(settings.ai?.anthropicApiKey || '')
+  const [openAIKeySaved, setOpenAIKeySaved] = useState(false)
+  const [anthropicKeySaved, setAnthropicKeySaved] = useState(false)
+  const [testingProvider, setTestingProvider] = useState<string | null>(null)
 
-  // Sync localApiKey when modal opens
+  // Sync local keys when modal opens
   useEffect(() => {
     if (isOpen) {
-      setLocalApiKey(settings.ai?.apiKey || '')
-      setApiKeySaved(false)
+      setLocalOpenAIKey(settings.ai?.openaiApiKey || '')
+      setLocalAnthropicKey(settings.ai?.anthropicApiKey || '')
+      setOpenAIKeySaved(false)
+      setAnthropicKeySaved(false)
     }
-  }, [isOpen, settings.ai?.apiKey])
+  }, [isOpen, settings.ai?.openaiApiKey, settings.ai?.anthropicApiKey])
 
-  // Debounce API key save
+  // Debounce OpenAI key save
   useEffect(() => {
     if (!isOpen) return
-    if (localApiKey === (settings.ai?.apiKey || '')) return
-    setApiKeySaved(false)
+    if (localOpenAIKey === (settings.ai?.openaiApiKey || '')) return
+    setOpenAIKeySaved(false)
     const timer = setTimeout(() => {
-      setAPIKey(localApiKey)
-      if (localApiKey.trim()) setApiKeySaved(true)
+      setOpenAIApiKey(localOpenAIKey)
+      if (localOpenAIKey.trim()) setOpenAIKeySaved(true)
     }, 300)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localApiKey])
+  }, [localOpenAIKey])
 
-  const handleTestConnection = async () => {
-    if (!localApiKey.trim()) {
+  // Debounce Anthropic key save
+  useEffect(() => {
+    if (!isOpen) return
+    if (localAnthropicKey === (settings.ai?.anthropicApiKey || '')) return
+    setAnthropicKeySaved(false)
+    const timer = setTimeout(() => {
+      setAnthropicApiKey(localAnthropicKey)
+      if (localAnthropicKey.trim()) setAnthropicKeySaved(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localAnthropicKey])
+
+  const handleTestConnection = async (provider: 'openai' | 'anthropic') => {
+    const key = provider === 'openai' ? localOpenAIKey : localAnthropicKey
+    if (!key.trim()) {
       showToast('API 키를 먼저 입력하세요', 'warning')
       return
     }
-    setIsTesting(true)
+    setTestingProvider(provider)
     try {
-      const res = await fetch('https://api.openai.com/v1/models', {
-        headers: { Authorization: `Bearer ${localApiKey}` },
-      })
+      let res: Response
+      if (provider === 'anthropic') {
+        res = await fetch('https://api.anthropic.com/v1/models', {
+          headers: {
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+          },
+        })
+      } else {
+        res = await fetch('https://api.openai.com/v1/models', {
+          headers: { Authorization: `Bearer ${key}` },
+        })
+      }
       if (res.ok) {
         showToast('연결 성공', 'success')
       } else {
@@ -866,14 +1101,9 @@ export function SettingsModal() {
     } catch {
       showToast('네트워크 오류가 발생했습니다', 'error')
     } finally {
-      setIsTesting(false)
+      setTestingProvider(null)
     }
   }
-
-  const providerOptions: { value: AIProvider; label: string; disabled?: boolean }[] = [
-    { value: 'openai', label: 'OpenAI' },
-    { value: 'google', label: 'Google (준비 중)', disabled: true },
-  ]
 
   const languageOptions: { value: STTLanguage; label: string }[] = [
     { value: 'ko', label: '한국어' },
@@ -884,99 +1114,114 @@ export function SettingsModal() {
 
   const renderAISettings = () => (
     <div className="space-y-8">
-      {/* Provider Selection */}
+      {/* OpenAI */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          AI 음성 인식
+          OpenAI
         </h3>
-        <div className="space-y-4">
+        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2 px-1">
-              AI 제공자
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {providerOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => !opt.disabled && setAIProvider(opt.value)}
-                  disabled={opt.disabled}
-                  className={clsx(
-                    'flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all',
-                    settings.ai?.provider === opt.value
-                      ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600',
-                    opt.disabled && 'opacity-50 cursor-not-allowed'
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* API Key Input */}
-          <div>
-            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2 px-1">
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
               API 키
             </label>
             <div className="relative">
               <input
-                type={showApiKey ? 'text' : 'password'}
-                value={localApiKey}
-                onChange={(e) => setLocalApiKey(e.target.value)}
+                type={showOpenAIKey ? 'text' : 'password'}
+                value={localOpenAIKey}
+                onChange={(e) => setLocalOpenAIKey(e.target.value)}
                 placeholder="sk-..."
                 autoComplete="off"
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
               <button
                 type="button"
-                onClick={() => setShowApiKey(!showApiKey)}
+                onClick={() => setShowOpenAIKey(!showOpenAIKey)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                aria-label={showApiKey ? 'API 키 숨기기' : 'API 키 보기'}
+                aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 보기'}
               >
-                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showOpenAIKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {apiKeySaved && localApiKey.trim() && (
-              <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 px-1 flex items-center gap-1">
+            {openAIKeySaved && localOpenAIKey.trim() && (
+              <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <Check className="w-3 h-3" />
-                API 키가 저장되었습니다
-              </p>
-            )}
-            {!localApiKey.trim() && (
-              <p className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500 px-1">
-                음성 인식을 사용하려면 API 키를 입력하세요
+                저장됨
               </p>
             )}
           </div>
-
-          {/* Connection Test */}
           <button
-            onClick={handleTestConnection}
-            disabled={isTesting || !localApiKey.trim()}
-            className={clsx(
-              'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all',
-              'border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300',
-              'hover:bg-zinc-50 dark:hover:bg-zinc-800',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
+            onClick={() => handleTestConnection('openai')}
+            disabled={testingProvider === 'openai' || !localOpenAIKey.trim()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isTesting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                테스트 중...
-              </>
-            ) : (
-              'API 키 연결 테스트'
-            )}
+            {testingProvider === 'openai' ? (
+              <><Loader2 className="w-4 h-4 animate-spin" />테스트 중...</>
+            ) : '연결 테스트'}
           </button>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            음성 인식(STT), 텍스트 생성 등에 사용됩니다.
+          </p>
         </div>
       </section>
 
-      {/* Language Selection */}
+      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+
+      {/* Anthropic */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          인식 언어
+          Anthropic
+        </h3>
+        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+              API 키
+            </label>
+            <div className="relative">
+              <input
+                type={showAnthropicKey ? 'text' : 'password'}
+                value={localAnthropicKey}
+                onChange={(e) => setLocalAnthropicKey(e.target.value)}
+                placeholder="sk-ant-..."
+                autoComplete="off"
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowAnthropicKey(!showAnthropicKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 보기'}
+              >
+                {showAnthropicKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {anthropicKeySaved && localAnthropicKey.trim() && (
+              <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                저장됨
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => handleTestConnection('anthropic')}
+            disabled={testingProvider === 'anthropic' || !localAnthropicKey.trim()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {testingProvider === 'anthropic' ? (
+              <><Loader2 className="w-4 h-4 animate-spin" />테스트 중...</>
+            ) : '연결 테스트'}
+          </button>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            텍스트 분석, 요약, AI 어시스턴트 등에 사용됩니다.
+          </p>
+        </div>
+      </section>
+
+      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+
+      {/* STT Language Selection */}
+      <section>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
+          음성 인식 언어
         </h3>
         <div className="grid grid-cols-4 gap-2">
           {languageOptions.map((opt) => (
@@ -996,11 +1241,42 @@ export function SettingsModal() {
         </div>
       </section>
 
+      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+
+      {/* AI Autocomplete toggle */}
+      <section>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
+          AI 자동완성
+        </h3>
+        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">자동완성 활성화</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">입력 중 AI가 다음 문장을 제안합니다 (Tab으로 수락)</p>
+            </div>
+            <button
+              onClick={() => useSettingsStore.getState().toggleAIAutocomplete()}
+              className={clsx(
+                'relative w-11 h-6 rounded-full transition-colors',
+                settings.ai?.aiAutocomplete
+                  ? 'bg-primary-500'
+                  : 'bg-zinc-300 dark:bg-zinc-600'
+              )}
+            >
+              <span className={clsx(
+                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
+                settings.ai?.aiAutocomplete ? 'translate-x-[22px]' : 'translate-x-0.5'
+              )} />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Info */}
       <section>
         <div className="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg">
-          <Mic className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>API 키는 이 기기에만 저장되며 외부 서버로 전송되지 않습니다. 음성 파일만 OpenAI 서버로 전송되어 텍스트로 변환됩니다.</span>
+          <Shield className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>API 키는 이 기기에만 저장되며 외부 서버로 전송되지 않습니다.</span>
         </div>
       </section>
     </div>
@@ -1058,6 +1334,37 @@ export function SettingsModal() {
 
       <div className="border-t border-zinc-100 dark:border-zinc-800" />
 
+      {/* High Contrast Mode */}
+      <section>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
+          접근성
+        </h3>
+        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">고대비 모드</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">텍스트와 UI 요소의 대비를 높여 가독성을 개선합니다</p>
+            </div>
+            <button
+              onClick={() => useSettingsStore.getState().toggleHighContrast()}
+              className={clsx(
+                'relative w-11 h-6 rounded-full transition-colors',
+                settings.highContrastMode
+                  ? 'bg-primary-500'
+                  : 'bg-zinc-300 dark:bg-zinc-600'
+              )}
+            >
+              <span className={clsx(
+                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
+                settings.highContrastMode ? 'translate-x-[22px]' : 'translate-x-0.5'
+              )} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+
       {/* Danger Zone */}
       <section>
         <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-4 px-1">
@@ -1091,7 +1398,7 @@ export function SettingsModal() {
     { id: 'account', label: '계정', icon: <User className="w-4 h-4" /> },
     { id: 'data', label: '데이터', icon: <HardDrive className="w-4 h-4" /> },
     { id: 'memo', label: '메모', icon: <StickyNote className="w-4 h-4" /> },
-    { id: 'ai', label: 'AI', icon: <Mic className="w-4 h-4" /> },
+    { id: 'ai', label: 'AI 서비스', icon: <Mic className="w-4 h-4" /> },
     { id: 'system', label: '시스템', icon: <Shield className="w-4 h-4" /> },
   ]
 

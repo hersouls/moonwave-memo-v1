@@ -76,8 +76,18 @@ export function MemoList() {
               : 'flex flex-col gap-2.5'
           )}
         >
-          {filteredMemos.map((memo) => (
-            <MemoCard key={memo.id} memo={memo} viewMode={viewMode} />
+          {filteredMemos.map((memo, index) => (
+            <div
+              key={memo.id}
+              className="animate-in slide-in-from-bottom"
+              style={{
+                animationDuration: '200ms',
+                animationDelay: index < 15 ? `${index * 50}ms` : '0ms',
+                animationFillMode: 'both',
+              }}
+            >
+              <MemoCard memo={memo} viewMode={viewMode} />
+            </div>
           ))}
         </div>
       )}

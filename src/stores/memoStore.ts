@@ -5,6 +5,11 @@ import { nowISO } from '@/lib/dateUtils'
 import { generateSyncId } from '@/utils/id'
 import { extractTags } from '@/lib/tagParser'
 import * as database from '@/services/database'
+import { calculateStreak, checkMilestones } from '@/services/gamification'
+import { useSettingsStore } from './settingsStore'
+
+// Track last version snapshot time per memo
+const versionTimestamps = new Map<number, number>()
 
 interface MemoState {
   memos: Memo[]
@@ -74,6 +79,27 @@ export const useMemoStore = create<MemoState>()(
           if (newMemo) {
             set((state) => ({ memos: [...state.memos, newMemo] }))
           }
+
+          // Gamification: update streak + check milestones
+          try {
+            const settings = useSettingsStore.getState()
+            const gamification = settings.settings.gamification
+            const streakUpdated = calculateStreak(gamification)
+            const totalMemos = get().memos.filter((m) => !m.deletedAt).length
+            const { updatedState, newBadges } = checkMilestones(
+              { ...streakUpdated, totalMemosCreated: totalMemos },
+              totalMemos
+            )
+            settings.updateGamification(updatedState)
+
+            // Trigger confetti for new badges
+            if (newBadges.length > 0) {
+              import('canvas-confetti').then((mod) => {
+                mod.default({ particleCount: 80, spread: 70, origin: { y: 0.6 } })
+              }).catch(() => {})
+            }
+          } catch { /* gamification is non-critical */ }
+
           return id
         } catch (err) {
           console.error('Failed to add memo:', err)
@@ -84,6 +110,24 @@ export const useMemoStore = create<MemoState>()(
 
       updateMemo: async (id, updates) => {
         try {
+          // Auto-snapshot for version history
+          const current = get().memos.find((m) => m.id === id)
+          if (current && updates.body !== undefined) {
+            const bodyDiff = Math.abs((updates.body?.length || 0) - (current.body?.length || 0))
+            const lastVersion = versionTimestamps.get(id) || 0
+            const elapsed = Date.now() - lastVersion
+            // Snapshot if 5+ minutes elapsed or 100+ chars changed
+            if (elapsed > 5 * 60 * 1000 || bodyDiff >= 100) {
+              versionTimestamps.set(id, Date.now())
+              database.addMemoVersion({
+                memoId: id,
+                title: current.title,
+                body: current.body,
+                createdAt: nowISO(),
+              }).catch(() => {})
+            }
+          }
+
           if (updates.body !== undefined) {
             updates.tags = extractTags(updates.body)
           }

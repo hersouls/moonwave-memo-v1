@@ -6,6 +6,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { IconButton } from '@/components/ui/IconButton'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
 
 export function Header() {
   const theme = useSettingsStore((state) => state.settings.theme)
@@ -72,6 +73,7 @@ export function Header() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1">
+          <ConnectionStatus />
           {/* User avatar */}
           {user && (
             <Tooltip content={user.displayName || user.email} placement="bottom">

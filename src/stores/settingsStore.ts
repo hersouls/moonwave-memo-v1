@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, AIProvider, STTLanguage } from '@/lib/types'
+import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState } from '@/lib/types'
 import { FONT_FAMILIES, FONT_SIZES } from '@/utils/constants'
 
 interface SettingsState {
@@ -18,9 +18,14 @@ interface SettingsState {
   setHasCompletedOnboarding: (completed: boolean) => void
   updateProfile: (profile: Partial<UserProfile>) => void
   setLastBackupDate: (date: Date) => void
-  setAIProvider: (provider: AIProvider) => void
-  setAPIKey: (apiKey: string) => void
+  setOpenAIApiKey: (apiKey: string) => void
+  setAnthropicApiKey: (apiKey: string) => void
   setSTTLanguage: (language: STTLanguage) => void
+  setOCRProvider: (provider: OCRProvider) => void
+  setEditorMode: (mode: EditorMode) => void
+  toggleAIAutocomplete: () => void
+  toggleHighContrast: () => void
+  updateGamification: (data: Partial<GamificationState>) => void
 }
 
 export function applyTheme(theme: ThemeMode) {
@@ -67,6 +72,7 @@ export const useSettingsStore = create<SettingsState>()(
           inputStartPosition: 'body',
           hashtagToTag: true,
           linkPreview: true,
+          editorMode: 'tabs',
         },
         hasCompletedOnboarding: false,
         userProfile: {
@@ -77,10 +83,20 @@ export const useSettingsStore = create<SettingsState>()(
           autoBackup: false,
         },
         ai: {
-          provider: 'openai',
-          apiKey: '',
+          openaiApiKey: '',
+          anthropicApiKey: '',
           whisperModel: 'whisper-1',
           language: 'ko',
+          ocrProvider: 'openai',
+          aiAutocomplete: false,
+        },
+        highContrastMode: false,
+        gamification: {
+          currentStreak: 0,
+          longestStreak: 0,
+          totalMemosCreated: 0,
+          lastActiveDate: '',
+          badges: [],
         },
       },
 
@@ -193,20 +209,20 @@ export const useSettingsStore = create<SettingsState>()(
         }))
       },
 
-      setAIProvider: (provider) => {
+      setOpenAIApiKey: (apiKey) => {
         set((state) => ({
           settings: {
             ...state.settings,
-            ai: { ...state.settings.ai, provider },
+            ai: { ...state.settings.ai, openaiApiKey: apiKey },
           },
         }))
       },
 
-      setAPIKey: (apiKey) => {
+      setAnthropicApiKey: (apiKey) => {
         set((state) => ({
           settings: {
             ...state.settings,
-            ai: { ...state.settings.ai, apiKey },
+            ai: { ...state.settings.ai, anthropicApiKey: apiKey },
           },
         }))
       },
@@ -219,7 +235,74 @@ export const useSettingsStore = create<SettingsState>()(
           },
         }))
       },
+
+      setOCRProvider: (provider) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            ai: { ...state.settings.ai, ocrProvider: provider },
+          },
+        }))
+      },
+
+      setEditorMode: (mode) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            memoSettings: { ...state.settings.memoSettings, editorMode: mode },
+          },
+        }))
+      },
+
+      toggleAIAutocomplete: () => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            ai: { ...state.settings.ai, aiAutocomplete: !state.settings.ai.aiAutocomplete },
+          },
+        }))
+      },
+
+      toggleHighContrast: () => {
+        set((state) => {
+          const next = !state.settings.highContrastMode
+          document.documentElement.toggleAttribute('data-high-contrast', next)
+          return { settings: { ...state.settings, highContrastMode: next } }
+        })
+      },
+
+      updateGamification: (data) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            gamification: { ...state.settings.gamification, ...data },
+          },
+        }))
+      },
     }),
-    { name: 'memo-settings' }
+    {
+      name: 'memo-settings',
+      version: 1,
+      migrate: (persisted: unknown, version: number) => {
+        const state = persisted as { settings: Record<string, unknown> & { ai?: Record<string, unknown> } }
+        if (version === 0 && state?.settings?.ai) {
+          const ai = state.settings.ai
+          // Migrate old single-key format to multi-key format
+          if ('apiKey' in ai && !('openaiApiKey' in ai)) {
+            const oldKey = (ai.apiKey as string) || ''
+            const oldProvider = (ai.provider as string) || 'openai'
+            state.settings.ai = {
+              openaiApiKey: oldProvider === 'openai' ? oldKey : '',
+              anthropicApiKey: oldProvider === 'anthropic' ? oldKey : '',
+              whisperModel: 'whisper-1',
+              language: (ai.language as string) || 'ko',
+              ocrProvider: 'openai',
+              aiAutocomplete: false,
+            }
+          }
+        }
+        return state
+      },
+    }
   )
 )

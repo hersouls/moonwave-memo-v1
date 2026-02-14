@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Memo, Folder } from '@/lib/types'
+import type { Memo, Folder, MemoImage, MemoVersion } from '@/lib/types'
 import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
@@ -7,6 +7,8 @@ import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
 class MemoDatabase extends Dexie {
   memos!: Table<Memo>
   folders!: Table<Folder>
+  memoImages!: Table<MemoImage>
+  memoVersions!: Table<MemoVersion>
 
   constructor() {
     super('MemoApp')
@@ -14,6 +16,19 @@ class MemoDatabase extends Dexie {
     this.version(1).stores({
       memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
       folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+    })
+
+    this.version(2).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+    })
+
+    this.version(3).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
     })
 
     this.on('populate', () => {
@@ -83,12 +98,16 @@ export async function restoreMemo(id: number): Promise<void> {
 }
 
 export async function permanentDeleteMemo(id: number): Promise<void> {
+  await db.memoImages.where('memoId').equals(id).delete()
   await db.memos.delete(id)
 }
 
 export async function emptyTrash(): Promise<void> {
   const deleted = await db.memos.filter((m) => !!m.deletedAt).toArray()
   const ids = deleted.map((m) => m.id!).filter(Boolean)
+  for (const id of ids) {
+    await db.memoImages.where('memoId').equals(id).delete()
+  }
   await db.memos.bulkDelete(ids)
 }
 
@@ -167,4 +186,44 @@ export async function getFolderBySyncId(syncId: string): Promise<Folder | undefi
 
 export async function getMemoCountByFolder(folderId: number): Promise<number> {
   return db.memos.where('folderId').equals(folderId).filter((m) => !m.deletedAt).count()
+}
+
+// ─── MemoImage CRUD ───────────────────────────────
+
+export async function addMemoImage(image: Omit<MemoImage, 'id'>): Promise<number> {
+  return db.memoImages.add(image as MemoImage) as unknown as number
+}
+
+export async function getMemoImage(id: number): Promise<MemoImage | undefined> {
+  return db.memoImages.get(id)
+}
+
+export async function getImagesByMemoId(memoId: number): Promise<MemoImage[]> {
+  return db.memoImages.where('memoId').equals(memoId).toArray()
+}
+
+export async function deleteMemoImage(id: number): Promise<void> {
+  await db.memoImages.delete(id)
+}
+
+export async function deleteImagesByMemoId(memoId: number): Promise<void> {
+  await db.memoImages.where('memoId').equals(memoId).delete()
+}
+
+// ─── MemoVersion CRUD ────────────────────────────
+
+export async function addMemoVersion(version: Omit<MemoVersion, 'id'>): Promise<number> {
+  return db.memoVersions.add(version as MemoVersion) as unknown as number
+}
+
+export async function getVersionsByMemoId(memoId: number): Promise<MemoVersion[]> {
+  return db.memoVersions.where('memoId').equals(memoId).reverse().sortBy('createdAt')
+}
+
+export async function getMemoVersion(id: number): Promise<MemoVersion | undefined> {
+  return db.memoVersions.get(id)
+}
+
+export async function deleteVersionsByMemoId(memoId: number): Promise<void> {
+  await db.memoVersions.where('memoId').equals(memoId).delete()
 }

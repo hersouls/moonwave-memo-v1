@@ -6,6 +6,7 @@ import { clsx } from 'clsx'
 import {
   StickyNote,
   ChevronDown,
+  FileText,
   Hash,
   HelpCircle,
   Palette,
@@ -25,6 +26,7 @@ export function MobileNav() {
   const closeMobileMenu = useUIStore((state) => state.closeMobileMenu)
   const openSettingsModal = useUIStore((state) => state.openSettingsModal)
   const openFAQModal = useUIStore((state) => state.openFAQModal)
+  const openTermsModal = useUIStore((state) => state.openTermsModal)
   const setCurrentView = useUIStore((state) => state.setCurrentView)
   const setActiveFilter = useUIStore((state) => state.setActiveFilter)
   const setActiveFolderId = useUIStore((state) => state.setActiveFolderId)
@@ -76,6 +78,11 @@ export function MobileNav() {
   const handleOpenFAQ = () => {
     closeMobileMenu()
     openFAQModal()
+  }
+
+  const handleOpenTerms = () => {
+    closeMobileMenu()
+    openTermsModal()
   }
 
   const handleAddMemo = () => {
@@ -361,6 +368,18 @@ export function MobileNav() {
                     >
                       <Settings className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">설정</span>
+                    </button>
+                  </li>
+
+                  {/* Terms */}
+                  <li role="none">
+                    <button
+                      onClick={handleOpenTerms}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]"
+                      role="menuitem"
+                    >
+                      <FileText className="w-5 h-5" aria-hidden="true" />
+                      <span className="font-medium">서비스 약관</span>
                     </button>
                   </li>
                 </ul>
