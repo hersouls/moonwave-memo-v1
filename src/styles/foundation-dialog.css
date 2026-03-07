@@ -1,0 +1,472 @@
+/* ============================================
+   Foundation Dialog — Design Token & Utility
+   06_Dialog 디자인 시스템
+   ============================================ */
+
+/* -----------------------------------------
+   1. Alert Dialog Tokens
+   ----------------------------------------- */
+:root {
+  --dialog-width: 320px;
+  --dialog-min-height-1btn: 184px;
+  --dialog-min-height-2btn: 246px;
+  --dialog-radius: var(--radius-16, 16px);
+  --dialog-padding: 24px;
+  --dialog-bg: white;
+  --dialog-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.18), 0 8px 16px rgba(0, 0, 0, 0.06);
+  --dialog-title-size: 18px;
+  --dialog-title-weight: 700;
+  --dialog-title-color: #09090b;
+  --dialog-title-margin-bottom: 8px;
+  --dialog-body-size: 15px;
+  --dialog-body-line-height: 1.5;
+  --dialog-body-color: #71717a;
+  --dialog-body-margin-bottom: 24px;
+  --dialog-overlay-bg: rgba(0, 0, 0, 0.4);
+  --dialog-button-gap: 8px;
+  --dialog-button-area-padding-top: 16px;
+}
+
+/* -----------------------------------------
+   2. Dialog Button Tokens
+   ----------------------------------------- */
+:root {
+  --dialog-btn-height: 48px;
+  --dialog-btn-radius: var(--radius-12, 12px);
+  --dialog-btn-font-size: 16px;
+  --dialog-btn-font-weight: 600;
+
+  /* Accent (Dark filled) */
+  --dialog-btn-accent-bg: #09090b;
+  --dialog-btn-accent-color: white;
+  --dialog-btn-accent-hover-bg: #18181b;
+  --dialog-btn-accent-pressed-bg: #27272a;
+  --dialog-btn-accent-disabled-bg: #d4d4d8;
+  --dialog-btn-accent-disabled-color: #a1a1aa;
+
+  /* Primary (Brand color) */
+  --dialog-btn-primary-bg: var(--color-primary-500);
+  --dialog-btn-primary-color: white;
+  --dialog-btn-primary-hover-bg: var(--color-primary-600);
+  --dialog-btn-primary-pressed-bg: var(--color-primary-700);
+  --dialog-btn-primary-disabled-bg: #d4d4d8;
+  --dialog-btn-primary-disabled-color: #a1a1aa;
+
+  /* Secondary (Light filled) */
+  --dialog-btn-secondary-bg: #f4f4f5;
+  --dialog-btn-secondary-color: #09090b;
+  --dialog-btn-secondary-hover-bg: #e4e4e7;
+  --dialog-btn-secondary-pressed-bg: #d4d4d8;
+  --dialog-btn-secondary-disabled-bg: #f4f4f5;
+  --dialog-btn-secondary-disabled-color: #a1a1aa;
+
+  /* Tertiary (Ghost) */
+  --dialog-btn-tertiary-bg: transparent;
+  --dialog-btn-tertiary-color: #71717a;
+  --dialog-btn-tertiary-hover-bg: #fafafa;
+  --dialog-btn-tertiary-pressed-bg: #f4f4f5;
+  --dialog-btn-tertiary-disabled-color: #d4d4d8;
+
+  /* Danger */
+  --dialog-btn-danger-bg: var(--color-danger-500);
+  --dialog-btn-danger-color: white;
+}
+
+/* -----------------------------------------
+   4. Toast Tokens
+   ----------------------------------------- */
+:root {
+  --toast-min-width: 288px;
+  --toast-max-width: 400px;
+  --toast-padding-x: 16px;
+  --toast-padding-y: 14px;
+  --toast-radius: var(--radius-12, 12px);
+  --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --toast-gap: 12px;
+  --toast-font-size: 14px;
+  --toast-font-weight: 500;
+  --toast-line-height: 1.4;
+  --toast-icon-size: 20px;
+  --toast-close-size: 16px;
+  --toast-close-touch-target: 32px;
+  --toast-offset-bottom: 24px;
+
+  /* Success */
+  --toast-success-bg: var(--color-success-50);
+  --toast-success-color: var(--color-success-800);
+  --toast-success-icon-color: var(--color-success-500);
+
+  /* Error */
+  --toast-error-bg: var(--color-danger-50);
+  --toast-error-color: var(--color-danger-800);
+  --toast-error-icon-color: var(--color-danger-500);
+
+  /* Warning */
+  --toast-warning-bg: var(--color-warning-50);
+  --toast-warning-color: var(--color-warning-800);
+  --toast-warning-icon-color: var(--color-warning-500);
+
+  /* Info */
+  --toast-info-bg: var(--color-primary-50);
+  --toast-info-color: var(--color-primary-800);
+  --toast-info-icon-color: var(--color-primary-500);
+}
+
+/* -----------------------------------------
+   5. Z-index Semantic Tokens
+   ----------------------------------------- */
+:root {
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-modal: 50;
+  --z-toast: 55;
+  --z-tooltip: 60;
+}
+
+/* -----------------------------------------
+   6. Dark Mode Overrides
+   ----------------------------------------- */
+.dark {
+  /* Alert Dialog */
+  --dialog-bg: #18181b;
+  --dialog-title-color: #fafafa;
+  --dialog-body-color: #a1a1aa;
+  --dialog-overlay-bg: rgba(0, 0, 0, 0.6);
+  --dialog-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+
+  /* Dialog Button — Accent */
+  --dialog-btn-accent-bg: #fafafa;
+  --dialog-btn-accent-color: #09090b;
+  --dialog-btn-accent-hover-bg: #e4e4e7;
+  --dialog-btn-accent-pressed-bg: #d4d4d8;
+  --dialog-btn-accent-disabled-bg: #3f3f46;
+  --dialog-btn-accent-disabled-color: #71717a;
+
+  /* Dialog Button — Secondary */
+  --dialog-btn-secondary-bg: #27272a;
+  --dialog-btn-secondary-color: #fafafa;
+  --dialog-btn-secondary-hover-bg: #3f3f46;
+  --dialog-btn-secondary-pressed-bg: #52525b;
+
+  /* Dialog Button — Tertiary */
+  --dialog-btn-tertiary-color: #a1a1aa;
+  --dialog-btn-tertiary-hover-bg: #27272a;
+  --dialog-btn-tertiary-pressed-bg: #3f3f46;
+
+  /* Toast */
+  --toast-success-bg: var(--color-success-900);
+  --toast-success-color: var(--color-success-300);
+  --toast-error-bg: var(--color-danger-900);
+  --toast-error-color: var(--color-danger-300);
+  --toast-warning-bg: var(--color-warning-900);
+  --toast-warning-color: var(--color-warning-300);
+  --toast-info-bg: var(--color-primary-900);
+  --toast-info-color: var(--color-primary-300);
+  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* -----------------------------------------
+   7. Keyframe Animations
+   ----------------------------------------- */
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dialog-leave {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -----------------------------------------
+   7. Alert Dialog Utilities
+   ----------------------------------------- */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--dialog-overlay-bg);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-overlay.overlay--entering {
+  animation: overlay-fade-in 200ms ease-out;
+}
+
+.dialog {
+  width: var(--dialog-width);
+  background: var(--dialog-bg);
+  border-radius: var(--dialog-radius);
+  padding: var(--dialog-padding);
+  box-shadow: var(--dialog-shadow);
+}
+
+.dialog--entering {
+  animation: dialog-enter 200ms ease-out;
+}
+
+.dialog--leaving {
+  animation: dialog-leave 150ms ease-in forwards;
+}
+
+.dialog__title {
+  font-size: var(--dialog-title-size);
+  font-weight: var(--dialog-title-weight);
+  color: var(--dialog-title-color);
+  margin-bottom: var(--dialog-title-margin-bottom);
+}
+
+.dialog__body {
+  font-size: var(--dialog-body-size);
+  line-height: var(--dialog-body-line-height);
+  color: var(--dialog-body-color);
+  margin-bottom: var(--dialog-body-margin-bottom);
+}
+
+.dialog__actions {
+  display: flex;
+  gap: var(--dialog-button-gap);
+  padding-top: var(--dialog-button-area-padding-top);
+}
+
+.dialog__actions--stacked {
+  flex-direction: column;
+}
+
+/* -----------------------------------------
+   8. Dialog Button Utilities
+   ----------------------------------------- */
+.dialog-btn {
+  height: var(--dialog-btn-height);
+  border-radius: var(--dialog-btn-radius);
+  font-size: var(--dialog-btn-font-size);
+  font-weight: var(--dialog-btn-font-weight);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dialog-btn--full {
+  width: 100%;
+  flex: 1;
+}
+
+.dialog-btn--accent {
+  background: var(--dialog-btn-accent-bg);
+  color: var(--dialog-btn-accent-color);
+}
+
+.dialog-btn--accent:hover {
+  background: var(--dialog-btn-accent-hover-bg);
+}
+
+.dialog-btn--accent:active {
+  background: var(--dialog-btn-accent-pressed-bg);
+}
+
+.dialog-btn--primary {
+  background: var(--dialog-btn-primary-bg);
+  color: var(--dialog-btn-primary-color);
+}
+
+.dialog-btn--primary:hover {
+  background: var(--dialog-btn-primary-hover-bg);
+}
+
+.dialog-btn--primary:active {
+  background: var(--dialog-btn-primary-pressed-bg);
+}
+
+.dialog-btn--secondary {
+  background: var(--dialog-btn-secondary-bg);
+  color: var(--dialog-btn-secondary-color);
+}
+
+.dialog-btn--secondary:hover {
+  background: var(--dialog-btn-secondary-hover-bg);
+}
+
+.dialog-btn--secondary:active {
+  background: var(--dialog-btn-secondary-pressed-bg);
+}
+
+.dialog-btn--tertiary {
+  background: var(--dialog-btn-tertiary-bg);
+  color: var(--dialog-btn-tertiary-color);
+}
+
+.dialog-btn--tertiary:hover {
+  background: var(--dialog-btn-tertiary-hover-bg);
+}
+
+.dialog-btn--tertiary:active {
+  background: var(--dialog-btn-tertiary-pressed-bg);
+}
+
+.dialog-btn--danger {
+  background: var(--dialog-btn-danger-bg);
+  color: var(--dialog-btn-danger-color);
+}
+
+.dialog-btn:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.dialog-btn--accent:disabled {
+  background: var(--dialog-btn-accent-disabled-bg);
+  color: var(--dialog-btn-accent-disabled-color);
+}
+
+.dialog-btn--primary:disabled {
+  background: var(--dialog-btn-primary-disabled-bg);
+  color: var(--dialog-btn-primary-disabled-color);
+}
+
+.dialog-btn--secondary:disabled {
+  background: var(--dialog-btn-secondary-disabled-bg);
+  color: var(--dialog-btn-secondary-disabled-color);
+}
+
+.dialog-btn--tertiary:disabled {
+  background: transparent;
+  color: var(--dialog-btn-tertiary-disabled-color);
+}
+
+/* -----------------------------------------
+   9. Toast Utilities
+   ----------------------------------------- */
+.toast-container {
+  position: fixed;
+  bottom: var(--toast-offset-bottom);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: var(--toast-min-width);
+  max-width: var(--toast-max-width);
+  padding: var(--toast-padding-y) var(--toast-padding-x);
+  border-radius: var(--toast-radius);
+  box-shadow: var(--toast-shadow);
+  display: flex;
+  align-items: center;
+  gap: var(--toast-gap);
+  font-size: var(--toast-font-size);
+  font-weight: var(--toast-font-weight);
+  line-height: var(--toast-line-height);
+  pointer-events: auto;
+  animation: toast-slide-in 300ms ease-out;
+}
+
+.toast--success {
+  background: var(--toast-success-bg);
+  color: var(--toast-success-color);
+}
+
+.toast--error {
+  background: var(--toast-error-bg);
+  color: var(--toast-error-color);
+}
+
+.toast--warning {
+  background: var(--toast-warning-bg);
+  color: var(--toast-warning-color);
+}
+
+.toast--info {
+  background: var(--toast-info-bg);
+  color: var(--toast-info-color);
+}
+
+.toast__icon {
+  width: var(--toast-icon-size);
+  height: var(--toast-icon-size);
+  flex-shrink: 0;
+}
+
+.toast--success .toast__icon {
+  color: var(--toast-success-icon-color);
+}
+
+.toast--error .toast__icon {
+  color: var(--toast-error-icon-color);
+}
+
+.toast--warning .toast__icon {
+  color: var(--toast-warning-icon-color);
+}
+
+.toast--info .toast__icon {
+  color: var(--toast-info-icon-color);
+}
+
+.toast__message {
+  flex: 1;
+}
+
+.toast__close {
+  width: var(--toast-close-touch-target);
+  height: var(--toast-close-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.toast__close:hover {
+  opacity: 1;
+}
+
+.toast__close svg {
+  width: var(--toast-close-size);
+  height: var(--toast-close-size);
+}

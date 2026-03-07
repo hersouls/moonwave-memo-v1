@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Mic, Pencil, Camera } from 'lucide-react'
+import { Mic, Pencil, Camera, FileText } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -74,6 +74,15 @@ export function FAB() {
           </button>
         </>
       )}
+
+      {/* Template memo button */}
+      <button
+        onClick={() => useUIStore.getState().openTemplateModal()}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-100 text-zinc-600 shadow-md transition-transform hover:scale-105 active:scale-95 dark:bg-zinc-700 dark:text-zinc-300"
+        aria-label="템플릿으로 메모 작성"
+      >
+        <FileText className="h-5 w-5" />
+      </button>
 
       {/* New memo button */}
       <button

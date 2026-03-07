@@ -1,4 +1,18 @@
 @import "tailwindcss";
+@import "./styles/foundation-tokens.css";
+@import "./styles/foundation-grid.css";
+@import "./styles/foundation-components.css";
+@import "./styles/foundation-button.css";
+@import "./styles/foundation-input.css";
+@import "./styles/foundation-navigation.css";
+@import "./styles/foundation-card.css";
+@import "./styles/foundation-dialog.css";
+@import "./styles/foundation-bottomsheet.css";
+@import "./styles/foundation-toast.css";
+@import "./styles/foundation-tab.css";
+@import "./styles/foundation-checkbox.css";
+@import "./styles/foundation-chip.css";
+@import "./styles/foundation-misc.css";
 
 /* Enable class-based dark mode for Tailwind CSS 4 */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -105,6 +119,20 @@ html {
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 0.3);
+  border-radius: 4px;
 }
 
 /* ========================================
@@ -490,11 +518,38 @@ html.dark[data-palette="forest"] {
    View Transitions
    ======================================== */
 ::view-transition-old(root) {
-  animation: fadeOut 150ms ease-out;
+  animation: fadeOut 120ms ease-out;
 }
 
 ::view-transition-new(root) {
-  animation: fadeIn 150ms ease-in;
+  animation: fadeIn 120ms ease-in 60ms;
+}
+
+::view-transition-group(root) {
+  animation-duration: 180ms;
+}
+
+/* ─── Checklist Styles ──────────── */
+.memo-markdown-preview .task-list-item {
+  list-style: none;
+  margin-left: -1.5em;
+}
+
+.memo-markdown-preview .task-list-item input[type="checkbox"] {
+  margin-right: 0.5em;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+  width: 1em;
+  height: 1em;
+}
+
+.memo-markdown-preview .task-list-item input[type="checkbox"]:hover {
+  transform: scale(1.15);
+}
+
+.memo-markdown-preview .task-list-item:has(input:checked) {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
 /* ─── High Contrast Mode (WCAG AAA) ──────────── */

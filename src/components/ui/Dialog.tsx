@@ -35,9 +35,10 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
       <DialogBackdrop
         transition
         className={clsx(
-          'fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px]',
+          'fixed inset-0 backdrop-blur-[2px]',
           'transition data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in'
         )}
+        style={{ background: 'var(--dialog-overlay-bg)' }}
       />
 
       <div className="fixed inset-0 overflow-y-auto pt-6 sm:pt-0">
@@ -45,16 +46,16 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
           <DialogPanel
             transition
             className={clsx(
-              'row-start-2 w-full min-w-0 rounded-t-2xl bg-white shadow-2xl ring-1 ring-zinc-200',
+              'row-start-2 w-full min-w-0 rounded-t-2xl',
               noPadding
                 ? 'pb-[env(safe-area-inset-bottom,0px)]'
                 : 'p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:p-8 sm:pb-8',
-              'dark:bg-zinc-900 dark:ring-zinc-700',
               'sm:mb-auto sm:rounded-xl',
               sizeStyles[size],
               'transition duration-300 data-[closed]:translate-y-12 data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:ease-in',
               'sm:data-[closed]:translate-y-0 sm:data-[closed]:scale-95 sm:data-[closed]:data-[enter]:duration-300 sm:data-[closed]:data-[leave]:duration-200'
             )}
+            style={{ background: 'var(--dialog-bg)', boxShadow: 'var(--dialog-shadow)' }}
           >
             {children}
           </DialogPanel>
@@ -73,11 +74,11 @@ interface DialogHeaderProps {
 export function DialogHeader({ title, description, onClose }: DialogHeaderProps) {
   return (
     <div className="relative">
-      <DialogTitle className="text-balance text-lg/6 font-semibold text-zinc-950 dark:text-white sm:text-base/6">
+      <DialogTitle className="dialog__title text-balance sm:text-base/6">
         {title}
       </DialogTitle>
       {description && (
-        <Description className="mt-2 text-pretty text-sm/6 text-zinc-500 dark:text-zinc-400">
+        <Description className="dialog__body mt-2 text-pretty text-sm/6 mb-0">
           {description}
         </Description>
       )}

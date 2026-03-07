@@ -43,10 +43,8 @@ export function MemoFilterTabs() {
         role="tab"
         aria-selected={isAllActive}
         className={clsx(
-          'shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors',
-          isAllActive
-            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-            : 'border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-700'
+          'shrink-0 chip-text chip-text--sm',
+          isAllActive ? 'chip-text--pressed' : 'chip-text--bordered'
         )}
       >
         전체
@@ -57,10 +55,8 @@ export function MemoFilterTabs() {
         role="tab"
         aria-selected={isStarredActive}
         className={clsx(
-          'shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors',
-          isStarredActive
-            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-            : 'border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-700'
+          'shrink-0 chip-text chip-text--sm',
+          isStarredActive ? 'chip-text--pressed' : 'chip-text--bordered'
         )}
       >
         중요
@@ -76,10 +72,8 @@ export function MemoFilterTabs() {
             role="tab"
             aria-selected={isActive}
             className={clsx(
-              'shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors',
-              isActive
-                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                : 'border border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-700'
+              'shrink-0 chip-text chip-text--sm',
+              isActive ? 'chip-text--pressed' : 'chip-text--bordered'
             )}
           >
             {folder.name}
@@ -91,7 +85,7 @@ export function MemoFilterTabs() {
       {activeTag && (
         <button
           onClick={() => setActiveFilter('all')}
-          className="shrink-0 rounded-full bg-primary-500 px-4 py-1.5 text-xs font-medium text-white"
+          className="shrink-0 chip-text chip-text--sm bg-primary-500 text-white"
         >
           #{activeTag}
         </button>
@@ -103,7 +97,7 @@ export function MemoFilterTabs() {
           const idx = SORT_ORDER.indexOf(sortBy)
           setSortBy(SORT_ORDER[(idx + 1) % SORT_ORDER.length])
         }}
-        className="shrink-0 flex items-center gap-1 rounded-full border border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-700"
+        className="shrink-0 chip-text chip-text--sm chip-text--bordered flex items-center gap-1"
         aria-label={`정렬: ${SORT_LABELS[sortBy]}`}
       >
         <ArrowUpDown className="h-3 w-3" />

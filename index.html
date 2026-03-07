@@ -50,6 +50,19 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumBarunpen/NanumBarunpen.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/MaruBuri/MaruBuri.css" />
   </noscript>
+  <!-- Speculation Rules API: prerender/prefetch for faster navigation -->
+  <script type="speculationrules">
+  {
+    "prerender": [{
+      "where": { "href_matches": ["/memos", "/calendar", "/memo/*"] },
+      "eagerness": "moderate"
+    }],
+    "prefetch": [{
+      "where": { "href_matches": ["/memos", "/calendar"] },
+      "eagerness": "eager"
+    }]
+  }
+  </script>
 </head>
 
 <body>

@@ -1,4 +1,4 @@
-import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download } from 'lucide-react'
+import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download, ImagePlus, FileCode2 } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 import { useMemoStore } from '@/stores/memoStore'
@@ -8,8 +8,10 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
 import { MEMO_COLORS } from '@/utils/constants'
 import type { MemoColor } from '@/lib/types'
+import { ShareCardModal } from './ShareCardModal'
+import { ShareLinkModal } from './ShareLinkModal'
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified'
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 
 interface EditorHeaderProps {
   isStarred: boolean
@@ -20,14 +22,17 @@ interface EditorHeaderProps {
   saveStatus?: SaveStatus
   title?: string
   body?: string
+  tags?: string[]
   isPinned?: boolean
   memoColor?: MemoColor
   onColorChange?: (color: MemoColor) => void
 }
 
-export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, isPinned, memoColor, onColorChange }: EditorHeaderProps) {
+export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, tags, isPinned, memoColor, onColorChange }: EditorHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showColorPicker, setShowColorPicker] = useState(false)
+  const [showShareCard, setShowShareCard] = useState(false)
+  const [showShareLink, setShowShareLink] = useState(false)
   const softDelete = useMemoStore((s) => s.softDelete)
   const pushUndo = useUndoStore((s) => s.pushUndo)
   const openFolderSelect = useUIStore((s) => s.openFolderSelect)
@@ -56,13 +61,15 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
 
   // UX-17: share with actual memo title/body
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: title || 'Memo',
-          text: body ? body.slice(0, 200) : '',
-        })
-      } catch { /* user cancelled */ }
+    const { shareMemo } = await import('@/utils/share')
+    const result = await shareMemo({
+      title: title || 'Memo',
+      body: body || '',
+      url: window.location.href,
+    })
+    if (result === 'copied') {
+      const { useToastStore } = await import('@/stores/toastStore')
+      useToastStore.getState().showToast('클립보드에 복사되었습니다', 'success')
     }
     setIsMenuOpen(false)
   }
@@ -93,10 +100,10 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         {/* Mobile: back arrow */}
         <button
           onClick={onBack}
-          className="lg:hidden p-2 -ml-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="f-icon-btn lg:hidden -ml-2"
           aria-label="뒤로가기"
         >
-          <ArrowLeft className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+          <ArrowLeft className="f-icon--default w-5 h-5" />
         </button>
 
         {saveStatus && saveStatus !== 'idle' && (
@@ -132,6 +139,12 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">수정됨</span>
               </span>
             )}
+            {saveStatus === 'error' && (
+              <span className="flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-danger-500" />
+                <span className="text-xs font-medium text-danger-500">저장 실패</span>
+              </span>
+            )}
           </span>
         )}
       </div>
@@ -140,23 +153,23 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         {/* Desktop: close button (modal) */}
         <button
           onClick={onBack}
-          className="hidden lg:block p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="f-icon-btn hidden lg:inline-flex"
           aria-label="닫기"
         >
-          <X className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+          <X className="f-icon--muted w-5 h-5" />
         </button>
 
         {/* Split/Tab toggle — desktop only */}
         <button
           onClick={() => setEditorMode(editorMode === 'split' ? 'tabs' : 'split')}
-          className="hidden lg:block p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="f-icon-btn hidden lg:inline-flex"
           aria-label={editorMode === 'split' ? '탭 모드' : '분할 모드'}
           title={editorMode === 'split' ? '탭 모드' : '분할 모드'}
         >
           {editorMode === 'split' ? (
-            <Rows2 className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+            <Rows2 className="f-icon--muted w-5 h-5" />
           ) : (
-            <Columns2 className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+            <Columns2 className="f-icon--muted w-5 h-5" />
           )}
         </button>
 
@@ -165,7 +178,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           <div className="relative">
             <button
               onClick={() => setShowColorPicker(!showColorPicker)}
-              className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="f-icon-btn"
               aria-label="메모 색상 변경"
             >
               <span
@@ -176,7 +189,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
             {showColorPicker && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setShowColorPicker(false)} />
-                <div className="absolute right-0 top-full mt-1 flex gap-1.5 p-2.5 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 z-30">
+                <div className="ctx-menu absolute right-0 top-full mt-1 flex gap-1.5 z-30">
                   {(Object.keys(MEMO_COLORS) as MemoColor[]).map((c) => (
                     <button
                       key={c}
@@ -197,7 +210,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
 
         <button
           onClick={onToggleStar}
-          className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="f-icon-btn"
           aria-label={isStarred ? '중요 해제' : '중요 표시'}
         >
           <Star
@@ -213,7 +226,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           {/* A11Y-06: aria-haspopup + aria-expanded */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="f-icon-btn"
             aria-label="더보기"
             aria-haspopup="menu"
             aria-expanded={isMenuOpen}
@@ -225,10 +238,10 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
             <>
               <div className="fixed inset-0 z-20" onClick={() => setIsMenuOpen(false)} />
               {/* A11Y-06: role="menu" + role="menuitem" */}
-              <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-30 min-w-[170px]" role="menu">
+              <div className="ctx-menu absolute right-0 top-full mt-1 z-30 min-w-[170px]" role="menu">
                 <button
                   onClick={() => { toggleFocusMode(); setIsMenuOpen(false) }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  className="ctx-menu__item w-full"
                   role="menuitem"
                 >
                   <Maximize2 className="w-4 h-4" />
@@ -238,7 +251,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 {memoId && (
                   <button
                     onClick={handleTogglePin}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                    className="ctx-menu__item w-full"
                     role="menuitem"
                   >
                     <Pin className="w-4 h-4" />
@@ -248,7 +261,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 {memoId && onOpenVersionHistory && (
                   <button
                     onClick={() => { onOpenVersionHistory(); setIsMenuOpen(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                    className="ctx-menu__item w-full"
                     role="menuitem"
                   >
                     <History className="w-4 h-4" />
@@ -257,7 +270,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 )}
                 <button
                   onClick={handleMove}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  className="ctx-menu__item w-full"
                   role="menuitem"
                 >
                   <FolderInput className="w-4 h-4" />
@@ -265,15 +278,31 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 </button>
                 <button
                   onClick={handleShare}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  className="ctx-menu__item w-full"
                   role="menuitem"
                 >
                   <Share2 className="w-4 h-4" />
                   공유
                 </button>
                 <button
+                  onClick={() => { setShowShareCard(true); setIsMenuOpen(false) }}
+                  className="ctx-menu__item w-full"
+                  role="menuitem"
+                >
+                  <ImagePlus className="w-4 h-4" />
+                  카드로 공유
+                </button>
+                <button
+                  onClick={() => { setShowShareLink(true); setIsMenuOpen(false) }}
+                  className="ctx-menu__item w-full"
+                  role="menuitem"
+                >
+                  <FileCode2 className="w-4 h-4" />
+                  링크로 공유
+                </button>
+                <button
                   onClick={handleExportMarkdown}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  className="ctx-menu__item w-full"
                   role="menuitem"
                 >
                   <Download className="w-4 h-4" />
@@ -281,7 +310,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-50 dark:hover:bg-zinc-700"
+                  className="ctx-menu__item ctx-menu__item--danger w-full"
                   role="menuitem"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -292,6 +321,26 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           )}
         </div>
       </div>
+      {showShareCard && (
+        <ShareCardModal
+          isOpen={showShareCard}
+          onClose={() => setShowShareCard(false)}
+          title={title || ''}
+          body={body || ''}
+          tags={tags || []}
+          color={memoColor || 'white'}
+          date={new Date().toISOString()}
+        />
+      )}
+      {showShareLink && (
+        <ShareLinkModal
+          isOpen={showShareLink}
+          onClose={() => setShowShareLink(false)}
+          title={title || ''}
+          body={body || ''}
+          tags={tags || []}
+        />
+      )}
     </div>
   )
 }

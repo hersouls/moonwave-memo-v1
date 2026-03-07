@@ -2,6 +2,7 @@ import { createBrowserRouter, useParams } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import App from './App'
 import { OAuthCallback } from './pages/OAuthCallback'
+import { ShareTargetPage } from './pages/ShareTargetPage'
 
 // P-02: Route-level code splitting
 const DashboardPage = lazy(() => import('./components/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
@@ -69,5 +70,9 @@ export const router = createBrowserRouter([
   {
     path: '/oauth/callback',
     element: <OAuthCallback />,
+  },
+  {
+    path: '/share-target',
+    element: <ShareTargetPage />,
   },
 ])

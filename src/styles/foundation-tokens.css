@@ -1,0 +1,80 @@
+/* ========================================
+   Foundation Design Tokens
+   01_Foundation Design System
+   ======================================== */
+
+@theme {
+  /* Border Radius Scale */
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-circle: 9999px;
+
+  /* Shadow System (Light) */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* Breakpoints */
+  --breakpoint-xs: 360px;
+  --breakpoint-2xl: 1920px;
+}
+
+:root {
+  /* Spacing Scale */
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-56: 56px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+
+  /* Elevation / Z-Index */
+  --z-level-0: 0;
+  --z-level-1: 10;
+  --z-level-2: 20;
+  --z-level-3: 30;
+  --z-dim-overlay: 35;
+  --z-level-4: 40;
+
+  /* Typography Scale */
+  --text-heading2-size: 1.5rem;
+  --text-heading2-weight: 700;
+  --text-heading2-line: 1.48;
+
+  --text-title1-size: 1.25rem;
+  --text-title1-weight: 700;
+  --text-title1-line: 1.48;
+
+  --text-title2-size: 1.125rem;
+  --text-title2-weight: 700;
+  --text-title2-line: 1.48;
+
+  --text-body1-size: 1rem;
+  --text-body1-weight: 500;
+  --text-body1-line: 1.7;
+
+  --text-body2-size: 0.9375rem;
+  --text-body2-weight: 500;
+  --text-body2-line: 1.48;
+
+  --text-label3-size: 0.8125rem;
+  --text-label3-weight: 500;
+  --text-label3-line: 1.48;
+}
+
+/* Shadow - Dark Mode */
+.dark {
+  --shadow-1: 0 1px 3px rgba(255, 255, 255, 0.04), 0 1px 2px rgba(255, 255, 255, 0.02);
+  --shadow-2: 0 4px 12px rgba(255, 255, 255, 0.06), 0 2px 4px rgba(255, 255, 255, 0.03);
+  --shadow-3: 0 12px 32px rgba(255, 255, 255, 0.08), 0 4px 8px rgba(255, 255, 255, 0.04);
+}

@@ -1,4 +1,5 @@
-import { FileText, Search, Trash2 } from 'lucide-react'
+import { FileText, Search, Trash2, Plus, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useUIStore } from '@/stores/uiStore'
 import { useFolderStore } from '@/stores/folderStore'
@@ -46,7 +47,9 @@ function NoteIllustration() {
 }
 
 export function MemoEmptyState() {
+  const navigate = useNavigate()
   const searchQuery = useUIStore((s) => s.searchQuery)
+  const setSearchQuery = useUIStore((s) => s.setSearchQuery)
   const activeFolderId = useUIStore((s) => s.activeFolderId)
   const getTrashFolder = useFolderStore((s) => s.getTrashFolder)
 
@@ -60,6 +63,15 @@ export function MemoEmptyState() {
         illustration={<SearchIllustration />}
         title="검색 결과가 없습니다"
         description={`"${searchQuery}"에 대한 결과를 찾을 수 없습니다`}
+        action={
+          <button
+            onClick={() => setSearchQuery('')}
+            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+          >
+            <X className="h-4 w-4" />
+            검색어 초기화
+          </button>
+        }
       />
     )
   }
@@ -81,6 +93,15 @@ export function MemoEmptyState() {
       illustration={<NoteIllustration />}
       title={getTimeGreeting()}
       description="새 메모를 작성해보세요"
+      action={
+        <button
+          onClick={() => navigate('/memo/new')}
+          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          새 메모 작성
+        </button>
+      }
     />
   )
 }

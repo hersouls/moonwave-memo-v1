@@ -1,0 +1,256 @@
+/* ============================================
+   Foundation Tab — Design Token & Utility
+   09_Tab 디자인 시스템
+   Fixed Tab + Scrollable Tab + Sticky Tab
+   ============================================ */
+
+/* -----------------------------------------
+   1. Tab Container Tokens
+   ----------------------------------------- */
+:root {
+  --tab-height: 48px;
+  --tab-bg: white;
+  --tab-divider-color: #e4e4e7;
+  --tab-divider-height: 1px;
+  --tab-scrollable-padding-start: 20px;
+  --tab-scrollable-gap: 16px;
+  --tab-sticky-z-index: 10;
+}
+
+/* -----------------------------------------
+   2. Tab Item Tokens
+   ----------------------------------------- */
+:root {
+  --tab-item-padding-x: 16px;
+  --tab-item-padding-y: 12px;
+  --tab-item-font-size: 14px;
+  --tab-item-line-height: 20px;
+  --tab-item-gap: 4px;
+}
+
+/* -----------------------------------------
+   3. Tab State Tokens
+   ----------------------------------------- */
+:root {
+  --tab-color-default: #3f3f46;
+  --tab-color-selected: #18181b;
+  --tab-color-disabled: #a1a1aa;
+  --tab-weight-default: 400;
+  --tab-weight-selected: 700;
+  --tab-weight-disabled: 400;
+}
+
+/* -----------------------------------------
+   4. Tab Indicator Tokens
+   ----------------------------------------- */
+:root {
+  --tab-indicator-height: 2px;
+  --tab-indicator-height-bold: 3px;
+  --tab-indicator-color: #18181b;
+  --tab-indicator-radius: 2px 2px 0 0;
+}
+
+/* -----------------------------------------
+   5. Tab Animation Tokens
+   ----------------------------------------- */
+:root {
+  --tab-transition-duration: 200ms;
+  --tab-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --tab-indicator-transition: 300ms;
+}
+
+/* -----------------------------------------
+   6. Dark Mode Overrides
+   ----------------------------------------- */
+.dark {
+  --tab-bg: #18181b;
+  --tab-divider-color: #3f3f46;
+  --tab-color-default: #a1a1aa;
+  --tab-color-selected: #f4f4f5;
+  --tab-color-disabled: #52525b;
+  --tab-indicator-color: #f4f4f5;
+}
+
+/* -----------------------------------------
+   7. Keyframe Animations
+   ----------------------------------------- */
+@keyframes tab-indicator-enter {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* -----------------------------------------
+   8. Tab Container Utility
+   ----------------------------------------- */
+.tab-container {
+  display: flex;
+  align-items: stretch;
+  height: var(--tab-height);
+  background: var(--tab-bg);
+  border-bottom: var(--tab-divider-height) solid var(--tab-divider-color);
+  position: relative;
+}
+
+/* -----------------------------------------
+   9. Tab Container Variants
+   ----------------------------------------- */
+.tab-container--fixed {
+  width: 100%;
+}
+.tab-container--fixed > .tab-item {
+  flex: 1 1 0%;
+}
+
+.tab-container--scrollable {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding-left: var(--tab-scrollable-padding-start);
+  gap: var(--tab-scrollable-gap);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.tab-container--scrollable::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-container--sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--tab-sticky-z-index);
+}
+
+/* -----------------------------------------
+   10. Tab Divider Utility
+   ----------------------------------------- */
+.tab-divider {
+  width: 100%;
+  height: var(--tab-divider-height);
+  background: var(--tab-divider-color);
+}
+
+/* -----------------------------------------
+   11. Tab Item Utility
+   ----------------------------------------- */
+.tab-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tab-item-gap);
+  padding: var(--tab-item-padding-y) var(--tab-item-padding-x);
+  font-size: var(--tab-item-font-size);
+  line-height: var(--tab-item-line-height);
+  color: var(--tab-color-default);
+  font-weight: var(--tab-weight-default);
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  background: transparent;
+  border: none;
+  transition:
+    color var(--tab-transition-duration) var(--tab-transition-easing),
+    font-weight var(--tab-transition-duration) var(--tab-transition-easing);
+}
+
+/* -----------------------------------------
+   12. Tab Item States
+   ----------------------------------------- */
+.tab-item--selected {
+  color: var(--tab-color-selected);
+  font-weight: var(--tab-weight-selected);
+}
+
+.tab-item--disabled {
+  color: var(--tab-color-disabled);
+  font-weight: var(--tab-weight-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* -----------------------------------------
+   13. Tab Indicator Utility
+   ----------------------------------------- */
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: var(--tab-indicator-height);
+  background: var(--tab-indicator-color);
+  border-radius: var(--tab-indicator-radius);
+  transition:
+    width var(--tab-indicator-transition) var(--tab-transition-easing),
+    left var(--tab-indicator-transition) var(--tab-transition-easing);
+}
+
+.tab-item--selected::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--tab-indicator-height);
+  background: var(--tab-indicator-color);
+  border-radius: var(--tab-indicator-radius);
+  animation: tab-indicator-enter var(--tab-transition-duration) var(--tab-transition-easing) both;
+}
+
+/* -----------------------------------------
+   14. Tab Badge Utility
+   ----------------------------------------- */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  background: #e4e4e7;
+  color: #71717a;
+}
+.tab-item--selected .tab-badge {
+  background: #18181b;
+  color: white;
+}
+.dark .tab-badge {
+  background: #3f3f46;
+  color: #a1a1aa;
+}
+.dark .tab-item--selected .tab-badge {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+/* -----------------------------------------
+   15. Tab Label Utility
+   ----------------------------------------- */
+.tab-item__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* -----------------------------------------
+   16. Responsive Text Limits
+   ----------------------------------------- */
+@media (max-width: 430px) {
+  .tab-item__label {
+    max-width: 10ch;
+  }
+}
+@media (max-width: 360px) {
+  .tab-item__label {
+    max-width: 8ch;
+  }
+}
+@media (max-width: 320px) {
+  .tab-item__label {
+    max-width: 3ch;
+  }
+}

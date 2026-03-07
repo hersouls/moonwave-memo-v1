@@ -10,6 +10,8 @@ import { useUndoStore } from '@/stores/undoStore'
 import { formatMemoDate } from '@/utils/format'
 import { maskSensitiveData, stripMarkdown } from '@/utils/textUtils'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useToastStore } from '@/stores/toastStore'
+import { useViewTransition } from '@/hooks/useViewTransition'
 
 const MEMO_CARD_BG: Record<MemoColor, string> = {
   white: 'bg-white dark:bg-zinc-800',
@@ -75,6 +77,7 @@ interface MemoCardProps {
 
 export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
   const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const location = useLocation()
   // PERF-02: Subscribe only to the needed folder, not entire array
   const folder = useFolderStore(
@@ -93,7 +96,9 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
   const softDelete = useMemoStore((s) => s.softDelete)
   const pushUndo = useUndoStore((s) => s.pushUndo)
 
-  const isSelected = selectedMemoIds.includes(memo.id!)
+  if (!memo.id) return null
+
+  const isSelected = selectedMemoIds.includes(memo.id)
   const isActive = location.pathname === `/memo/${memo.id}`
   const isGrid = viewMode === 'grid'
   const [starPulse, setStarPulse] = useState(false)
@@ -192,14 +197,23 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
     const threshold = getSwipeThreshold()
     if (swipeX > threshold && memo.id) {
       // Right swipe → toggle star
+      navigator.vibrate?.(15)
       toggleStar(memo.id)
     } else if (swipeX < -threshold && memo.id) {
       // Left swipe → delete with shrink animation
+      navigator.vibrate?.(25)
       setIsDeleting(true)
+      const memoId = memo.id
       setTimeout(async () => {
-        const deleted = await softDelete(memo.id!)
-        if (deleted) {
-          pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
+        try {
+          const deleted = await softDelete(memoId)
+          if (deleted) {
+            pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
+          }
+        } catch (err) {
+          console.error('Failed to delete memo:', err)
+          setIsDeleting(false)
+          useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
         }
       }, 300)
     }
@@ -211,11 +225,11 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
   }, [swipeX, memo.id, isSelectionMode, toggleStar, softDelete, pushUndo])
 
   const handleClick = () => {
-    if (isSwiping || isLongPressed.current) return
+    if (isSwiping || isLongPressed.current || !memo.id) return
     if (isSelectionMode) {
-      toggleMemoSelection(memo.id!)
+      toggleMemoSelection(memo.id)
     } else {
-      navigate(`/memo/${memo.id}`)
+      navigateWithTransition(`/memo/${memo.id}`)
     }
   }
 
@@ -279,7 +293,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
         className={clsx(
           'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left shadow-sm transition-all duration-200',
           MEMO_CARD_BG[memo.color] || MEMO_CARD_BG[defaultColor] || 'bg-white dark:bg-zinc-800',
-          isSelectionMode && 'hover:bg-zinc-50 dark:hover:bg-zinc-750',
+          isSelectionMode && 'hover:bg-zinc-50 dark:hover:bg-zinc-700',
           !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]',
           isLongPressing && 'scale-[0.97] bg-zinc-100 dark:bg-zinc-700/50',
           isSelected && 'ring-2 ring-primary-500',

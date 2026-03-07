@@ -43,7 +43,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
 
     const handleBlur = (e: FocusEvent) => {
       // Don't hide if clicking toolbar
-      if (toolbarRef.current?.contains(e.relatedTarget as Node)) return
+      if (e.relatedTarget && toolbarRef.current?.contains(e.relatedTarget as Node)) return
       setTimeout(() => setVisible(false), 150)
     }
 

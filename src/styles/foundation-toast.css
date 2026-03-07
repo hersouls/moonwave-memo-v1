@@ -1,0 +1,340 @@
+/* ============================================
+   Foundation Toast — Design Token & Utility
+   08_Toast_Snackbar 디자인 시스템
+   Snackbar + Prompt Text + App Bar Scroll + AI Image
+   ============================================ */
+
+/* -----------------------------------------
+   1. Snackbar Container & Layout Tokens
+   ----------------------------------------- */
+:root {
+  --snackbar-bg: #27272a;
+  --snackbar-text-color: white;
+  --snackbar-radius: 999px;
+  --snackbar-max-height: 66px;
+  --snackbar-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  --snackbar-z-index: 55;
+  --snackbar-margin-x: 20px;
+  --snackbar-min-width-xs: 228px;
+}
+
+/* -----------------------------------------
+   2. Snackbar Padding & Text Tokens
+   ----------------------------------------- */
+:root {
+  --snackbar-padding-text: 20px;
+  --snackbar-padding-left-icon: 16px;
+  --snackbar-padding-right-action: 4px;
+  --snackbar-padding-y: 14px;
+  --snackbar-font-size: 14px;
+  --snackbar-font-weight: 500;
+  --snackbar-icon-size: 20px;
+  --snackbar-icon-gap: 4px;
+  --snackbar-bottom-mobile: 80px;
+  --snackbar-bottom-desktop: 32px;
+}
+
+/* -----------------------------------------
+   3. Snackbar Icon, Action & Animation Tokens
+   ----------------------------------------- */
+:root {
+  /* Icon Colors */
+  --snackbar-icon-success: white;
+  --snackbar-icon-info: #2dd4bf;
+  --snackbar-icon-critical: var(--color-danger-400);
+
+  /* Action Label */
+  --snackbar-action-font-size: 14px;
+  --snackbar-action-font-weight: 600;
+  --snackbar-action-color: white;
+  --snackbar-action-padding: 8px 16px;
+
+  /* Animation */
+  --snackbar-enter-duration: 200ms;
+  --snackbar-leave-duration: 150ms;
+  --snackbar-auto-dismiss: 3000ms;
+  --snackbar-enter-easing: cubic-bezier(0, 0, 0.2, 1);
+  --snackbar-leave-easing: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* -----------------------------------------
+   4. Prompt Text Tokens
+   ----------------------------------------- */
+:root {
+  --prompt-bg: #f4f4f5;
+  --prompt-radius: 12px;
+  --prompt-padding: 12px 16px;
+  --prompt-font-size: 16px;
+  --prompt-collapsed-lines: 3;
+  --prompt-toggle-font-size: 13px;
+  --prompt-toggle-color: #71717a;
+}
+
+/* -----------------------------------------
+   5. Dark Mode Overrides
+   ----------------------------------------- */
+.dark {
+  --snackbar-bg: #f4f4f5;
+  --snackbar-text-color: #18181b;
+  --snackbar-action-color: #18181b;
+  --prompt-bg: #27272a;
+}
+
+/* -----------------------------------------
+   6. Keyframe Animations
+   ----------------------------------------- */
+@keyframes snackbar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes snackbar-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+}
+
+@keyframes snackbar-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* -----------------------------------------
+   7. Snackbar Container Utility
+   ----------------------------------------- */
+.snackbar-container {
+  position: fixed;
+  left: var(--snackbar-margin-x);
+  right: var(--snackbar-margin-x);
+  bottom: var(--snackbar-bottom-mobile);
+  z-index: var(--snackbar-z-index);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .snackbar-container {
+    bottom: var(--snackbar-bottom-desktop);
+  }
+}
+
+/* -----------------------------------------
+   8. Snackbar Item Utilities
+   ----------------------------------------- */
+.snackbar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-height: var(--snackbar-max-height);
+  background: var(--snackbar-bg);
+  color: var(--snackbar-text-color);
+  border-radius: var(--snackbar-radius);
+  box-shadow: var(--snackbar-shadow);
+  font-size: var(--snackbar-font-size);
+  font-weight: var(--snackbar-font-weight);
+  pointer-events: auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.snackbar--text-only {
+  justify-content: center;
+  padding: var(--snackbar-padding-y) var(--snackbar-padding-text);
+  text-align: center;
+}
+
+.snackbar--with-icon {
+  padding-left: var(--snackbar-padding-left-icon);
+  padding-right: var(--snackbar-padding-text);
+  padding-top: var(--snackbar-padding-y);
+  padding-bottom: var(--snackbar-padding-y);
+}
+
+.snackbar--with-action {
+  padding-left: var(--snackbar-padding-left-icon);
+  padding-right: var(--snackbar-padding-right-action);
+  padding-top: var(--snackbar-padding-y);
+  padding-bottom: var(--snackbar-padding-y);
+}
+
+/* -----------------------------------------
+   9. Snackbar Icon Utilities
+   ----------------------------------------- */
+.snackbar__icon {
+  width: var(--snackbar-icon-size);
+  height: var(--snackbar-icon-size);
+  flex-shrink: 0;
+  margin-right: var(--snackbar-icon-gap);
+}
+
+.snackbar__icon--success {
+  color: var(--snackbar-icon-success);
+}
+
+.snackbar__icon--info {
+  color: var(--snackbar-icon-info);
+}
+
+.snackbar__icon--critical {
+  color: var(--snackbar-icon-critical);
+}
+
+/* -----------------------------------------
+   10. Snackbar Text & Action Utilities
+   ----------------------------------------- */
+.snackbar__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snackbar__text--multiline {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.snackbar__action {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: var(--snackbar-action-padding);
+  font-size: var(--snackbar-action-font-size);
+  font-weight: var(--snackbar-action-font-weight);
+  color: var(--snackbar-action-color);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 150ms ease;
+}
+.snackbar__action:hover {
+  opacity: 0.7;
+}
+
+/* -----------------------------------------
+   11. Snackbar Animation Utilities
+   ----------------------------------------- */
+.snackbar--entering {
+  animation: snackbar-enter var(--snackbar-enter-duration) var(--snackbar-enter-easing) both;
+}
+
+.snackbar--leaving {
+  animation: snackbar-leave var(--snackbar-leave-duration) var(--snackbar-leave-easing) both;
+}
+
+.snackbar__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 0 0 var(--snackbar-radius) var(--snackbar-radius);
+  animation: snackbar-progress var(--snackbar-auto-dismiss) linear both;
+}
+
+/* Responsive: minimum width for very small screens */
+@media (max-width: 359px) {
+  .snackbar {
+    min-width: var(--snackbar-min-width-xs);
+  }
+}
+
+/* -----------------------------------------
+   12. Prompt Text Utilities
+   ----------------------------------------- */
+.prompt-bubble {
+  display: inline-block;
+  padding: var(--prompt-padding);
+  background: var(--prompt-bg);
+  border-radius: var(--prompt-radius);
+  font-size: var(--prompt-font-size);
+  line-height: 1.5;
+  color: #18181b;
+}
+.dark .prompt-bubble {
+  color: #f4f4f5;
+}
+
+.prompt-bubble--collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: var(--prompt-collapsed-lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.prompt-bubble--expanded {
+  display: block;
+}
+
+/* -----------------------------------------
+   13. Prompt Toggle Utilities
+   ----------------------------------------- */
+.prompt-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: var(--prompt-toggle-font-size);
+  color: var(--prompt-toggle-color);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 150ms ease;
+}
+.prompt-toggle:hover {
+  opacity: 0.7;
+}
+.prompt-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 200ms ease;
+}
+.prompt-toggle--expanded svg {
+  transform: rotate(180deg);
+}
+
+/* -----------------------------------------
+   14. App Bar Scroll Modifier
+   ----------------------------------------- */
+.appbar--scrolled {
+  border-bottom: 1px solid #e4e4e7;
+}
+.dark .appbar--scrolled {
+  border-bottom-color: #3f3f46;
+}
+
+/* -----------------------------------------
+   15. AI Image Output Utility
+   ----------------------------------------- */
+.ai-image-output {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f4f4f5;
+}
+.dark .ai-image-output {
+  background: #27272a;
+}
+.ai-image-output img {
+  width: 100%;
+  height: auto;
+  display: block;
+}

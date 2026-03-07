@@ -136,27 +136,29 @@ export async function restoreFromBackup(
       createdAt: f.createdAt || new Date().toISOString(),
     }))
 
-    await db.memos.clear()
-    await db.folders.clear()
-    await db.memoImages.clear()
-    await db.memoVersions.clear()
+    await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions], async () => {
+      await db.memos.clear()
+      await db.folders.clear()
+      await db.memoImages.clear()
+      await db.memoVersions.clear()
 
-    if (folders.length > 0) {
-      await db.folders.bulkAdd(folders)
-    }
-    if (memos.length > 0) {
-      await db.memos.bulkAdd(memos)
-    }
+      if (folders.length > 0) {
+        await db.folders.bulkAdd(folders)
+      }
+      if (memos.length > 0) {
+        await db.memos.bulkAdd(memos)
+      }
 
-    // B-11: Restore memoImages and memoVersions
-    const backupImages = (backup.data as Record<string, unknown>).memoImages as unknown[] || []
-    if (backupImages.length > 0) {
-      await db.memoImages.bulkAdd(backupImages as never[])
-    }
-    const backupVersions = (backup.data as Record<string, unknown>).memoVersions as unknown[] || []
-    if (backupVersions.length > 0) {
-      await db.memoVersions.bulkAdd(backupVersions as never[])
-    }
+      // B-11: Restore memoImages and memoVersions
+      const backupImages = (backup.data as Record<string, unknown>).memoImages as unknown[] || []
+      if (backupImages.length > 0) {
+        await db.memoImages.bulkAdd(backupImages as never[])
+      }
+      const backupVersions = (backup.data as Record<string, unknown>).memoVersions as unknown[] || []
+      if (backupVersions.length > 0) {
+        await db.memoVersions.bulkAdd(backupVersions as never[])
+      }
+    })
 
     // Restore settings
     if (backup.data.settings) {

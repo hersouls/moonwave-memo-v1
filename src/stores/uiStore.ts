@@ -28,6 +28,7 @@ interface UIState {
   isImageOCRModalOpen: boolean
   isCommandPaletteOpen: boolean
   isKeyboardShortcutsOpen: boolean
+  isTemplateModalOpen: boolean
   isFocusMode: boolean
   isNarrowFold: boolean
   searchFilters: SearchFilters
@@ -69,6 +70,8 @@ interface UIState {
   closeCommandPalette: () => void
   openKeyboardShortcuts: () => void
   closeKeyboardShortcuts: () => void
+  openTemplateModal: () => void
+  closeTemplateModal: () => void
   toggleFocusMode: () => void
   setSearchFilters: (filters: Partial<SearchFilters>) => void
   resetSearchFilters: () => void
@@ -104,6 +107,7 @@ export const useUIStore = create<UIState>()(
       isImageOCRModalOpen: false,
       isCommandPaletteOpen: false,
       isKeyboardShortcutsOpen: false,
+      isTemplateModalOpen: false,
       isFocusMode: false,
       isNarrowFold: false,
       searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null },
@@ -143,6 +147,8 @@ export const useUIStore = create<UIState>()(
       closeCommandPalette: () => set({ isCommandPaletteOpen: false }),
       openKeyboardShortcuts: () => set({ isKeyboardShortcutsOpen: true }),
       closeKeyboardShortcuts: () => set({ isKeyboardShortcutsOpen: false }),
+      openTemplateModal: () => set({ isTemplateModalOpen: true }),
+      closeTemplateModal: () => set({ isTemplateModalOpen: false }),
       toggleFocusMode: () => set((s) => ({ isFocusMode: !s.isFocusMode })),
       setSearchFilters: (filters) => set((s) => ({ searchFilters: { ...s.searchFilters, ...filters } })),
       resetSearchFilters: () => set({ searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null } }),

@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Search, X, Clock, SlidersHorizontal } from 'lucide-react'
+import { Search, X, Clock, SlidersHorizontal, Sparkles } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
+import { parseNaturalQuery } from '@/services/aiSearch'
 import { SearchFilters } from './SearchFilters'
 
 // F-08: Limit recent searches on narrow fold
@@ -35,6 +36,7 @@ export function MemoSearchBar() {
   const [isExpanded, setIsExpanded] = useState(!!searchQuery)
   const [showRecent, setShowRecent] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [aiMode, setAiMode] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches)
   const isNarrowFold = useUIStore((s) => s.isNarrowFold)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -96,6 +98,16 @@ export function MemoSearchBar() {
     if (searchQuery.trim()) {
       saveRecentSearch(searchQuery.trim())
       setRecentSearches(getRecentSearches())
+    }
+    if (aiMode && searchQuery.trim()) {
+      const parsed = parseNaturalQuery(searchQuery)
+      if (parsed.starredOnly) {
+        useUIStore.getState().setActiveFilter('starred')
+      }
+      if (parsed.keywords.length > 0) {
+        setLocalQuery(parsed.keywords.join(' '))
+        setSearchQuery(parsed.keywords.join(' '))
+      }
     }
     setShowRecent(false)
   }
@@ -166,6 +178,19 @@ export function MemoSearchBar() {
             aria-label="필터"
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => setAiMode(!aiMode)}
+            className={clsx(
+              'rounded-full p-1 transition-colors',
+              aiMode
+                ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                : 'text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+            )}
+            aria-label="\uC2A4\uB9C8\uD2B8 \uAC80\uC0C9"
+            title="\uC790\uC5F0\uC5B4 \uAC80\uC0C9"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
           </button>
           {searchQuery && (
             <button

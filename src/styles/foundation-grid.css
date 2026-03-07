@@ -1,0 +1,62 @@
+/* ========================================
+   Foundation Grid & Layout System
+   01_Foundation Design System
+   ======================================== */
+
+:root {
+  --grid-margin: 16px;
+  --grid-gutter: 8px;
+  --grid-columns: 4;
+}
+
+/* xs: 360px+ (Foundation small) */
+@media (min-width: 360px) {
+  :root {
+    --grid-margin: 20px;
+    --grid-gutter: 16px;
+    --grid-columns: 4;
+  }
+}
+
+/* md: 768px+ (Foundation medium) */
+@media (min-width: 768px) {
+  :root {
+    --grid-margin: 20px;
+    --grid-gutter: 16px;
+    --grid-columns: 8;
+  }
+}
+
+/* xl: 1280px+ (Foundation large) */
+@media (min-width: 1280px) {
+  :root {
+    --grid-margin: 24px;
+    --grid-gutter: 20px;
+    --grid-columns: 12;
+  }
+}
+
+/* 2xl: 1920px+ (Foundation xlarge) */
+@media (min-width: 1920px) {
+  :root {
+    --grid-margin: 24px;
+    --grid-gutter: 20px;
+    --grid-columns: 12;
+  }
+}
+
+/* Grid Container */
+.grid-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--grid-margin);
+  padding-right: var(--grid-margin);
+}
+
+/* Grid Layout */
+.grid-foundation {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), 1fr);
+  gap: var(--grid-gutter);
+}

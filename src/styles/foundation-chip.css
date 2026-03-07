@@ -1,0 +1,370 @@
+/* ============================================
+   Foundation Chip & Badge — Design Token & Utility
+   11_Chip_Badge 디자인 시스템
+   Text Chip + Badge Chip + Status Badge + Badge Count
+   ============================================ */
+
+/* -----------------------------------------
+   1. Chip Common Tokens
+   ----------------------------------------- */
+:root {
+  --chip-border-radius: 9999px;
+  --chip-font-size: 14px;
+  --chip-font-weight: 500;
+  --chip-transition: background-color 200ms ease, color 200ms ease, transform 150ms ease;
+}
+
+/* -----------------------------------------
+   2. Chip Size Tokens
+   ----------------------------------------- */
+:root {
+  /* Default */
+  --chip-height: 36px;
+  --chip-padding-x: 16px;
+  --chip-padding-y: 8px;
+
+  /* Small */
+  --chip-sm-height: 28px;
+  --chip-sm-padding-x: 12px;
+  --chip-sm-font-size: 12px;
+
+  /* XS */
+  --chip-xs-height: 20px;
+  --chip-xs-padding-x: 8px;
+  --chip-xs-font-size: 10px;
+}
+
+/* -----------------------------------------
+   3. Text Chip Color Tokens
+   ----------------------------------------- */
+:root {
+  --chip-text-bg: white;
+  --chip-text-color: #3f3f46;
+  --chip-text-bg-hover: #f4f4f5;
+  --chip-text-bg-pressed: #71717a;
+  --chip-text-color-pressed: white;
+  --chip-text-border-color: #e4e4e7;
+}
+
+/* -----------------------------------------
+   4. Badge Chip Color Tokens
+   ----------------------------------------- */
+:root {
+  --chip-badge-bg: white;
+  --chip-badge-color: #3f3f46;
+  --chip-badge-bg-pressed: #e4e4e7;
+  --chip-badge-icon-size: 20px;
+  --chip-badge-icon-gap: 8px;
+  --chip-badge-icon-color: #d4d4d8;
+}
+
+/* -----------------------------------------
+   5. Status Badge & Group Tokens
+   ----------------------------------------- */
+:root {
+  --badge-border-radius: 9999px;
+  --badge-padding-x: 8px;
+  --badge-padding-y: 2px;
+  --badge-font-size: 12px;
+  --badge-font-weight: 500;
+  --badge-icon-size: 12px;
+  --badge-gap: 4px;
+  --chip-group-gap: 8px;
+}
+
+/* -----------------------------------------
+   6. Dark Mode Overrides
+   ----------------------------------------- */
+.dark {
+  /* Text Chip */
+  --chip-text-bg: #27272a;
+  --chip-text-color: #d4d4d8;
+  --chip-text-bg-hover: #3f3f46;
+  --chip-text-bg-pressed: #a1a1aa;
+  --chip-text-color-pressed: #18181b;
+  --chip-text-border-color: #52525b;
+
+  /* Badge Chip */
+  --chip-badge-bg: #27272a;
+  --chip-badge-color: #d4d4d8;
+  --chip-badge-bg-pressed: #52525b;
+  --chip-badge-icon-color: #52525b;
+}
+
+/* ========================================
+   Text Chip Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   7. Text Chip Base
+   ----------------------------------------- */
+.chip-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--chip-height);
+  padding: var(--chip-padding-y) var(--chip-padding-x);
+  border-radius: var(--chip-border-radius);
+  font-size: var(--chip-font-size);
+  font-weight: var(--chip-font-weight);
+  background: var(--chip-text-bg);
+  color: var(--chip-text-color);
+  transition: var(--chip-transition);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  border: none;
+}
+
+/* -----------------------------------------
+   8. Text Chip States
+   ----------------------------------------- */
+.chip-text:hover {
+  background: var(--chip-text-bg-hover);
+}
+
+.chip-text--pressed,
+.chip-text:active {
+  background: var(--chip-text-bg-pressed);
+  color: var(--chip-text-color-pressed);
+  transform: scale(0.95);
+}
+
+.chip-text--bordered {
+  border: 1px solid var(--chip-text-border-color);
+}
+
+/* ========================================
+   Badge Chip Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   9. Badge Chip Base
+   ----------------------------------------- */
+.chip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--chip-badge-icon-gap);
+  height: var(--chip-height);
+  padding: var(--chip-padding-y) var(--chip-padding-x);
+  border-radius: var(--chip-border-radius);
+  font-size: var(--chip-font-size);
+  font-weight: var(--chip-font-weight);
+  background: var(--chip-badge-bg);
+  color: var(--chip-badge-color);
+  transition: var(--chip-transition);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  border: none;
+}
+
+.chip-badge__icon {
+  width: var(--chip-badge-icon-size);
+  height: var(--chip-badge-icon-size);
+  border-radius: 50%;
+  background: var(--chip-badge-icon-color);
+  flex-shrink: 0;
+}
+
+/* -----------------------------------------
+   10. Badge Chip States
+   ----------------------------------------- */
+.chip-badge:hover {
+  background: var(--chip-text-bg-hover);
+}
+
+.chip-badge--pressed,
+.chip-badge:active {
+  background: var(--chip-badge-bg-pressed);
+}
+
+/* -----------------------------------------
+   11. Chip Size Variants
+   ----------------------------------------- */
+.chip-text--sm,
+.chip-badge--sm {
+  height: var(--chip-sm-height);
+  padding: 4px var(--chip-sm-padding-x);
+  font-size: var(--chip-sm-font-size);
+}
+
+.chip-text--xs {
+  height: var(--chip-xs-height);
+  padding: 2px var(--chip-xs-padding-x);
+  font-size: var(--chip-xs-font-size);
+}
+
+/* -----------------------------------------
+   12. Chip Remove Button
+   ----------------------------------------- */
+.chip-text--removable {
+  padding-right: calc(var(--chip-padding-x) - 4px);
+}
+
+.chip-text__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.chip-text__remove:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+.dark .chip-text__remove:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.chip-text__remove svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* -----------------------------------------
+   13. Chip Group
+   ----------------------------------------- */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--chip-group-gap);
+  align-items: center;
+}
+
+.chip-group--scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.chip-group--scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ========================================
+   Status Badge Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   14. Badge Base
+   ----------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--badge-gap);
+  padding: var(--badge-padding-y) var(--badge-padding-x);
+  border-radius: var(--badge-border-radius);
+  font-size: var(--badge-font-size);
+  font-weight: var(--badge-font-weight);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.badge__icon {
+  width: var(--badge-icon-size);
+  height: var(--badge-icon-size);
+  flex-shrink: 0;
+}
+
+/* -----------------------------------------
+   15. Badge Semantic Variants
+   ----------------------------------------- */
+.badge--neutral {
+  background: #f4f4f5;
+  color: #3f3f46;
+}
+.dark .badge--neutral {
+  background: #27272a;
+  color: #d4d4d8;
+}
+
+.badge--dark {
+  background: #18181b;
+  color: white;
+}
+.dark .badge--dark {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.badge--info {
+  background: var(--color-primary-100);
+  color: var(--color-primary-800);
+}
+.dark .badge--info {
+  background: color-mix(in oklch, var(--color-primary-900) 30%, transparent);
+  color: var(--color-primary-300);
+}
+
+.badge--success {
+  background: var(--color-success-100);
+  color: var(--color-success-800);
+}
+.dark .badge--success {
+  background: color-mix(in oklch, var(--color-success-900) 30%, transparent);
+  color: var(--color-success-300);
+}
+
+.badge--warning {
+  background: var(--color-warning-100);
+  color: var(--color-warning-800);
+}
+.dark .badge--warning {
+  background: color-mix(in oklch, var(--color-warning-900) 30%, transparent);
+  color: var(--color-warning-300);
+}
+
+.badge--danger {
+  background: var(--color-danger-100);
+  color: var(--color-danger-800);
+}
+.dark .badge--danger {
+  background: color-mix(in oklch, var(--color-danger-900) 30%, transparent);
+  color: var(--color-danger-300);
+}
+
+/* -----------------------------------------
+   16. Badge Count
+   ----------------------------------------- */
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  background: var(--color-danger-500);
+  color: white;
+}
+
+/* -----------------------------------------
+   17. Interaction & Accessibility
+   ----------------------------------------- */
+.chip-text:focus-visible,
+.chip-badge:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-text,
+  .chip-badge,
+  .badge {
+    transition: none;
+  }
+}

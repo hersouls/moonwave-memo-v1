@@ -3,16 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { MoreVertical, Trash2, RefreshCw } from 'lucide-react'
 import clsx from 'clsx'
 import { MemoCard } from './MemoCard'
+import { TimelineView } from './TimelineView'
+import { KanbanView } from './KanbanView'
 import { MemoFilterTabs } from './MemoFilterTabs'
 import { MemoSearchBar } from './MemoSearchBar'
 import { MemoContextMenu } from './MemoContextMenu'
 import { MemoEmptyState } from './MemoEmptyState'
 import { BatchActionBar } from './BatchActionBar'
+import { QuickMemoInput } from './QuickMemoInput'
 import { FAB } from '@/components/ui/FAB'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { useMemoFilters } from '@/hooks/useMemoFilters'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
+import { useSpeculationRules } from '@/hooks/useSpeculationRules'
+import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
@@ -48,9 +53,9 @@ function SkeletonMemoCard() {
   return (
     <div className="rounded-2xl bg-white dark:bg-zinc-800 p-4 shadow-sm">
       <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700 skeleton-shimmer mb-3" />
-      <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-750 skeleton-shimmer mb-2" />
-      <div className="h-3 w-2/3 rounded bg-zinc-100 dark:bg-zinc-750 skeleton-shimmer mb-3" />
-      <div className="h-2.5 w-1/4 rounded bg-zinc-100 dark:bg-zinc-750 skeleton-shimmer" />
+      <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-700 skeleton-shimmer mb-2" />
+      <div className="h-3 w-2/3 rounded bg-zinc-100 dark:bg-zinc-700 skeleton-shimmer mb-3" />
+      <div className="h-2.5 w-1/4 rounded bg-zinc-100 dark:bg-zinc-700 skeleton-shimmer" />
     </div>
   )
 }
@@ -58,6 +63,7 @@ function SkeletonMemoCard() {
 export function MemoList() {
   const filteredMemos = useMemoFilters()
   const viewMode = useUIStore((s) => s.viewMode)
+  const { gridColsClass, handleTouchStart, handleTouchMove } = usePinchZoom()
   const isSelectionMode = useUIStore((s) => s.isSelectionMode)
   const openContextMenu = useUIStore((s) => s.openContextMenu)
   const activeFolderId = useUIStore((s) => s.activeFolderId)
@@ -69,6 +75,7 @@ export function MemoList() {
   const navigate = useNavigate()
 
   const [isEmptyTrashOpen, setIsEmptyTrashOpen] = useState(false)
+  const [showQuickMemo, setShowQuickMemo] = useState(false)
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const listRef = useRef<HTMLDivElement>(null)
@@ -131,12 +138,17 @@ export function MemoList() {
   visibleMemosRef.current = visibleMemos
   const hasMore = filteredMemos.length > visibleCount
 
+  // Speculation Rules: prerender top visible memo pages
+  const visibleMemoIds = visibleMemos.slice(0, 10).map((m) => m.id).filter((id): id is number => Boolean(id))
+  useSpeculationRules(visibleMemoIds)
+
   const handleLoadMore = useCallback(() => {
     setVisibleCount((c) => c + LOAD_MORE_COUNT)
   }, [])
 
-  const refreshFromDb = useMemoStore((s) => s.refreshFromDb)
-  const { bind: bindPull, pullDistance, isRefreshing } = usePullToRefresh(refreshFromDb)
+  const { bind: bindPull, pullDistance, isRefreshing } = usePullToRefresh(async () => {
+    setShowQuickMemo(true)
+  })
 
   // Swipe onboarding hint
   const [showSwipeHint] = useState(() => {
@@ -165,6 +177,10 @@ export function MemoList() {
           />
         </div>
       )}
+      {/* Quick memo input */}
+      {showQuickMemo && (
+        <QuickMemoInput onClose={() => setShowQuickMemo(false)} />
+      )}
       {/* Filter tabs + context menu button */}
       <div className="flex items-center gap-2">
         <div className="flex-1 min-w-0">
@@ -182,7 +198,7 @@ export function MemoList() {
         )}
         <button
           onClick={openContextMenu}
-          className="shrink-0 mr-4 rounded-full p-2 transition-colors hover:bg-zinc-100 active:bg-zinc-200 dark:hover:bg-zinc-800 dark:active:bg-zinc-700 lg:mr-0"
+          className="f-icon-btn shrink-0 mr-4 lg:mr-0"
           aria-label="더보기 메뉴"
         >
           <MoreVertical className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
@@ -203,17 +219,28 @@ export function MemoList() {
         </div>
       )}
 
-      {/* Memo list / grid */}
+      {/* Memo list / grid / timeline */}
       {filteredMemos.length === 0 ? (
         <MemoEmptyState />
+      ) : viewMode === 'kanban' ? (
+        <div className="mt-3 px-4 fold:px-2.5 pb-4 lg:px-0">
+          <KanbanView memos={filteredMemos} />
+        </div>
+      ) : viewMode === 'timeline' ? (
+        <div className="mt-3 px-4 fold:px-2.5 pb-4 lg:px-0">
+          <TimelineView memos={visibleMemos} />
+        </div>
       ) : (
         <div
           ref={listRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           className={clsx(
             'mt-3 px-4 fold:px-2.5 pb-4 lg:px-0',
+            '@container',
             viewMode === 'grid'
-              ? 'grid grid-cols-2 fold:!grid-cols-1 gap-3 fold:gap-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-              : 'flex flex-col gap-2.5 fold:gap-2 lg:max-w-3xl lg:mx-auto'
+              ? `grid ${gridColsClass} fold:!grid-cols-1 gap-3 fold:gap-2`
+              : 'flex flex-col gap-2.5 fold:gap-2 @lg:max-w-3xl @lg:mx-auto'
           )}
         >
           {visibleMemos.map((memo, index) => (
@@ -230,7 +257,7 @@ export function MemoList() {
                 animationFillMode: 'both',
               }}
             >
-              <MemoCard memo={memo} viewMode={viewMode} />
+              <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} />
               {showSwipeHint && index === 0 && (
                 <FeatureHint id="swipe-onboarding" message="좌우로 밀어 중요 표시/삭제할 수 있습니다. 길게 눌러 선택 모드로 진입합니다." />
               )}
@@ -244,11 +271,12 @@ export function MemoList() {
         <>
           <div className={clsx(
             'px-4 fold:px-2.5 lg:px-0',
+            '@container',
             viewMode === 'grid'
-              ? 'grid grid-cols-2 fold:!grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-3'
-              : 'flex flex-col gap-2.5 lg:max-w-3xl lg:mx-auto'
+              ? 'grid grid-cols-1 @2xs:grid-cols-2 fold:!grid-cols-1 gap-3 fold:gap-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5'
+              : 'flex flex-col gap-2.5 fold:gap-2 @lg:max-w-3xl @lg:mx-auto'
           )}>
-            {[0, 1, 2].map((i) => <SkeletonMemoCard key={i} />)}
+            {Array.from({ length: viewMode === 'grid' ? 4 : 2 }, (_, i) => <SkeletonMemoCard key={i} />)}
           </div>
           <InfiniteScrollSentinel onIntersect={handleLoadMore} />
         </>

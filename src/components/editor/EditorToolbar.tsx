@@ -5,6 +5,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useVisualViewport } from '@/hooks/useVisualViewport'
+import { ImageInsertButton } from './ImageInsertButton'
 
 interface EditorToolbarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -13,9 +14,10 @@ interface EditorToolbarProps {
   onRedo?: () => void
   canUndo?: boolean
   canRedo?: boolean
+  memoId?: number
 }
 
-export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo }: EditorToolbarProps) {
+export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo, memoId }: EditorToolbarProps) {
   const hasApiKey = useSettingsStore((s) => !!s.settings.ai?.openaiApiKey || !!s.settings.ai?.anthropicApiKey)
   const { isKeyboardOpen, keyboardHeight } = useVisualViewport()
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
@@ -174,10 +176,23 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
           </button>
         ))}
 
+        {/* Image insert button */}
+        <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <ImageInsertButton
+          memoId={memoId}
+          onInsert={(markdown) => {
+            const textarea = textareaRef.current
+            if (!textarea) return
+            const start = textarea.selectionStart
+            const text = textarea.value
+            const newText = text.substring(0, start) + markdown + text.substring(start)
+            onContentChange(newText)
+          }}
+        />
+
         {/* AI buttons — only when API key configured */}
         {hasApiKey && (
           <>
-            <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
             <button
               onClick={handleMicClick}
               className="p-2.5 rounded-lg text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors active:scale-95"

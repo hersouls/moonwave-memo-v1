@@ -1,0 +1,713 @@
+/* ============================================
+   Foundation Misc — Design Token & Utility
+   12_기타 디자인 시스템
+   Section Header + Empty State + Context Menu
+   + Icon System + Text Expand + Completion Page
+   + File Upload + Tooltip Utility
+   ============================================ */
+
+/* -----------------------------------------
+   1. Section Header Tokens
+   ----------------------------------------- */
+:root {
+  --section-header-height: 48px;
+  --section-header-padding: 0 20px;
+  --section-header-border-top: 1px solid #d4d4d8;
+  --section-header-title-size: 16px;
+  --section-header-title-weight: 700;
+  --section-header-title-color: #09090b;
+  --section-header-action-size: 14px;
+  --section-header-action-color: #71717a;
+  --section-header-action-weight: 500;
+  --section-header-chevron-size: 16px;
+  --section-header-chevron-color: #a1a1aa;
+}
+
+/* -----------------------------------------
+   2. Empty State Tokens
+   ----------------------------------------- */
+:root {
+  --empty-icon-size: 56px;
+  --empty-icon-color: #a1a1aa;
+  --empty-icon-bg: #f4f4f5;
+  --empty-icon-radius: 18px;
+  --empty-title-size: 16px;
+  --empty-title-weight: 600;
+  --empty-title-color: #3f3f46;
+  --empty-desc-size: 14px;
+  --empty-desc-color: #71717a;
+  --empty-desc-max-width: 280px;
+  --empty-action-margin-top: 16px;
+}
+
+/* -----------------------------------------
+   3. Context Menu Tokens
+   ----------------------------------------- */
+:root {
+  --ctx-menu-bg: white;
+  --ctx-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --ctx-menu-radius: 14px;
+  --ctx-menu-padding: 6px;
+  --ctx-menu-min-width: 160px;
+  --ctx-menu-item-height: 44px;
+  --ctx-menu-item-padding: 0 16px;
+  --ctx-menu-item-gap: 12px;
+  --ctx-menu-item-radius: 8px;
+  --ctx-menu-item-font-size: 14px;
+  --ctx-menu-item-color: #18181b;
+  --ctx-menu-item-icon-size: 20px;
+  --ctx-menu-item-icon-color: #71717a;
+  --ctx-menu-hover-bg: #f4f4f5;
+  --ctx-menu-pressed-bg: #e4e4e7;
+  --ctx-menu-transition: background-color 150ms ease;
+}
+
+/* -----------------------------------------
+   4. Icon System Tokens
+   ----------------------------------------- */
+:root {
+  --icon-size-sm: 16px;
+  --icon-size-md: 20px;
+  --icon-size-default: 24px;
+  --icon-touch-target: 44px;
+  --icon-color-default: #3f3f46;
+  --icon-color-active: #09090b;
+  --icon-color-muted: #71717a;
+  --icon-color-disabled: #a1a1aa;
+}
+
+/* -----------------------------------------
+   5. Text Expand/Collapse Tokens
+   ----------------------------------------- */
+:root {
+  --text-expand-max-lines: 4;
+  --text-expand-line-height: 1.5;
+  --text-expand-font-size: 16px;
+  --text-expand-toggle-size: 14px;
+  --text-expand-toggle-color: #71717a;
+  --text-expand-toggle-weight: 500;
+  --text-expand-toggle-gap: 4px;
+  --text-expand-transition: max-height 300ms ease;
+}
+
+/* -----------------------------------------
+   6. Completion Page Tokens
+   ----------------------------------------- */
+:root {
+  --completion-top-spacing: 80px;
+  --completion-icon-size: 64px;
+  --completion-icon-bg: #09090b;
+  --completion-icon-color: white;
+  --completion-icon-radius: 50%;
+  --completion-title-size: 20px;
+  --completion-title-weight: 700;
+  --completion-title-color: #09090b;
+  --completion-desc-size: 14px;
+  --completion-desc-color: #71717a;
+  --completion-button-margin-top: 24px;
+}
+
+/* -----------------------------------------
+   7. File Upload Tokens
+   ----------------------------------------- */
+:root {
+  --upload-thumb-size: 64px;
+  --upload-thumb-radius: 8px;
+  --upload-thumb-bg: #f4f4f5;
+  --upload-close-size: 20px;
+  --upload-close-bg: #27272a;
+  --upload-close-color: white;
+  --upload-close-offset: -6px;
+  --upload-spinner-size: 24px;
+  --upload-spinner-color: #71717a;
+  --upload-error-color: var(--color-danger-500);
+  --upload-overlay-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* -----------------------------------------
+   8. Dark Mode Overrides
+   ----------------------------------------- */
+.dark {
+  /* Section Header */
+  --section-header-border-top: 1px solid #3f3f46;
+  --section-header-title-color: #f4f4f5;
+  --section-header-chevron-color: #71717a;
+
+  /* Empty State */
+  --empty-icon-color: #71717a;
+  --empty-icon-bg: #27272a;
+  --empty-title-color: #d4d4d8;
+  --empty-desc-color: #71717a;
+
+  /* Context Menu */
+  --ctx-menu-bg: #27272a;
+  --ctx-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --ctx-menu-item-color: #f4f4f5;
+  --ctx-menu-item-icon-color: #a1a1aa;
+  --ctx-menu-hover-bg: #3f3f46;
+  --ctx-menu-pressed-bg: #52525b;
+
+  /* Icon */
+  --icon-color-default: #d4d4d8;
+  --icon-color-active: #f4f4f5;
+  --icon-color-disabled: #52525b;
+
+  /* Completion Page */
+  --completion-icon-bg: #f4f4f5;
+  --completion-icon-color: #09090b;
+  --completion-title-color: #f4f4f5;
+  --completion-desc-color: #71717a;
+
+  /* File Upload */
+  --upload-thumb-bg: #3f3f46;
+  --upload-close-bg: #f4f4f5;
+  --upload-close-color: #18181b;
+  --upload-spinner-color: #a1a1aa;
+  --upload-overlay-bg: rgba(0, 0, 0, 0.5);
+}
+
+/* ========================================
+   Section Header Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   9. Section Header Base
+   ----------------------------------------- */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--section-header-height);
+  padding: var(--section-header-padding);
+  border-top: var(--section-header-border-top);
+}
+
+.section-header--borderless {
+  border-top: none;
+}
+
+/* -----------------------------------------
+   10. Section Header Elements
+   ----------------------------------------- */
+.section-header__title {
+  font-size: var(--section-header-title-size);
+  font-weight: var(--section-header-title-weight);
+  color: var(--section-header-title-color);
+  line-height: 1.4;
+}
+
+.section-header__action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--section-header-action-size);
+  font-weight: var(--section-header-action-weight);
+  color: var(--section-header-action-color);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  transition: opacity 150ms ease;
+}
+.section-header__action:hover {
+  opacity: 0.7;
+}
+
+.section-header__chevron {
+  width: var(--section-header-chevron-size);
+  height: var(--section-header-chevron-size);
+  color: var(--section-header-chevron-color);
+}
+
+/* ========================================
+   Empty State Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   11. Empty State Base
+   ----------------------------------------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+/* -----------------------------------------
+   12. Empty State Elements
+   ----------------------------------------- */
+.empty-state__icon {
+  width: var(--empty-icon-size);
+  height: var(--empty-icon-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--empty-icon-radius);
+  background: var(--empty-icon-bg);
+  color: var(--empty-icon-color);
+  margin-bottom: 16px;
+}
+.empty-state__icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.empty-state__title {
+  font-size: var(--empty-title-size);
+  font-weight: var(--empty-title-weight);
+  color: var(--empty-title-color);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.empty-state__desc {
+  font-size: var(--empty-desc-size);
+  color: var(--empty-desc-color);
+  max-width: var(--empty-desc-max-width);
+  line-height: 1.5;
+}
+
+.empty-state__action {
+  margin-top: var(--empty-action-margin-top);
+}
+
+/* ========================================
+   Context Menu Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   13. Context Menu Base
+   ----------------------------------------- */
+.ctx-menu {
+  background: var(--ctx-menu-bg);
+  box-shadow: var(--ctx-menu-shadow);
+  border-radius: var(--ctx-menu-radius);
+  padding: var(--ctx-menu-padding);
+  min-width: var(--ctx-menu-min-width);
+  overflow: hidden;
+}
+
+/* -----------------------------------------
+   14. Context Menu Items
+   ----------------------------------------- */
+.ctx-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--ctx-menu-item-gap);
+  height: var(--ctx-menu-item-height);
+  padding: var(--ctx-menu-item-padding);
+  border-radius: var(--ctx-menu-item-radius);
+  font-size: var(--ctx-menu-item-font-size);
+  color: var(--ctx-menu-item-color);
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: var(--ctx-menu-transition), transform 100ms ease;
+}
+.ctx-menu__item:hover {
+  background: var(--ctx-menu-hover-bg);
+}
+.ctx-menu__item:focus-visible {
+  background: var(--ctx-menu-hover-bg);
+  outline: none;
+}
+.ctx-menu__item:active {
+  background: var(--ctx-menu-pressed-bg);
+  transform: scale(0.98);
+}
+
+.ctx-menu__item-icon {
+  width: var(--ctx-menu-item-icon-size);
+  height: var(--ctx-menu-item-icon-size);
+  color: var(--ctx-menu-item-icon-color);
+  flex-shrink: 0;
+}
+
+.ctx-menu__item-label {
+  flex: 1;
+  text-align: left;
+}
+
+.ctx-menu__divider {
+  height: 1px;
+  background: #e4e4e7;
+  margin: 4px 0;
+}
+.dark .ctx-menu__divider {
+  background: #3f3f46;
+}
+
+.ctx-menu__item--danger {
+  color: var(--color-danger-500);
+}
+.ctx-menu__item--danger .ctx-menu__item-icon {
+  color: var(--color-danger-500);
+}
+
+/* ========================================
+   Icon System Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   15. Icon Sizes
+   ----------------------------------------- */
+.f-icon {
+  width: var(--icon-size-default);
+  height: var(--icon-size-default);
+  flex-shrink: 0;
+}
+.f-icon--sm {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+.f-icon--md {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+}
+
+/* -----------------------------------------
+   16. Icon Button & States
+   ----------------------------------------- */
+.f-icon-btn {
+  width: var(--icon-touch-target);
+  height: var(--icon-touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+.f-icon-btn:hover {
+  background: #f4f4f5;
+}
+.f-icon-btn:active {
+  transform: scale(0.9);
+  background: #e4e4e7;
+}
+.dark .f-icon-btn:hover {
+  background: #3f3f46;
+}
+.dark .f-icon-btn:active {
+  background: #52525b;
+}
+
+.f-icon--default { color: var(--icon-color-default); }
+.f-icon--active { color: var(--icon-color-active); }
+.f-icon--muted { color: var(--icon-color-muted); }
+.f-icon--disabled {
+  color: var(--icon-color-disabled);
+  pointer-events: none;
+}
+
+/* ========================================
+   Text Expand/Collapse Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   17. Text Expand Base
+   ----------------------------------------- */
+.text-expand {
+  position: relative;
+}
+
+.text-expand__content {
+  font-size: var(--text-expand-font-size);
+  line-height: var(--text-expand-line-height);
+}
+
+/* -----------------------------------------
+   18. Text Expand States & Toggle
+   ----------------------------------------- */
+.text-expand--collapsed .text-expand__content {
+  display: -webkit-box;
+  -webkit-line-clamp: var(--text-expand-max-lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-expand--expanded .text-expand__content {
+  display: block;
+}
+
+.text-expand__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--text-expand-toggle-gap);
+  margin-top: 8px;
+  font-size: var(--text-expand-toggle-size);
+  font-weight: var(--text-expand-toggle-weight);
+  color: var(--text-expand-toggle-color);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 150ms ease;
+}
+.text-expand__toggle:hover {
+  opacity: 0.7;
+}
+.text-expand__toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 200ms ease;
+}
+.text-expand--expanded .text-expand__toggle svg {
+  transform: rotate(180deg);
+}
+
+/* ========================================
+   Completion Page Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   19. Completion Page Base
+   ----------------------------------------- */
+.completion-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--completion-top-spacing) 20px 40px;
+  min-height: 100dvh;
+}
+
+/* -----------------------------------------
+   20. Completion Page Elements
+   ----------------------------------------- */
+.completion-page__icon {
+  width: var(--completion-icon-size);
+  height: var(--completion-icon-size);
+  border-radius: var(--completion-icon-radius);
+  background: var(--completion-icon-bg);
+  color: var(--completion-icon-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.completion-page__icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.completion-page__title {
+  font-size: var(--completion-title-size);
+  font-weight: var(--completion-title-weight);
+  color: var(--completion-title-color);
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.completion-page__desc {
+  font-size: var(--completion-desc-size);
+  color: var(--completion-desc-color);
+  line-height: 1.5;
+}
+
+.completion-page__actions {
+  margin-top: var(--completion-button-margin-top);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+/* ========================================
+   File Upload Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   21. Upload Thumbnail Base
+   ----------------------------------------- */
+.upload-thumb {
+  position: relative;
+  width: var(--upload-thumb-size);
+  height: var(--upload-thumb-size);
+  border-radius: var(--upload-thumb-radius);
+  background: var(--upload-thumb-bg);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.upload-thumb__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* -----------------------------------------
+   22. Upload Thumbnail States & Elements
+   ----------------------------------------- */
+.upload-thumb__close {
+  position: absolute;
+  top: var(--upload-close-offset);
+  right: var(--upload-close-offset);
+  width: var(--upload-close-size);
+  height: var(--upload-close-size);
+  border-radius: 50%;
+  background: var(--upload-close-bg);
+  color: var(--upload-close-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+}
+.upload-thumb__close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.upload-thumb__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--upload-overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.upload-thumb__spinner {
+  width: var(--upload-spinner-size);
+  height: var(--upload-spinner-size);
+  border: 2px solid transparent;
+  border-top-color: var(--upload-spinner-color);
+  border-radius: 50%;
+  animation: progressSpin 0.8s linear infinite;
+}
+
+.upload-thumb__error {
+  position: absolute;
+  bottom: var(--upload-close-offset);
+  right: var(--upload-close-offset);
+  width: var(--upload-close-size);
+  height: var(--upload-close-size);
+  border-radius: 50%;
+  background: var(--upload-error-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.upload-thumb__error svg {
+  width: 12px;
+  height: 12px;
+}
+
+.upload-thumb--uploading .upload-thumb__overlay {
+  display: flex;
+}
+
+.upload-thumb--error .upload-thumb__error {
+  display: flex;
+}
+
+/* ========================================
+   Toggle Tooltip Utility Classes
+   (Tokens from foundation-input.css)
+   ======================================== */
+
+/* -----------------------------------------
+   23. Toggle Tooltip Base
+   ----------------------------------------- */
+.toggle-tooltip {
+  position: absolute;
+  background: var(--tooltip-bg);
+  color: #09090b;
+  box-shadow: var(--tooltip-shadow);
+  border-radius: var(--tooltip-border-radius);
+  padding: var(--tooltip-padding);
+  font-size: var(--tooltip-font-size);
+  max-width: 280px;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+.dark .toggle-tooltip {
+  color: #f4f4f5;
+}
+
+.toggle-tooltip--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* -----------------------------------------
+   24. Toggle Tooltip Elements & Positions
+   ----------------------------------------- */
+.toggle-tooltip__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: var(--tooltip-close-size);
+  height: var(--tooltip-close-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #a1a1aa;
+  border-radius: 50%;
+  transition: background-color 150ms ease;
+}
+.toggle-tooltip__close:hover {
+  background: #f4f4f5;
+}
+.dark .toggle-tooltip__close:hover {
+  background: #3f3f46;
+}
+
+.toggle-tooltip__arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--tooltip-bg);
+  transform: rotate(45deg);
+}
+
+.toggle-tooltip--top .toggle-tooltip__arrow {
+  bottom: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+.toggle-tooltip--bottom .toggle-tooltip__arrow {
+  top: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+.toggle-tooltip--left .toggle-tooltip__arrow {
+  right: -4px;
+  top: 50%;
+  margin-top: -4px;
+}
+.toggle-tooltip--right .toggle-tooltip__arrow {
+  left: -4px;
+  top: 50%;
+  margin-top: -4px;
+}
+
+.toggle-tooltip-trigger {
+  width: var(--icon-touch-target);
+  height: var(--icon-touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}

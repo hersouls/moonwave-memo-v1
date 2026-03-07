@@ -1,0 +1,311 @@
+/* ========================================
+   Foundation Input Design Tokens
+   03_Input Design System
+   ======================================== */
+
+:root {
+  /* ── Text Field ────────────────────── */
+  --input-height: 56px;
+  --input-margin-x: 20px;
+  --input-padding-x: 16px;
+  --input-padding-y: 16px;
+  --input-border-width: 1px;
+  --input-border-width-focused: 2px;
+  --input-border-color: #d4d4d8;
+  --input-border-color-hover: #a1a1aa;
+  --input-border-color-focused: #18181b;
+  --input-border-color-error: var(--color-danger-500);
+  --input-border-color-disabled: #e4e4e7;
+  --input-border-radius: var(--radius-8, 8px);
+  --input-bg: transparent;
+  --input-bg-hover: #fafafa;
+  --input-bg-disabled: #f4f4f5;
+  --input-bg-readonly: #fafafa;
+  --input-text-color: #18181b;
+  --input-text-placeholder: #a1a1aa;
+  --input-text-disabled: #a1a1aa;
+  --input-text-size: 16px;
+  --input-text-line-height: 24px;
+
+  /* Floating Label */
+  --input-label-color: #71717a;
+  --input-label-color-focused: #18181b;
+  --input-label-color-error: var(--color-danger-500);
+  --input-label-size: 16px;
+  --input-label-size-floating: 12px;
+  --input-label-top: 50%;
+  --input-label-top-floating: 8px;
+
+  /* Helper / Error Text */
+  --input-helper-color: #71717a;
+  --input-helper-color-error: var(--color-danger-500);
+  --input-helper-size: 13px;
+  --input-helper-margin-top: 4px;
+
+  /* Trailing Icon */
+  --input-trailing-size: 24px;
+  --input-trailing-color: #71717a;
+  --input-trailing-gap: 8px;
+
+  /* ── Search Bar ────────────────────── */
+  --search-height: 48px;
+  --search-border-radius: var(--radius-12, 12px);
+  --search-underline-width: 2px;
+  --search-icon-size: 20px;
+  --search-clear-size: 20px;
+  --search-clear-touch-target: 44px;
+  --search-min-text-width: 212px;
+  --search-margin-x: 20px;
+
+  /* ── Dropdown ──────────────────────── */
+  --dropdown-height: 56px;
+  --dropdown-border-radius: var(--radius-8, 8px);
+  --dropdown-chevron-size: 24px;
+  --dropdown-min-label-width: 208px;
+  --dropdown-list-shadow: var(--shadow-2);
+  --dropdown-list-radius: var(--radius-12, 12px);
+  --dropdown-item-padding-y: 12px;
+  --dropdown-item-padding-x: 16px;
+  --dropdown-item-hover-bg: #fafafa;
+  --dropdown-item-selected-bg: #f4f4f5;
+  --dropdown-item-selected-weight: 700;
+
+  /* ── Textarea ──────────────────────── */
+  --textarea-min-height: 120px;
+  --textarea-padding: 16px;
+  --textarea-border-radius: var(--radius-8, 8px);
+  --textarea-counter-size: 13px;
+  --textarea-counter-color: #a1a1aa;
+  --textarea-counter-margin-top: 4px;
+
+  /* ── Chat Input ────────────────────── */
+  --chat-input-min-height: 48px;
+  --chat-input-max-height: 200px;
+  --chat-input-border-radius: var(--radius-16, 16px);
+  --chat-input-bg: white;
+  --chat-input-shadow: var(--shadow-1);
+  --chat-input-padding-x: 16px;
+  --chat-input-padding-y: 12px;
+  --chat-input-icon-size: 24px;
+  --chat-input-send-size: 32px;
+  --chat-input-send-bg: #18181b;
+  --chat-input-send-bg-disabled: #e4e4e7;
+  --chat-input-thumbnail-size: 64px;
+  --chat-input-thumbnail-radius: var(--radius-8, 8px);
+  --chat-input-tool-tag-radius: 9999px;
+  --chat-input-tool-tag-bg: #f4f4f5;
+  --chat-input-tool-tag-padding: 4px 12px;
+  --chat-input-desc-size: 13px;
+  --chat-input-desc-color: #71717a;
+  --chat-input-desc-margin-bottom: 8px;
+
+  /* ── Toggle / Switch ───────────────── */
+  --toggle-width: 52px;
+  --toggle-height: 32px;
+  --toggle-thumb-size: 28px;
+  --toggle-border-radius: 9999px;
+  --toggle-bg-off: #d4d4d8;
+  --toggle-bg-on: #18181b;
+  --toggle-thumb-bg: white;
+
+  /* Tooltip */
+  --tooltip-bg: white;
+  --tooltip-shadow: var(--shadow-2);
+  --tooltip-border-radius: var(--radius-8, 8px);
+  --tooltip-padding: 12px 16px;
+  --tooltip-font-size: 14px;
+  --tooltip-close-size: 20px;
+  --tooltip-gap: 16px;
+
+  /* ── App Bar ───────────────────────── */
+  --appbar-height: 56px;
+  --appbar-padding-x: 16px;
+  --appbar-icon-size: 24px;
+  --appbar-icon-gap: 8px;
+  --appbar-title-size: 18px;
+  --appbar-title-weight: 600;
+  --appbar-bg: white;
+  --appbar-search-input-height: 40px;
+
+  /* ── Bottom Navigation ─────────────── */
+  --bottom-nav-height: 56px;
+  --bottom-nav-icon-size: 24px;
+  --bottom-nav-label-size: 10px;
+  --bottom-nav-item-padding: 8px 0;
+  --bottom-nav-bg: white;
+  --bottom-nav-active-color: #18181b;
+  --bottom-nav-inactive-color: #a1a1aa;
+
+  /* ── Thumbnail / Image Card ────────── */
+  --thumbnail-border-radius: var(--radius-16, 16px);
+  --thumbnail-bg: #f4f4f5;
+  --thumbnail-title-size: 18px;
+  --thumbnail-title-weight: 700;
+  --thumbnail-body-size: 14px;
+  --thumbnail-body-color: #71717a;
+
+  /* ── Citation Badge ────────────────── */
+  --citation-badge-radius: 9999px;
+  --citation-badge-bg: #f4f4f5;
+  --citation-badge-padding: 4px 12px;
+  --citation-badge-font-size: 13px;
+  --citation-avatar-size: 20px;
+  --citation-avatar-overlap: -4px;
+  --citation-panel-radius: var(--radius-12, 12px);
+  --citation-panel-shadow: var(--shadow-2);
+  --citation-panel-padding: 20px;
+}
+
+/* ── Dark Mode ───────────────────────── */
+.dark {
+  /* Text Field */
+  --input-border-color: #52525b;
+  --input-border-color-hover: #71717a;
+  --input-border-color-focused: #f4f4f5;
+  --input-border-color-disabled: #3f3f46;
+  --input-bg-hover: #27272a;
+  --input-bg-disabled: #27272a;
+  --input-bg-readonly: #27272a;
+  --input-text-color: #f4f4f5;
+  --input-text-placeholder: #71717a;
+  --input-label-color: #a1a1aa;
+  --input-label-color-focused: #f4f4f5;
+  --input-helper-color: #71717a;
+  --input-trailing-color: #a1a1aa;
+
+  /* Dropdown */
+  --dropdown-item-hover-bg: #27272a;
+  --dropdown-item-selected-bg: #3f3f46;
+
+  /* Chat Input */
+  --chat-input-bg: #27272a;
+  --chat-input-send-bg: #f4f4f5;
+  --chat-input-tool-tag-bg: #3f3f46;
+  --chat-input-desc-color: #71717a;
+
+  /* Toggle */
+  --toggle-bg-off: #71717a;
+  --toggle-bg-on: #f4f4f5;
+
+  /* Tooltip */
+  --tooltip-bg: #27272a;
+
+  /* App Bar */
+  --appbar-bg: #18181b;
+
+  /* Bottom Nav */
+  --bottom-nav-bg: #18181b;
+  --bottom-nav-active-color: #f4f4f5;
+
+  /* Thumbnail */
+  --thumbnail-bg: #27272a;
+
+  /* Citation */
+  --citation-badge-bg: #3f3f46;
+}
+
+/* ========================================
+   Text Field Utility Classes
+   ======================================== */
+
+/* Container */
+.text-field {
+  height: var(--input-height);
+  padding: var(--input-padding-y) var(--input-padding-x);
+  border: var(--input-border-width) solid var(--input-border-color);
+  border-radius: var(--input-border-radius);
+  background: var(--input-bg);
+  position: relative;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.text-field:hover {
+  background: var(--input-bg-hover);
+}
+
+.text-field--focused {
+  border-width: var(--input-border-width-focused);
+  border-color: var(--input-border-color-focused);
+}
+
+.text-field--error {
+  border-color: var(--input-border-color-error);
+}
+
+.text-field--disabled {
+  background: var(--input-bg-disabled);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.text-field--readonly {
+  background: var(--input-bg-readonly);
+}
+
+/* Floating Label */
+.text-field__label {
+  position: absolute;
+  left: var(--input-padding-x);
+  top: var(--input-label-top);
+  transform: translateY(-50%);
+  font-size: var(--input-label-size);
+  color: var(--input-label-color);
+  pointer-events: none;
+  transition: top 0.2s, font-size 0.2s, color 0.2s;
+}
+
+.text-field--focused .text-field__label,
+.text-field--filled .text-field__label {
+  top: var(--input-label-top-floating);
+  transform: translateY(0);
+  font-size: var(--input-label-size-floating);
+}
+
+.text-field--focused .text-field__label {
+  color: var(--input-label-color-focused);
+}
+
+.text-field--error .text-field__label {
+  color: var(--input-label-color-error);
+}
+
+/* Input Element */
+.text-field__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--input-text-size);
+  line-height: var(--input-text-line-height);
+  color: var(--input-text-color);
+}
+
+.text-field__input::placeholder {
+  color: var(--input-text-placeholder);
+}
+
+/* Helper / Error Text */
+.text-field__helper {
+  margin-top: var(--input-helper-margin-top);
+  font-size: var(--input-helper-size);
+  color: var(--input-helper-color);
+}
+
+.text-field--error .text-field__helper {
+  color: var(--input-helper-color-error);
+}
+
+/* Trailing Icon */
+.text-field__trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--input-trailing-gap);
+  color: var(--input-trailing-color);
+}
+
+.text-field__trailing svg {
+  width: var(--input-trailing-size);
+  height: var(--input-trailing-size);
+}

@@ -66,24 +66,24 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
             leaveTo="translate-y-full"
           >
             <DialogPanel
-              className="w-full max-h-[85vh] fold:max-h-[70vh] overflow-y-auto rounded-t-2xl bg-white pb-safe dark:bg-zinc-900"
+              className="sheet-panel w-full overflow-y-auto"
               style={{
                 transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
                 transition: isDragging ? 'none' : 'transform 0.2s ease',
               }}
             >
               {/* Drag handle */}
-              <div {...bind()} className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none">
-                <div className="h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-              </div>
+              <div {...bind()} className="sheet-drag-handle" />
 
               {title && (
-                <DialogTitle className="border-b border-zinc-100 px-5 pb-3 text-base font-semibold text-zinc-900 dark:border-zinc-800 dark:text-zinc-100">
-                  {title}
-                </DialogTitle>
+                <div className="sheet-header">
+                  <DialogTitle className="sheet-header__title">
+                    {title}
+                  </DialogTitle>
+                </div>
               )}
 
-              <div className="px-5 py-4">{children}</div>
+              <div className="sheet-content py-4">{children}</div>
             </DialogPanel>
           </TransitionChild>
         </div>

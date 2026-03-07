@@ -116,9 +116,10 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
 interface MarkdownPreviewProps {
   content: string
   className?: string
+  onCheckboxToggle?: (lineIndex: number, checked: boolean) => void
 }
 
-export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
+export function MarkdownPreview({ content, className, onCheckboxToggle }: MarkdownPreviewProps) {
   const memos = useMemoStore((s) => s.memos)
 
   const processedContent = useMemo(
@@ -154,6 +155,53 @@ export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
           code: ({ className, children, ...props }) => (
             <CodeBlock className={className} {...props}>{children}</CodeBlock>
           ),
+          input: ({ type, checked, ...props }) => {
+            if (type === 'checkbox') {
+              return (
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => {
+                    if (!onCheckboxToggle) return
+                    // Find the nth checkbox occurrence to determine the line index
+                    const checkboxes = content.split('\n')
+                    let checkboxIndex = 0
+                    const allCheckboxEls = document.querySelectorAll('.memo-markdown-preview input[type="checkbox"]')
+                    const currentEl = props as any
+                    for (let i = 0; i < allCheckboxEls.length; i++) {
+                      if (allCheckboxEls[i] === (currentEl?.ref?.current ?? null)) {
+                        checkboxIndex = i
+                        break
+                      }
+                    }
+                    // Count through lines to find the matching checkbox
+                    let count = 0
+                    for (let i = 0; i < checkboxes.length; i++) {
+                      if (/^\s*-\s\[[ xX]\]/.test(checkboxes[i])) {
+                        if (count === checkboxIndex) {
+                          onCheckboxToggle(i, !checked)
+                          return
+                        }
+                        count++
+                      }
+                    }
+                    // Fallback: toggle by sequential index
+                    let idx = 0
+                    for (let i = 0; i < checkboxes.length; i++) {
+                      if (/^\s*-\s\[[ xX]\]/.test(checkboxes[i])) {
+                        idx = i
+                        break
+                      }
+                    }
+                    onCheckboxToggle(idx, !checked)
+                  }}
+                  className="cursor-pointer accent-primary-500"
+                  {...props}
+                />
+              )
+            }
+            return <input type={type} checked={checked} {...props} />
+          },
           a: ({ href, children, ...props }) => {
             // Internal memo links
             if (href?.startsWith('#/memo/')) {

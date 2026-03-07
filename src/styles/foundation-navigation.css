@@ -1,0 +1,514 @@
+/* ========================================
+   Foundation Navigation Design Tokens & Utilities
+   04_Navigation Design System
+   ======================================== */
+
+:root {
+  /* ── App Bar (신규 토큰만 — 기존 foundation-input.css 토큰 제외) ── */
+  --appbar-margin-right: 24px;
+  --appbar-icon-touch-target: 44px;
+  --appbar-icon-color: #18181b;
+  --appbar-icon-color-hover: #3f3f46;
+  --appbar-title-min-width: 130px;
+  --appbar-title-color: #18181b;
+  --appbar-title-align: center;
+  --appbar-back-size: 24px;
+  --appbar-badge-size: 8px;
+  --appbar-badge-color: var(--color-danger-500);
+  --appbar-badge-offset-top: -2px;
+  --appbar-badge-offset-right: -2px;
+  --appbar-logo-height: 28px;
+  --appbar-border: none;
+
+  /* ── Bottom Navigation (신규 토큰만) ──────── */
+  --bottom-nav-height-fold: 48px;
+  --bottom-nav-safe-area: 24px;
+  --bottom-nav-border-top: 1px solid #e4e4e7;
+  --bottom-nav-columns: 5;
+  --bottom-nav-item-min-width: 56px;
+  --bottom-nav-icon-color-default: #a1a1aa;
+  --bottom-nav-icon-color-selected: #18181b;
+  --bottom-nav-icon-color-disabled: #d4d4d8;
+  --bottom-nav-label-weight-default: 400;
+  --bottom-nav-label-weight-selected: 700;
+  --bottom-nav-label-color-default: #71717a;
+  --bottom-nav-label-color-selected: #18181b;
+  --bottom-nav-label-color-disabled: #d4d4d8;
+
+  /* ── Side Navigation (Drawer) ────────────── */
+  --sidenav-width: 280px;
+  --sidenav-bg: white;
+  --sidenav-shadow: var(--shadow-3, 0 12px 32px rgba(0, 0, 0, 0.14), 0 4px 8px rgba(0, 0, 0, 0.08));
+  --sidenav-overlay-bg: rgba(0, 0, 0, 0.5);
+  --sidenav-header-height: 56px;
+  --sidenav-header-padding: 16px;
+  --sidenav-close-size: 24px;
+  --sidenav-close-touch-target: 44px;
+  --sidenav-item-height: 48px;
+  --sidenav-item-padding: 12px 16px;
+  --sidenav-item-icon-size: 24px;
+  --sidenav-item-icon-gap: 12px;
+  --sidenav-item-radius: var(--radius-8, 8px);
+  --sidenav-item-margin-x: 8px;
+  --sidenav-item-font-size: 16px;
+  --sidenav-item-font-weight: 400;
+  --sidenav-item-font-weight-selected: 700;
+  --sidenav-item-color: #18181b;
+  --sidenav-item-bg-default: transparent;
+  --sidenav-item-bg-hover: #f4f4f5;
+  --sidenav-item-bg-pressed: #e4e4e7;
+  --sidenav-item-bg-selected: #f4f4f5;
+  --sidenav-section-title-size: 13px;
+  --sidenav-section-title-color: #71717a;
+  --sidenav-section-title-weight: 600;
+  --sidenav-section-title-padding: 16px 16px 8px;
+  --sidenav-section-divider: 1px solid #e4e4e7;
+  --sidenav-enter-duration: 300ms;
+  --sidenav-leave-duration: 200ms;
+  --sidenav-enter-easing: ease-out;
+  --sidenav-leave-easing: ease-in;
+
+  /* ── Full Popup Navigation ───────────────── */
+  --popup-nav-bg: white;
+  --popup-nav-border-radius: var(--radius-16, 16px);
+  --popup-nav-padding: 24px;
+  --popup-nav-shadow: var(--shadow-3, 0 12px 32px rgba(0, 0, 0, 0.14), 0 4px 8px rgba(0, 0, 0, 0.08));
+  --popup-nav-title-size: 18px;
+  --popup-nav-title-weight: 700;
+  --popup-nav-title-color: #18181b;
+  --popup-nav-title-margin-bottom: 16px;
+  --popup-nav-close-size: 24px;
+  --popup-nav-close-color: #18181b;
+  --popup-nav-close-touch-target: 44px;
+  --popup-nav-item-height: 48px;
+  --popup-nav-item-padding: 12px 0;
+  --popup-nav-item-font-size: 16px;
+  --popup-nav-item-selected-weight: 700;
+  --popup-nav-item-selected-color: #18181b;
+  --popup-nav-item-unselected-color: #a1a1aa;
+  --popup-nav-check-size: 24px;
+  --popup-nav-check-color: #18181b;
+
+  /* ── Auto Tooltip ────────────────────────── */
+  --tooltip-auto-bg: #18181b;
+  --tooltip-auto-color: white;
+  --tooltip-auto-border-radius: var(--radius-8, 8px);
+  --tooltip-auto-padding: 8px 16px;
+  --tooltip-auto-max-width: 280px;
+  --tooltip-auto-font-size: 14px;
+  --tooltip-auto-line-height: 20px;
+  --tooltip-auto-arrow-size: 8px;
+  --tooltip-auto-arrow-color: #18181b;
+  --tooltip-auto-offset: 8px;
+  --tooltip-auto-enter-duration: 200ms;
+  --tooltip-auto-leave-duration: 150ms;
+}
+
+/* ── Dark Mode ───────────────────────────── */
+.dark {
+  /* App Bar */
+  --appbar-title-color: #f4f4f5;
+  --appbar-icon-color: #f4f4f5;
+  --appbar-icon-color-hover: #d4d4d8;
+
+  /* Bottom Navigation */
+  --bottom-nav-border-top: 1px solid #27272a;
+  --bottom-nav-icon-color-default: #71717a;
+  --bottom-nav-icon-color-selected: #f4f4f5;
+  --bottom-nav-icon-color-disabled: #52525b;
+  --bottom-nav-label-color-default: #71717a;
+  --bottom-nav-label-color-selected: #f4f4f5;
+  --bottom-nav-label-color-disabled: #52525b;
+
+  /* Side Navigation */
+  --sidenav-bg: #09090b;
+  --sidenav-overlay-bg: rgba(0, 0, 0, 0.7);
+  --sidenav-item-color: #f4f4f5;
+  --sidenav-item-bg-hover: #27272a;
+  --sidenav-item-bg-pressed: #3f3f46;
+  --sidenav-item-bg-selected: #27272a;
+  --sidenav-section-title-color: #71717a;
+  --sidenav-section-divider: 1px solid #27272a;
+
+  /* Full Popup Navigation */
+  --popup-nav-bg: #18181b;
+  --popup-nav-title-color: #f4f4f5;
+  --popup-nav-close-color: #f4f4f5;
+  --popup-nav-item-selected-color: #f4f4f5;
+  --popup-nav-item-unselected-color: #71717a;
+  --popup-nav-check-color: #f4f4f5;
+
+  /* Auto Tooltip */
+  --tooltip-auto-bg: #f4f4f5;
+  --tooltip-auto-color: #18181b;
+  --tooltip-auto-arrow-color: #f4f4f5;
+}
+
+/* ========================================
+   App Bar Utility Classes
+   ======================================== */
+
+/* Common Container */
+.appbar {
+  height: var(--appbar-height);
+  padding: 0 var(--appbar-padding-x);
+  background: var(--appbar-bg);
+  border-bottom: var(--appbar-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-level-3, 30);
+}
+
+/* Logo Type (Main) */
+.appbar--main .appbar__logo {
+  height: var(--appbar-logo-height);
+  width: auto;
+}
+
+.appbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--appbar-icon-gap);
+  margin-right: var(--appbar-margin-right);
+}
+
+.appbar__actions > * {
+  color: var(--appbar-icon-color);
+}
+
+.appbar__actions > *:hover {
+  color: var(--appbar-icon-color-hover);
+}
+
+/* Sub Type */
+.appbar--sub {
+  position: relative;
+}
+
+.appbar__back {
+  width: var(--appbar-icon-touch-target);
+  height: var(--appbar-icon-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.appbar__back svg {
+  width: var(--appbar-back-size);
+  height: var(--appbar-back-size);
+}
+
+.appbar__title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--appbar-title-size);
+  font-weight: var(--appbar-title-weight);
+  color: var(--appbar-title-color);
+  text-align: var(--appbar-title-align);
+  min-width: var(--appbar-title-min-width);
+  max-width: 60%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Notification Badge (dot) */
+.appbar__icon--badge {
+  position: relative;
+}
+
+.appbar__icon--badge::after {
+  content: '';
+  position: absolute;
+  width: var(--appbar-badge-size);
+  height: var(--appbar-badge-size);
+  background: var(--appbar-badge-color);
+  border-radius: 50%;
+  top: var(--appbar-badge-offset-top);
+  right: var(--appbar-badge-offset-right);
+}
+
+/* AI Chat Type */
+.appbar--chat .appbar__menu {
+  width: var(--appbar-icon-touch-target);
+  height: var(--appbar-icon-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================================
+   Bottom Navigation Utility Classes
+   ======================================== */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-height);
+  background: var(--bottom-nav-bg);
+  border-top: var(--bottom-nav-border-top);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-bottom: var(--bottom-nav-safe-area);
+  z-index: var(--z-level-4, 40);
+}
+
+.bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  min-width: var(--bottom-nav-item-min-width);
+  padding: var(--bottom-nav-item-padding);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Default State */
+.bottom-nav__item .bottom-nav__icon {
+  width: var(--bottom-nav-icon-size);
+  height: var(--bottom-nav-icon-size);
+  color: var(--bottom-nav-icon-color-default);
+}
+
+.bottom-nav__item .bottom-nav__label {
+  font-size: var(--bottom-nav-label-size);
+  font-weight: var(--bottom-nav-label-weight-default);
+  color: var(--bottom-nav-label-color-default);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Selected State */
+.bottom-nav__item--selected .bottom-nav__icon {
+  color: var(--bottom-nav-icon-color-selected);
+}
+
+.bottom-nav__item--selected .bottom-nav__label {
+  font-weight: var(--bottom-nav-label-weight-selected);
+  color: var(--bottom-nav-label-color-selected);
+}
+
+/* Disabled State */
+.bottom-nav__item--disabled {
+  pointer-events: none;
+}
+
+.bottom-nav__item--disabled .bottom-nav__icon {
+  color: var(--bottom-nav-icon-color-disabled);
+}
+
+.bottom-nav__item--disabled .bottom-nav__label {
+  color: var(--bottom-nav-label-color-disabled);
+}
+
+/* ========================================
+   Side Navigation (Drawer) Utility Classes
+   ======================================== */
+
+.sidenav {
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  width: var(--sidenav-width);
+  background: var(--sidenav-bg);
+  box-shadow: var(--sidenav-shadow);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  transform: translateX(-100%);
+  transition: transform var(--sidenav-enter-duration) var(--sidenav-enter-easing);
+}
+
+.sidenav--open {
+  transform: translateX(0);
+}
+
+.sidenav__overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--sidenav-overlay-bg);
+  z-index: 49;
+}
+
+/* Header */
+.sidenav__header {
+  height: var(--sidenav-header-height);
+  padding: 0 var(--sidenav-header-padding);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.sidenav__header .sidenav__close {
+  width: var(--sidenav-close-touch-target);
+  height: var(--sidenav-close-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidenav__header .sidenav__close svg {
+  width: var(--sidenav-close-size);
+  height: var(--sidenav-close-size);
+}
+
+/* Menu Item */
+.sidenav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sidenav-item-icon-gap);
+  height: var(--sidenav-item-height);
+  padding: var(--sidenav-item-padding);
+  margin: 0 var(--sidenav-item-margin-x);
+  border-radius: var(--sidenav-item-radius);
+  font-size: var(--sidenav-item-font-size);
+  font-weight: var(--sidenav-item-font-weight);
+  color: var(--sidenav-item-color);
+  background: var(--sidenav-item-bg-default);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.sidenav__item:hover {
+  background: var(--sidenav-item-bg-hover);
+}
+
+.sidenav__item:active {
+  background: var(--sidenav-item-bg-pressed);
+}
+
+.sidenav__item--selected {
+  background: var(--sidenav-item-bg-selected);
+  font-weight: var(--sidenav-item-font-weight-selected);
+}
+
+.sidenav__item__icon {
+  width: var(--sidenav-item-icon-size);
+  height: var(--sidenav-item-icon-size);
+  flex-shrink: 0;
+}
+
+/* Section Title */
+.sidenav__section-title {
+  font-size: var(--sidenav-section-title-size);
+  font-weight: var(--sidenav-section-title-weight);
+  color: var(--sidenav-section-title-color);
+  padding: var(--sidenav-section-title-padding);
+}
+
+/* Section Divider */
+.sidenav__divider {
+  border: none;
+  border-top: var(--sidenav-section-divider);
+  margin: 8px 16px;
+}
+
+/* ========================================
+   Full Popup Navigation Utility Classes
+   ======================================== */
+
+.popup-nav {
+  background: var(--popup-nav-bg);
+  border-radius: var(--popup-nav-border-radius);
+  padding: var(--popup-nav-padding);
+  box-shadow: var(--popup-nav-shadow);
+  position: relative;
+}
+
+.popup-nav__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--popup-nav-title-margin-bottom);
+}
+
+.popup-nav__title {
+  font-size: var(--popup-nav-title-size);
+  font-weight: var(--popup-nav-title-weight);
+  color: var(--popup-nav-title-color);
+}
+
+.popup-nav__close {
+  width: var(--popup-nav-close-touch-target);
+  height: var(--popup-nav-close-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--popup-nav-close-color);
+}
+
+.popup-nav__close svg {
+  width: var(--popup-nav-close-size);
+  height: var(--popup-nav-close-size);
+}
+
+.popup-nav__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--popup-nav-item-height);
+  padding: var(--popup-nav-item-padding);
+  font-size: var(--popup-nav-item-font-size);
+}
+
+.popup-nav__item--selected {
+  font-weight: var(--popup-nav-item-selected-weight);
+  color: var(--popup-nav-item-selected-color);
+}
+
+.popup-nav__item--unselected {
+  color: var(--popup-nav-item-unselected-color);
+}
+
+.popup-nav__check {
+  width: var(--popup-nav-check-size);
+  height: var(--popup-nav-check-size);
+  color: var(--popup-nav-check-color);
+}
+
+/* ========================================
+   Auto Tooltip Utility Classes
+   ======================================== */
+
+.auto-tooltip {
+  position: absolute;
+  background: var(--tooltip-auto-bg);
+  color: var(--tooltip-auto-color);
+  border-radius: var(--tooltip-auto-border-radius);
+  padding: var(--tooltip-auto-padding);
+  max-width: var(--tooltip-auto-max-width);
+  font-size: var(--tooltip-auto-font-size);
+  line-height: var(--tooltip-auto-line-height);
+  z-index: 50;
+  opacity: 0;
+  transition: opacity var(--tooltip-auto-enter-duration) ease-out;
+}
+
+.auto-tooltip--visible {
+  opacity: 1;
+}
+
+/* Arrow (pointing up — tooltip appears below target) */
+.auto-tooltip--bottom::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--tooltip-auto-arrow-size) * -1);
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: var(--tooltip-auto-arrow-size) solid transparent;
+  border-right: var(--tooltip-auto-arrow-size) solid transparent;
+  border-bottom: var(--tooltip-auto-arrow-size) solid var(--tooltip-auto-arrow-color);
+}

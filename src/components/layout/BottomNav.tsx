@@ -1,11 +1,11 @@
-import { useNavigate } from 'react-router-dom'
 import { AlignJustify, Calendar, Home, StickyNote, Settings } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useUIStore, type CurrentView } from '@/stores/uiStore'
 import { useRipple } from '@/hooks/useRipple'
+import { useViewTransition } from '@/hooks/useViewTransition'
 
 export function BottomNav() {
-  const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const currentView = useUIStore((state) => state.currentView)
   const setCurrentView = useUIStore((state) => state.setCurrentView)
   const toggleMobileMenu = useUIStore((state) => state.openMobileMenu)
@@ -24,17 +24,17 @@ export function BottomNav() {
     }
     if (target === 'dashboard') {
       setCurrentView('dashboard')
-      navigate('/')
+      navigateWithTransition('/')
       return
     }
     if (target === 'calendar') {
       setCurrentView('calendar')
-      navigate('/calendar')
+      navigateWithTransition('/calendar')
       return
     }
     if (target === 'memos') {
       setCurrentView('memos')
-      navigate('/memos')
+      navigateWithTransition('/memos')
       return
     }
   }

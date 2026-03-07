@@ -1,0 +1,45 @@
+/* ========================================
+   Foundation Button Tokens & Utilities
+   02_Button Design System
+   ======================================== */
+
+:root {
+  /* Button Heights */
+  --btn-height-lg: 48px;
+  --btn-height-md: 44px;
+  --btn-height-sm: 32px;
+
+  /* Button Padding */
+  --btn-padding-x: 16px;
+
+  /* Button Radius */
+  --btn-radius: 12px;
+
+  /* Button Width */
+  --btn-min-width: 248px;
+  --btn-fullwidth-margin: 20px;
+  --btn-cta-margin: 16px;
+}
+
+/* Flexible full-width button (20px side margins) */
+.btn-flexible {
+  width: calc(100% - var(--btn-fullwidth-margin) * 2);
+  margin-left: var(--btn-fullwidth-margin);
+  margin-right: var(--btn-fullwidth-margin);
+}
+
+/* Sticky bottom CTA container */
+.btn-sticky-container {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--btn-cta-margin);
+  padding-bottom: max(var(--btn-cta-margin), env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, white 60%, transparent);
+  z-index: var(--z-level-2, 20);
+}
+
+.dark .btn-sticky-container {
+  background: linear-gradient(to top, #09090b 60%, transparent);
+}

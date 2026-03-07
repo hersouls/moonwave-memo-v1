@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import clsx from 'clsx'
 import { EditorHeader } from './EditorHeader'
 import { FolderSelector } from './FolderSelector'
@@ -9,26 +10,34 @@ import { FloatingToolbar } from './FloatingToolbar'
 import { SlashCommandMenu } from './SlashCommandMenu'
 import { AISummaryPanel } from './AISummaryPanel'
 import { BacklinksPanel } from './BacklinksPanel'
+import { FocusTimer } from './FocusTimer'
 // P-05: Lazy load VersionHistory (includes diff library)
 const VersionHistory = lazy(() => import('./VersionHistory').then((m) => ({ default: m.VersionHistory })))
+const RelatedMemosPanel = lazy(() => import('./RelatedMemosPanel').then((m) => ({ default: m.RelatedMemosPanel })))
 import { TagInput } from './TagInput'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { extractTags } from '@/lib/tagParser'
 import { useAITagSuggestions } from '@/hooks/useAIFeatures'
 import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
+import { useTypingSounds } from '@/hooks/useTypingSounds'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import { FONT_FAMILIES } from '@/utils/constants'
 import { setLastViewedMemo } from '@/components/ui/ContinueBanner'
+import { useToastStore } from '@/stores/toastStore'
+import { toggleChecklistItem, getChecklistStats } from '@/utils/checklistParser'
+import { MEMO_TEMPLATES } from '@/utils/memoTemplates'
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified'
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 type EditorTab = 'edit' | 'preview'
 
 export function MemoEditor() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
+  const [searchParams] = useSearchParams()
   const memos = useMemoStore((s) => s.memos)
   const addMemo = useMemoStore((s) => s.addMemo)
   const updateMemo = useMemoStore((s) => s.updateMemo)
@@ -40,17 +49,22 @@ export function MemoEditor() {
   const folders = useFolderStore((s) => s.folders)
   const getDefaultFolder = useFolderStore((s) => s.getDefaultFolder)
   const isFocusMode = useUIStore((s) => s.isFocusMode)
+  const { playKeySound } = useTypingSounds(isFocusMode)
 
   const isNew = !id || id === 'new'
   const memo = isNew ? null : memos.find((m) => m.id === Number(id))
 
-  const [title, setTitle] = useState(memo?.title || '')
-  const [body, setBody] = useState(memo?.body || '')
+  // Template pre-fill for new memos
+  const templateId = isNew ? searchParams.get('template') : null
+  const template = templateId ? MEMO_TEMPLATES.find((t) => t.id === templateId) : null
+
+  const [title, setTitle] = useState(memo?.title || template?.title || '')
+  const [body, setBody] = useState(memo?.body || template?.body || '')
   const [folderId, setFolderId] = useState<number | null>(
     memo?.folderId ?? defaultFolderId ?? getDefaultFolder()?.id ?? null
   )
   const [isStarred, setIsStarred] = useState(memo?.isStarred || false)
-  const [memoColor, setMemoColor] = useState<import('@/lib/types').MemoColor>(memo?.color || 'white')
+  const [memoColor, setMemoColor] = useState<import('@/lib/types').MemoColor>(memo?.color || template?.color || 'white')
   const [memoId, setMemoId] = useState<number | undefined>(memo?.id)
   const [activeTab, setActiveTab] = useState<EditorTab>('edit')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -137,7 +151,6 @@ export function MemoEditor() {
         setSaveStatus('saved')
       } else if (!hasCreated.current && (title.trim() || body.trim())) {
         setSaveStatus('saving')
-        hasCreated.current = true
         const newId = await addMemo({
           title,
           body,
@@ -145,11 +158,16 @@ export function MemoEditor() {
           color: memoColor,
         })
         if (newId) {
+          hasCreated.current = true
           setMemoId(newId)
           navigate(`/memo/${newId}`, { replace: true })
         }
         setSaveStatus('saved')
       }
+    } catch (err) {
+      console.error('AutoSave failed:', err)
+      setSaveStatus('error')
+      useToastStore.getState().showToast('메모 저장에 실패했습니다', 'error')
     } finally {
       savingRef.current = false
     }
@@ -159,6 +177,10 @@ export function MemoEditor() {
   useEffect(() => {
     if (saveStatus === 'saved') {
       const timer = setTimeout(() => setSaveStatus('idle'), 2000)
+      return () => clearTimeout(timer)
+    }
+    if (saveStatus === 'error') {
+      const timer = setTimeout(() => setSaveStatus('idle'), 4000)
       return () => clearTimeout(timer)
     }
   }, [saveStatus])
@@ -251,7 +273,7 @@ export function MemoEditor() {
   const handleBack = async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     await autoSave()
-    navigate('/memos')
+    navigateWithTransition('/memos')
   }
 
   // UX-06: Remove tag from body
@@ -314,6 +336,7 @@ export function MemoEditor() {
     } else if (slashOpen) {
       setSlashOpen(false)
     }
+    playKeySound()
   }
 
   const handleSlashSelect = (insert: string) => {
@@ -355,62 +378,64 @@ export function MemoEditor() {
     }
   }
 
-  // BUG-04: Keyboard shortcuts — check for open overlays before Escape navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (slashOpen) {
-          setSlashOpen(false)
-          return
-        }
-        if (ghostText) {
-          dismissSuggestion()
-          return
-        }
-        if (showVersionHistory) {
-          setShowVersionHistory(false)
-          return
-        }
-        // Check for any open overlay (headlessui dialogs, dropdown menus, etc.)
-        if (document.querySelector('[data-headlessui-state="open"]') ||
-            document.querySelector('.fixed.inset-0.z-20') ||
-            document.querySelector('.fixed.inset-0.z-40')) {
-          return // Let the overlay handle its own Escape
-        }
-        if (isFocusMode) return // handled by App.tsx
-        e.preventDefault()
-        handleBack()
+  // Keyboard shortcuts — ref delegation to avoid stale closures
+  const handleKeyDownRef = useRef<(e: KeyboardEvent) => void>(() => {})
+
+  handleKeyDownRef.current = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (slashOpen) {
+        setSlashOpen(false)
         return
       }
-
-      if (activeTab !== 'edit' && !isSplit) return
-      const textarea = bodyRef.current
-      if (!textarea || document.activeElement !== textarea) return
-
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
-        if (e.key === 'b') {
-          e.preventDefault()
-          insertMarkdown('**', '**')
-        }
-        if (e.key === 'i') {
-          e.preventDefault()
-          insertMarkdown('*', '*')
-        }
-        if (e.key === 'k') {
-          // Don't intercept Ctrl+K if it's for command palette
-          return
-        }
+      if (ghostText) {
+        dismissSuggestion()
+        return
       }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') {
-        e.preventDefault()
-        insertMarkdown('```\n', '\n```')
+      if (showVersionHistory) {
+        setShowVersionHistory(false)
+        return
       }
+      // Check for any open overlay (headlessui dialogs, dropdown menus, etc.)
+      if (document.querySelector('[data-headlessui-state="open"]') ||
+          document.querySelector('.fixed.inset-0.z-20') ||
+          document.querySelector('.fixed.inset-0.z-40')) {
+        return // Let the overlay handle its own Escape
+      }
+      if (isFocusMode) return // handled by App.tsx
+      e.preventDefault()
+      handleBack()
+      return
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, isSplit, slashOpen, isFocusMode, ghostText, showVersionHistory])
+    if (activeTab !== 'edit' && !isSplit) return
+    const textarea = bodyRef.current
+    if (!textarea || document.activeElement !== textarea) return
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+      if (e.key === 'b') {
+        e.preventDefault()
+        insertMarkdown('**', '**')
+      }
+      if (e.key === 'i') {
+        e.preventDefault()
+        insertMarkdown('*', '*')
+      }
+      if (e.key === 'k') {
+        // Don't intercept Ctrl+K if it's for command palette
+        return
+      }
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') {
+      e.preventDefault()
+      insertMarkdown('```\n', '\n```')
+    }
+  }
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => handleKeyDownRef.current(e)
+    window.addEventListener('keydown', listener)
+    return () => window.removeEventListener('keydown', listener)
+  }, [])
 
   // Version restore handler
   const handleVersionRestore = (restoredTitle: string, restoredBody: string) => {
@@ -422,9 +447,16 @@ export function MemoEditor() {
 
   const currentFolder = folders.find((f) => f.id === folderId)
 
-  // Focus mode: char count + reading time
+  // Stats: char count, reading time, checklist progress
   const charCount = body.length
   const readingTime = Math.max(1, Math.ceil(charCount / 400)) // Korean: ~400 chars/min
+  const checklistStats = useMemo(() => getChecklistStats(body), [body])
+
+  // Checkbox toggle handler for interactive checklist
+  const handleCheckboxToggle = useCallback((lineIndex: number, _checked: boolean) => {
+    const newBody = toggleChecklistItem(body, lineIndex)
+    handleBodyChange(newBody)
+  }, [body, handleBodyChange])
 
   // Handle AI tag click → insert as hashtag
   const handleAITagClick = (tag: string) => {
@@ -511,7 +543,7 @@ export function MemoEditor() {
           {title}
         </h1>
       )}
-      <MarkdownPreview content={body} />
+      <MarkdownPreview content={body} onCheckboxToggle={handleCheckboxToggle} />
     </div>
   )
 
@@ -530,6 +562,7 @@ export function MemoEditor() {
           saveStatus={saveStatus}
           title={title}
           body={body}
+          tags={currentTags}
           isPinned={memo?.isPinned ?? false}
           memoColor={memoColor}
           onColorChange={(color) => {
@@ -616,18 +649,43 @@ export function MemoEditor() {
           <div className="mt-4 space-y-3 pb-4">
             <AISummaryPanel content={body} />
             <BacklinksPanel memoId={memoId} title={title} />
+            <Suspense fallback={null}>
+              <RelatedMemosPanel memoId={memoId} tags={currentTags} body={body} />
+            </Suspense>
           </div>
         )}
       </div>
 
-      {/* Focus mode footer */}
-      {isFocusMode && (
+      {/* Editor stats footer */}
+      {isFocusMode ? (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
+          <FocusTimer />
+          <span>·</span>
           <span>{charCount}자</span>
           <span>·</span>
           <span>읽기 약 {readingTime}분</span>
           <span>·</span>
           <span className="text-zinc-300 dark:text-zinc-600">ESC로 나가기</span>
+        </div>
+      ) : (activeTab === 'edit' || isSplit) && charCount > 0 && (
+        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-4xl mx-auto w-full py-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+          <span>{charCount.toLocaleString()}자</span>
+          <span>·</span>
+          <span>읽기 약 {readingTime}분</span>
+          {checklistStats && (
+            <>
+              <span>·</span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-16 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                  <span
+                    className="block h-full rounded-full bg-primary-500 transition-all duration-300"
+                    style={{ width: `${checklistStats.total > 0 ? (checklistStats.checked / checklistStats.total) * 100 : 0}%` }}
+                  />
+                </span>
+                {checklistStats.checked}/{checklistStats.total}
+              </span>
+            </>
+          )}
         </div>
       )}
 
@@ -637,7 +695,8 @@ export function MemoEditor() {
           'h-0.5 w-full transition-all duration-300',
           saveStatus === 'saving' && 'bg-primary-500 animate-pulse',
           saveStatus === 'saved' && 'bg-success-500 animate-save-fadeout',
-          saveStatus === 'modified' && 'bg-zinc-300 dark:bg-zinc-600'
+          saveStatus === 'modified' && 'bg-zinc-300 dark:bg-zinc-600',
+          saveStatus === 'error' && 'bg-danger-500'
         )} />
       )}
 
@@ -650,6 +709,7 @@ export function MemoEditor() {
           onRedo={redoText}
           canUndo={undoStack.current.length > 0}
           canRedo={redoStack.current.length > 0}
+          memoId={memoId}
         />
       )}
 

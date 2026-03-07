@@ -369,10 +369,17 @@ export async function initSync(userId: string) {
   currentUserId = userId
   await initialMerge(userId)
   startListeners(userId)
+
+  // Settings cloud sync
+  const { initSettingsSync } = await import('./settingsSync')
+  await initSettingsSync(userId)
 }
 
 export function stopSync() {
   if (unsubMemos) { unsubMemos(); unsubMemos = null }
   if (unsubFolders) { unsubFolders(); unsubFolders = null }
   currentUserId = null
+
+  // Stop settings sync
+  import('./settingsSync').then(({ stopSettingsSync }) => stopSettingsSync())
 }

@@ -36,11 +36,12 @@ export function CalendarGrid({
 
   const daysInMonth = useMemo(
     () => eachDayOfInterval({ start: monthStart, end: monthEnd }),
-    [monthStart, monthEnd]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentMonth.getTime()]
   )
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm p-4">
+    <div className="card @container p-4">
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -108,7 +109,7 @@ export function CalendarGrid({
                 !isSelected && dayOfWeek > 0 && dayOfWeek < 6 && 'text-zinc-700 dark:text-zinc-300'
               )}
             >
-              <span className="text-sm font-medium">{format(day, 'd')}</span>
+              <span className="text-xs @xs:text-sm font-medium">{format(day, 'd')}</span>
               {count > 0 && (
                 <div className="absolute bottom-1 flex gap-0.5">
                   {Array.from({ length: Math.min(count, 3) }).map((_, i) => (

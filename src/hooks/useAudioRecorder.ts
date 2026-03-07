@@ -30,6 +30,7 @@ export function useAudioRecorder() {
   const startTimeRef = useRef(0)
   const pausedDurationRef = useRef(0)
   const rafRef = useRef<number | null>(null)
+  const stoppedRef = useRef(false)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
 
@@ -52,13 +53,14 @@ export function useAudioRecorder() {
   useEffect(() => cleanup, [cleanup])
 
   const updateDurationAndLevel = useCallback(() => {
-    if (status !== 'recording') return
+    if (status !== 'recording' || stoppedRef.current) return
 
     const elapsed = pausedDurationRef.current + (Date.now() - startTimeRef.current) / 1000
     setDuration(Math.floor(elapsed))
 
     // Auto-stop at max duration
     if (elapsed >= MAX_DURATION) {
+      stoppedRef.current = true
       mediaRecorderRef.current?.stop()
       return
     }
@@ -94,6 +96,7 @@ export function useAudioRecorder() {
     setAudioBlob(null)
     setDuration(0)
     pausedDurationRef.current = 0
+    stoppedRef.current = false
     chunksRef.current = []
     setStatus('requesting-permission')
 
@@ -172,6 +175,7 @@ export function useAudioRecorder() {
     cleanup()
     chunksRef.current = []
     pausedDurationRef.current = 0
+    stoppedRef.current = false
     setStatus('idle')
     setDuration(0)
     setAudioBlob(null)

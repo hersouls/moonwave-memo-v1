@@ -1,7 +1,8 @@
-import { FolderInput, Trash2, Star, Pin, X } from 'lucide-react'
+import { FolderInput, Trash2, Star, Pin, X, Share2 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
+import { useToastStore } from '@/stores/toastStore'
 
 export function BatchActionBar() {
   const selectedMemoIds = useUIStore((s) => s.selectedMemoIds)
@@ -22,6 +23,7 @@ export function BatchActionBar() {
   }
 
   const handleDelete = async () => {
+    navigator.vibrate?.(20)
     const deleted = await batchDelete(selectedMemoIds)
     if (deleted.length > 0) {
       pushUndo({ type: 'delete-memos', memos: deleted, timestamp: Date.now() })
@@ -43,63 +45,90 @@ export function BatchActionBar() {
     clearSelection()
   }
 
+  const handleShare = async () => {
+    if (count !== 1) return
+    const memo = memos.find((m) => m.id === selectedMemoIds[0])
+    if (!memo) return
+    const { shareMemo } = await import('@/utils/share')
+    const result = await shareMemo({
+      title: memo.title,
+      body: memo.body,
+      url: `${window.location.origin}/memo/${memo.id}`,
+    })
+    if (result === 'copied') {
+      useToastStore.getState().showToast('클립보드에 복사되었습니다', 'success')
+    }
+    clearSelection()
+  }
+
   const handleCancel = () => {
     clearSelection()
   }
 
   return (
-    <div className="batch-action-bar fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-2xl bg-zinc-900 px-4 py-2.5 shadow-xl dark:bg-zinc-100 md:bottom-6">
-      <span className="mr-1 text-xs font-medium text-white dark:text-zinc-900">
-        {count}개 선택
+    <div className="batch-action-bar fixed top-16 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1 sm:gap-2 rounded-2xl bg-zinc-900 px-3 sm:px-4 py-2.5 shadow-xl dark:bg-zinc-100">
+      <span className="mr-1 shrink-0 text-xs font-medium text-white dark:text-zinc-900">
+        {count}개
       </span>
 
-      <div className="mx-1 h-4 w-px bg-zinc-700 dark:bg-zinc-300" />
+      <div className="mx-0.5 sm:mx-1 h-4 w-px shrink-0 bg-zinc-700 dark:bg-zinc-300" />
 
       <button
         onClick={handleMove}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
         aria-label="이동"
       >
         <FolderInput className="h-4 w-4" />
-        이동
+        <span className="hidden sm:inline">이동</span>
       </button>
 
       <button
         onClick={handleDelete}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
         aria-label="삭제"
       >
         <Trash2 className="h-4 w-4" />
-        삭제
+        <span className="hidden sm:inline">삭제</span>
       </button>
 
       <button
         onClick={handleStar}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
         aria-label="중요"
       >
         <Star className="h-4 w-4" />
-        중요
+        <span className="hidden sm:inline">중요</span>
       </button>
 
       <button
         onClick={handlePin}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
         aria-label="고정"
       >
         <Pin className="h-4 w-4" />
-        고정
+        <span className="hidden sm:inline">고정</span>
       </button>
 
-      <div className="mx-1 h-4 w-px bg-zinc-700 dark:bg-zinc-300" />
+      {count === 1 && (
+        <button
+          onClick={handleShare}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+          aria-label="공유"
+        >
+          <Share2 className="h-4 w-4" />
+          <span className="hidden sm:inline">공유</span>
+        </button>
+      )}
+
+      <div className="mx-0.5 sm:mx-1 h-4 w-px shrink-0 bg-zinc-700 dark:bg-zinc-300" />
 
       <button
         onClick={handleCancel}
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-500 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-500 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
         aria-label="취소"
       >
         <X className="h-4 w-4" />
-        취소
+        <span className="hidden sm:inline">취소</span>
       </button>
     </div>
   )

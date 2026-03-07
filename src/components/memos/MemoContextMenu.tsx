@@ -54,20 +54,20 @@ export function MemoContextMenu() {
     <>
       <button
         onClick={handleSelectMode}
-        className="flex items-center gap-4 px-5 py-3.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 active:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:active:bg-zinc-700"
+        className="ctx-menu__item"
       >
-        <CheckCircle className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+        <CheckCircle className="ctx-menu__item-icon" />
         메모 선택
       </button>
 
       <button
         onClick={handleToggleView}
-        className="flex items-center gap-4 px-5 py-3.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 active:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:active:bg-zinc-700"
+        className="ctx-menu__item"
       >
         {viewMode === 'list' ? (
-          <LayoutGrid className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+          <LayoutGrid className="ctx-menu__item-icon" />
         ) : (
-          <LayoutList className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+          <LayoutList className="ctx-menu__item-icon" />
         )}
         보기 방식
         <span className="ml-auto text-xs text-zinc-400 dark:text-zinc-500">
@@ -77,9 +77,9 @@ export function MemoContextMenu() {
 
       <button
         onClick={handleCycleSort}
-        className="flex items-center gap-4 px-5 py-3.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 active:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:active:bg-zinc-700"
+        className="ctx-menu__item"
       >
-        <ArrowUpDown className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+        <ArrowUpDown className="ctx-menu__item-icon" />
         정렬 기준
         <span className="ml-auto text-xs text-zinc-400 dark:text-zinc-500">
           {SORT_LABELS[sortBy]}
@@ -94,7 +94,7 @@ export function MemoContextMenu() {
     return (
       <>
         <div className="fixed inset-0 z-20" onClick={closeContextMenu} />
-        <div className="absolute right-2 top-12 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-30 min-w-[200px]">
+        <div className="ctx-menu absolute right-2 top-12 z-30 min-w-[200px]">
           <div className="flex flex-col">{menuItems}</div>
         </div>
       </>

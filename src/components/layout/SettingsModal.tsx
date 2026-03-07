@@ -1320,28 +1320,12 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           AI 자동완성
         </h3>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">자동완성 활성화</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">입력 중 AI가 다음 문장을 제안합니다 (Tab으로 수락)</p>
-            </div>
-            <button
-              onClick={() => useSettingsStore.getState().toggleAIAutocomplete()}
-              className={clsx(
-                'relative w-11 h-6 rounded-full transition-colors',
-                settings.ai?.aiAutocomplete
-                  ? 'bg-primary-500'
-                  : 'bg-zinc-300 dark:bg-zinc-600'
-              )}
-            >
-              <span className={clsx(
-                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
-                settings.ai?.aiAutocomplete ? 'translate-x-[22px]' : 'translate-x-0.5'
-              )} />
-            </button>
-          </div>
-        </div>
+        <ToggleItem
+          label="자동완성 활성화"
+          description="입력 중 AI가 다음 문장을 제안합니다 (Tab으로 수락)"
+          enabled={settings.ai?.aiAutocomplete ?? false}
+          onChange={() => useSettingsStore.getState().toggleAIAutocomplete()}
+        />
       </section>
 
       {/* Info */}
@@ -1411,28 +1395,13 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           접근성
         </h3>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">고대비 모드</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">텍스트와 UI 요소의 대비를 높여 가독성을 개선합니다</p>
-            </div>
-            <button
-              onClick={() => useSettingsStore.getState().toggleHighContrast()}
-              className={clsx(
-                'relative w-11 h-6 rounded-full transition-colors',
-                settings.highContrastMode
-                  ? 'bg-primary-500'
-                  : 'bg-zinc-300 dark:bg-zinc-600'
-              )}
-            >
-              <span className={clsx(
-                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
-                settings.highContrastMode ? 'translate-x-[22px]' : 'translate-x-0.5'
-              )} />
-            </button>
-          </div>
-        </div>
+        <ToggleItem
+          icon={<Eye className="w-4 h-4" />}
+          label="고대비 모드"
+          description="텍스트와 UI 요소의 대비를 높여 가독성을 개선합니다"
+          enabled={settings.highContrastMode ?? false}
+          onChange={() => useSettingsStore.getState().toggleHighContrast()}
+        />
       </section>
 
       <div className="border-t border-zinc-100 dark:border-zinc-800" />

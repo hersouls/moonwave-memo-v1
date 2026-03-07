@@ -12,7 +12,7 @@ export function ProfileCard() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-4 rounded-2xl bg-white px-5 py-4 shadow-sm dark:bg-zinc-800">
+      <div className="card flex items-center gap-4 px-5 py-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
           <span className="text-lg text-zinc-400 dark:text-zinc-500">?</span>
         </div>
@@ -43,7 +43,7 @@ export function ProfileCard() {
   return (
     <button
       onClick={() => navigate('/settings')}
-      className="flex w-full items-center gap-4 rounded-2xl bg-white px-5 py-4 shadow-sm transition-colors hover:bg-zinc-50 active:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-750 dark:active:bg-zinc-700 text-left"
+      className="card card--interactive flex w-full items-center gap-4 px-5 py-4 text-left"
     >
       {photoURL ? (
         <img

@@ -1,0 +1,346 @@
+/* ============================================
+   Foundation Checkbox & Radio — Design Token & Utility
+   10_Checkbox_Radio 디자인 시스템
+   Checkbox (원형 6상태) + Radio (내부 원 + Bold 라벨)
+   ============================================ */
+
+/* -----------------------------------------
+   1. Checkbox Size & Layout Tokens
+   ----------------------------------------- */
+:root {
+  --checkbox-size: 24px;
+  --checkbox-border-radius: 50%;
+  --checkbox-border-width: 2px;
+  --checkbox-label-gap: 8px;
+  --checkbox-row-height: 48px;
+  --checkbox-row-padding-x: 20px;
+  --checkbox-transition: all 150ms ease;
+}
+
+/* -----------------------------------------
+   2. Checkbox State Tokens
+   ----------------------------------------- */
+:root {
+  /* Default */
+  --checkbox-border-color: #a1a1aa;
+  --checkbox-check-color: #d4d4d8;
+  --checkbox-bg: transparent;
+
+  /* Hover */
+  --checkbox-border-color-hover: #71717a;
+  --checkbox-check-color-hover: #a1a1aa;
+
+  /* Disabled */
+  --checkbox-border-color-disabled: #e4e4e7;
+  --checkbox-check-color-disabled: #e4e4e7;
+}
+
+/* -----------------------------------------
+   3. Checkbox Selected State Tokens
+   ----------------------------------------- */
+:root {
+  /* Selected */
+  --checkbox-bg-selected: #18181b;
+  --checkbox-border-color-selected: #18181b;
+  --checkbox-check-color-selected: white;
+
+  /* Selected Hover */
+  --checkbox-bg-selected-hover: #3f3f46;
+  --checkbox-border-color-selected-hover: #3f3f46;
+  --checkbox-check-color-selected-hover: white;
+
+  /* Selected Disabled */
+  --checkbox-bg-selected-disabled: #d4d4d8;
+  --checkbox-border-color-selected-disabled: #d4d4d8;
+  --checkbox-check-color-selected-disabled: #a1a1aa;
+}
+
+/* -----------------------------------------
+   4. Checkbox Label Tokens
+   ----------------------------------------- */
+:root {
+  --checkbox-label-size: 16px;
+  --checkbox-label-weight: 400;
+  --checkbox-label-color: #18181b;
+}
+
+/* -----------------------------------------
+   5. Radio Size & Layout Tokens
+   ----------------------------------------- */
+:root {
+  --radio-size: 24px;
+  --radio-border-radius: 50%;
+  --radio-border-width: 2px;
+  --radio-label-gap: 4px;
+  --radio-inner-dot-size: 10px;
+  --radio-row-padding: 12px 20px;
+  --radio-transition: all 150ms ease;
+}
+
+/* -----------------------------------------
+   6. Radio State Tokens
+   ----------------------------------------- */
+:root {
+  --radio-border-color: #a1a1aa;
+  --radio-bg-selected: #18181b;
+  --radio-border-color-selected: #18181b;
+  --radio-dot-color: white;
+}
+
+/* -----------------------------------------
+   7. Radio Label Tokens
+   ----------------------------------------- */
+:root {
+  --radio-label-size: 16px;
+  --radio-label-weight: 400;
+  --radio-label-weight-selected: 700;
+  --radio-label-color: #18181b;
+}
+
+/* -----------------------------------------
+   8. Dark Mode Overrides
+   ----------------------------------------- */
+.dark {
+  /* Checkbox Default */
+  --checkbox-border-color: #71717a;
+  --checkbox-check-color: #52525b;
+
+  /* Checkbox Hover */
+  --checkbox-border-color-hover: #a1a1aa;
+  --checkbox-check-color-hover: #71717a;
+
+  /* Checkbox Disabled */
+  --checkbox-border-color-disabled: #3f3f46;
+  --checkbox-check-color-disabled: #3f3f46;
+
+  /* Checkbox Selected */
+  --checkbox-bg-selected: #f4f4f5;
+  --checkbox-border-color-selected: #f4f4f5;
+  --checkbox-check-color-selected: #18181b;
+
+  /* Checkbox Selected Hover */
+  --checkbox-bg-selected-hover: #d4d4d8;
+  --checkbox-border-color-selected-hover: #d4d4d8;
+  --checkbox-check-color-selected-hover: #18181b;
+
+  /* Checkbox Selected Disabled */
+  --checkbox-bg-selected-disabled: #3f3f46;
+  --checkbox-border-color-selected-disabled: #3f3f46;
+  --checkbox-check-color-selected-disabled: #71717a;
+
+  /* Checkbox Label */
+  --checkbox-label-color: #f4f4f5;
+
+  /* Radio */
+  --radio-border-color: #71717a;
+  --radio-bg-selected: #f4f4f5;
+  --radio-border-color-selected: #f4f4f5;
+  --radio-dot-color: #18181b;
+  --radio-label-color: #f4f4f5;
+}
+
+/* ========================================
+   Checkbox Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   9. Checkbox Base
+   ----------------------------------------- */
+.checkbox {
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
+  border-radius: var(--checkbox-border-radius);
+  border: var(--checkbox-border-width) solid var(--checkbox-border-color);
+  background: var(--checkbox-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--checkbox-transition);
+  cursor: pointer;
+  position: relative;
+}
+
+.checkbox::after {
+  content: "";
+  width: 6px;
+  height: 10px;
+  border: solid var(--checkbox-check-color);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 1px;
+}
+
+/* -----------------------------------------
+   10. Checkbox States
+   ----------------------------------------- */
+.checkbox:hover {
+  border-color: var(--checkbox-border-color-hover);
+}
+.checkbox:hover::after {
+  border-color: var(--checkbox-check-color-hover);
+}
+
+.checkbox--selected {
+  background: var(--checkbox-bg-selected);
+  border-color: var(--checkbox-border-color-selected);
+}
+.checkbox--selected::after {
+  border-color: var(--checkbox-check-color-selected);
+}
+
+.checkbox--selected:hover {
+  background: var(--checkbox-bg-selected-hover);
+  border-color: var(--checkbox-border-color-selected-hover);
+}
+.checkbox--selected:hover::after {
+  border-color: var(--checkbox-check-color-selected-hover);
+}
+
+.checkbox--disabled {
+  border-color: var(--checkbox-border-color-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.checkbox--disabled::after {
+  border-color: var(--checkbox-check-color-disabled);
+}
+
+.checkbox--selected.checkbox--disabled {
+  background: var(--checkbox-bg-selected-disabled);
+  border-color: var(--checkbox-border-color-selected-disabled);
+}
+.checkbox--selected.checkbox--disabled::after {
+  border-color: var(--checkbox-check-color-selected-disabled);
+}
+
+/* -----------------------------------------
+   11. Checkbox Row Layout
+   ----------------------------------------- */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--checkbox-label-gap);
+  height: var(--checkbox-row-height);
+  padding: 0 var(--checkbox-row-padding-x);
+}
+
+.checkbox-row__label {
+  font-size: var(--checkbox-label-size);
+  font-weight: var(--checkbox-label-weight);
+  color: var(--checkbox-label-color);
+  line-height: 1.5;
+}
+
+/* -----------------------------------------
+   12. Checkbox Child (Hierarchy)
+   ----------------------------------------- */
+.checkbox-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #d4d4d8;
+  transition: color 150ms ease;
+}
+
+.checkbox-child--checked {
+  color: #18181b;
+}
+.dark .checkbox-child {
+  color: #52525b;
+}
+.dark .checkbox-child--checked {
+  color: #f4f4f5;
+}
+
+.checkbox-row--child {
+  padding-left: calc(var(--checkbox-row-padding-x) + var(--checkbox-size) + var(--checkbox-label-gap));
+}
+
+/* -----------------------------------------
+   13. Checkbox Group
+   ----------------------------------------- */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   Radio Utility Classes
+   ======================================== */
+
+/* -----------------------------------------
+   14. Radio Base
+   ----------------------------------------- */
+.radio {
+  width: var(--radio-size);
+  height: var(--radio-size);
+  border-radius: var(--radio-border-radius);
+  border: var(--radio-border-width) solid var(--radio-border-color);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--radio-transition);
+  cursor: pointer;
+}
+
+/* -----------------------------------------
+   15. Radio States
+   ----------------------------------------- */
+.radio--selected {
+  background: var(--radio-bg-selected);
+  border-color: var(--radio-border-color-selected);
+}
+
+.radio--selected::after {
+  content: "";
+  width: var(--radio-inner-dot-size);
+  height: var(--radio-inner-dot-size);
+  border-radius: 50%;
+  background: var(--radio-dot-color);
+}
+
+/* -----------------------------------------
+   16. Radio Row Layout
+   ----------------------------------------- */
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: var(--radio-label-gap);
+  padding: var(--radio-row-padding);
+  cursor: pointer;
+}
+
+.radio-row__label {
+  font-size: var(--radio-label-size);
+  font-weight: var(--radio-label-weight);
+  color: var(--radio-label-color);
+  line-height: 1.5;
+}
+
+.radio-row--selected .radio-row__label {
+  font-weight: var(--radio-label-weight-selected);
+}
+
+/* -----------------------------------------
+   17. Radio Group
+   ----------------------------------------- */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* -----------------------------------------
+   18. Responsive
+   ----------------------------------------- */
+@media (max-width: 320px) {
+  .radio-row__label {
+    max-width: 212px;
+  }
+}

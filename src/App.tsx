@@ -19,6 +19,7 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { KeyboardShortcutsModal } from './components/ui/KeyboardShortcutsModal'
 import { IOSInstallBanner } from './components/ui/IOSInstallBanner'
 import { FolderSelectModal } from './components/folders/FolderSelectModal'
+import { TemplateSelectModal } from './components/editor/TemplateSelectModal'
 import { VoiceUploadModal } from './components/voice/VoiceUploadModal'
 import { ImageOCRModal } from './components/ocr/ImageOCRModal'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
@@ -213,6 +214,7 @@ export default function App() {
       <TermsModal />
       <FAQModal />
       <FolderSelectModal />
+      <TemplateSelectModal />
       <VoiceUploadModal />
       <ImageOCRModal />
       <CommandPalette />

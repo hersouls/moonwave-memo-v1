@@ -1,0 +1,901 @@
+/* ============================================
+   Foundation BottomSheet — Design Token & Utility
+   07_BottomSheet 디자인 시스템 (10종 유형)
+   ============================================ */
+
+/* -----------------------------------------
+   1. Container Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-radius-top: 20px;
+  --sheet-bg: white;
+  --sheet-max-height: 85vh;
+  --sheet-max-height-fold: 70vh;
+  --sheet-top-offset: 64px;
+}
+
+/* -----------------------------------------
+   2. Padding Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-padding-x: 20px;
+  --sheet-padding-top: 20px;
+  --sheet-padding-bottom: 24px;
+  --sheet-header-padding-y: 16px;
+}
+
+/* -----------------------------------------
+   3. Close Button Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-close-icon-size: 24px;
+  --sheet-close-tap-target: 44px;
+  --sheet-close-color: #71717a;
+  --sheet-close-hover-bg: #f4f4f5;
+}
+
+/* -----------------------------------------
+   4. Drag Handle Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-handle-width: 36px;
+  --sheet-handle-height: 5px;
+  --sheet-handle-radius: 999px;
+  --sheet-handle-color: #d4d4d8;
+  --sheet-handle-padding-top: 12px;
+  --sheet-handle-padding-bottom: 8px;
+}
+
+/* -----------------------------------------
+   5. Home Indicator Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-indicator-width: 36px;
+  --sheet-indicator-height: 5px;
+  --sheet-indicator-radius: 999px;
+  --sheet-indicator-color: #18181b;
+  --sheet-indicator-padding: 8px;
+}
+
+/* -----------------------------------------
+   6. CTA Button Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-cta-height: 48px;
+  --sheet-cta-radius: 12px;
+  --sheet-cta-bg: #18181b;
+  --sheet-cta-color: white;
+  --sheet-cta-disabled-bg: #e4e4e7;
+  --sheet-cta-disabled-color: #a1a1aa;
+  --sheet-cta-font-size: 15px;
+  --sheet-cta-font-weight: 500;
+}
+
+/* -----------------------------------------
+   7. Text Button Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-text-btn-color: #3f3f46;
+  --sheet-text-btn-font-size: 14px;
+  --sheet-text-btn-padding-y: 12px;
+  --sheet-text-btn-font-weight: 400;
+}
+
+/* -----------------------------------------
+   8. List Item Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-list-item-height: 52px;
+  --sheet-list-item-padding-x: 20px;
+  --sheet-list-item-gap: 12px;
+  --sheet-list-item-font-size: 16px;
+  --sheet-list-item-divider-color: #f4f4f5;
+}
+
+/* -----------------------------------------
+   9. Overlay Token
+   ----------------------------------------- */
+:root {
+  --sheet-overlay-bg: rgba(0, 0, 0, 0.4);
+}
+
+/* -----------------------------------------
+   10. Animation Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-enter-duration: 300ms;
+  --sheet-leave-duration: 200ms;
+  --sheet-enter-easing: cubic-bezier(0, 0, 0.2, 1);
+  --sheet-leave-easing: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* -----------------------------------------
+   11. Drag Gesture Tokens
+   ----------------------------------------- */
+:root {
+  --sheet-drag-threshold: 100px;
+  --sheet-drag-velocity: 0.5;
+}
+
+/* -----------------------------------------
+   12. Dark Mode Overrides
+   ----------------------------------------- */
+.dark {
+  --sheet-bg: #18181b;
+  --sheet-close-color: #a1a1aa;
+  --sheet-close-hover-bg: #27272a;
+  --sheet-handle-color: #52525b;
+  --sheet-indicator-color: #f4f4f5;
+  --sheet-cta-bg: #f4f4f5;
+  --sheet-cta-color: #18181b;
+  --sheet-cta-disabled-bg: #3f3f46;
+  --sheet-cta-disabled-color: #71717a;
+  --sheet-text-btn-color: #d4d4d8;
+  --sheet-list-item-divider-color: #27272a;
+  --sheet-overlay-bg: rgba(0, 0, 0, 0.6);
+}
+
+/* -----------------------------------------
+   13. Keyframe Animations
+   ----------------------------------------- */
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes sheet-slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes sheet-overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sheet-overlay-leave {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes sheet-content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -----------------------------------------
+   14. Overlay & Container Utilities
+   ----------------------------------------- */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--sheet-overlay-bg);
+  z-index: 50;
+}
+
+.sheet-overlay--entering {
+  animation: sheet-overlay-enter var(--sheet-enter-duration) var(--sheet-enter-easing) both;
+}
+
+.sheet-overlay--leaving {
+  animation: sheet-overlay-leave var(--sheet-leave-duration) var(--sheet-leave-easing) both;
+}
+
+.sheet-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+}
+
+/* -----------------------------------------
+   15. Panel Utilities
+   ----------------------------------------- */
+.sheet-panel {
+  width: 100%;
+  max-height: var(--sheet-max-height);
+  border-radius: var(--sheet-radius-top) var(--sheet-radius-top) 0 0;
+  background: var(--sheet-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.sheet-panel--fullscreen {
+  max-height: calc(100vh - var(--sheet-top-offset));
+  max-height: calc(100dvh - var(--sheet-top-offset));
+}
+
+.sheet-panel--entering {
+  animation: sheet-slide-up var(--sheet-enter-duration) var(--sheet-enter-easing) both;
+}
+
+.sheet-panel--leaving {
+  animation: sheet-slide-down var(--sheet-leave-duration) var(--sheet-leave-easing) both;
+}
+
+.sheet-panel--dragging {
+  transform: translateY(var(--sheet-drag-y, 0px));
+  transition: none;
+}
+
+.sheet-overlay--dragging {
+  opacity: var(--sheet-drag-opacity, 1);
+  transition: none;
+}
+
+/* Galaxy Fold narrow screen */
+@media (max-width: 320px) {
+  .sheet-panel {
+    max-height: var(--sheet-max-height-fold);
+  }
+}
+
+/* -----------------------------------------
+   16. Header Utilities
+   ----------------------------------------- */
+.sheet-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sheet-header-padding-y) var(--sheet-padding-x);
+  background: inherit;
+  flex-shrink: 0;
+}
+
+.sheet-header__title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #18181b;
+  flex: 1;
+  padding-right: 8px;
+}
+.dark .sheet-header__title {
+  color: white;
+}
+
+.sheet-header__close {
+  width: var(--sheet-close-tap-target);
+  height: var(--sheet-close-tap-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--sheet-close-color);
+  border-radius: 8px;
+  transition: background-color 150ms ease;
+  margin: -10px -10px 0 0;
+}
+.sheet-header__close:hover {
+  background: var(--sheet-close-hover-bg);
+}
+.sheet-header__close svg {
+  width: var(--sheet-close-icon-size);
+  height: var(--sheet-close-icon-size);
+}
+
+/* -----------------------------------------
+   17. Content & Footer Utilities
+   ----------------------------------------- */
+.sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--sheet-padding-x);
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheet-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding: 12px var(--sheet-padding-x) var(--sheet-padding-bottom);
+  background: inherit;
+  flex-shrink: 0;
+}
+
+/* -----------------------------------------
+   18. Drag Handle & Home Indicator
+   ----------------------------------------- */
+.sheet-drag-handle {
+  display: flex;
+  justify-content: center;
+  padding: var(--sheet-handle-padding-top) 0 var(--sheet-handle-padding-bottom);
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+.sheet-drag-handle:active {
+  cursor: grabbing;
+}
+.sheet-drag-handle::after {
+  content: '';
+  width: var(--sheet-handle-width);
+  height: var(--sheet-handle-height);
+  border-radius: var(--sheet-handle-radius);
+  background: var(--sheet-handle-color);
+}
+
+.sheet-home-indicator {
+  display: flex;
+  justify-content: center;
+  padding: var(--sheet-indicator-padding) 0;
+  flex-shrink: 0;
+}
+.sheet-home-indicator::after {
+  content: '';
+  width: var(--sheet-indicator-width);
+  height: var(--sheet-indicator-height);
+  border-radius: var(--sheet-indicator-radius);
+  background: var(--sheet-indicator-color);
+}
+
+/* -----------------------------------------
+   19. CTA Button Utilities
+   ----------------------------------------- */
+.sheet-cta {
+  width: 100%;
+  height: var(--sheet-cta-height);
+  border-radius: var(--sheet-cta-radius);
+  background: var(--sheet-cta-bg);
+  color: var(--sheet-cta-color);
+  font-size: var(--sheet-cta-font-size);
+  font-weight: var(--sheet-cta-font-weight);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease, opacity 150ms ease;
+}
+.sheet-cta:hover {
+  background: #3f3f46;
+}
+.dark .sheet-cta:hover {
+  background: #d4d4d8;
+}
+.sheet-cta:active {
+  background: #52525b;
+}
+.sheet-cta:disabled {
+  background: var(--sheet-cta-disabled-bg);
+  color: var(--sheet-cta-disabled-color);
+  cursor: not-allowed;
+}
+
+.sheet-cta-group {
+  display: flex;
+  gap: 8px;
+}
+.sheet-cta-group > * {
+  flex: 1;
+}
+
+.sheet-cta--secondary {
+  background: #e4e4e7;
+  color: #18181b;
+}
+.dark .sheet-cta--secondary {
+  background: #3f3f46;
+  color: #f4f4f5;
+}
+.sheet-cta--secondary:hover {
+  background: #d4d4d8;
+}
+
+/* -----------------------------------------
+   20. Tertiary Button Utilities
+   ----------------------------------------- */
+.sheet-btn-tertiary {
+  flex: 1;
+  height: var(--sheet-cta-height);
+  border-radius: var(--sheet-cta-radius);
+  background: transparent;
+  color: #3f3f46;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #d4d4d8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 150ms ease;
+}
+.sheet-btn-tertiary:hover {
+  background: #f4f4f5;
+}
+.dark .sheet-btn-tertiary {
+  color: #d4d4d8;
+  border-color: #52525b;
+}
+.dark .sheet-btn-tertiary:hover {
+  background: #27272a;
+}
+.sheet-btn-tertiary svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* -----------------------------------------
+   21. Text Button Utilities
+   ----------------------------------------- */
+.sheet-text-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--sheet-text-btn-padding-y) 0;
+  font-size: var(--sheet-text-btn-font-size);
+  font-weight: var(--sheet-text-btn-font-weight);
+  color: var(--sheet-text-btn-color);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 150ms ease;
+}
+.sheet-text-btn:hover {
+  opacity: 0.7;
+}
+.sheet-text-btn--underline {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* -----------------------------------------
+   22. List Item Utilities
+   ----------------------------------------- */
+.sheet-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sheet-list-item-gap);
+  min-height: var(--sheet-list-item-height);
+  padding: 0 var(--sheet-list-item-padding-x);
+  font-size: var(--sheet-list-item-font-size);
+  color: #18181b;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.dark .sheet-list-item {
+  color: #f4f4f5;
+}
+.sheet-list-item:hover {
+  background: #fafafa;
+}
+.dark .sheet-list-item:hover {
+  background: #27272a;
+}
+.sheet-list-item:active {
+  background: #f4f4f5;
+}
+.dark .sheet-list-item:active {
+  background: #3f3f46;
+}
+
+.sheet-list-item--selected {
+  font-weight: 700;
+}
+
+.sheet-list-item__check {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  color: #18181b;
+  flex-shrink: 0;
+}
+.dark .sheet-list-item__check {
+  color: #f4f4f5;
+}
+
+.sheet-list-divider {
+  height: 1px;
+  margin: 0 var(--sheet-list-item-padding-x);
+  background: var(--sheet-list-item-divider-color);
+}
+
+/* -----------------------------------------
+   23. Radio Selection Utilities
+   ----------------------------------------- */
+.sheet-radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #d4d4d8;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 150ms ease;
+}
+.dark .sheet-radio {
+  border-color: #52525b;
+}
+
+.sheet-radio--selected {
+  border-color: #18181b;
+}
+.dark .sheet-radio--selected {
+  border-color: #f4f4f5;
+}
+.sheet-radio--selected::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #18181b;
+}
+.dark .sheet-radio--selected::after {
+  background: #f4f4f5;
+}
+
+/* -----------------------------------------
+   24. Terms Agreement Utilities
+   ----------------------------------------- */
+.sheet-terms__all {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px var(--sheet-list-item-padding-x);
+  font-size: 16px;
+  font-weight: 700;
+  color: #18181b;
+}
+.dark .sheet-terms__all {
+  color: #f4f4f5;
+}
+
+.sheet-terms__all-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sheet-terms__all-icon--unchecked {
+  border: 2px solid #d4d4d8;
+  background: transparent;
+}
+.sheet-terms__all-icon--checked {
+  border: none;
+  background: #18181b;
+  color: white;
+}
+.dark .sheet-terms__all-icon--checked {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.sheet-terms__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--sheet-list-item-height);
+  padding: 0 var(--sheet-list-item-padding-x);
+  font-size: 14px;
+  color: #3f3f46;
+  cursor: pointer;
+}
+.dark .sheet-terms__item {
+  color: #d4d4d8;
+}
+
+.sheet-terms__item-check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #a1a1aa;
+}
+.sheet-terms__item-check--checked {
+  color: #18181b;
+}
+.dark .sheet-terms__item-check--checked {
+  color: #f4f4f5;
+}
+
+.sheet-terms__item-chevron {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  color: #a1a1aa;
+  flex-shrink: 0;
+}
+
+/* -----------------------------------------
+   25. Promotion Type Utilities
+   ----------------------------------------- */
+.sheet-promo {
+  position: relative;
+  overflow: hidden;
+}
+.sheet-promo__image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.sheet-promo__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: var(--sheet-padding-x);
+}
+.sheet-promo__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: var(--sheet-close-tap-target);
+  height: var(--sheet-close-tap-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #18181b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.sheet-promo__title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #18181b;
+  margin-top: 20px;
+}
+.sheet-promo__subtitle {
+  font-size: 14px;
+  color: #71717a;
+  margin-top: 4px;
+}
+
+/* -----------------------------------------
+   26. Search Type Utilities
+   ----------------------------------------- */
+.sheet-search__input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--sheet-padding-x);
+  margin-bottom: 16px;
+}
+.sheet-search__input {
+  flex: 1;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #18181b;
+  background: white;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+.dark .sheet-search__input {
+  border-color: #52525b;
+  background: #27272a;
+  color: #f4f4f5;
+}
+.sheet-search__input:focus {
+  border-color: #18181b;
+}
+.dark .sheet-search__input:focus {
+  border-color: #d4d4d8;
+}
+.sheet-search__icon {
+  width: 20px;
+  height: 20px;
+  color: #71717a;
+  flex-shrink: 0;
+}
+.sheet-search__content {
+  padding: 0 var(--sheet-padding-x);
+}
+
+/* -----------------------------------------
+   27. Content View/Edit Type Utilities
+   ----------------------------------------- */
+.sheet-content-view__body {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #52525b;
+  padding: 0 var(--sheet-padding-x);
+}
+.dark .sheet-content-view__body {
+  color: #a1a1aa;
+}
+
+.sheet-content-view__actions {
+  display: flex;
+  gap: 8px;
+  padding: 16px var(--sheet-padding-x) 0;
+}
+
+.sheet-content-edit__textarea {
+  min-height: 120px;
+  padding: 16px;
+  margin: 0 var(--sheet-padding-x);
+  width: calc(100% - var(--sheet-padding-x) * 2);
+  border: 1px solid #d4d4d8;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #18181b;
+  background: white;
+  resize: none;
+  outline: none;
+}
+.dark .sheet-content-edit__textarea {
+  border-color: #52525b;
+  background: #27272a;
+  color: #f4f4f5;
+}
+.sheet-content-edit__textarea:focus {
+  border-color: #18181b;
+}
+
+/* -----------------------------------------
+   28. Source/Reference Type Utilities
+   ----------------------------------------- */
+.sheet-source__item {
+  padding: 12px var(--sheet-padding-x);
+}
+.sheet-source__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sheet-source__favicon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sheet-source__name {
+  font-size: 13px;
+  color: #71717a;
+}
+.dark .sheet-source__name {
+  color: #a1a1aa;
+}
+.sheet-source__title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #18181b;
+  margin-bottom: 4px;
+}
+.dark .sheet-source__title {
+  color: #f4f4f5;
+}
+.sheet-source__preview {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #71717a;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dark .sheet-source__preview {
+  color: #a1a1aa;
+}
+
+/* -----------------------------------------
+   29. Input Expansion Type Utilities
+   ----------------------------------------- */
+.sheet-input-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 var(--sheet-padding-x);
+  margin-bottom: 12px;
+}
+.sheet-input-grid__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+  border-radius: 12px;
+  background: #f4f4f5;
+  color: #3f3f46;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.dark .sheet-input-grid__item {
+  background: #27272a;
+  color: #d4d4d8;
+}
+.sheet-input-grid__item:hover {
+  background: #e4e4e7;
+}
+.dark .sheet-input-grid__item:hover {
+  background: #3f3f46;
+}
+.sheet-input-grid__item svg {
+  width: 24px;
+  height: 24px;
+}
+
+.sheet-input-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px var(--sheet-padding-x);
+  font-size: 15px;
+  color: #27272a;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.dark .sheet-input-menu__item {
+  color: #e4e4e7;
+}
+.sheet-input-menu__item:hover {
+  background: #fafafa;
+}
+.dark .sheet-input-menu__item:hover {
+  background: #27272a;
+}
+.sheet-input-menu__item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #71717a;
+}
+
+.sheet-input-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #d4d4d8;
+  font-size: 13px;
+  color: #3f3f46;
+  background: white;
+}
+.dark .sheet-input-chip {
+  border-color: #52525b;
+  color: #d4d4d8;
+  background: #27272a;
+}
+.sheet-input-chip svg {
+  width: 14px;
+  height: 14px;
+}
+.sheet-input-chip__close {
+  cursor: pointer;
+  color: #a1a1aa;
+  margin-left: 2px;
+}
+
+/* -----------------------------------------
+   30. Content Stagger Animation
+   ----------------------------------------- */
+.sheet-content--animated > * {
+  animation: sheet-content-fade-in 200ms ease-out both;
+}
+.sheet-content--animated > *:nth-child(1) { animation-delay: 50ms; }
+.sheet-content--animated > *:nth-child(2) { animation-delay: 100ms; }
+.sheet-content--animated > *:nth-child(3) { animation-delay: 150ms; }
+.sheet-content--animated > *:nth-child(4) { animation-delay: 200ms; }
+.sheet-content--animated > *:nth-child(5) { animation-delay: 250ms; }

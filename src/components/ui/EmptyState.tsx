@@ -22,21 +22,21 @@ const sizeConfig = {
 export function EmptyState({ icon, title, description, action, illustration, size = 'md', className }: EmptyStateProps) {
   const s = sizeConfig[size]
   return (
-    <div className={clsx('flex flex-col items-center justify-center text-center', s.wrapper, className)}>
+    <div className={clsx('empty-state', s.wrapper, className)}>
       {illustration ? (
         <div className="mb-6 animate-float">
           {illustration}
         </div>
       ) : (
-        <div className={clsx('flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800 mb-4 animate-float', s.iconBox)}>
+        <div className={clsx('empty-state__icon animate-float', s.iconBox)}>
           {icon}
         </div>
       )}
-      <p className={clsx('font-medium text-zinc-500 dark:text-zinc-400', s.title)}>{title}</p>
+      <p className={clsx('empty-state__title', s.title)}>{title}</p>
       {description && (
-        <p className={clsx('mt-1.5 text-zinc-400 dark:text-zinc-500 max-w-xs', s.desc)}>{description}</p>
+        <p className={clsx('empty-state__desc', s.desc)}>{description}</p>
       )}
-      {action && <div className="mt-4">{action}</div>}
+      {action && <div className="empty-state__action">{action}</div>}
     </div>
   )
 }

@@ -26,7 +26,7 @@ export const FolderList = memo(function FolderList() {
   }
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm dark:bg-zinc-800">
+    <div className="card">
       {/* Header */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
@@ -82,7 +82,7 @@ export const FolderList = memo(function FolderList() {
                 <button
                   key={folder.id}
                   onClick={() => handleFolderClick(folder.id!)}
-                  className="flex w-full items-center gap-3 px-5 py-3 transition-colors hover:bg-zinc-50 active:bg-zinc-100 dark:hover:bg-zinc-750 dark:active:bg-zinc-700"
+                  className="list-item list-item--button flex w-full items-center gap-3"
                 >
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
