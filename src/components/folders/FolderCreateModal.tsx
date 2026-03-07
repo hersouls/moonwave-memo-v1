@@ -1,11 +1,7 @@
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import { Fragment, useState } from 'react'
 import { useFolderStore } from '@/stores/folderStore'
-
-const FOLDER_COLORS = [
-  '#F59E0B', '#84CC16', '#22C55E', '#06B6D4',
-  '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444',
-]
+import { FOLDER_COLORS } from '@/utils/constants'
 
 interface FolderCreateModalProps {
   isOpen: boolean
@@ -15,7 +11,7 @@ interface FolderCreateModalProps {
 
 export function FolderCreateModal({ isOpen, onClose, onCreated }: FolderCreateModalProps) {
   const [name, setName] = useState('')
-  const [color, setColor] = useState(FOLDER_COLORS[0])
+  const [color, setColor] = useState<string>(FOLDER_COLORS[0])
   const addFolder = useFolderStore((s) => s.addFolder)
 
   const handleCreate = async () => {

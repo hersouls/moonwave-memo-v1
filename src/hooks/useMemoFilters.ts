@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
+import Fuse from 'fuse.js'
 import { useMemoStore } from '@/stores/memoStore'
+import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
 
 export function useMemoFilters() {
@@ -10,34 +12,44 @@ export function useMemoFilters() {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const sortBy = useUIStore((s) => s.sortBy)
   const searchFilters = useUIStore((s) => s.searchFilters)
+  const getTrashFolder = useFolderStore((s) => s.getTrashFolder)
 
   return useMemo(() => {
-    let filtered = memos.filter((m) => !m.deletedAt)
+    // B-01: Support trash view - show deleted memos when in trash folder
+    const trashFolder = getTrashFolder()
+    const isTrashView = trashFolder != null && activeFolderId === trashFolder.id
+
+    let filtered: typeof memos
+    if (isTrashView) {
+      filtered = memos.filter((m) => !!m.deletedAt)
+    } else {
+      filtered = memos.filter((m) => !m.deletedAt)
+    }
 
     // Filter by starred
     if (activeFilter === 'starred') {
       filtered = filtered.filter((m) => m.isStarred)
     }
 
-    // Filter by folder
-    if (activeFolderId != null) {
+    // Filter by folder (skip when in trash view - show all deleted memos)
+    if (activeFolderId != null && !isTrashView) {
       filtered = filtered.filter((m) => m.folderId === activeFolderId)
     }
 
     // Filter by tag
-    if (activeTag) {
+    if (activeTag !== null) {
       filtered = filtered.filter((m) => m.tags.includes(activeTag))
     }
 
-    // Filter by search query
+    // Filter by search query (fuzzy with Fuse.js)
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      filtered = filtered.filter(
-        (m) =>
-          m.title.toLowerCase().includes(q) ||
-          m.body.toLowerCase().includes(q) ||
-          m.tags.some((t) => t.toLowerCase().includes(q))
-      )
+      const fuse = new Fuse(filtered, {
+        keys: ['title', 'body', 'tags'],
+        threshold: 0.3,
+        ignoreLocation: true,
+        minMatchCharLength: 1,
+      })
+      filtered = fuse.search(searchQuery.trim()).map((r) => r.item)
     }
 
     // Advanced search filters
@@ -85,5 +97,5 @@ export function useMemoFilters() {
     unpinned.sort(sortFn)
 
     return [...pinned, ...unpinned]
-  }, [memos, activeFilter, activeFolderId, activeTag, searchQuery, sortBy, searchFilters])
+  }, [memos, activeFilter, activeFolderId, activeTag, searchQuery, sortBy, searchFilters, getTrashFolder])
 }

@@ -1,4 +1,5 @@
 import type { OCRProvider } from '@/lib/types'
+import { auth, callable } from '@/lib/firebase'
 
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
@@ -18,6 +19,12 @@ interface ValidationResult {
   valid: boolean
   error?: string
 }
+
+// B-03: Cloud Functions callable
+const imageOCRFn = callable<
+  { imageDataUrl: string; provider: OCRProvider; language: string },
+  { text: string; provider: OCRProvider }
+>('imageOCR')
 
 // ─── Prompts ──────────────────────────────────────
 function getOCRPrompt(language: string): string {
@@ -62,7 +69,23 @@ export function validateImageFile(file: File): ValidationResult {
   return { valid: true }
 }
 
-// ─── OpenAI Vision OCR ────────────────────────────
+// ─── Cloud Functions proxy ────────────────────────
+async function extractTextViaProxy(
+  imageDataUrl: string,
+  provider: OCRProvider,
+  language: string
+): Promise<OCRResult | null> {
+  if (!auth.currentUser) return null
+
+  try {
+    const result = await imageOCRFn({ imageDataUrl, provider, language })
+    return { text: result.data.text, provider: result.data.provider }
+  } catch {
+    return null
+  }
+}
+
+// ─── OpenAI Vision OCR (fallback) ─────────────────
 async function extractTextWithOpenAI(
   imageDataUrl: string,
   apiKey: string,
@@ -109,7 +132,7 @@ async function extractTextWithOpenAI(
   return { text, provider: 'openai' }
 }
 
-// ─── Anthropic Vision OCR ─────────────────────────
+// ─── Anthropic Vision OCR (fallback) ──────────────
 async function extractTextWithAnthropic(
   imageDataUrl: string,
   apiKey: string,
@@ -187,7 +210,7 @@ function handleAPIError(status: number, provider: string): never {
   throw new Error('텍스트 추출 중 오류가 발생했습니다')
 }
 
-// ─── Unified API ──────────────────────────────────
+// ─── Unified API: proxy first, then direct fallback ──
 export async function extractTextFromImage(
   imageDataUrl: string,
   provider: OCRProvider,
@@ -195,6 +218,11 @@ export async function extractTextFromImage(
   language: string,
   signal?: AbortSignal
 ): Promise<OCRResult> {
+  // Try Cloud Functions proxy first (secure)
+  const proxyResult = await extractTextViaProxy(imageDataUrl, provider, language)
+  if (proxyResult) return proxyResult
+
+  // Fallback to direct API calls with user-provided key
   if (provider === 'anthropic') {
     return extractTextWithAnthropic(imageDataUrl, apiKey, language, signal)
   }

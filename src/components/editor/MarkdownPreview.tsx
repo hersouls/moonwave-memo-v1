@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -8,8 +8,17 @@ import { getMemoImage } from '@/services/database'
 import { useMemoStore } from '@/stores/memoStore'
 import '@/styles/markdown.css'
 
-// Module-level cache to avoid re-fetching images
+// Module-level cache to avoid re-fetching images (capped to prevent memory leaks)
+const IMAGE_CACHE_MAX = 50
 const imageCache = new Map<number, string>()
+
+function setCachedImage(id: number, data: string) {
+  if (imageCache.size >= IMAGE_CACHE_MAX && !imageCache.has(id)) {
+    const oldest = imageCache.keys().next().value
+    if (oldest !== undefined) imageCache.delete(oldest)
+  }
+  imageCache.set(id, data)
+}
 
 function MemoImageRenderer({ imageId, alt }: { imageId: number; alt: string }) {
   const [dataUrl, setDataUrl] = useState<string | null>(imageCache.get(imageId) ?? null)
@@ -25,7 +34,7 @@ function MemoImageRenderer({ imageId, alt }: { imageId: number; alt: string }) {
     let cancelled = false
     getMemoImage(imageId).then((img) => {
       if (!cancelled && img) {
-        imageCache.set(imageId, img.data)
+        setCachedImage(imageId, img.data)
         setDataUrl(img.data)
       }
       if (!cancelled) setLoading(false)
@@ -67,6 +76,43 @@ function processMemoLinks(content: string, memos: { id?: number; title: string; 
   })
 }
 
+function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode }) {
+  const [copied, setCopied] = useState(false)
+  const match = /language-(\w+)/.exec(className || '')
+  const language = match?.[1]
+
+  const handleCopy = useCallback(() => {
+    const text = String(children).replace(/\n$/, '')
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [children])
+
+  // Inline code (no language class)
+  if (!className) {
+    return <code className={className} {...props}>{children}</code>
+  }
+
+  return (
+    <div className="relative group">
+      {language && (
+        <div className="absolute top-0 left-0 px-2 py-0.5 text-[10px] font-mono text-zinc-400 dark:text-zinc-500 bg-zinc-800 dark:bg-zinc-900 rounded-br-md rounded-tl-md uppercase">
+          {language}
+        </div>
+      )}
+      <button
+        onClick={handleCopy}
+        className="absolute top-1 right-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-label="코드 복사"
+      >
+        {copied ? '복사됨' : '복사'}
+      </button>
+      <code className={className} {...props}>{children}</code>
+    </div>
+  )
+}
+
 interface MarkdownPreviewProps {
   content: string
   className?: string
@@ -105,6 +151,9 @@ export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
             }
             return <img src={src} alt={alt} {...props} />
           },
+          code: ({ className, children, ...props }) => (
+            <CodeBlock className={className} {...props}>{children}</CodeBlock>
+          ),
           a: ({ href, children, ...props }) => {
             // Internal memo links
             if (href?.startsWith('#/memo/')) {

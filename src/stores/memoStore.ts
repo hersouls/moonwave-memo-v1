@@ -5,6 +5,7 @@ import { nowISO } from '@/lib/dateUtils'
 import { generateSyncId } from '@/utils/id'
 import { extractTags } from '@/lib/tagParser'
 import * as database from '@/services/database'
+import { pushMemo, deleteMemoFromCloud } from '@/services/firestoreSync'
 import { calculateStreak, checkMilestones } from '@/services/gamification'
 import { useSettingsStore } from './settingsStore'
 
@@ -32,6 +33,7 @@ interface MemoState {
   batchDelete: (ids: number[]) => Promise<Memo[]>
   batchMove: (ids: number[], folderId: number) => Promise<void>
   batchStar: (ids: number[], starred: boolean) => Promise<void>
+  batchPin: (ids: number[], pinned: boolean) => Promise<void>
   seedWelcomeMemos: () => Promise<void>
 }
 
@@ -78,6 +80,7 @@ export const useMemoStore = create<MemoState>()(
           const newMemo = await database.getMemo(id)
           if (newMemo) {
             set((state) => ({ memos: [...state.memos, newMemo] }))
+            pushMemo(newMemo).catch(console.error)
           }
 
           // Gamification: update streak + check milestones
@@ -137,6 +140,8 @@ export const useMemoStore = create<MemoState>()(
               m.id === id ? { ...m, ...updates, updatedAt: nowISO() } : m
             ),
           }))
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
         } catch (err) {
           console.error('Failed to update memo:', err)
         }
@@ -152,6 +157,8 @@ export const useMemoStore = create<MemoState>()(
               m.id === id ? { ...m, deletedAt: now, updatedAt: now } : m
             ),
           }))
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
           return memo
         } catch (err) {
           console.error('Failed to delete memo:', err)
@@ -167,6 +174,8 @@ export const useMemoStore = create<MemoState>()(
               m.id === id ? { ...m, deletedAt: undefined, updatedAt: nowISO() } : m
             ),
           }))
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
         } catch (err) {
           console.error('Failed to restore memo:', err)
         }
@@ -174,10 +183,13 @@ export const useMemoStore = create<MemoState>()(
 
       permanentDelete: async (id) => {
         try {
+          const memo = get().memos.find((m) => m.id === id)
+          const syncId = memo?.syncId
           await database.permanentDeleteMemo(id)
           set((state) => ({
             memos: state.memos.filter((m) => m.id !== id),
           }))
+          if (syncId) deleteMemoFromCloud(syncId).catch(console.error)
         } catch (err) {
           console.error('Failed to permanently delete memo:', err)
         }
@@ -185,10 +197,13 @@ export const useMemoStore = create<MemoState>()(
 
       emptyTrash: async () => {
         try {
+          const trashed = get().memos.filter((m) => m.deletedAt)
+          const syncIds = trashed.map((m) => m.syncId).filter(Boolean) as string[]
           await database.emptyTrash()
           set((state) => ({
             memos: state.memos.filter((m) => !m.deletedAt),
           }))
+          syncIds.forEach((syncId) => deleteMemoFromCloud(syncId).catch(console.error))
         } catch (err) {
           console.error('Failed to empty trash:', err)
         }
@@ -197,23 +212,55 @@ export const useMemoStore = create<MemoState>()(
       toggleStar: async (id) => {
         const memo = get().memos.find((m) => m.id === id)
         if (!memo) return
-        await database.updateMemo(id, { isStarred: !memo.isStarred })
+        const newStarred = !memo.isStarred
+
+        // Optimistic update
         set((state) => ({
           memos: state.memos.map((m) =>
-            m.id === id ? { ...m, isStarred: !m.isStarred, updatedAt: nowISO() } : m
+            m.id === id ? { ...m, isStarred: newStarred, updatedAt: nowISO() } : m
           ),
         }))
+
+        try {
+          await database.updateMemo(id, { isStarred: newStarred })
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        } catch (err) {
+          console.error('Failed to toggle star:', err)
+          // Rollback
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              m.id === id ? { ...m, isStarred: memo.isStarred, updatedAt: memo.updatedAt } : m
+            ),
+          }))
+        }
       },
 
       togglePin: async (id) => {
         const memo = get().memos.find((m) => m.id === id)
         if (!memo) return
-        await database.updateMemo(id, { isPinned: !memo.isPinned })
+        const newPinned = !memo.isPinned
+
+        // Optimistic update
         set((state) => ({
           memos: state.memos.map((m) =>
-            m.id === id ? { ...m, isPinned: !m.isPinned, updatedAt: nowISO() } : m
+            m.id === id ? { ...m, isPinned: newPinned, updatedAt: nowISO() } : m
           ),
         }))
+
+        try {
+          await database.updateMemo(id, { isPinned: newPinned })
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        } catch (err) {
+          console.error('Failed to toggle pin:', err)
+          // Rollback
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              m.id === id ? { ...m, isPinned: memo.isPinned, updatedAt: memo.updatedAt } : m
+            ),
+          }))
+        }
       },
 
       moveToFolder: async (id, folderId) => {
@@ -223,6 +270,8 @@ export const useMemoStore = create<MemoState>()(
             m.id === id ? { ...m, folderId, updatedAt: nowISO() } : m
           ),
         }))
+        const updated = await database.getMemo(id)
+        if (updated) pushMemo(updated).catch(console.error)
       },
 
       batchDelete: async (ids) => {
@@ -234,6 +283,10 @@ export const useMemoStore = create<MemoState>()(
             ids.includes(m.id!) ? { ...m, deletedAt: now, updatedAt: now } : m
           ),
         }))
+        for (const id of ids) {
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        }
         return memosToDelete
       },
 
@@ -244,6 +297,10 @@ export const useMemoStore = create<MemoState>()(
             ids.includes(m.id!) ? { ...m, folderId, updatedAt: nowISO() } : m
           ),
         }))
+        for (const id of ids) {
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        }
       },
 
       batchStar: async (ids, starred) => {
@@ -253,33 +310,62 @@ export const useMemoStore = create<MemoState>()(
             ids.includes(m.id!) ? { ...m, isStarred: starred, updatedAt: nowISO() } : m
           ),
         }))
+        for (const id of ids) {
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        }
+      },
+
+      batchPin: async (ids, pinned) => {
+        await database.bulkUpdateMemos(ids, { isPinned: pinned })
+        set((state) => ({
+          memos: state.memos.map((m) =>
+            ids.includes(m.id!) ? { ...m, isPinned: pinned, updatedAt: nowISO() } : m
+          ),
+        }))
+        for (const id of ids) {
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        }
       },
       seedWelcomeMemos: async () => {
         const addMemo = get().addMemo
 
         await addMemo({
           title: 'Memo에 오신 것을 환영합니다!',
-          body: `## Memo 앱 소개
+          body: `## Memo by Moonwave
 
-Memo는 빠르고 간편한 메모 앱입니다.
+빠르고 강력한 메모 앱, Memo에 오신 것을 환영합니다.
 
 ### 주요 기능
 
-- **폴더 분류**: 메모를 폴더별로 정리할 수 있습니다
-- **태그 시스템**: 본문에 \`#태그\`를 입력하면 자동 분류됩니다
-- **마크다운 지원**: 서식 있는 문서를 작성할 수 있습니다
-- **오프라인 사용**: 인터넷 없이도 사용 가능합니다
+- **마크다운 편집기**: 슬래시 명령어(/)와 플로팅 툴바로 빠르게 서식 적용
+- **AI 기능**: 음성 입력(STT), 이미지 OCR, AI 자동완성, AI 요약
+- **분할 보기 & 집중 모드**: 편집과 미리보기를 나란히, 또는 전체 화면 집중 모드
+- **버전 기록**: 자동 스냅샷으로 이전 버전 복원 가능
+- **스마트 정리**: 폴더, 태그(#), 색상 코딩, 상단 고정, 백링크(\`[[제목]]\`)
+- **명령 팔레트**: Ctrl+K로 메모 검색 & 빠른 액션 실행
+- **대시보드**: 활동 히트맵, 연속 기록(스트릭), 마일스톤 배지
 - **클라우드 동기화**: Google 로그인으로 여러 기기에서 동기화
+- **PWA 지원**: 앱으로 설치하여 오프라인에서도 사용
 
-### 단축키
+### 단축키 모음
 
 | 단축키 | 기능 |
 |--------|------|
 | \`Ctrl+N\` | 새 메모 |
+| \`Ctrl+K\` | 명령 팔레트 |
 | \`Ctrl+B\` | 굵게 |
 | \`Ctrl+I\` | 기울임 |
-| \`Ctrl+K\` | 링크 삽입 |
-| \`Ctrl+Z\` | 실행 취소 |
+| \`/\` | 슬래시 명령 |
+| \`Tab\` | AI 자동완성 수락 |
+| \`Ctrl+/\` | 단축키 안내 |
+
+### 시작하기
+
+1. 우측 하단 **+** 버튼으로 새 메모 작성
+2. 사이드바에서 폴더와 태그로 정리
+3. 설정에서 테마, AI 기능 등을 커스터마이즈
 
 > 이 메모를 삭제하고 자유롭게 사용해보세요!`,
           folderId: null,
@@ -287,7 +373,7 @@ Memo는 빠르고 간편한 메모 앱입니다.
         })
 
         await addMemo({
-          title: '마크다운 사용 가이드',
+          title: '마크다운 & 편집 가이드',
           body: `## 마크다운 문법
 
 ### 텍스트 서식
@@ -298,11 +384,8 @@ Memo는 빠르고 간편한 메모 앱입니다.
 
 ### 목록
 
-- 순서 없는 목록
-- 하이픈(\`-\`)으로 시작
-
-1. 순서 있는 목록
-2. 숫자로 시작
+- 순서 없는 목록: \`-\`로 시작
+- 순서 있는 목록: \`1.\`로 시작
 
 ### 체크리스트
 
@@ -323,25 +406,72 @@ function hello() {
 ### 인용문
 
 > 인용문은 \`>\` 기호로 작성합니다.
-> 여러 줄도 가능합니다.
 
-### 링크 & 이미지
+### 링크 & 표
 
 [링크 텍스트](https://example.com)
 
-### 표
-
-| 항목 | 설명 |
+| 문법 | 설명 |
 |------|------|
-| 제목 | \`#\` ~ \`######\` |
-| 굵게 | \`**텍스트**\` |
-| 코드 | \`\\\`코드\\\`\` |
+| \`# ~ ######\` | 제목 (H1~H6) |
+| \`**텍스트**\` | 굵게 |
+| \`[[제목]]\` | 다른 메모 연결 |
 
 ---
 
-*편집 탭에서 마크다운을 작성하고, 미리보기 탭에서 결과를 확인하세요!*`,
+### 슬래시 명령어
+
+편집 중 \`/\`를 입력하면 다음 명령을 사용할 수 있습니다:
+
+| 명령 | 설명 |
+|------|------|
+| /제목 | 제목(H2) 삽입 |
+| /목록 | 글머리 기호 목록 |
+| /체크리스트 | 체크리스트 |
+| /코드 | 코드 블록 |
+| /인용 | 인용문 |
+| /구분선 | 수평선 |
+| /음성 | 음성 입력 (AI) |
+| /이미지 | 이미지 OCR (AI) |
+
+*텍스트를 선택하면 플로팅 툴바가 나타나 빠르게 서식을 적용할 수 있습니다!*`,
           folderId: null,
           color: 'green',
+        })
+
+        await addMemo({
+          title: '활용 팁 & AI 기능',
+          body: `## 활용 팁
+
+### 메모 정리
+
+- **색상 코딩**: 메모마다 6가지 색상을 지정하여 시각적으로 분류
+- **상단 고정**: 중요한 메모를 목록 최상단에 고정
+- **일괄 작업**: 메모 선택 모드에서 여러 메모를 한번에 이동, 삭제, 중요 표시
+- **모바일 스와이프**: 오른쪽 스와이프 = 중요 표시, 왼쪽 스와이프 = 삭제
+
+### 검색 & 탐색
+
+- **명령 팔레트** (Ctrl+K): 메모 검색 + 빠른 액션 실행
+- **검색 필터**: 기간, 중요 표시, 색상별로 필터링
+- **정렬**: 수정일, 생성일, 제목순으로 정렬 변경
+
+### AI 기능 활용 (설정 > AI 서비스에서 API 키 입력 필요)
+
+- **음성 입력**: 마이크 아이콘 또는 /음성으로 음성을 텍스트로 변환
+- **이미지 OCR**: 카메라 아이콘 또는 /이미지로 사진에서 텍스트 추출
+- **AI 자동완성**: 글을 쓰는 중 AI가 다음 문장을 제안 (Tab으로 수락)
+- **AI 요약**: 긴 메모를 AI가 자동으로 요약
+
+### 데이터 안전
+
+- 설정 > 데이터에서 **정기적으로 백업**해두세요
+- Google 로그인으로 **클라우드 동기화** 활성화 권장
+- API 키는 **기기에만 저장**되며 외부로 전송되지 않습니다
+
+> 도움이 필요하면 사이드바의 "도움말"을 확인하세요!`,
+          folderId: null,
+          color: 'purple',
         })
       },
     }),

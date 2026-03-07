@@ -11,6 +11,11 @@ export const SYSTEM_FOLDERS = [
   { name: '삭제된 메모', color: '#A1A1AA', isDefault: false, isSystem: true },
 ] as const
 
+export const FOLDER_COLORS = [
+  '#F59E0B', '#84CC16', '#22C55E', '#06B6D4',
+  '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444',
+] as const
+
 export const MEMO_COLORS: Record<MemoColor, string> = {
   white: '#FFFFFF',
   yellow: '#FEF3C7',
@@ -18,6 +23,15 @@ export const MEMO_COLORS: Record<MemoColor, string> = {
   blue: '#DBEAFE',
   pink: '#FCE7F3',
   purple: '#F3E8FF',
+}
+
+export const MEMO_PAGE_BG: Record<MemoColor, string> = {
+  white:  'bg-transparent',
+  yellow: 'bg-amber-50/60 dark:bg-amber-950/15',
+  green:  'bg-emerald-50/60 dark:bg-emerald-950/15',
+  blue:   'bg-blue-50/60 dark:bg-blue-950/15',
+  pink:   'bg-pink-50/60 dark:bg-pink-950/15',
+  purple: 'bg-purple-50/60 dark:bg-purple-950/15',
 }
 
 export const FONT_FAMILIES = [

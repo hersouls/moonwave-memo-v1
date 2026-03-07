@@ -30,14 +30,14 @@ function DiffView({ oldText, newText }: { oldText: string; newText: string }) {
       {changes.map((part, i) => {
         if (part.added) {
           return (
-            <span key={i} className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
+            <span key={i} className="bg-success-100 dark:bg-success-900/30 text-success-800 dark:text-success-300">
               {part.value}
             </span>
           )
         }
         if (part.removed) {
           return (
-            <span key={i} className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 line-through">
+            <span key={i} className="bg-danger-100 dark:bg-danger-900/30 text-danger-800 dark:text-danger-300 line-through">
               {part.value}
             </span>
           )
@@ -64,7 +64,7 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
   const selected = selectedIdx !== null ? versions[selectedIdx] : null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-labelledby="version-history-title">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
@@ -73,7 +73,7 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
           <History className="h-5 w-5 text-primary-500" />
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex-1">버전 기록</h2>
+          <h2 id="version-history-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex-1">버전 기록</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -90,20 +90,40 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
             ) : versions.length === 0 ? (
               <div className="p-4 text-sm text-zinc-400">버전 기록이 없습니다.</div>
             ) : (
-              <div className="py-2">
+              <div className="py-3 px-3">
                 {versions.map((v, idx) => (
                   <button
                     key={v.id}
                     onClick={() => setSelectedIdx(idx)}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                      selectedIdx === idx
-                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                    }`}
+                    className="w-full flex items-start gap-2.5 text-left group"
                   >
-                    <div className="font-medium">{formatDateTime(v.createdAt)}</div>
-                    <div className="text-xs text-zinc-400 truncate mt-0.5">
-                      {v.title || '제목 없음'}
+                    {/* Timeline dot + line */}
+                    <div className="flex flex-col items-center shrink-0 pt-1">
+                      <div className={`w-2.5 h-2.5 rounded-full border-2 transition-colors ${
+                        selectedIdx === idx
+                          ? 'bg-primary-500 border-primary-500'
+                          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-600 group-hover:border-primary-400'
+                      }`} />
+                      {idx < versions.length - 1 && (
+                        <div className="w-px flex-1 min-h-[24px] bg-zinc-200 dark:bg-zinc-700 mt-1" />
+                      )}
+                    </div>
+                    {/* Content */}
+                    <div className={`flex-1 pb-3 rounded-lg px-2 py-1.5 -mt-0.5 transition-colors ${
+                      selectedIdx === idx
+                        ? 'bg-primary-50 dark:bg-primary-900/20'
+                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                    }`}>
+                      <div className={`text-sm font-medium ${
+                        selectedIdx === idx
+                          ? 'text-primary-700 dark:text-primary-300'
+                          : 'text-zinc-600 dark:text-zinc-400'
+                      }`}>
+                        {formatDateTime(v.createdAt)}
+                      </div>
+                      <div className="text-xs text-zinc-400 truncate mt-0.5">
+                        {v.title || '제목 없음'}
+                      </div>
                     </div>
                   </button>
                 ))}

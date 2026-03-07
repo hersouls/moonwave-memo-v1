@@ -4,6 +4,7 @@ import type { Folder } from '@/lib/types'
 import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 import * as database from '@/services/database'
+import { pushFolder, deleteFolderFromCloud } from '@/services/firestoreSync'
 
 interface FolderState {
   folders: Folder[]
@@ -55,6 +56,7 @@ export const useFolderStore = create<FolderState>()(
           const folder = await database.getFolder(id)
           if (folder) {
             set((state) => ({ folders: [...state.folders, folder] }))
+            pushFolder(folder).catch(console.error)
           }
           return id
         } catch (err) {
@@ -70,16 +72,20 @@ export const useFolderStore = create<FolderState>()(
             f.id === id ? { ...f, ...updates, updatedAt: nowISO() } : f
           ),
         }))
+        const updated = await database.getFolder(id)
+        if (updated) pushFolder(updated).catch(console.error)
       },
 
       deleteFolder: async (id) => {
         const folder = get().folders.find((f) => f.id === id)
-        if (folder?.isDefault || folder?.isSystem) return
+        if (folder?.isSystem) return
+        const syncId = folder?.syncId
 
         await database.deleteFolder(id)
         set((state) => ({
           folders: state.folders.filter((f) => f.id !== id),
         }))
+        if (syncId) deleteFolderFromCloud(syncId).catch(console.error)
       },
 
       reorderFolders: async (orderedIds) => {
@@ -95,6 +101,10 @@ export const useFolderStore = create<FolderState>()(
             }))
             .sort((a, b) => a.sortOrder - b.sortOrder),
         }))
+        for (const id of orderedIds) {
+          const folder = await database.getFolder(id)
+          if (folder) pushFolder(folder).catch(console.error)
+        }
       },
 
       getDefaultFolder: () => get().folders.find((f) => f.isDefault),

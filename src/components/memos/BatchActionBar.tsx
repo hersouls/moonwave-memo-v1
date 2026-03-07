@@ -1,4 +1,4 @@
-import { FolderInput, Trash2, Star, X } from 'lucide-react'
+import { FolderInput, Trash2, Star, Pin, X } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
@@ -9,6 +9,7 @@ export function BatchActionBar() {
   const openFolderSelect = useUIStore((s) => s.openFolderSelect)
   const batchDelete = useMemoStore((s) => s.batchDelete)
   const batchStar = useMemoStore((s) => s.batchStar)
+  const batchPin = useMemoStore((s) => s.batchPin)
   const memos = useMemoStore((s) => s.memos)
   const pushUndo = useUndoStore((s) => s.pushUndo)
 
@@ -32,6 +33,13 @@ export function BatchActionBar() {
     const selectedMemos = memos.filter((m) => selectedMemoIds.includes(m.id!))
     const allStarred = selectedMemos.every((m) => m.isStarred)
     await batchStar(selectedMemoIds, !allStarred)
+    clearSelection()
+  }
+
+  const handlePin = async () => {
+    const selectedMemos = memos.filter((m) => selectedMemoIds.includes(m.id!))
+    const allPinned = selectedMemos.every((m) => m.isPinned)
+    await batchPin(selectedMemoIds, !allPinned)
     clearSelection()
   }
 
@@ -72,6 +80,15 @@ export function BatchActionBar() {
       >
         <Star className="h-4 w-4" />
         중요
+      </button>
+
+      <button
+        onClick={handlePin}
+        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+        aria-label="고정"
+      >
+        <Pin className="h-4 w-4" />
+        고정
       </button>
 
       <div className="mx-1 h-4 w-px bg-zinc-700 dark:bg-zinc-300" />

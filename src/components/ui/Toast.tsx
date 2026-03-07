@@ -11,10 +11,10 @@ const iconMap: Record<ToastType, React.ReactNode> = {
 }
 
 const colorMap: Record<ToastType, string> = {
-  success: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800',
-  error: 'bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-300 ring-red-200 dark:ring-red-800',
-  warning: 'bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 ring-amber-200 dark:ring-amber-800',
-  info: 'bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ring-blue-200 dark:ring-blue-800',
+  success: 'bg-success-50 text-success-800 dark:bg-success-900/30 dark:text-success-300 ring-success-200 dark:ring-success-800',
+  error: 'bg-danger-50 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300 ring-danger-200 dark:ring-danger-800',
+  warning: 'bg-warning-50 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300 ring-warning-200 dark:ring-warning-800',
+  info: 'bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 ring-primary-200 dark:ring-primary-800',
 }
 
 function ToastItem({ toast }: { toast: Toast }) {
@@ -54,10 +54,10 @@ function ToastItem({ toast }: { toast: Toast }) {
       )}
       <button
         onClick={handleClose}
-        className="shrink-0 p-0.5 rounded hover:opacity-70 transition-opacity"
+        className="shrink-0 -m-2 p-2 rounded-lg hover:opacity-70 transition-opacity min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="닫기"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-4 h-4" />
       </button>
     </div>
   )

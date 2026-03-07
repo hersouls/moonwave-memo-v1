@@ -18,6 +18,8 @@ export interface BackupValidationResult {
 export async function createBackup(): Promise<BackupFile> {
   const memos = await getAllMemos()
   const folders = await getAllFolders()
+  const memoImages = await db.memoImages.toArray()
+  const memoVersions = await db.memoVersions.toArray()
   const settingsStr = localStorage.getItem('memo-settings')
   const settings = settingsStr ? JSON.parse(settingsStr).state?.settings : {}
 
@@ -28,6 +30,8 @@ export async function createBackup(): Promise<BackupFile> {
     data: {
       memos,
       folders,
+      memoImages,
+      memoVersions,
       settings: {
         theme: settings.theme || 'light',
         colorPalette: settings.colorPalette || 'default',
@@ -134,12 +138,24 @@ export async function restoreFromBackup(
 
     await db.memos.clear()
     await db.folders.clear()
+    await db.memoImages.clear()
+    await db.memoVersions.clear()
 
     if (folders.length > 0) {
       await db.folders.bulkAdd(folders)
     }
     if (memos.length > 0) {
       await db.memos.bulkAdd(memos)
+    }
+
+    // B-11: Restore memoImages and memoVersions
+    const backupImages = (backup.data as Record<string, unknown>).memoImages as unknown[] || []
+    if (backupImages.length > 0) {
+      await db.memoImages.bulkAdd(backupImages as never[])
+    }
+    const backupVersions = (backup.data as Record<string, unknown>).memoVersions as unknown[] || []
+    if (backupVersions.length > 0) {
+      await db.memoVersions.bulkAdd(backupVersions as never[])
     }
 
     // Restore settings
@@ -165,6 +181,8 @@ export async function restoreFromBackup(
 export async function clearAllData(): Promise<void> {
   await db.memos.clear()
   await db.folders.clear()
+  await db.memoImages.clear()
+  await db.memoVersions.clear()
 
   // Recreate default folders
   const now = nowISO()
@@ -181,5 +199,13 @@ export async function clearAllData(): Promise<void> {
     }))
   )
 
-  localStorage.clear()
+  // B-09: Only remove app-specific localStorage keys (memo- prefix)
+  const keysToRemove: string[] = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key && key.startsWith('memo-')) {
+      keysToRemove.push(key)
+    }
+  }
+  keysToRemove.forEach((key) => localStorage.removeItem(key))
 }

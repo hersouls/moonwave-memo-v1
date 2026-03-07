@@ -13,6 +13,7 @@ const CORE_ASSETS = [
   '/manifest.json',
   '/favicon.png',
   '/icons/icon-192.png',
+  '/icons/apple-touch-icon-180.png',
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css',
 ]
 

@@ -1,23 +1,24 @@
 import { useUIStore } from '@/stores/uiStore'
 import { useFolderStore } from '@/stores/folderStore'
-import { useMemoStore } from '@/stores/memoStore'
+import { useMemoStats } from '@/hooks/useMemoStats'
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react'
 import { clsx } from 'clsx'
 import {
+  Calendar,
   StickyNote,
   ChevronDown,
   FileText,
   Hash,
   HelpCircle,
-  Palette,
   Plus,
   Settings,
   Star,
   Trash2,
   X,
 } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDrag } from '@use-gesture/react'
 
 export function MobileNav() {
   const navigate = useNavigate()
@@ -34,34 +35,18 @@ export function MobileNav() {
   const activeFilter = useUIStore((state) => state.activeFilter)
   const activeFolderId = useUIStore((state) => state.activeFolderId)
   const activeTag = useUIStore((state) => state.activeTag)
+  const currentView = useUIStore((state) => state.currentView)
 
-  const { folders } = useFolderStore()
-  const { memos } = useMemoStore()
+  const folders = useFolderStore((s) => s.folders)
+
+  // P-09: Use shared useMemoStats hook instead of duplicate calculations
+  const { totalCount, starredCount, deletedCount: trashedCount, folderCounts, allTags } = useMemoStats()
 
   const [isFolderExpanded, setIsFolderExpanded] = useState(true)
   const [isTagExpanded, setIsTagExpanded] = useState(false)
 
   const userFolders = folders.filter((f) => !f.isSystem)
   const trashFolder = folders.find((f) => f.isSystem)
-
-  const activeMemos = memos.filter((m) => !m.deletedAt)
-  const trashedCount = memos.filter((m) => !!m.deletedAt).length
-
-  const allTags = useMemo(() => {
-    const tagSet = new Set<string>()
-    activeMemos.forEach((m) => m.tags.forEach((t) => tagSet.add(t)))
-    return Array.from(tagSet).sort()
-  }, [activeMemos])
-
-  const folderCounts = useMemo(() => {
-    const counts: Record<number, number> = {}
-    activeMemos.forEach((m) => {
-      if (m.folderId != null) {
-        counts[m.folderId] = (counts[m.folderId] || 0) + 1
-      }
-    })
-    return counts
-  }, [activeMemos])
 
   const handleNav = (action: () => void) => {
     closeMobileMenu()
@@ -94,10 +79,33 @@ export function MobileNav() {
     handleNav(() => setActiveFilter('starred'))
   }
 
+  // Swipe-to-close gesture
+  const [dragX, setDragX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const bindDrag = useDrag(
+    ({ active, movement: [mx], velocity: [vx] }) => {
+      if (mx > 0) { setDragX(0); return }
+      setIsDragging(active)
+      if (active) {
+        setDragX(Math.min(0, mx))
+      } else {
+        if (mx < -100 || vx > 0.5) {
+          closeMobileMenu()
+        }
+        setDragX(0)
+      }
+    },
+    { axis: 'x', filterTaps: true, pointer: { touch: true } }
+  )
+
   // Body scroll lock when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden'
+    } else {
+      setDragX(0)
+      setIsDragging(false)
     }
     return () => {
       document.body.style.overflow = ''
@@ -131,8 +139,14 @@ export function MobileNav() {
           leaveTo="-translate-x-full"
         >
           <DialogPanel
+            {...bindDrag()}
             className="fixed inset-y-0 left-0 w-full max-w-xs bg-white dark:bg-zinc-950 shadow-xl dark:shadow-zinc-900/50 flex flex-col"
             aria-labelledby="mobile-nav-title"
+            style={{
+              transform: dragX < 0 ? `translateX(${dragX}px)` : undefined,
+              transition: isDragging ? 'none' : 'transform 0.2s ease',
+              touchAction: 'pan-y',
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between h-16 px-4 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
@@ -190,7 +204,7 @@ export function MobileNav() {
                       <StickyNote className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">모든 메모</span>
                       <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                        {activeMemos.length}
+                        {totalCount}
                       </span>
                     </button>
                   </li>
@@ -209,11 +223,32 @@ export function MobileNav() {
                     >
                       <Star className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">중요 메모</span>
-                      {activeMemos.filter((m) => m.isStarred).length > 0 && (
+                      {starredCount > 0 && (
                         <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                          {activeMemos.filter((m) => m.isStarred).length}
+                          {starredCount}
                         </span>
                       )}
+                    </button>
+                  </li>
+
+                  {/* Calendar */}
+                  <li role="none">
+                    <button
+                      onClick={() => {
+                        closeMobileMenu()
+                        setCurrentView('calendar')
+                        navigate('/calendar')
+                      }}
+                      className={clsx(
+                        'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]',
+                        currentView === 'calendar'
+                          ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      )}
+                      role="menuitem"
+                    >
+                      <Calendar className="w-5 h-5" aria-hidden="true" />
+                      <span className="font-medium">캘린더</span>
                     </button>
                   </li>
 
@@ -256,7 +291,7 @@ export function MobileNav() {
                               />
                               <span className="text-sm truncate">{folder.name}</span>
                               <span className="ml-auto text-xs text-zinc-400">
-                                {folderCounts[folder.id!] || 0}
+                                {folderCounts.get(folder.id!) || 0}
                               </span>
                             </button>
                           </li>
@@ -335,18 +370,6 @@ export function MobileNav() {
                     <div className="border-t border-zinc-200 dark:border-zinc-800" />
                   </li>
 
-                  {/* Theme */}
-                  <li role="none">
-                    <button
-                      onClick={handleOpenSettings}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]"
-                      role="menuitem"
-                    >
-                      <Palette className="w-5 h-5" aria-hidden="true" />
-                      <span className="font-medium">테마</span>
-                    </button>
-                  </li>
-
                   {/* Help */}
                   <li role="none">
                     <button
@@ -386,7 +409,7 @@ export function MobileNav() {
               </nav>
 
               {/* Empty State */}
-              {memos.length === 0 && (
+              {totalCount === 0 && (
                 <div className="px-6 py-8 text-center">
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
                     등록된 메모가 없습니다.

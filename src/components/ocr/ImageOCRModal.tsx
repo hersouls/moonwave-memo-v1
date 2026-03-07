@@ -36,12 +36,6 @@ function ScanAnimation() {
         }}
       />
       <ScanText className="absolute inset-0 m-auto w-8 h-8 text-primary-500/60" />
-      <style>{`
-        @keyframes scanLine {
-          0%, 100% { top: 10%; }
-          50% { top: 85%; }
-        }
-      `}</style>
     </div>
   )
 }
@@ -200,7 +194,7 @@ function StepImageSelect({
 
       {/* File error */}
       {fileError && (
-        <p className="text-xs text-red-500 dark:text-red-400 px-1">{fileError}</p>
+        <p className="text-xs text-danger-500 dark:text-danger-400 px-1">{fileError}</p>
       )}
 
       {/* Selected file preview */}
@@ -447,7 +441,7 @@ export function ImageOCRModal() {
 
   return (
     <Dialog open={isOpen} onClose={step === 2 ? () => {} : closeModal} size="lg" noPadding>
-      <div className="flex flex-col max-h-[85dvh]">
+      <div className="flex flex-col max-h-[85dvh] fold:max-h-[70dvh]">
         <DialogHeader
           title={stepTitles[step]}
           onClose={step === 2 ? undefined : closeModal}

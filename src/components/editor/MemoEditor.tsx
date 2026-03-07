@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { EditorHeader } from './EditorHeader'
@@ -9,13 +9,18 @@ import { FloatingToolbar } from './FloatingToolbar'
 import { SlashCommandMenu } from './SlashCommandMenu'
 import { AISummaryPanel } from './AISummaryPanel'
 import { BacklinksPanel } from './BacklinksPanel'
-import { VersionHistory } from './VersionHistory'
+// P-05: Lazy load VersionHistory (includes diff library)
+const VersionHistory = lazy(() => import('./VersionHistory').then((m) => ({ default: m.VersionHistory })))
+import { TagInput } from './TagInput'
+import { FeatureHint } from '@/components/ui/FeatureHint'
+import { extractTags } from '@/lib/tagParser'
 import { useAITagSuggestions } from '@/hooks/useAIFeatures'
 import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
+import { FONT_FAMILIES } from '@/utils/constants'
 import { setLastViewedMemo } from '@/components/ui/ContinueBanner'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified'
@@ -29,9 +34,9 @@ export function MemoEditor() {
   const updateMemo = useMemoStore((s) => s.updateMemo)
   const toggleStar = useMemoStore((s) => s.toggleStar)
   const defaultFolderId = useSettingsStore((s) => s.settings.memoSettings.defaultFolderId)
-  const defaultColor = useSettingsStore((s) => s.settings.memoSettings.defaultColor)
   const inputStartPosition = useSettingsStore((s) => s.settings.memoSettings.inputStartPosition)
   const editorMode = useSettingsStore((s) => s.settings.memoSettings.editorMode)
+  const fontFamilyId = useSettingsStore((s) => s.settings.fontFamily)
   const folders = useFolderStore((s) => s.folders)
   const getDefaultFolder = useFolderStore((s) => s.getDefaultFolder)
   const isFocusMode = useUIStore((s) => s.isFocusMode)
@@ -45,6 +50,7 @@ export function MemoEditor() {
     memo?.folderId ?? defaultFolderId ?? getDefaultFolder()?.id ?? null
   )
   const [isStarred, setIsStarred] = useState(memo?.isStarred || false)
+  const [memoColor, setMemoColor] = useState<import('@/lib/types').MemoColor>(memo?.color || 'white')
   const [memoId, setMemoId] = useState<number | undefined>(memo?.id)
   const [activeTab, setActiveTab] = useState<EditorTab>('edit')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -74,12 +80,26 @@ export function MemoEditor() {
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasCreated = useRef(false)
-  const latestDataRef = useRef({ memoId, title, body, folderId })
-  latestDataRef.current = { memoId, title, body, folderId }
+  const latestDataRef = useRef({ memoId, title, body, folderId, color: memoColor })
+  latestDataRef.current = { memoId, title, body, folderId, color: memoColor }
+
+  // BUG-01: Refs for cleanup to avoid stale closures
+  const addMemoRef = useRef(addMemo)
+  addMemoRef.current = addMemo
+
+  // TECH-01: Ref for handleBodyChange to avoid stale closure in insertMarkdown
+  const handleBodyChangeRef = useRef<(value: string) => void>(() => {})
 
   // AI features
   const { tags: aiTags, isLoading: aiTagsLoading } = useAITagSuggestions(body)
   const { ghostText, acceptSuggestion, dismissSuggestion } = useAIAutocomplete(body, bodyRef)
+
+  // UX-03: Compute font family from settings
+  const fontDef = FONT_FAMILIES.find((f) => f.id === fontFamilyId)
+  const editorFontFamily = fontDef?.fontFamily || "'Pretendard', sans-serif"
+
+  // UX-06: Extract current tags from body
+  const currentTags = extractTags(body)
 
   // Focus on mount + track last viewed memo
   useEffect(() => {
@@ -97,43 +117,98 @@ export function MemoEditor() {
     }
   }, [isNew, inputStartPosition, memoId])
 
+  // Text undo/redo stack refs (logic defined after scheduleAutoSave)
+  const undoStack = useRef<string[]>([])
+  const redoStack = useRef<string[]>([])
+  const lastSnapshotRef = useRef(body)
+
+  // BUG-05: Prevent concurrent autoSave execution
+  const savingRef = useRef(false)
+
   // Auto-save with debounce
+  // BUG-02: Added navigate() after creating new memo
   const autoSave = useCallback(async () => {
-    if (memoId) {
-      setSaveStatus('saving')
-      await updateMemo(memoId, { title, body, folderId })
-      setSaveStatus('saved')
-    } else if (!hasCreated.current && (title.trim() || body.trim())) {
-      setSaveStatus('saving')
-      hasCreated.current = true
-      const newId = await addMemo({
-        title,
-        body,
-        folderId,
-        color: defaultColor,
-      })
-      if (newId) {
-        setMemoId(newId)
+    if (savingRef.current) return
+    savingRef.current = true
+    try {
+      if (memoId) {
+        setSaveStatus('saving')
+        await updateMemo(memoId, { title, body, folderId })
+        setSaveStatus('saved')
+      } else if (!hasCreated.current && (title.trim() || body.trim())) {
+        setSaveStatus('saving')
+        hasCreated.current = true
+        const newId = await addMemo({
+          title,
+          body,
+          folderId,
+          color: memoColor,
+        })
+        if (newId) {
+          setMemoId(newId)
+          navigate(`/memo/${newId}`, { replace: true })
+        }
+        setSaveStatus('saved')
       }
-      setSaveStatus('saved')
+    } finally {
+      savingRef.current = false
     }
-  }, [memoId, title, body, folderId, updateMemo, addMemo, defaultColor])
+  }, [memoId, title, body, folderId, memoColor, updateMemo, addMemo, navigate])
+
+  // Auto-clear saved status after 2s
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      const timer = setTimeout(() => setSaveStatus('idle'), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [saveStatus])
 
   const scheduleAutoSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(autoSave, 500)
   }, [autoSave])
 
-  // Flush pending save on unmount
+  // Text undo/redo actions
+  const pushUndoSnapshot = useCallback((text: string) => {
+    if (text === lastSnapshotRef.current) return
+    undoStack.current.push(lastSnapshotRef.current)
+    if (undoStack.current.length > 50) undoStack.current.shift()
+    redoStack.current = []
+    lastSnapshotRef.current = text
+  }, [])
+
+  const undoText = useCallback(() => {
+    if (undoStack.current.length === 0) return
+    const prev = undoStack.current.pop()!
+    redoStack.current.push(body)
+    setBody(prev)
+    lastSnapshotRef.current = prev
+    setSaveStatus('modified')
+    scheduleAutoSave()
+  }, [body, scheduleAutoSave])
+
+  const redoText = useCallback(() => {
+    if (redoStack.current.length === 0) return
+    const next = redoStack.current.pop()!
+    undoStack.current.push(body)
+    setBody(next)
+    lastSnapshotRef.current = next
+    setSaveStatus('modified')
+    scheduleAutoSave()
+  }, [body, scheduleAutoSave])
+
+  // BUG-01: Flush pending save on unmount — handles both existing and NEW memos
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current)
         saveTimerRef.current = null
       }
-      const { memoId: id, title: t, body: b, folderId: f } = latestDataRef.current
+      const { memoId: id, title: t, body: b, folderId: f, color: c } = latestDataRef.current
       if (id && (t.trim() || b.trim())) {
         updateMemo(id, { title: t, body: b, folderId: f })
+      } else if (!id && !hasCreated.current && (t.trim() || b.trim())) {
+        addMemoRef.current({ title: t, body: b, folderId: f, color: c })
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -145,17 +220,24 @@ export function MemoEditor() {
     scheduleAutoSave()
   }
 
-  const handleBodyChange = (value: string) => {
+  const handleBodyChange = useCallback((value: string) => {
+    pushUndoSnapshot(value)
     setBody(value)
     setSaveStatus('modified')
     scheduleAutoSave()
     dismissSuggestion()
-  }
+  }, [scheduleAutoSave, dismissSuggestion, pushUndoSnapshot])
 
+  // TECH-01: Keep ref up to date
+  handleBodyChangeRef.current = handleBodyChange
+
+  // UX-12: handleFolderChange triggers save for new memos too
   const handleFolderChange = (newFolderId: number) => {
     setFolderId(newFolderId)
     if (memoId) {
       updateMemo(memoId, { folderId: newFolderId })
+    } else {
+      scheduleAutoSave()
     }
   }
 
@@ -172,7 +254,13 @@ export function MemoEditor() {
     navigate('/memos')
   }
 
-  // Markdown insertion helper
+  // UX-06: Remove tag from body
+  const handleRemoveTag = (tag: string) => {
+    const newBody = body.replace(new RegExp(`#${tag}\\s?`, 'g'), '').trim()
+    handleBodyChange(newBody)
+  }
+
+  // TECH-01: Markdown insertion helper — uses ref to avoid stale closure
   const insertMarkdown = useCallback((before: string, after: string = '') => {
     const textarea = bodyRef.current
     if (!textarea) return
@@ -183,7 +271,7 @@ export function MemoEditor() {
     const selected = text.substring(start, end)
 
     const newText = text.substring(0, start) + before + selected + after + text.substring(end)
-    handleBodyChange(newText)
+    handleBodyChangeRef.current(newText)
 
     requestAnimationFrame(() => {
       textarea.focus()
@@ -195,7 +283,6 @@ export function MemoEditor() {
         textarea.setSelectionRange(cursorPos, cursorPos)
       }
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Slash command detection
@@ -268,7 +355,7 @@ export function MemoEditor() {
     }
   }
 
-  // Keyboard shortcuts
+  // BUG-04: Keyboard shortcuts — check for open overlays before Escape navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -279,6 +366,16 @@ export function MemoEditor() {
         if (ghostText) {
           dismissSuggestion()
           return
+        }
+        if (showVersionHistory) {
+          setShowVersionHistory(false)
+          return
+        }
+        // Check for any open overlay (headlessui dialogs, dropdown menus, etc.)
+        if (document.querySelector('[data-headlessui-state="open"]') ||
+            document.querySelector('.fixed.inset-0.z-20') ||
+            document.querySelector('.fixed.inset-0.z-40')) {
+          return // Let the overlay handle its own Escape
         }
         if (isFocusMode) return // handled by App.tsx
         e.preventDefault()
@@ -313,7 +410,7 @@ export function MemoEditor() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, isSplit, slashOpen, isFocusMode, ghostText])
+  }, [activeTab, isSplit, slashOpen, isFocusMode, ghostText, showVersionHistory])
 
   // Version restore handler
   const handleVersionRestore = (restoredTitle: string, restoredBody: string) => {
@@ -339,26 +436,31 @@ export function MemoEditor() {
 
   const editContent = (
     <>
+      {/* UX-18: maxLength={100} on title */}
       <input
         ref={titleRef}
         type="text"
         value={title}
         onChange={(e) => handleTitleChange(e.target.value)}
         placeholder="제목"
-        className="w-full text-2xl font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none mb-3"
+        maxLength={100}
+        className="w-full text-2xl fold:text-lg font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none mb-3"
+        style={{ fontFamily: editorFontFamily }}
       />
 
       <div className="relative flex-1">
+        {/* UX-03: Apply user font, UX-20: Responsive min-height */}
         <textarea
           ref={bodyRef}
           value={body}
           onChange={handleBodyInput}
           onKeyDown={handleBodyKeyDown}
-          placeholder="메모를 입력하세요. 마크다운 문법을 사용할 수 있습니다."
+          placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
           className={clsx(
-            'w-full flex-1 min-h-[300px] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed',
+            'w-full flex-1 fold:min-h-[150px] min-h-[200px] sm:min-h-[300px] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed',
             isFocusMode && 'min-h-[60vh]'
           )}
+          style={{ fontFamily: editorFontFamily }}
         />
         {/* AI Autocomplete ghost text */}
         {ghostText && (
@@ -367,6 +469,19 @@ export function MemoEditor() {
           </div>
         )}
       </div>
+
+      {/* Feature hint: slash commands */}
+      {!isFocusMode && !body && (
+        <FeatureHint
+          id="slash-commands"
+          message="'/' 키를 입력하면 슬래시 커맨드를 사용할 수 있습니다. 제목, 구분선, 코드 블록 등을 빠르게 삽입해보세요."
+        />
+      )}
+
+      {/* UX-06: TagInput for current tags */}
+      {!isFocusMode && currentTags.length > 0 && (
+        <TagInput tags={currentTags} onRemoveTag={handleRemoveTag} />
+      )}
 
       {/* AI Tag suggestions */}
       {aiTags.length > 0 && (
@@ -413,6 +528,14 @@ export function MemoEditor() {
           onOpenVersionHistory={memoId ? () => setShowVersionHistory(true) : undefined}
           memoId={memoId}
           saveStatus={saveStatus}
+          title={title}
+          body={body}
+          isPinned={memo?.isPinned ?? false}
+          memoColor={memoColor}
+          onColorChange={(color) => {
+            setMemoColor(color)
+            if (memoId) updateMemo(memoId, { color })
+          }}
         />
       )}
 
@@ -442,10 +565,14 @@ export function MemoEditor() {
           </div>
         ) : (
           <>
-            {/* Tab bar (hidden in focus mode) */}
+            {/* A11Y-02: Tab bar with proper ARIA roles */}
             {!isFocusMode && (
-              <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
+              <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700" role="tablist" aria-label="편집기 모드">
                 <button
+                  role="tab"
+                  aria-selected={activeTab === 'edit'}
+                  id="tab-edit"
+                  aria-controls="panel-edit"
                   onClick={() => setActiveTab('edit')}
                   className={clsx(
                     'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
@@ -457,6 +584,10 @@ export function MemoEditor() {
                   편집
                 </button>
                 <button
+                  role="tab"
+                  aria-selected={activeTab === 'preview'}
+                  id="tab-preview"
+                  aria-controls="panel-preview"
                   onClick={() => setActiveTab('preview')}
                   className={clsx(
                     'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
@@ -470,7 +601,13 @@ export function MemoEditor() {
               </div>
             )}
 
-            {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
+            <div
+              role="tabpanel"
+              id={activeTab === 'edit' ? 'panel-edit' : 'panel-preview'}
+              aria-labelledby={activeTab === 'edit' ? 'tab-edit' : 'tab-preview'}
+            >
+              {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
+            </div>
           </>
         )}
 
@@ -494,9 +631,26 @@ export function MemoEditor() {
         </div>
       )}
 
-      {/* Editor toolbar (mobile only, not in focus/split mode) */}
+      {/* Save status indicator bar */}
+      {saveStatus !== 'idle' && (
+        <div className={clsx(
+          'h-0.5 w-full transition-all duration-300',
+          saveStatus === 'saving' && 'bg-primary-500 animate-pulse',
+          saveStatus === 'saved' && 'bg-success-500 animate-save-fadeout',
+          saveStatus === 'modified' && 'bg-zinc-300 dark:bg-zinc-600'
+        )} />
+      )}
+
+      {/* Editor toolbar (not in focus/split mode) */}
       {(activeTab === 'edit' || isSplit) && !isFocusMode && (
-        <EditorToolbar textareaRef={bodyRef} onContentChange={handleBodyChange} />
+        <EditorToolbar
+          textareaRef={bodyRef}
+          onContentChange={handleBodyChange}
+          onUndo={undoText}
+          onRedo={redoText}
+          canUndo={undoStack.current.length > 0}
+          canRedo={redoStack.current.length > 0}
+        />
       )}
 
       {/* Floating toolbar for text selection */}
@@ -516,13 +670,15 @@ export function MemoEditor() {
 
       {/* Version history panel */}
       {showVersionHistory && memoId && (
-        <VersionHistory
-          memoId={memoId}
-          currentTitle={title}
-          currentBody={body}
-          onRestore={handleVersionRestore}
-          onClose={() => setShowVersionHistory(false)}
-        />
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>}>
+          <VersionHistory
+            memoId={memoId}
+            currentTitle={title}
+            currentBody={body}
+            onRestore={handleVersionRestore}
+            onClose={() => setShowVersionHistory(false)}
+          />
+        </Suspense>
       )}
     </div>
   )

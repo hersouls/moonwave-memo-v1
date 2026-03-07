@@ -47,16 +47,31 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
       setTimeout(() => setVisible(false), 150)
     }
 
+    const handleDocumentSelection = () => {
+      const selection = window.getSelection()
+      if (!selection || selection.isCollapsed) {
+        setVisible(false)
+        return
+      }
+      if (document.activeElement === textarea) {
+        requestAnimationFrame(updatePosition)
+      }
+    }
+
     textarea.addEventListener('select', handleSelect)
     textarea.addEventListener('mouseup', handleSelect)
     textarea.addEventListener('keyup', handleSelect)
+    textarea.addEventListener('touchend', handleSelect)
     textarea.addEventListener('blur', handleBlur)
+    document.addEventListener('selectionchange', handleDocumentSelection)
 
     return () => {
       textarea.removeEventListener('select', handleSelect)
       textarea.removeEventListener('mouseup', handleSelect)
       textarea.removeEventListener('keyup', handleSelect)
+      textarea.removeEventListener('touchend', handleSelect)
       textarea.removeEventListener('blur', handleBlur)
+      document.removeEventListener('selectionchange', handleDocumentSelection)
     }
   }, [textareaRef, updatePosition])
 
@@ -88,6 +103,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
           }}
           className="p-1.5 rounded-lg text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
           title={tool.label}
+          aria-label={tool.label}
         >
           {tool.icon}
         </button>

@@ -30,7 +30,7 @@ export function SearchFilters() {
     searchFilters.colorFilter !== null
 
   return (
-    <div className="flex flex-wrap items-center gap-2 py-2">
+    <div className="flex flex-wrap items-center gap-2 py-2 fold:flex-nowrap fold:overflow-x-auto fold:scrollbar-none fold:-mx-2 fold:px-2">
       {/* Date range chips */}
       <div className="flex items-center gap-1">
         <Calendar className="h-3.5 w-3.5 text-zinc-400" />
@@ -56,7 +56,7 @@ export function SearchFilters() {
         className={clsx(
           'flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
           searchFilters.starredOnly
-            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+            ? 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300'
             : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
         )}
       >
@@ -82,7 +82,7 @@ export function SearchFilters() {
                 ? 'ring-2 ring-primary-500 ring-offset-1 dark:ring-offset-zinc-900'
                 : 'hover:scale-110'
             )}
-            aria-label={opt.value}
+            aria-label={`${opt.value} 색상 필터`}
           />
         ))}
       </div>

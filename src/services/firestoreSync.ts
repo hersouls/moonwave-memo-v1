@@ -3,6 +3,7 @@ import {
   doc,
   getDocs,
   setDoc,
+  deleteDoc,
   onSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
@@ -38,17 +39,32 @@ export function registerRefreshCallbacks(
   refreshFolders = folderRefresh
 }
 
+// ─── Folder syncId ↔ local ID resolution ──────────
+
+async function resolveFolderSyncId(folderSyncId: string | null | undefined): Promise<number | null> {
+  if (!folderSyncId) return null
+  const folder = await database.getFolderBySyncId(folderSyncId)
+  return folder?.id ?? null
+}
+
+async function getFolderSyncId(folderId: number | null): Promise<string | null> {
+  if (folderId == null) return null
+  const folder = await database.getFolder(folderId)
+  return folder?.syncId ?? null
+}
+
 // ─── Push to Firestore ────────────────────────────
 
 export async function pushMemo(memo: Memo) {
   if (!currentUserId || !memo.syncId) return
   try {
     recentlyPushed.add(`memo-${memo.syncId}`)
+    const folderSyncId = await getFolderSyncId(memo.folderId)
     const ref = doc(firestore, `users/${currentUserId}/memos`, memo.syncId)
     await setDoc(ref, stripUndefined({
       title: memo.title,
       body: memo.body,
-      folderId: memo.folderId,
+      folderSyncId,
       tags: memo.tags,
       isStarred: memo.isStarred,
       color: memo.color,
@@ -57,7 +73,7 @@ export async function pushMemo(memo: Memo) {
       updatedAt: memo.updatedAt,
       deletedAt: memo.deletedAt || null,
     }), { merge: true })
-    setTimeout(() => recentlyPushed.delete(`memo-${memo.syncId}`), 3000)
+    setTimeout(() => recentlyPushed.delete(`memo-${memo.syncId}`), 5000)
   } catch (err) {
     console.error('Push memo failed:', err)
     recentlyPushed.delete(`memo-${memo.syncId}`)
@@ -78,10 +94,36 @@ export async function pushFolder(folder: Folder) {
       createdAt: folder.createdAt,
       updatedAt: folder.updatedAt,
     }), { merge: true })
-    setTimeout(() => recentlyPushed.delete(`folder-${folder.syncId}`), 3000)
+    setTimeout(() => recentlyPushed.delete(`folder-${folder.syncId}`), 5000)
   } catch (err) {
     console.error('Push folder failed:', err)
     recentlyPushed.delete(`folder-${folder.syncId}`)
+  }
+}
+
+// ─── Delete from Firestore ────────────────────────
+
+export async function deleteMemoFromCloud(syncId: string) {
+  if (!currentUserId || !syncId) return
+  try {
+    recentlyPushed.add(`memo-${syncId}`)
+    await deleteDoc(doc(firestore, `users/${currentUserId}/memos`, syncId))
+    setTimeout(() => recentlyPushed.delete(`memo-${syncId}`), 5000)
+  } catch (err) {
+    console.error('Delete memo from cloud failed:', err)
+    recentlyPushed.delete(`memo-${syncId}`)
+  }
+}
+
+export async function deleteFolderFromCloud(syncId: string) {
+  if (!currentUserId || !syncId) return
+  try {
+    recentlyPushed.add(`folder-${syncId}`)
+    await deleteDoc(doc(firestore, `users/${currentUserId}/folders`, syncId))
+    setTimeout(() => recentlyPushed.delete(`folder-${syncId}`), 5000)
+  } catch (err) {
+    console.error('Delete folder from cloud failed:', err)
+    recentlyPushed.delete(`folder-${syncId}`)
   }
 }
 
@@ -92,7 +134,15 @@ async function initialMerge(userId: string) {
   mergeInProgress = true
 
   try {
-    // Merge folders
+    // Patch local folders missing updatedAt (legacy fix)
+    const allLocalFolders = await database.getAllFolders()
+    for (const f of allLocalFolders) {
+      if (!f.updatedAt) {
+        await database.updateFolder(f.id!, {})
+      }
+    }
+
+    // Merge folders first (memos reference folders)
     const folderSnap = await getDocs(collection(firestore, `users/${userId}/folders`))
     for (const docSnap of folderSnap.docs) {
       const remote = docSnap.data()
@@ -119,16 +169,21 @@ async function initialMerge(userId: string) {
       }
     }
 
-    // Push local folders without syncId
+    // Push local folders without cloud copy + re-push legacy data
     const localFolders = await database.getAllFolders()
     for (const folder of localFolders) {
       if (!folder.syncId) {
         folder.syncId = generateSyncId()
         await database.updateFolder(folder.id!, { syncId: folder.syncId })
       }
-      const exists = folderSnap.docs.find((d) => d.id === folder.syncId)
-      if (!exists) {
+      const cloudDoc = folderSnap.docs.find((d) => d.id === folder.syncId)
+      if (!cloudDoc) {
         await pushFolder(folder)
+      } else {
+        const remote = cloudDoc.data()
+        if (!remote.updatedAt) {
+          await pushFolder(folder)
+        }
       }
     }
 
@@ -139,11 +194,16 @@ async function initialMerge(userId: string) {
       const syncId = docSnap.id
       const local = await database.getMemoBySyncId(syncId)
 
+      // Resolve folderSyncId → local folderId (with legacy fallback)
+      const folderId = remote.folderSyncId
+        ? await resolveFolderSyncId(remote.folderSyncId)
+        : (remote.folderId ?? null)
+
       if (!local) {
         await database.addMemo({
           title: remote.title || '',
           body: remote.body || '',
-          folderId: remote.folderId,
+          folderId,
           tags: remote.tags || [],
           isStarred: remote.isStarred ?? false,
           color: remote.color || 'white',
@@ -157,7 +217,7 @@ async function initialMerge(userId: string) {
         await database.updateMemo(local.id!, {
           title: remote.title,
           body: remote.body,
-          folderId: remote.folderId,
+          folderId,
           tags: remote.tags || [],
           isStarred: remote.isStarred,
           color: remote.color,
@@ -167,16 +227,21 @@ async function initialMerge(userId: string) {
       }
     }
 
-    // Push local memos
+    // Push local memos without cloud copy + migrate legacy folderId
     const localMemos = await database.getAllMemos()
     for (const memo of localMemos) {
       if (!memo.syncId) {
         memo.syncId = generateSyncId()
         await database.updateMemo(memo.id!, { syncId: memo.syncId })
       }
-      const exists = memoSnap.docs.find((d) => d.id === memo.syncId)
-      if (!exists) {
+      const cloudDoc = memoSnap.docs.find((d) => d.id === memo.syncId)
+      if (!cloudDoc) {
         await pushMemo(memo)
+      } else {
+        const remote = cloudDoc.data()
+        if (memo.folderId != null && !remote.folderSyncId) {
+          await pushMemo(memo)
+        }
       }
     }
 
@@ -190,6 +255,10 @@ async function initialMerge(userId: string) {
 // ─── Real-time Listeners ───────────────────────────
 
 function startListeners(userId: string) {
+  // Clean up existing listeners before re-subscribing
+  if (unsubMemos) { unsubMemos(); unsubMemos = null }
+  if (unsubFolders) { unsubFolders(); unsubFolders = null }
+
   unsubMemos = onSnapshot(
     collection(firestore, `users/${userId}/memos`),
     async (snapshot) => {
@@ -200,13 +269,19 @@ function startListeners(userId: string) {
         if (recentlyPushed.has(`memo-${syncId}`)) continue
 
         const remote = change.doc.data()
+
         if (change.type === 'added' || change.type === 'modified') {
           const local = await database.getMemoBySyncId(syncId)
+          // Resolve folderSyncId → local folderId (with legacy fallback)
+          const folderId = remote.folderSyncId
+            ? await resolveFolderSyncId(remote.folderSyncId)
+            : (remote.folderId ?? null)
+
           if (!local) {
             await database.addMemo({
               title: remote.title || '',
               body: remote.body || '',
-              folderId: remote.folderId,
+              folderId,
               tags: remote.tags || [],
               isStarred: remote.isStarred ?? false,
               color: remote.color || 'white',
@@ -220,13 +295,20 @@ function startListeners(userId: string) {
             await database.updateMemo(local.id!, {
               title: remote.title,
               body: remote.body,
-              folderId: remote.folderId,
+              folderId,
               tags: remote.tags || [],
               isStarred: remote.isStarred,
               color: remote.color,
               isPinned: remote.isPinned,
               deletedAt: remote.deletedAt || undefined,
             })
+          }
+        }
+
+        if (change.type === 'removed') {
+          const local = await database.getMemoBySyncId(syncId)
+          if (local) {
+            await database.permanentDeleteMemo(local.id!)
           }
         }
       }
@@ -245,6 +327,7 @@ function startListeners(userId: string) {
         if (recentlyPushed.has(`folder-${syncId}`)) continue
 
         const remote = change.doc.data()
+
         if (change.type === 'added' || change.type === 'modified') {
           const local = await database.getFolderBySyncId(syncId)
           if (!local) {
@@ -264,6 +347,13 @@ function startListeners(userId: string) {
               color: remote.color,
               sortOrder: remote.sortOrder,
             })
+          }
+        }
+
+        if (change.type === 'removed') {
+          const local = await database.getFolderBySyncId(syncId)
+          if (local && !local.isDefault && !local.isSystem) {
+            await database.deleteFolder(local.id!)
           }
         }
       }

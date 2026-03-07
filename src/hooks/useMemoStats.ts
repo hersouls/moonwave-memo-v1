@@ -20,9 +20,11 @@ export function useMemoStats() {
     }
 
     const tagSet = new Set<string>()
+    const tagCounts = new Map<string, number>()
     for (const memo of activeMemos) {
       for (const tag of memo.tags) {
         tagSet.add(tag)
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
       }
     }
     const allTags = Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ko'))
@@ -33,6 +35,7 @@ export function useMemoStats() {
       deletedCount,
       folderCounts,
       allTags,
+      tagCounts,
     }
   }, [memos])
 }

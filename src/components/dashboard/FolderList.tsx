@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FolderOpen, ChevronDown, ChevronUp } from 'lucide-react'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
 
-export function FolderList() {
+export const FolderList = memo(function FolderList() {
   const navigate = useNavigate()
   const folders = useFolderStore((s) => s.folders)
   const setActiveFolderId = useUIStore((s) => s.setActiveFolderId)
@@ -45,6 +45,7 @@ export function FolderList() {
           <span
             role="button"
             tabIndex={0}
+            aria-label="폴더 편집"
             onClick={(e) => {
               e.stopPropagation()
               handleEditClick()
@@ -101,4 +102,4 @@ export function FolderList() {
       )}
     </div>
   )
-}
+})

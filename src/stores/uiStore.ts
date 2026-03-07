@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { SortBy, ViewMode, SearchFilters } from '@/lib/types'
 
-export type CurrentView = 'dashboard' | 'memos' | 'settings'
+export type CurrentView = 'dashboard' | 'memos' | 'calendar' | 'settings'
 
 interface UIState {
   isSidebarOpen: boolean
@@ -29,6 +29,7 @@ interface UIState {
   isCommandPaletteOpen: boolean
   isKeyboardShortcutsOpen: boolean
   isFocusMode: boolean
+  isNarrowFold: boolean
   searchFilters: SearchFilters
 
   // Selection
@@ -73,6 +74,7 @@ interface UIState {
   resetSearchFilters: () => void
 
   toggleSelectionMode: () => void
+  enterSelectionMode: (memoId: number) => void
   toggleMemoSelection: (id: number) => void
   selectAllMemos: (ids: number[]) => void
   clearSelection: () => void
@@ -103,6 +105,7 @@ export const useUIStore = create<UIState>()(
       isCommandPaletteOpen: false,
       isKeyboardShortcutsOpen: false,
       isFocusMode: false,
+      isNarrowFold: false,
       searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null },
 
       isSelectionMode: false,
@@ -149,6 +152,8 @@ export const useUIStore = create<UIState>()(
           isSelectionMode: !s.isSelectionMode,
           selectedMemoIds: s.isSelectionMode ? [] : s.selectedMemoIds,
         })),
+      enterSelectionMode: (memoId) =>
+        set({ isSelectionMode: true, selectedMemoIds: [memoId] }),
       toggleMemoSelection: (id) =>
         set((s) => ({
           selectedMemoIds: s.selectedMemoIds.includes(id)
@@ -160,10 +165,14 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'memo-ui',
+      // UX-16: persist filter state across sessions
       partialize: (state) => ({
         isSidebarOpen: state.isSidebarOpen,
         viewMode: state.viewMode,
         sortBy: state.sortBy,
+        activeFolderId: state.activeFolderId,
+        activeFilter: state.activeFilter,
+        activeTag: state.activeTag,
       }),
     }
   )

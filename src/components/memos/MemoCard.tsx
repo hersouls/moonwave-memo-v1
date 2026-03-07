@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Star, CheckCircle, Trash2 } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
+import { Star, CheckCircle, Trash2, Pin } from 'lucide-react'
 import clsx from 'clsx'
 import type { Memo, MemoColor } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
@@ -8,6 +8,8 @@ import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
 import { formatMemoDate } from '@/utils/format'
+import { maskSensitiveData, stripMarkdown } from '@/utils/textUtils'
+import { useSettingsStore } from '@/stores/settingsStore'
 
 const MEMO_CARD_BG: Record<MemoColor, string> = {
   white: 'bg-white dark:bg-zinc-800',
@@ -18,7 +20,13 @@ const MEMO_CARD_BG: Record<MemoColor, string> = {
   purple: 'bg-purple-50 dark:bg-purple-950/30',
 }
 
-const SWIPE_THRESHOLD = 80
+// F-06: Dynamic swipe threshold for fold screens
+function getSwipeThreshold() {
+  return window.innerWidth <= 400
+    ? Math.round(window.innerWidth * 0.25)
+    : 80
+}
+const LONG_PRESS_DURATION = 500
 const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window
 
 // Highlight search query matches in text
@@ -49,7 +57,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         part.match ? (
-          <mark key={i} className="bg-primary-200 dark:bg-primary-800/40 text-inherit rounded-sm px-0.5">
+          <mark key={i} className="bg-yellow-300/80 dark:bg-yellow-500/40 text-inherit rounded-sm px-0.5 ring-1 ring-yellow-400/50 dark:ring-yellow-500/30">
             {part.text}
           </mark>
         ) : (
@@ -65,26 +73,31 @@ interface MemoCardProps {
   viewMode?: 'list' | 'grid'
 }
 
-export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
+export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const folders = useFolderStore((s) => s.folders)
+  // PERF-02: Subscribe only to the needed folder, not entire array
+  const folder = useFolderStore(
+    useCallback(
+      (s) => memo.folderId != null ? s.folders.find((f) => f.id === memo.folderId) ?? null : null,
+      [memo.folderId]
+    )
+  )
   const isSelectionMode = useUIStore((s) => s.isSelectionMode)
   const selectedMemoIds = useUIStore((s) => s.selectedMemoIds)
   const toggleMemoSelection = useUIStore((s) => s.toggleMemoSelection)
   const searchQuery = useUIStore((s) => s.searchQuery)
+  const setActiveTag = useUIStore((s) => s.setActiveTag)
+  const defaultColor = useSettingsStore((s) => s.settings.memoSettings.defaultColor)
   const toggleStar = useMemoStore((s) => s.toggleStar)
   const softDelete = useMemoStore((s) => s.softDelete)
   const pushUndo = useUndoStore((s) => s.pushUndo)
-
-  const folder = memo.folderId != null
-    ? folders.find((f) => f.id === memo.folderId)
-    : null
 
   const isSelected = selectedMemoIds.includes(memo.id!)
   const isActive = location.pathname === `/memo/${memo.id}`
   const isGrid = viewMode === 'grid'
   const [starPulse, setStarPulse] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Swipe gesture state
   const [swipeX, setSwipeX] = useState(0)
@@ -93,28 +106,64 @@ export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
   const touchStartY = useRef(0)
   const cardRef = useRef<HTMLButtonElement>(null)
 
+  // Long-press state
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLongPressed = useRef(false)
+  const [isLongPressing, setIsLongPressing] = useState(false)
+
   // Track star changes for pulse animation
-  const prevStarred = useState(memo.isStarred)[0]
+  const prevStarredRef = useRef(memo.isStarred)
   useEffect(() => {
-    if (memo.isStarred !== prevStarred) {
+    if (memo.isStarred !== prevStarredRef.current) {
       setStarPulse(true)
       const t = setTimeout(() => setStarPulse(false), 400)
+      prevStarredRef.current = memo.isStarred
       return () => clearTimeout(t)
     }
-  }, [memo.isStarred, prevStarred])
+  }, [memo.isStarred])
+
+  const enterSelectionMode = useUIStore((s) => s.enterSelectionMode)
 
   // Touch gesture handlers (mobile only)
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!isTouchDevice || isSelectionMode) return
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
+    isLongPressed.current = false
     setIsSwiping(false)
-  }, [isSelectionMode])
+
+    // Visual feedback timer (150ms)
+    longPressFeedbackTimer.current = setTimeout(() => setIsLongPressing(true), 150)
+
+    // Long-press: enter selection mode (Gmail pattern)
+    longPressTimer.current = setTimeout(() => {
+      if (memo.id) {
+        enterSelectionMode(memo.id)
+        navigator.vibrate?.(30)
+        isLongPressed.current = true
+        setIsLongPressing(false)
+      }
+    }, LONG_PRESS_DURATION)
+  }, [isSelectionMode, memo.id, enterSelectionMode])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isTouchDevice || isSelectionMode) return
     const dx = e.touches[0].clientX - touchStartX.current
     const dy = e.touches[0].clientY - touchStartY.current
+
+    // Cancel long-press on any movement (5px threshold)
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current)
+        longPressTimer.current = null
+      }
+      if (longPressFeedbackTimer.current) {
+        clearTimeout(longPressFeedbackTimer.current)
+        longPressFeedbackTimer.current = null
+      }
+      setIsLongPressing(false)
+    }
 
     // Only swipe if horizontal movement > vertical
     if (!isSwiping && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
@@ -129,23 +178,40 @@ export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
   const handleTouchEnd = useCallback(async () => {
     if (!isTouchDevice || isSelectionMode) return
 
-    if (swipeX > SWIPE_THRESHOLD && memo.id) {
+    // Cancel long-press timer
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+    if (longPressFeedbackTimer.current) {
+      clearTimeout(longPressFeedbackTimer.current)
+      longPressFeedbackTimer.current = null
+    }
+    setIsLongPressing(false)
+
+    const threshold = getSwipeThreshold()
+    if (swipeX > threshold && memo.id) {
       // Right swipe → toggle star
       toggleStar(memo.id)
-    } else if (swipeX < -SWIPE_THRESHOLD && memo.id) {
-      // Left swipe → delete
-      const deleted = await softDelete(memo.id)
-      if (deleted) {
-        pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
-      }
+    } else if (swipeX < -threshold && memo.id) {
+      // Left swipe → delete with shrink animation
+      setIsDeleting(true)
+      setTimeout(async () => {
+        const deleted = await softDelete(memo.id!)
+        if (deleted) {
+          pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
+        }
+      }, 300)
     }
 
     setSwipeX(0)
     setIsSwiping(false)
+    // Reset long-press flag after a tick to prevent click
+    setTimeout(() => { isLongPressed.current = false }, 0)
   }, [swipeX, memo.id, isSelectionMode, toggleStar, softDelete, pushUndo])
 
   const handleClick = () => {
-    if (isSwiping) return
+    if (isSwiping || isLongPressed.current) return
     if (isSelectionMode) {
       toggleMemoSelection(memo.id!)
     } else {
@@ -153,29 +219,56 @@ export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
     }
   }
 
-  const bodyText = memo.body.replace(/!\[.*?\]\(memo-image:\d+\)/g, '[이미지]')
+  // SEC-01 + UX-13: mask sensitive data and strip markdown for preview
+  const bodyText = stripMarkdown(
+    maskSensitiveData(memo.body.replace(/!\[.*?\]\(memo-image:\d+\)/g, '[이미지]'))
+  )
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
-      {/* Swipe action backgrounds */}
-      {isTouchDevice && !isSelectionMode && (
-        <>
-          {/* Right swipe: star */}
-          <div className={clsx(
-            'absolute inset-0 flex items-center pl-5 rounded-2xl bg-amber-500 transition-opacity',
-            swipeX > 20 ? 'opacity-100' : 'opacity-0'
-          )}>
-            <Star className="h-5 w-5 text-white fill-white" />
-          </div>
-          {/* Left swipe: delete */}
-          <div className={clsx(
-            'absolute inset-0 flex items-center justify-end pr-5 rounded-2xl bg-red-500 transition-opacity',
-            swipeX < -20 ? 'opacity-100' : 'opacity-0'
-          )}>
-            <Trash2 className="h-5 w-5 text-white" />
-          </div>
-        </>
-      )}
+    <div className={clsx('relative overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}>
+      {/* Swipe action backgrounds with progressive visual feedback */}
+      {isTouchDevice && !isSelectionMode && (() => {
+        const swipeProgress = Math.min(Math.abs(swipeX) / getSwipeThreshold(), 1)
+        const iconScale = 0.8 + swipeProgress * 0.6
+        return (
+          <>
+            {/* Right swipe: star */}
+            <div
+              className={clsx(
+                'absolute inset-0 flex items-center pl-5 rounded-2xl transition-opacity',
+                swipeX > 20 ? 'opacity-100' : 'opacity-0'
+              )}
+              style={{
+                background: swipeX > 0
+                  ? `linear-gradient(90deg, oklch(0.78 0.18 70 / ${swipeProgress * 0.9}), transparent 80%)`
+                  : undefined,
+              }}
+            >
+              <Star
+                className="text-white fill-white transition-transform"
+                style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
+              />
+            </div>
+            {/* Left swipe: delete */}
+            <div
+              className={clsx(
+                'absolute inset-0 flex items-center justify-end pr-5 rounded-2xl transition-opacity',
+                swipeX < -20 ? 'opacity-100' : 'opacity-0'
+              )}
+              style={{
+                background: swipeX < 0
+                  ? `linear-gradient(270deg, oklch(0.58 0.22 25 / ${swipeProgress * 0.9}), transparent 80%)`
+                  : undefined,
+              }}
+            >
+              <Trash2
+                className="text-white transition-transform"
+                style={{ width: 20, height: 20, transform: `scale(${swipeX < 0 ? iconScale : 1})` }}
+              />
+            </div>
+          </>
+        )
+      })()}
 
       <button
         ref={cardRef}
@@ -184,20 +277,23 @@ export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className={clsx(
-          'memo-card relative flex w-full overflow-hidden rounded-2xl text-left shadow-sm transition-all duration-200',
-          MEMO_CARD_BG[memo.color] || 'bg-white dark:bg-zinc-800',
+          'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left shadow-sm transition-all duration-200',
+          MEMO_CARD_BG[memo.color] || MEMO_CARD_BG[defaultColor] || 'bg-white dark:bg-zinc-800',
           isSelectionMode && 'hover:bg-zinc-50 dark:hover:bg-zinc-750',
           !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]',
+          isLongPressing && 'scale-[0.97] bg-zinc-100 dark:bg-zinc-700/50',
           isSelected && 'ring-2 ring-primary-500',
-          isActive && 'lg:ring-2 lg:ring-primary-500 lg:bg-primary-50 lg:dark:bg-primary-900/20',
+          // UX-07: stronger active highlight
+          isActive && 'lg:ring-1 lg:ring-primary-300 lg:dark:ring-primary-700 lg:bg-primary-50/50 lg:dark:bg-primary-900/10',
           isGrid ? 'flex-col' : 'flex-row gap-0'
         )}
+        onContextMenu={(e) => e.preventDefault()}
         style={{
           transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined,
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
         }}
       >
-        {/* Color bar: top for grid, left for list */}
+        {/* UX-14: Color bar — folder color */}
         {folder && (
           <div
             className={clsx(
@@ -224,12 +320,16 @@ export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
                 )}
               />
             )}
-            <h3 className={clsx(
+            {/* A11Y-03: span instead of h3 inside button */}
+            <span className={clsx(
               'flex-1 font-bold text-zinc-900 dark:text-zinc-100',
-              isGrid ? 'text-xs line-clamp-2' : 'text-sm truncate'
+              isGrid ? 'text-xs line-clamp-2' : 'text-sm fold:text-xs truncate'
             )}>
               <HighlightText text={memo.title || '제목 없음'} query={searchQuery} />
-            </h3>
+            </span>
+            {memo.isPinned && (
+              <Pin className="h-3.5 w-3.5 shrink-0 text-primary-500 rotate-[-30deg]" />
+            )}
             {memo.isStarred && (
               <Star className={clsx('h-4 w-4 shrink-0 fill-primary-500 text-primary-500', starPulse && 'animate-star-pulse')} />
             )}
@@ -239,10 +339,35 @@ export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
           {memo.body && (
             <p className={clsx(
               'text-xs leading-relaxed text-zinc-500 dark:text-zinc-400',
-              isGrid ? 'line-clamp-3' : 'line-clamp-2'
+              isGrid ? 'line-clamp-3' : 'line-clamp-2 fold:line-clamp-1'
             )}>
               <HighlightText text={bodyText} query={searchQuery} />
             </p>
+          )}
+
+          {/* Tags */}
+          {memo.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              {memo.tags.slice(0, isGrid ? 2 : 3).map((tag) => (
+                <span
+                  key={tag}
+                  role="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setActiveTag(tag)
+                    navigate('/memos')
+                  }}
+                  className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800/50 transition-colors cursor-pointer"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {memo.tags.length > (isGrid ? 2 : 3) && (
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                  +{memo.tags.length - (isGrid ? 2 : 3)}
+                </span>
+              )}
+            </div>
           )}
 
           {/* Footer */}
@@ -257,15 +382,9 @@ export function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
               </>
             )}
             <span className="shrink-0">{formatMemoDate(memo.updatedAt)}</span>
-            {memo.isPinned && (
-              <>
-                <span>·</span>
-                <span className="shrink-0 text-primary-500">고정됨</span>
-              </>
-            )}
           </div>
         </div>
       </button>
     </div>
   )
-}
+})

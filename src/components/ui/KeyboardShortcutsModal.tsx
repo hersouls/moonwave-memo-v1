@@ -23,12 +23,6 @@ const SHORTCUT_GROUPS = [
       { keys: ['Tab'], desc: 'AI 자동완성 수락' },
     ],
   },
-  {
-    title: '보기',
-    shortcuts: [
-      { keys: ['Ctrl', 'K'], desc: '명령 팔레트 열기/닫기' },
-    ],
-  },
 ]
 
 export function KeyboardShortcutsModal() {
@@ -38,11 +32,11 @@ export function KeyboardShortcutsModal() {
   if (!isOpen) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="keyboard-shortcuts-title">
       <div className="absolute inset-0 bg-black/50" onClick={close} />
       <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">키보드 단축키</h2>
+          <h2 id="keyboard-shortcuts-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100">키보드 단축키</h2>
           <button
             onClick={close}
             className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -51,7 +45,7 @@ export function KeyboardShortcutsModal() {
           </button>
         </div>
 
-        <div className="px-5 py-4 space-y-5 max-h-[60vh] overflow-y-auto">
+        <div className="px-5 py-4 space-y-5 max-h-[60vh] fold:max-h-[50vh] overflow-y-auto">
           {SHORTCUT_GROUPS.map((group) => (
             <div key={group.title}>
               <h3 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mb-2">

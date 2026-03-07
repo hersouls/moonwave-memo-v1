@@ -1,10 +1,13 @@
-import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History } from 'lucide-react'
+import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download } from 'lucide-react'
 import { useState } from 'react'
+import clsx from 'clsx'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
+import { MEMO_COLORS } from '@/utils/constants'
+import type { MemoColor } from '@/lib/types'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified'
 
@@ -15,10 +18,16 @@ interface EditorHeaderProps {
   onOpenVersionHistory?: () => void
   memoId?: number
   saveStatus?: SaveStatus
+  title?: string
+  body?: string
+  isPinned?: boolean
+  memoColor?: MemoColor
+  onColorChange?: (color: MemoColor) => void
 }
 
-export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus }: EditorHeaderProps) {
+export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, isPinned, memoColor, onColorChange }: EditorHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [showColorPicker, setShowColorPicker] = useState(false)
   const softDelete = useMemoStore((s) => s.softDelete)
   const pushUndo = useUndoStore((s) => s.pushUndo)
   const openFolderSelect = useUIStore((s) => s.openFolderSelect)
@@ -42,28 +51,56 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
     setIsMenuOpen(false)
   }
 
+  // UX-19: pin/unpin
+  const togglePin = useMemoStore((s) => s.togglePin)
+
+  // UX-17: share with actual memo title/body
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Memo', text: 'Check this memo' })
+        await navigator.share({
+          title: title || 'Memo',
+          text: body ? body.slice(0, 200) : '',
+        })
       } catch { /* user cancelled */ }
     }
     setIsMenuOpen(false)
   }
 
+  const handleTogglePin = () => {
+    if (!memoId) return
+    togglePin(memoId)
+    setIsMenuOpen(false)
+  }
+
+  const handleExportMarkdown = () => {
+    if (!title && !body) return
+    const content = `# ${title || '제목 없음'}\n\n${body || ''}`
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${title || 'memo'}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+    setIsMenuOpen(false)
+  }
+
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-900 sticky top-0 z-10">
+    // UX-21: bg-zinc-50 matches app background
+    <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10">
       <div className="flex items-center gap-2">
+        {/* Mobile: back arrow */}
         <button
           onClick={onBack}
-          className="p-2 -ml-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="lg:hidden p-2 -ml-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           aria-label="뒤로가기"
         >
           <ArrowLeft className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
         </button>
 
         {saveStatus && saveStatus !== 'idle' && (
-          <span className="flex items-center gap-1.5 transition-opacity duration-200">
+          <span className="flex items-center gap-1.5 transition-opacity duration-200" aria-live="polite" role="status">
             {saveStatus === 'saving' && (
               <>
                 <svg className="h-4 w-4 animate-progress-spin text-primary-500" viewBox="0 0 16 16" fill="none">
@@ -74,7 +111,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
               </>
             )}
             {saveStatus === 'saved' && (
-              <>
+              <span className="animate-save-fadeout flex items-center gap-1.5">
                 <svg className="h-4 w-4 text-success-500" viewBox="0 0 16 16" fill="none">
                   <path
                     d="M3 8.5l3.5 3.5L13 5"
@@ -87,7 +124,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   />
                 </svg>
                 <span className="text-xs font-medium text-success-500">저장됨</span>
-              </>
+              </span>
             )}
             {saveStatus === 'modified' && (
               <span className="flex items-center gap-1">
@@ -100,6 +137,15 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
       </div>
 
       <div className="flex items-center gap-1">
+        {/* Desktop: close button (modal) */}
+        <button
+          onClick={onBack}
+          className="hidden lg:block p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label="닫기"
+        >
+          <X className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+        </button>
+
         {/* Split/Tab toggle — desktop only */}
         <button
           onClick={() => setEditorMode(editorMode === 'split' ? 'tabs' : 'split')}
@@ -113,6 +159,41 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
             <Columns2 className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
           )}
         </button>
+
+        {/* Memo color selector */}
+        {onColorChange && (
+          <div className="relative">
+            <button
+              onClick={() => setShowColorPicker(!showColorPicker)}
+              className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              aria-label="메모 색상 변경"
+            >
+              <span
+                className="block w-4 h-4 rounded-full ring-1 ring-zinc-300 dark:ring-zinc-600"
+                style={{ backgroundColor: MEMO_COLORS[memoColor || 'white'] }}
+              />
+            </button>
+            {showColorPicker && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setShowColorPicker(false)} />
+                <div className="absolute right-0 top-full mt-1 flex gap-1.5 p-2.5 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 z-30">
+                  {(Object.keys(MEMO_COLORS) as MemoColor[]).map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => { onColorChange(c); setShowColorPicker(false) }}
+                      className={clsx(
+                        'w-6 h-6 rounded-full transition-all',
+                        memoColor === c ? 'ring-2 ring-primary-500 scale-110' : 'ring-1 ring-zinc-200 dark:ring-zinc-600 hover:scale-105'
+                      )}
+                      style={{ backgroundColor: MEMO_COLORS[c] }}
+                      aria-label={`${c} 색상`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <button
           onClick={onToggleStar}
@@ -129,10 +210,13 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         </button>
 
         <div className="relative">
+          {/* A11Y-06: aria-haspopup + aria-expanded */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             aria-label="더보기"
+            aria-haspopup="menu"
+            aria-expanded={isMenuOpen}
           >
             <MoreVertical className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
           </button>
@@ -140,18 +224,32 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           {isMenuOpen && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setIsMenuOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-30 min-w-[160px]">
+              {/* A11Y-06: role="menu" + role="menuitem" */}
+              <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-30 min-w-[170px]" role="menu">
                 <button
                   onClick={() => { toggleFocusMode(); setIsMenuOpen(false) }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  role="menuitem"
                 >
                   <Maximize2 className="w-4 h-4" />
                   집중 모드
                 </button>
+                {/* UX-19: Pin/unpin toggle */}
+                {memoId && (
+                  <button
+                    onClick={handleTogglePin}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                    role="menuitem"
+                  >
+                    <Pin className="w-4 h-4" />
+                    {isPinned ? '고정 해제' : '상단 고정'}
+                  </button>
+                )}
                 {memoId && onOpenVersionHistory && (
                   <button
                     onClick={() => { onOpenVersionHistory(); setIsMenuOpen(false) }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                    role="menuitem"
                   >
                     <History className="w-4 h-4" />
                     버전 기록
@@ -160,6 +258,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 <button
                   onClick={handleMove}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  role="menuitem"
                 >
                   <FolderInput className="w-4 h-4" />
                   폴더 이동
@@ -167,13 +266,23 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 <button
                   onClick={handleShare}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  role="menuitem"
                 >
                   <Share2 className="w-4 h-4" />
                   공유
                 </button>
                 <button
+                  onClick={handleExportMarkdown}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                  role="menuitem"
+                >
+                  <Download className="w-4 h-4" />
+                  마크다운 내보내기
+                </button>
+                <button
                   onClick={handleDelete}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-50 dark:hover:bg-zinc-700"
+                  role="menuitem"
                 >
                   <Trash2 className="w-4 h-4" />
                   삭제

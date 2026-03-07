@@ -48,12 +48,6 @@ function WaveformAnimation() {
           }}
         />
       ))}
-      <style>{`
-        @keyframes waveform {
-          0%, 100% { height: 8px; }
-          50% { height: 32px; }
-        }
-      `}</style>
     </div>
   )
 }
@@ -68,7 +62,7 @@ function AudioLevelBars({ level }: { level: number }) {
         return (
           <div
             key={i}
-            className="w-1 rounded-full bg-red-400 dark:bg-red-500 transition-all duration-75"
+            className="w-1 rounded-full bg-danger-400 dark:bg-danger-500 transition-all duration-75"
             style={{ height: `${Math.max(4, barLevel * 32)}px` }}
           />
         )
@@ -202,7 +196,7 @@ function StepFileSelect({
 
           {/* File error */}
           {fileError && (
-            <p className="text-xs text-red-500 dark:text-red-400 px-1">{fileError}</p>
+            <p className="text-xs text-danger-500 dark:text-danger-400 px-1">{fileError}</p>
           )}
 
           {/* Selected file */}
@@ -238,7 +232,7 @@ function StepFileSelect({
         /* Record tab */
         <div className="flex flex-col items-center gap-4 py-4">
           {recorder.error && (
-            <div className="w-full p-3 rounded-lg bg-red-50 dark:bg-red-900/10 text-xs text-red-600 dark:text-red-400">
+            <div className="w-full p-3 rounded-lg bg-danger-50 dark:bg-danger-900/10 text-xs text-danger-600 dark:text-danger-400">
               {recorder.error}
             </div>
           )}
@@ -248,7 +242,7 @@ function StepFileSelect({
             {recorder.status === 'recording' || recorder.status === 'paused' ? (
               <span className="flex items-center gap-2">
                 {recorder.status === 'recording' && (
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-danger-500 animate-pulse" />
                 )}
                 {formatDuration(recorder.duration)}
               </span>
@@ -267,7 +261,7 @@ function StepFileSelect({
             <div className="w-full max-w-[200px]">
               <div className="h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-red-400 transition-all duration-1000"
+                  className="h-full bg-danger-400 transition-all duration-1000"
                   style={{ width: `${(recorder.duration / 600) * 100}%` }}
                 />
               </div>
@@ -280,7 +274,7 @@ function StepFileSelect({
             {recorder.status === 'idle' || recorder.status === 'error' ? (
               <button
                 onClick={recorder.start}
-                className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+                className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
                 aria-label="녹음 시작"
               >
                 <Mic className="w-7 h-7" />
@@ -303,7 +297,7 @@ function StepFileSelect({
                 {/* Stop */}
                 <button
                   onClick={handleRecordStop}
-                  className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+                  className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
                   aria-label="녹음 중지"
                 >
                   <Square className="w-6 h-6 fill-current" />
@@ -535,7 +529,7 @@ export function VoiceUploadModal() {
 
   return (
     <Dialog open={isOpen} onClose={step === 2 ? () => {} : closeModal} size="lg" noPadding>
-      <div className="flex flex-col max-h-[85dvh]">
+      <div className="flex flex-col max-h-[85dvh] fold:max-h-[70dvh]">
         <DialogHeader
           title={stepTitles[step]}
           onClose={step === 2 ? undefined : closeModal}

@@ -1,12 +1,8 @@
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import { Fragment, useState, useEffect } from 'react'
 import { useFolderStore } from '@/stores/folderStore'
+import { FOLDER_COLORS } from '@/utils/constants'
 import type { Folder } from '@/lib/types'
-
-const FOLDER_COLORS = [
-  '#F59E0B', '#84CC16', '#22C55E', '#06B6D4',
-  '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444',
-]
 
 interface FolderEditModalProps {
   isOpen: boolean
@@ -16,7 +12,7 @@ interface FolderEditModalProps {
 
 export function FolderEditModal({ isOpen, onClose, folder }: FolderEditModalProps) {
   const [name, setName] = useState('')
-  const [color, setColor] = useState(FOLDER_COLORS[0])
+  const [color, setColor] = useState<string>(FOLDER_COLORS[0])
   const updateFolder = useFolderStore((s) => s.updateFolder)
   const deleteFolder = useFolderStore((s) => s.deleteFolder)
 
@@ -33,9 +29,17 @@ export function FolderEditModal({ isOpen, onClose, folder }: FolderEditModalProp
     onClose()
   }
 
-  const handleDelete = async () => {
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+
+  const handleDelete = () => {
     if (!folder?.id || folder.isDefault || folder.isSystem) return
+    setIsDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!folder?.id) return
     await deleteFolder(folder.id)
+    setIsDeleteConfirmOpen(false)
     onClose()
   }
 
@@ -119,6 +123,33 @@ export function FolderEditModal({ isOpen, onClose, folder }: FolderEditModalProp
             </DialogPanel>
           </TransitionChild>
         </div>
+
+        {/* Delete confirmation dialog */}
+        {isDeleteConfirmOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/50" onClick={() => setIsDeleteConfirmOpen(false)} />
+            <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-w-xs w-full">
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">폴더 삭제</h3>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5">
+                &ldquo;{folder?.name}&rdquo; 폴더를 삭제하시겠습니까? 폴더 내 메모는 삭제되지 않습니다.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsDeleteConfirmOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 text-sm font-medium text-white bg-danger-500 rounded-lg hover:bg-danger-600"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Dialog>
     </Transition>
   )

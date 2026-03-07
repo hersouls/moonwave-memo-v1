@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom'
-import { Menu, Moon, Sun, Monitor, StickyNote, Settings } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { Menu, Moon, Sun, Monitor, StickyNote, Settings, LogOut, Cloud } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import type { ThemeMode } from '@/lib/types'
 import { useUIStore } from '@/stores/uiStore'
@@ -9,12 +10,37 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
 
 export function Header() {
+  const location = useLocation()
   const theme = useSettingsStore((state) => state.settings.theme)
   const setTheme = useSettingsStore((state) => state.setTheme)
   const openSettingsModal = useUIStore((state) => state.openSettingsModal)
   const openMobileMenu = useUIStore((state) => state.openMobileMenu)
   const user = useAuthStore((state) => state.user)
+  const syncStatus = useAuthStore((state) => state.syncStatus)
+  const logout = useAuthStore((state) => state.logout)
   const displayName = user?.displayName || useSettingsStore.getState().settings.userProfile.name
+  const isNarrowFold = useUIStore((state) => state.isNarrowFold)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+
+  // F-01: Auto-hide header on scroll for fold
+  const [headerHidden, setHeaderHidden] = useState(false)
+  const lastScrollY = useRef(0)
+  useEffect(() => {
+    if (!isNarrowFold) {
+      setHeaderHidden(false)
+      return
+    }
+    const handleScroll = () => {
+      const currentY = window.scrollY
+      setHeaderHidden(currentY > lastScrollY.current && currentY > 60)
+      lastScrollY.current = currentY
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [isNarrowFold])
+
+  // UX-08: hide header on desktop when viewing editor
+  const isEditorRoute = /^\/memo\/\d+$/.test(location.pathname) || location.pathname === '/memo/new'
 
   const cycleTheme = () => {
     const themeOrder: ThemeMode[] = ['light', 'dark', 'system']
@@ -40,8 +66,16 @@ export function Header() {
     system: '시스템 설정',
   }
 
+  // UX-10: tooltip shows current → next mode
+  const themeOrder: ThemeMode[] = ['light', 'dark', 'system']
+  const nextTheme = themeOrder[(themeOrder.indexOf(theme) + 1) % themeOrder.length]
+  const themeTooltip = `${themeLabels[theme]} → ${themeLabels[nextTheme]}`
+
+  const syncStatusLabel = syncStatus === 'syncing' ? '동기화 중...' : syncStatus === 'synced' ? '동기화 완료' : syncStatus === 'error' ? '동기화 오류' : '로컬 전용'
+
+  // UX-08: hide on desktop when in editor
   return (
-    <header className="sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800">
+    <header className={`sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ${isEditorRoute ? 'lg:hidden' : ''} ${headerHidden ? '-translate-y-full' : ''}`}>
       <nav className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left: Mobile menu + Logo */}
         <div className="flex items-center gap-3">
@@ -63,7 +97,7 @@ export function Header() {
 
         {/* Greeting */}
         {user && (
-          <p className="hidden sm:block text-sm text-zinc-600 dark:text-zinc-400 ml-4 truncate max-w-[200px]">
+          <p className="hidden sm:block fold:!hidden text-sm text-zinc-600 dark:text-zinc-400 ml-4 truncate max-w-[200px]">
             안녕하세요, <span className="font-semibold text-zinc-900 dark:text-zinc-100">{displayName}</span>님!
           </p>
         )}
@@ -74,13 +108,17 @@ export function Header() {
         {/* Right: Actions */}
         <div className="flex items-center gap-1">
           <ConnectionStatus />
-          {/* User avatar */}
+
+          {/* User avatar with dropdown */}
           {user && (
-            <Tooltip content={user.displayName || user.email} placement="bottom">
+            <div className="relative">
               <button
                 type="button"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className="mr-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                aria-label="프로필"
+                aria-label="프로필 메뉴"
+                aria-haspopup="menu"
+                aria-expanded={showProfileMenu}
               >
                 {user.photoURL ? (
                   <img
@@ -95,7 +133,43 @@ export function Header() {
                   </div>
                 )}
               </button>
-            </Tooltip>
+
+              {showProfileMenu && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowProfileMenu(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-30" role="menu">
+                    {/* User info */}
+                    <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user.displayName || '사용자'}</p>
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{user.email}</p>
+                    </div>
+                    {/* Sync status */}
+                    <div className="px-4 py-2.5 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <Cloud className="w-3.5 h-3.5" />
+                      {syncStatusLabel}
+                    </div>
+                    {/* Settings */}
+                    <button
+                      onClick={() => { openSettingsModal(); setShowProfileMenu(false) }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                      role="menuitem"
+                    >
+                      <Settings className="w-4 h-4" />
+                      설정
+                    </button>
+                    {/* Logout */}
+                    <button
+                      onClick={() => { logout(); setShowProfileMenu(false) }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-50 dark:hover:bg-zinc-700"
+                      role="menuitem"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      로그아웃
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           {/* Settings button */}
@@ -111,7 +185,7 @@ export function Header() {
           </Tooltip>
 
           {/* Theme toggle */}
-          <Tooltip content={themeLabels[theme]} placement="bottom">
+          <Tooltip content={themeTooltip} placement="bottom">
             <IconButton
               plain
               color="secondary"

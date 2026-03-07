@@ -1,3 +1,5 @@
+import { auth, callable } from '@/lib/firebase'
+
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg']
 const ALLOWED_MIME_PREFIXES = ['audio/', 'video/mp4']
@@ -22,6 +24,12 @@ interface ValidationResult {
   valid: boolean
   error?: string
 }
+
+// B-03: Cloud Functions callable
+const speechToTextFn = callable<
+  { audioBase64: string; fileName: string; language: string },
+  STTResult
+>('speechToText')
 
 // ─── File Validation ──────────────────────────────
 export function validateAudioFile(file: File): ValidationResult {
@@ -55,13 +63,53 @@ export function validateAudioFile(file: File): ValidationResult {
   return { valid: true }
 }
 
-// ─── Transcription ────────────────────────────────
+// ─── Helper: File → base64 ───────────────────────
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      // Strip the data URL prefix to get pure base64
+      const base64 = dataUrl.split(',')[1]
+      resolve(base64)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+// ─── Cloud Functions proxy ────────────────────────
+async function transcribeViaProxy(
+  file: File,
+  language: string
+): Promise<STTResult | null> {
+  if (!auth.currentUser) return null
+
+  try {
+    const audioBase64 = await fileToBase64(file)
+    const result = await speechToTextFn({
+      audioBase64,
+      fileName: file.name,
+      language,
+    })
+    return result.data
+  } catch {
+    return null
+  }
+}
+
+// ─── Transcription: proxy first, then direct fallback ──
 export async function transcribeAudio(
   file: File,
   apiKey: string,
   language: string,
   signal?: AbortSignal
 ): Promise<STTResult> {
+  // Try Cloud Functions proxy first (secure)
+  const proxyResult = await transcribeViaProxy(file, language)
+  if (proxyResult) return proxyResult
+
+  // Fallback to direct API call with user-provided key
   const formData = new FormData()
   formData.append('file', file)
   formData.append('model', 'whisper-1')

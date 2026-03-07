@@ -43,6 +43,7 @@ class MemoDatabase extends Dexie {
           isSystem: f.isSystem,
           syncId: generateSyncId(),
           createdAt: now,
+          updatedAt: now,
         })
       })
     })
@@ -161,6 +162,7 @@ export async function addFolder(folder: Omit<Folder, 'id'>): Promise<number> {
     syncId: folder.syncId || generateSyncId(),
     sortOrder: folder.sortOrder ?? count,
     createdAt: folder.createdAt || now,
+    updatedAt: folder.updatedAt || now,
   } as Folder) as unknown as number
 }
 

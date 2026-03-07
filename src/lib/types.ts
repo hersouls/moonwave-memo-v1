@@ -173,6 +173,8 @@ export interface BackupFile {
   data: {
     memos: Memo[]
     folders: Folder[]
+    memoImages?: MemoImage[]
+    memoVersions?: MemoVersion[]
     settings: Partial<Settings>
   }
 }

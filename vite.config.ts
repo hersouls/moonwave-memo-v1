@@ -47,7 +47,7 @@ export default defineConfig({
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           'vendor-ui': ['lucide-react', '@headlessui/react'],
           'vendor-data': ['zustand', 'dexie', 'dexie-react-hooks', 'date-fns'],
-          'vendor-markdown': ['react-markdown', 'remark-gfm', 'remark-breaks', 'rehype-raw', 'rehype-highlight'],
+          'vendor-markdown': ['react-markdown', 'remark-gfm', 'remark-breaks', 'rehype-raw'],
         },
       },
     },

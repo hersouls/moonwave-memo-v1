@@ -3,6 +3,9 @@
 /* Enable class-based dark mode for Tailwind CSS 4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* F-09: Galaxy Fold narrow screen detection variant */
+@custom-variant fold (&:where([data-narrow-fold], [data-narrow-fold] *));
+
 @theme {
   /* Primary Colors */
   --color-primary-50: oklch(0.97 0.02 250);
@@ -17,16 +20,40 @@
   --color-primary-900: oklch(0.27 0.09 250);
 
   --color-success-50: oklch(0.97 0.03 145);
+  --color-success-100: oklch(0.93 0.05 145);
+  --color-success-200: oklch(0.86 0.08 145);
+  --color-success-300: oklch(0.76 0.12 145);
+  --color-success-400: oklch(0.68 0.15 145);
   --color-success-500: oklch(0.62 0.18 145);
   --color-success-600: oklch(0.52 0.16 145);
+  --color-success-700: oklch(0.44 0.14 145);
+  --color-success-800: oklch(0.36 0.11 145);
+  --color-success-900: oklch(0.28 0.08 145);
+  --color-success-950: oklch(0.18 0.05 145);
 
   --color-warning-50: oklch(0.98 0.04 85);
+  --color-warning-100: oklch(0.93 0.06 80);
+  --color-warning-200: oklch(0.86 0.10 75);
+  --color-warning-300: oklch(0.80 0.14 72);
+  --color-warning-400: oklch(0.78 0.16 70);
   --color-warning-500: oklch(0.75 0.18 70);
   --color-warning-600: oklch(0.65 0.18 55);
+  --color-warning-700: oklch(0.55 0.16 50);
+  --color-warning-800: oklch(0.45 0.13 45);
+  --color-warning-900: oklch(0.35 0.10 40);
+  --color-warning-950: oklch(0.22 0.06 40);
 
   --color-danger-50: oklch(0.97 0.02 25);
+  --color-danger-100: oklch(0.93 0.04 25);
+  --color-danger-200: oklch(0.86 0.08 25);
+  --color-danger-300: oklch(0.76 0.14 25);
+  --color-danger-400: oklch(0.68 0.18 25);
   --color-danger-500: oklch(0.58 0.22 25);
   --color-danger-600: oklch(0.50 0.20 25);
+  --color-danger-700: oklch(0.42 0.18 25);
+  --color-danger-800: oklch(0.35 0.14 25);
+  --color-danger-900: oklch(0.28 0.10 25);
+  --color-danger-950: oklch(0.18 0.06 25);
 
   /* Fonts */
   --font-sans: var(--memo-font-family, 'Pretendard'), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -84,56 +111,57 @@ html {
    Color Palettes (Light Mode Only)
    ======================================== */
 
+/* TECH-04: Light mode palettes unified to oklch (matching dark mode system) */
 html:not(.dark)[data-palette="ocean"] {
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
+  --color-primary-50: oklch(0.97 0.02 250);
+  --color-primary-100: oklch(0.93 0.04 250);
+  --color-primary-200: oklch(0.86 0.08 250);
+  --color-primary-300: oklch(0.76 0.12 250);
+  --color-primary-400: oklch(0.64 0.16 250);
+  --color-primary-500: oklch(0.55 0.18 250);
+  --color-primary-600: oklch(0.48 0.18 250);
+  --color-primary-700: oklch(0.40 0.15 250);
+  --color-primary-800: oklch(0.33 0.12 250);
+  --color-primary-900: oklch(0.27 0.09 250);
 }
 
 html:not(.dark)[data-palette="rose"] {
-  --color-primary-50: #fdf2f8;
-  --color-primary-100: #fce7f3;
-  --color-primary-200: #fbcfe8;
-  --color-primary-300: #f9a8d4;
-  --color-primary-400: #f472b6;
-  --color-primary-500: #ec4899;
-  --color-primary-600: #db2777;
-  --color-primary-700: #be185d;
-  --color-primary-800: #9d174d;
-  --color-primary-900: #831843;
+  --color-primary-50: oklch(0.97 0.02 350);
+  --color-primary-100: oklch(0.93 0.04 350);
+  --color-primary-200: oklch(0.86 0.08 350);
+  --color-primary-300: oklch(0.76 0.14 350);
+  --color-primary-400: oklch(0.64 0.18 350);
+  --color-primary-500: oklch(0.55 0.20 350);
+  --color-primary-600: oklch(0.48 0.20 350);
+  --color-primary-700: oklch(0.40 0.16 350);
+  --color-primary-800: oklch(0.33 0.12 350);
+  --color-primary-900: oklch(0.27 0.08 350);
 }
 
 html:not(.dark)[data-palette="purple"] {
-  --color-primary-50: #faf5ff;
-  --color-primary-100: #f3e8ff;
-  --color-primary-200: #e9d5ff;
-  --color-primary-300: #d8b4fe;
-  --color-primary-400: #c084fc;
-  --color-primary-500: #a855f7;
-  --color-primary-600: #9333ea;
-  --color-primary-700: #7c3aed;
-  --color-primary-800: #6b21a8;
-  --color-primary-900: #581c87;
+  --color-primary-50: oklch(0.97 0.02 300);
+  --color-primary-100: oklch(0.93 0.04 300);
+  --color-primary-200: oklch(0.86 0.08 300);
+  --color-primary-300: oklch(0.76 0.14 300);
+  --color-primary-400: oklch(0.64 0.18 300);
+  --color-primary-500: oklch(0.55 0.20 300);
+  --color-primary-600: oklch(0.48 0.20 300);
+  --color-primary-700: oklch(0.40 0.16 300);
+  --color-primary-800: oklch(0.33 0.12 300);
+  --color-primary-900: oklch(0.27 0.08 300);
 }
 
 html:not(.dark)[data-palette="forest"] {
-  --color-primary-50: #ecfdf5;
-  --color-primary-100: #d1fae5;
-  --color-primary-200: #a7f3d0;
-  --color-primary-300: #6ee7b7;
-  --color-primary-400: #34d399;
-  --color-primary-500: #10b981;
-  --color-primary-600: #059669;
-  --color-primary-700: #047857;
-  --color-primary-800: #065f46;
-  --color-primary-900: #064e3b;
+  --color-primary-50: oklch(0.97 0.03 160);
+  --color-primary-100: oklch(0.93 0.05 160);
+  --color-primary-200: oklch(0.86 0.08 160);
+  --color-primary-300: oklch(0.76 0.14 160);
+  --color-primary-400: oklch(0.64 0.18 160);
+  --color-primary-500: oklch(0.55 0.20 160);
+  --color-primary-600: oklch(0.48 0.18 160);
+  --color-primary-700: oklch(0.40 0.14 160);
+  --color-primary-800: oklch(0.33 0.10 160);
+  --color-primary-900: oklch(0.27 0.06 160);
 }
 
 /* ========================================
@@ -244,6 +272,25 @@ html.dark[data-palette="forest"] {
   to { opacity: 0; }
 }
 
+@keyframes fadeOutDelayed {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cardShrink {
+  to { opacity: 0; transform: scale(0.85); max-height: 0; margin: 0; padding: 0; }
+}
+
+@keyframes scanLine {
+  0%, 100% { top: 10%; }
+  50% { top: 85%; }
+}
+
+@keyframes waveform {
+  0%, 100% { height: 8px; }
+  50% { height: 32px; }
+}
+
 .animate-in {
   animation-fill-mode: both;
 }
@@ -284,6 +331,15 @@ html.dark[data-palette="forest"] {
   animation: progressSpin 1s linear infinite;
 }
 
+.animate-save-fadeout {
+  animation: fadeOutDelayed 2s ease-out forwards;
+}
+
+.animate-card-shrink {
+  animation: cardShrink 0.3s ease-in forwards;
+  overflow: hidden;
+}
+
 .slide-up {
   animation: slideUp 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -298,6 +354,48 @@ html.dark[data-palette="forest"] {
 
 .duration-300 {
   animation-duration: 300ms;
+}
+
+/* Wiggle animation for swipe onboarding hint */
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.6s ease-in-out 2;
+}
+
+/* Ripple touch feedback */
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* Page enter transition */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: pageEnter 200ms ease-out both;
+}
+
+/* Editor slide-in from right */
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 200ms ease-out both;
+}
+
+/* Tab indicator slide */
+@keyframes tabIndicatorSlide {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 /* ========================================
@@ -380,6 +478,14 @@ html.dark[data-palette="forest"] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* FAB desktop positioning override */
+@media (min-width: 768px) {
+  .fab-button {
+    bottom: 2rem !important;
+    right: 2rem;
+  }
+}
+
 /* ========================================
    View Transitions
    ======================================== */
@@ -406,3 +512,24 @@ html[data-high-contrast] .text-zinc-400 { color: oklch(0.45 0 0); }
 html[data-high-contrast] .text-zinc-500 { color: oklch(0.40 0 0); }
 html[data-high-contrast].dark .text-zinc-400 { color: oklch(0.65 0 0); }
 html[data-high-contrast].dark .text-zinc-500 { color: oklch(0.60 0 0); }
+
+/* ─── Galaxy Fold Narrow Screen Overrides ──────── */
+/* F-12: Slightly reduce font scale on fold front screen */
+[data-narrow-fold] {
+  --memo-font-scale: 0.95;
+}
+
+/* F-10: Ensure minimum touch target sizes on fold */
+[data-narrow-fold] button:not(.no-min-touch),
+[data-narrow-fold] a:not(.no-min-touch),
+[data-narrow-fold] [role="button"]:not(.no-min-touch) {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* F-11: Smooth transitions during fold/unfold */
+@media (prefers-reduced-motion: no-preference) {
+  [data-narrow-fold] {
+    --fold-transition: padding 200ms ease, gap 200ms ease;
+  }
+}

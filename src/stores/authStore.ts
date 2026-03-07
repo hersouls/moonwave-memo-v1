@@ -36,6 +36,8 @@ function toAuthUser(u: User): AuthUser {
   }
 }
 
+let unsubAuth: (() => void) | null = null
+
 export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   isLoading: false,
@@ -45,6 +47,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
   error: null,
 
   initialize: () => {
+    if (unsubAuth) {
+      unsubAuth()
+      unsubAuth = null
+    }
+
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) {
@@ -59,7 +66,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
         })
       })
 
-    onAuthStateChanged(auth, async (firebaseUser) => {
+    unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         set({ user: toAuthUser(firebaseUser), isLoading: false, isSigningIn: false, syncStatus: 'syncing' })
         try {

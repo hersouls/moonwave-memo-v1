@@ -1,9 +1,16 @@
 import { useSettingsStore } from '@/stores/settingsStore'
+import { auth, callable } from '@/lib/firebase'
 
 interface AIResponse {
   text: string
   error?: string
 }
+
+// B-03: Cloud Functions callable
+const aiChatFn = callable<
+  { prompt: string; systemPrompt: string; provider?: 'openai' | 'anthropic' },
+  { text: string }
+>('aiChat')
 
 function getApiKeys() {
   const ai = useSettingsStore.getState().settings.ai
@@ -12,6 +19,22 @@ function getApiKeys() {
     anthropicKey: ai.anthropicApiKey,
   }
 }
+
+// ─── Cloud Functions proxy ───────────────────────────
+
+async function callViaProxy(prompt: string, systemPrompt: string): Promise<AIResponse> {
+  if (!auth.currentUser) return { text: '', error: 'proxy-unavailable' }
+
+  try {
+    const result = await aiChatFn({ prompt, systemPrompt })
+    return { text: result.data.text }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Cloud Function 호출 실패'
+    return { text: '', error: message }
+  }
+}
+
+// ─── Direct API calls (fallback) ─────────────────────
 
 async function callOpenAI(prompt: string, systemPrompt: string): Promise<AIResponse> {
   const { openaiKey } = getApiKeys()
@@ -81,13 +104,24 @@ async function callAnthropic(prompt: string, systemPrompt: string): Promise<AIRe
   }
 }
 
-async function callAI(prompt: string, systemPrompt: string): Promise<AIResponse> {
-  const { openaiKey, anthropicKey } = getApiKeys()
+// ─── Unified AI call: proxy first, then direct fallback ──
 
-  // Prefer OpenAI, fallback to Anthropic
+async function callAI(prompt: string, systemPrompt: string): Promise<AIResponse> {
+  // Try Cloud Functions proxy first (secure, no client-side API keys)
+  const proxyResult = await callViaProxy(prompt, systemPrompt)
+  if (!proxyResult.error) return proxyResult
+
+  // Fallback to direct API calls with user-provided keys
+  const { openaiKey, anthropicKey } = getApiKeys()
   if (openaiKey) return callOpenAI(prompt, systemPrompt)
   if (anthropicKey) return callAnthropic(prompt, systemPrompt)
-  return { text: '', error: 'AI 서비스를 사용하려면 설정에서 API 키를 입력해 주세요.' }
+
+  // If proxy failed with a real error (not just unavailable), show it
+  if (proxyResult.error !== 'proxy-unavailable') {
+    return proxyResult
+  }
+
+  return { text: '', error: 'AI 서비스를 사용하려면 로그인하거나 설정에서 API 키를 입력해 주세요.' }
 }
 
 export async function suggestTags(content: string): Promise<{ tags: string[]; error?: string }> {

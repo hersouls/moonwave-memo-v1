@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions'
 
 const env = (key: string) => (import.meta.env[key] as string || '').trim()
 
@@ -16,3 +17,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const firestore = getFirestore(app)
+export const functions = getFunctions(app, 'asia-northeast3')
+
+// Connect to emulator in development
+if (import.meta.env.DEV && env('VITE_FIREBASE_FUNCTIONS_EMULATOR')) {
+  connectFunctionsEmulator(functions, 'localhost', 5001)
+}
+
+// B-03: Typed callable function helper
+export function callable<TData, TResult>(name: string) {
+  return httpsCallable<TData, TResult>(functions, name)
+}

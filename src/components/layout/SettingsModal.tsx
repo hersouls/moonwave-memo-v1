@@ -34,7 +34,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { COLOR_PALETTES, MEMO_COLORS } from '@/utils/constants'
+import { COLOR_PALETTES, FOLDER_COLORS, FONT_FAMILIES, FONT_SIZES, MEMO_COLORS } from '@/utils/constants'
 import {
   createBackup,
   downloadBackup,
@@ -60,21 +60,21 @@ function SyncStatusBadge({ status }: { status: SyncStatus }) {
   switch (status) {
     case 'syncing':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
           <Loader2 className="w-3 h-3 animate-spin" />
           동기화 중...
         </span>
       )
     case 'synced':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300">
           <Cloud className="w-3 h-3" />
           동기화됨
         </span>
       )
     case 'error':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
           <CloudOff className="w-3 h-3" />
           동기화 오류
         </span>
@@ -145,7 +145,7 @@ function CloudSyncSection() {
               <button
                 type="button"
                 onClick={logout}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-red-600 bg-zinc-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/20 transition-colors border border-zinc-200 dark:border-zinc-700 hover:border-red-200 dark:hover:border-red-800"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-danger-600 bg-zinc-50 hover:bg-danger-50 dark:bg-zinc-800 dark:hover:bg-danger-900/20 transition-colors border border-zinc-200 dark:border-zinc-700 hover:border-danger-200 dark:hover:border-danger-800"
               >
                 로그아웃
               </button>
@@ -201,7 +201,7 @@ function CloudSyncSection() {
               {isSigningIn ? '로그인 중...' : 'Google로 로그인'}
             </button>
             {authError && (
-              <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 p-3 rounded-lg mx-auto max-w-xs text-left">
+              <div className="flex items-start gap-2 text-xs text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/10 p-3 rounded-lg mx-auto max-w-xs text-left">
                 <CloudOff className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{authError}</span>
               </div>
@@ -279,6 +279,8 @@ export function SettingsModal() {
   const settings = useSettingsStore((s) => s.settings)
   const setTheme = useSettingsStore((s) => s.setTheme)
   const setColorPalette = useSettingsStore((s) => s.setColorPalette)
+  const setFontFamily = useSettingsStore((s) => s.setFontFamily)
+  const setFontSize = useSettingsStore((s) => s.setFontSize)
   const setDefaultColor = useSettingsStore((s) => s.setDefaultColor)
   const setDefaultFolder = useSettingsStore((s) => s.setDefaultFolder)
   const setInputStartPosition = useSettingsStore((s) => s.setInputStartPosition)
@@ -299,6 +301,8 @@ export function SettingsModal() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
   const [localTheme, setLocalTheme] = useState<ThemeMode>(settings.theme)
   const [localPalette, setLocalPalette] = useState<ColorPalette>(settings.colorPalette)
+  const [localFontFamily, setLocalFontFamily] = useState(settings.fontFamily)
+  const [localFontSize, setLocalFontSize] = useState(settings.fontSize)
 
   // PWA Install state
   const [canInstallPWA, setCanInstallPWA] = useState(false)
@@ -323,7 +327,6 @@ export function SettingsModal() {
   const [editFolderName, setEditFolderName] = useState('')
   const [editFolderColor, setEditFolderColor] = useState('')
 
-  const FOLDER_COLORS = ['#F59E0B', '#84CC16', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444']
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -589,14 +592,58 @@ export function SettingsModal() {
 
       <div className="border-t border-zinc-100 dark:border-zinc-800" />
 
-      {/* Font Settings (non-functional placeholder) */}
+      {/* Font Settings */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           글자 설정
         </h3>
-        <div className="w-full flex items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">글자 크기·글꼴</span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">추후 업데이트 예정</span>
+        <div className="space-y-4">
+          {/* Font Family */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {FONT_FAMILIES.map((font) => (
+              <button
+                key={font.id}
+                onClick={() => {
+                  setLocalFontFamily(font.id)
+                  setFontFamily(font.id)
+                }}
+                className={clsx(
+                  'px-3 py-3 rounded-xl border-2 text-sm transition-all text-center',
+                  localFontFamily === font.id
+                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
+                )}
+                style={{ fontFamily: font.fontFamily }}
+              >
+                {font.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Font Size */}
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 shrink-0 font-medium">크기</span>
+            <div className="flex-1 flex gap-1.5">
+              {FONT_SIZES.map((size) => (
+                <button
+                  key={size.id}
+                  onClick={() => {
+                    setLocalFontSize(size.id)
+                    setFontSize(size.id)
+                  }}
+                  className={clsx(
+                    'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
+                    localFontSize === size.id
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  )}
+                  title={size.label}
+                >
+                  {size.label.replace('매우 ', '')}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -657,7 +704,7 @@ export function SettingsModal() {
                     {user.email}
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400 text-xs font-medium">
                   <Check className="w-3 h-3" />
                   Google 계정 연동됨
                 </div>
@@ -743,12 +790,12 @@ export function SettingsModal() {
 
           {/* Restore Error */}
           {restoreError && (
-            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800">
-              <div className="flex items-center gap-2 text-red-700 dark:text-red-300 mb-1">
+            <div className="p-4 rounded-xl bg-danger-50 dark:bg-danger-900/30 border border-danger-200 dark:border-danger-800">
+              <div className="flex items-center gap-2 text-danger-700 dark:text-danger-300 mb-1">
                 <AlertTriangle className="w-4 h-4" />
                 <span className="text-sm font-semibold">복원 오류</span>
               </div>
-              <p className="text-xs text-red-600 dark:text-red-400 whitespace-pre-line pl-6">
+              <p className="text-xs text-danger-600 dark:text-danger-400 whitespace-pre-line pl-6">
                 {restoreError}
               </p>
             </div>
@@ -764,7 +811,7 @@ export function SettingsModal() {
       {/* Default Color */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          기본 메모 색상
+          메모장 배경색
         </h3>
         <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
           <div className="flex items-center gap-3">
@@ -1004,7 +1051,7 @@ export function SettingsModal() {
                   <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
                     {folder.name}
                   </span>
-                  {!folder.isDefault && (
+                  {!folder.isSystem && (
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => {
@@ -1022,7 +1069,7 @@ export function SettingsModal() {
                           deleteFolder(folder.id!)
                           showToast(`'${folder.name}' 폴더가 삭제되었습니다`, 'info')
                         }}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                         aria-label={`${folder.name} 삭제`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1097,6 +1144,7 @@ export function SettingsModal() {
           headers: {
             'x-api-key': key,
             'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true',
           },
         })
       } else {
@@ -1123,8 +1171,21 @@ export function SettingsModal() {
     { value: 'zh', label: '中文' },
   ]
 
-  const renderAISettings = () => (
+  const renderAISettings = () => {
+    const hasAnyKey = !!(localOpenAIKey.trim() || localAnthropicKey.trim())
+    return (
     <div className="space-y-8">
+      {/* AI status banner */}
+      {!hasAnyKey ? (
+        <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-sm text-blue-700 dark:text-blue-300">
+          AI 기능은 선택 사항입니다. API 키 없이도 메모의 모든 기본 기능을 사용할 수 있습니다.
+        </div>
+      ) : (
+        <div className="rounded-lg bg-success-50 dark:bg-success-900/20 p-3 text-sm text-success-700 dark:text-success-300">
+          AI 기능이 활성화되었습니다. 음성 입력, 이미지 OCR, 자동완성을 사용할 수 있습니다.
+        </div>
+      )}
+
       {/* OpenAI */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
@@ -1154,7 +1215,7 @@ export function SettingsModal() {
               </button>
             </div>
             {openAIKeySaved && localOpenAIKey.trim() && (
-              <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <p className="mt-1.5 text-xs text-success-600 dark:text-success-400 flex items-center gap-1">
                 <Check className="w-3 h-3" />
                 저장됨
               </p>
@@ -1206,7 +1267,7 @@ export function SettingsModal() {
               </button>
             </div>
             {anthropicKeySaved && localAnthropicKey.trim() && (
-              <p className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <p className="mt-1.5 text-xs text-success-600 dark:text-success-400 flex items-center gap-1">
                 <Check className="w-3 h-3" />
                 저장됨
               </p>
@@ -1291,7 +1352,7 @@ export function SettingsModal() {
         </div>
       </section>
     </div>
-  )
+  )}
 
   // ─── Tab Content: System ──────────────────────────
   const renderSystemSettings = () => (
@@ -1303,8 +1364,8 @@ export function SettingsModal() {
         </h3>
         <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
           {isInstalled ? (
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+            <div className="flex items-center gap-3 p-3 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-400 rounded-lg">
+              <div className="w-8 h-8 rounded-full bg-success-100 dark:bg-success-900/40 flex items-center justify-center">
                 <Smartphone className="w-4 h-4" />
               </div>
               <span className="text-sm font-medium">앱이 이미 설치되어 있습니다</span>
@@ -1378,15 +1439,15 @@ export function SettingsModal() {
 
       {/* Danger Zone */}
       <section>
-        <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-4 px-1">
+        <h3 className="text-sm font-semibold text-danger-600 dark:text-danger-400 mb-4 px-1">
           위험 영역
         </h3>
-        <div className="flex items-center justify-between p-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
+        <div className="flex items-center justify-between p-4 rounded-xl border border-danger-200 dark:border-danger-800 bg-danger-50 dark:bg-danger-900/10">
           <div className="space-y-0.5">
-            <div className="text-sm font-medium text-red-700 dark:text-red-300">
+            <div className="text-sm font-medium text-danger-700 dark:text-danger-300">
               모든 데이터 삭제
             </div>
-            <div className="text-xs text-red-600/80 dark:text-red-400/80">
+            <div className="text-xs text-danger-600/80 dark:text-danger-400/80">
               모든 메모와 설정이 삭제됩니다. 복구할 수 없습니다.
             </div>
           </div>
@@ -1435,7 +1496,7 @@ export function SettingsModal() {
   return (
     <>
       <Dialog open={isOpen} onClose={handleClose} size="4xl" noPadding>
-        <div className="flex flex-col h-[90dvh] sm:h-auto sm:max-h-[800px]">
+        <div className="flex flex-col h-[90dvh] fold:h-[75dvh] sm:h-auto sm:max-h-[800px]">
           {/* Header */}
           <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5 sm:pb-4">
             <DialogHeader title="설정" onClose={handleClose} />
