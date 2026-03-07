@@ -68,6 +68,31 @@ export interface GamificationState {
   badges: Badge[]
 }
 
+// ─── Living Workspace Types ───────────────────────
+export type WeatherCondition = 'clear' | 'rain' | 'snow' | 'overcast'
+export type ThemeSource = 'default' | 'environment' | 'special-event' | 'survival' | 'manual-override'
+
+export interface LivingWorkspaceSettings {
+  environmentThemeEnabled: boolean
+  survivalModeEnabled: boolean
+  completionEffectsEnabled: boolean
+  timeCapsuleEnabled: boolean
+  soundSyncEnabled: boolean
+  ambientImagesEnabled: boolean
+  worldBuildingEnabled: boolean
+}
+
+// ─── Ambient Image Types ─────────────────────────
+export interface AmbientImage {
+  id?: number
+  type: 'ambient' | 'world-building'
+  prompt: string
+  imageUrl: string        // base64 data URL
+  generatedAt: string
+  expiresAt: string
+  tags?: string[]         // for world-building: which tags drove this image
+}
+
 // ─── Settings Types ────────────────────────────────
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = 'pretendard' | 'nanum-square' | 'nanum-square-neo' | 'nanum-square-round' | 'nanum-barun-pen' | 'maruburi'
@@ -119,6 +144,7 @@ export interface Settings {
   ai: AISettings
   highContrastMode: boolean
   gamification: GamificationState
+  livingWorkspace: LivingWorkspaceSettings
 }
 
 // ─── Search Filter Types ──────────────────────────
@@ -175,6 +201,7 @@ export interface BackupFile {
     folders: Folder[]
     memoImages?: MemoImage[]
     memoVersions?: MemoVersion[]
+    ambientImages?: AmbientImage[]
     settings: Partial<Settings>
   }
 }

@@ -65,7 +65,7 @@ function evaluateCondition(condition: SmartFolderCondition, memo: Memo): boolean
       return false
     case 'createdAt': {
       if (condition.operator !== 'within') return false
-      const days = parseInt(String(condition.value))
+      const days = parseInt(String(condition.value), 10)
       if (isNaN(days)) return false
       const cutoff = new Date(Date.now() - days * 86400000)
       return new Date(memo.createdAt) >= cutoff

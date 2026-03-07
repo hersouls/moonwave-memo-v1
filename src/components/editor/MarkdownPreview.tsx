@@ -86,7 +86,7 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    })
+    }).catch(() => { /* clipboard access denied */ })
   }, [children])
 
   // Inline code (no language class)

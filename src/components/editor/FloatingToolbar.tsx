@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, type MutableRefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { Bold, Italic, Code, Link2 } from 'lucide-react'
 
@@ -11,6 +11,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
   const [visible, setVisible] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null) as MutableRefObject<ReturnType<typeof setTimeout> | null>
 
   const updatePosition = useCallback(() => {
     const textarea = textareaRef.current
@@ -44,7 +45,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
     const handleBlur = (e: FocusEvent) => {
       // Don't hide if clicking toolbar
       if (e.relatedTarget && toolbarRef.current?.contains(e.relatedTarget as Node)) return
-      setTimeout(() => setVisible(false), 150)
+      blurTimeoutRef.current = setTimeout(() => setVisible(false), 150)
     }
 
     const handleDocumentSelection = () => {
@@ -72,6 +73,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
       textarea.removeEventListener('touchend', handleSelect)
       textarea.removeEventListener('blur', handleBlur)
       document.removeEventListener('selectionchange', handleDocumentSelection)
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current)
     }
   }, [textareaRef, updatePosition])
 

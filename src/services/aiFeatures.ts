@@ -36,7 +36,7 @@ async function callViaProxy(prompt: string, systemPrompt: string): Promise<AIRes
 
 // ─── Direct API calls (fallback) ─────────────────────
 
-async function callOpenAI(prompt: string, systemPrompt: string): Promise<AIResponse> {
+async function callOpenAI(prompt: string, systemPrompt: string, maxTokens = 500): Promise<AIResponse> {
   const { openaiKey } = getApiKeys()
   if (!openaiKey) return { text: '', error: 'OpenAI API 키가 설정되지 않았습니다.' }
 
@@ -53,7 +53,7 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<AIRespo
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 500,
+        max_tokens: maxTokens,
         temperature: 0.3,
       }),
     })
@@ -70,7 +70,7 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<AIRespo
   }
 }
 
-async function callAnthropic(prompt: string, systemPrompt: string): Promise<AIResponse> {
+async function callAnthropic(prompt: string, systemPrompt: string, maxTokens = 500): Promise<AIResponse> {
   const { anthropicKey } = getApiKeys()
   if (!anthropicKey) return { text: '', error: 'Anthropic API 키가 설정되지 않았습니다.' }
 
@@ -85,7 +85,7 @@ async function callAnthropic(prompt: string, systemPrompt: string): Promise<AIRe
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 500,
+        max_tokens: maxTokens,
         system: systemPrompt,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -106,15 +106,15 @@ async function callAnthropic(prompt: string, systemPrompt: string): Promise<AIRe
 
 // ─── Unified AI call: proxy first, then direct fallback ──
 
-async function callAI(prompt: string, systemPrompt: string): Promise<AIResponse> {
+async function callAI(prompt: string, systemPrompt: string, maxTokens = 500): Promise<AIResponse> {
   // Try Cloud Functions proxy first (secure, no client-side API keys)
   const proxyResult = await callViaProxy(prompt, systemPrompt)
   if (!proxyResult.error) return proxyResult
 
   // Fallback to direct API calls with user-provided keys
   const { openaiKey, anthropicKey } = getApiKeys()
-  if (openaiKey) return callOpenAI(prompt, systemPrompt)
-  if (anthropicKey) return callAnthropic(prompt, systemPrompt)
+  if (openaiKey) return callOpenAI(prompt, systemPrompt, maxTokens)
+  if (anthropicKey) return callAnthropic(prompt, systemPrompt, maxTokens)
 
   // If proxy failed with a real error (not just unavailable), show it
   if (proxyResult.error !== 'proxy-unavailable') {
@@ -174,4 +174,59 @@ export async function autocomplete(_content: string, cursorContext: string): Pro
   )
   if (result.error) return { suggestion: '', error: result.error }
   return { suggestion: result.text }
+}
+
+export async function enhanceReadability(content: string): Promise<{ enhanced: string; error?: string }> {
+  if (!content.trim() || content.length < 20) return { enhanced: '' }
+
+  const systemPrompt = `You are a readability enhancement assistant for a memo app. Reformat the given memo content to improve readability using Markdown formatting. Rules:
+- Use headings (##, ###) to organize sections
+- Use bullet points or numbered lists where appropriate
+- Use **bold** for key terms or important points
+- Add proper paragraph spacing
+- Do NOT add, remove, or change any information — only restructure and format
+- Write in the same language as the input
+- Return ONLY the reformatted content, no explanations`
+
+  const result = await callAI(
+    content.slice(0, 5000),
+    systemPrompt,
+    2000
+  )
+  if (result.error) return { enhanced: '', error: result.error }
+  return { enhanced: result.text }
+}
+
+export async function classifyMemo(
+  text: string,
+  folderNames: string[]
+): Promise<{ folder: string | null; tags: string[]; title: string; error?: string }> {
+  if (!text.trim() || text.length < 5) return { folder: null, tags: [], title: '' }
+
+  const systemPrompt = `You are a memo classification assistant for a Korean memo app. Given the user's raw text and the available folder list, classify it automatically.
+
+Available folders: ${JSON.stringify(folderNames)}
+
+Return ONLY valid JSON in this exact format:
+{"folder": "folder name or null", "tags": ["tag1", "tag2"], "title": "short title"}
+
+Rules:
+- folder must be one of the available folders or null if none fits
+- tags should be 1-3 relevant Korean tags without # prefix
+- title should be a concise Korean title (under 30 chars)
+- Do not add any text outside the JSON`
+
+  const result = await callAI(text.slice(0, 1000), systemPrompt)
+  if (result.error) return { folder: null, tags: [], title: '', error: result.error }
+
+  try {
+    const parsed = JSON.parse(result.text)
+    return {
+      folder: typeof parsed.folder === 'string' ? parsed.folder : null,
+      tags: Array.isArray(parsed.tags) ? parsed.tags.filter((t: unknown): t is string => typeof t === 'string').slice(0, 5) : [],
+      title: typeof parsed.title === 'string' ? parsed.title : '',
+    }
+  } catch {
+    return { folder: null, tags: [], title: '' }
+  }
 }

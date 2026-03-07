@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useUIStore } from '@/stores/uiStore'
 import { useFolderStore } from '@/stores/folderStore'
+import { useAmbientImage } from '@/hooks/useAmbientImage'
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours()
@@ -47,7 +48,6 @@ function NoteIllustration() {
 }
 
 export function MemoEmptyState() {
-  const navigate = useNavigate()
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
   const activeFolderId = useUIStore((s) => s.activeFolderId)
@@ -87,21 +87,40 @@ export function MemoEmptyState() {
     )
   }
 
+  return <DefaultEmptyState />
+}
+
+function DefaultEmptyState() {
+  const navigate = useNavigate()
+  const { ambientImage } = useAmbientImage()
+
   return (
-    <EmptyState
-      icon={<FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
-      illustration={<NoteIllustration />}
-      title={getTimeGreeting()}
-      description="새 메모를 작성해보세요"
-      action={
-        <button
-          onClick={() => navigate('/memo/new')}
-          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          새 메모 작성
-        </button>
-      }
-    />
+    <div className="relative">
+      {ambientImage && (
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none" aria-hidden="true">
+          <img
+            src={ambientImage.imageUrl}
+            alt=""
+            className="max-w-xs w-full rounded-2xl opacity-15 dark:opacity-10"
+            loading="lazy"
+          />
+        </div>
+      )}
+      <EmptyState
+        icon={<FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+        illustration={<NoteIllustration />}
+        title={getTimeGreeting()}
+        description="새 메모를 작성해보세요"
+        action={
+          <button
+            onClick={() => navigate('/memo/new')}
+            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            새 메모 작성
+          </button>
+        }
+      />
+    </div>
   )
 }

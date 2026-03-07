@@ -458,6 +458,15 @@ export function MemoEditor() {
     handleBodyChange(newBody)
   }, [body, handleBodyChange])
 
+  // Handle AI enhance → replace body with enhanced version
+  const handleAIEnhance = useCallback((enhanced: string) => {
+    pushUndoSnapshot(enhanced)
+    setBody(enhanced)
+    setSaveStatus('modified')
+    scheduleAutoSave()
+    useToastStore.getState().showToast('AI 편집이 적용되었습니다. Ctrl+Z로 되돌릴 수 있습니다.', 'success')
+  }, [pushUndoSnapshot, scheduleAutoSave])
+
   // Handle AI tag click → insert as hashtag
   const handleAITagClick = (tag: string) => {
     const hashtag = `#${tag} `
@@ -579,6 +588,8 @@ export function MemoEditor() {
           canUndo={undoStack.current.length > 0}
           canRedo={redoStack.current.length > 0}
           memoId={memoId}
+          body={body}
+          onAIEnhance={handleAIEnhance}
         />
       )}
 

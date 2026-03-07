@@ -79,7 +79,7 @@ export const useMemoStore = create<MemoState>()(
           const id = await database.addMemo(memo)
           const newMemo = await database.getMemo(id)
           if (newMemo) {
-            set((state) => ({ memos: [...state.memos, newMemo] }))
+            set((state) => ({ memos: [...state.memos, newMemo], error: null }))
             pushMemo(newMemo).catch(console.error)
           }
 
@@ -139,11 +139,13 @@ export const useMemoStore = create<MemoState>()(
             memos: state.memos.map((m) =>
               m.id === id ? { ...m, ...updates, updatedAt: nowISO() } : m
             ),
+            error: null,
           }))
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
         } catch (err) {
           console.error('Failed to update memo:', err)
+          set({ error: '메모 수정에 실패했습니다.' })
         }
       },
 
@@ -264,14 +266,18 @@ export const useMemoStore = create<MemoState>()(
       },
 
       moveToFolder: async (id, folderId) => {
-        await database.updateMemo(id, { folderId })
-        set((state) => ({
-          memos: state.memos.map((m) =>
-            m.id === id ? { ...m, folderId, updatedAt: nowISO() } : m
-          ),
-        }))
-        const updated = await database.getMemo(id)
-        if (updated) pushMemo(updated).catch(console.error)
+        try {
+          await database.updateMemo(id, { folderId })
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              m.id === id ? { ...m, folderId, updatedAt: nowISO() } : m
+            ),
+          }))
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        } catch (err) {
+          console.error('Failed to move memo:', err)
+        }
       },
 
       batchDelete: async (ids) => {
@@ -283,10 +289,10 @@ export const useMemoStore = create<MemoState>()(
             ids.includes(m.id!) ? { ...m, deletedAt: now, updatedAt: now } : m
           ),
         }))
-        for (const id of ids) {
+        await Promise.all(ids.map(async (id) => {
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
-        }
+        }))
         return memosToDelete
       },
 
@@ -297,10 +303,10 @@ export const useMemoStore = create<MemoState>()(
             ids.includes(m.id!) ? { ...m, folderId, updatedAt: nowISO() } : m
           ),
         }))
-        for (const id of ids) {
+        await Promise.all(ids.map(async (id) => {
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
-        }
+        }))
       },
 
       batchStar: async (ids, starred) => {
@@ -310,10 +316,10 @@ export const useMemoStore = create<MemoState>()(
             ids.includes(m.id!) ? { ...m, isStarred: starred, updatedAt: nowISO() } : m
           ),
         }))
-        for (const id of ids) {
+        await Promise.all(ids.map(async (id) => {
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
-        }
+        }))
       },
 
       batchPin: async (ids, pinned) => {
@@ -323,10 +329,10 @@ export const useMemoStore = create<MemoState>()(
             ids.includes(m.id!) ? { ...m, isPinned: pinned, updatedAt: nowISO() } : m
           ),
         }))
-        for (const id of ids) {
+        await Promise.all(ids.map(async (id) => {
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
-        }
+        }))
       },
       seedWelcomeMemos: async () => {
         const addMemo = get().addMemo

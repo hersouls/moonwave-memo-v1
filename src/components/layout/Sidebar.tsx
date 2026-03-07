@@ -19,6 +19,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { SidebarAmbientImage } from '@/components/ui/SidebarAmbientImage'
 import { FOLDER_COLORS } from '@/utils/constants'
 
 export function Sidebar() {
@@ -298,6 +299,9 @@ export function Sidebar() {
             </ul>
           </section>
         )}
+
+        {/* Ambient Image — sidebar bottom */}
+        {isSidebarOpen && <SidebarAmbientImage />}
 
         {/* Help & Settings */}
         <div className="mt-6 px-2">

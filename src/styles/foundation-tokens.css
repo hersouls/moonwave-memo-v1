@@ -17,12 +17,6 @@
   --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
 
-  /* Breakpoints */
-  --breakpoint-xs: 360px;
-  --breakpoint-2xl: 1920px;
-}
-
-:root {
   /* Spacing Scale */
   --spacing-2: 2px;
   --spacing-4: 4px;
@@ -38,6 +32,12 @@
   --spacing-64: 64px;
   --spacing-80: 80px;
 
+  /* Breakpoints */
+  --breakpoint-xs: 360px;
+  --breakpoint-2xl: 1920px;
+}
+
+:root {
   /* Elevation / Z-Index */
   --z-level-0: 0;
   --z-level-1: 10;
@@ -70,6 +70,25 @@
   --text-label3-size: 0.8125rem;
   --text-label3-weight: 500;
   --text-label3-line: 1.48;
+
+  /* -----------------------------------------
+     Semantic Color Tokens
+     ----------------------------------------- */
+  --color-bg-primary: white;
+  --color-bg-secondary: #fafafa;
+  --color-bg-tertiary: #f4f4f5;
+  --color-bg-elevated: white;
+
+  --color-text-primary: #09090b;
+  --color-text-secondary: #71717a;
+  --color-text-tertiary: #a1a1aa;
+  --color-text-inverse: white;
+
+  --color-border-default: #e4e4e7;
+  --color-border-subtle: #f4f4f5;
+
+  --color-surface-hover: #fafafa;
+  --color-surface-active: #f4f4f5;
 }
 
 /* Shadow - Dark Mode */
@@ -77,4 +96,21 @@
   --shadow-1: 0 1px 3px rgba(255, 255, 255, 0.04), 0 1px 2px rgba(255, 255, 255, 0.02);
   --shadow-2: 0 4px 12px rgba(255, 255, 255, 0.06), 0 2px 4px rgba(255, 255, 255, 0.03);
   --shadow-3: 0 12px 32px rgba(255, 255, 255, 0.08), 0 4px 8px rgba(255, 255, 255, 0.04);
+
+  /* Semantic Color Tokens - Dark */
+  --color-bg-primary: #09090b;
+  --color-bg-secondary: #18181b;
+  --color-bg-tertiary: #27272a;
+  --color-bg-elevated: #27272a;
+
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #71717a;
+  --color-text-inverse: #09090b;
+
+  --color-border-default: #3f3f46;
+  --color-border-subtle: #27272a;
+
+  --color-surface-hover: #3f3f46;
+  --color-surface-active: #52525b;
 }

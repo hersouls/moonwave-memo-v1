@@ -93,18 +93,19 @@ export const useFolderStore = create<FolderState>()(
           database.updateFolder(id, { sortOrder: index })
         )
         await Promise.all(updates)
+        const orderMap = new Map(orderedIds.map((id, idx) => [id, idx]))
         set((state) => ({
           folders: state.folders
             .map((f) => ({
               ...f,
-              sortOrder: orderedIds.indexOf(f.id!) >= 0 ? orderedIds.indexOf(f.id!) : f.sortOrder,
+              sortOrder: orderMap.get(f.id!) ?? f.sortOrder,
             }))
             .sort((a, b) => a.sortOrder - b.sortOrder),
         }))
-        for (const id of orderedIds) {
+        await Promise.all(orderedIds.map(async (id) => {
           const folder = await database.getFolder(id)
           if (folder) pushFolder(folder).catch(console.error)
-        }
+        }))
       },
 
       getDefaultFolder: () => get().folders.find((f) => f.isDefault),

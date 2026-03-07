@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bold, Italic, Code, Link2, List, Heading2, Mic, Camera, Undo2, Redo2 } from 'lucide-react'
+import { Bold, Italic, Code, Link2, List, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
 import { ImageInsertButton } from './ImageInsertButton'
+import { enhanceReadability } from '@/services/aiFeatures'
 
 interface EditorToolbarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -14,11 +15,40 @@ interface EditorToolbarProps {
   canUndo?: boolean
   canRedo?: boolean
   memoId?: number
+  body?: string
+  onAIEnhance?: (enhanced: string) => void
 }
 
-export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo, memoId }: EditorToolbarProps) {
+export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance }: EditorToolbarProps) {
   const hasApiKey = useSettingsStore((s) => !!s.settings.ai?.openaiApiKey || !!s.settings.ai?.anthropicApiKey)
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
+  const [isEnhancing, setIsEnhancing] = useState(false)
+
+  const handleAIEnhanceClick = async () => {
+    if (!hasApiKey) {
+      useToastStore.getState().showToast(
+        'AI 서비스 설정에서 API 키를 입력해 주세요',
+        'warning',
+        { action: { label: '설정', onClick: () => useUIStore.getState().openSettingsModal() } }
+      )
+      return
+    }
+    if (!body || body.trim().length < 20) {
+      useToastStore.getState().showToast('내용이 너무 짧습니다 (20자 이상 필요)', 'warning')
+      return
+    }
+    if (isEnhancing) return
+    setIsEnhancing(true)
+    const result = await enhanceReadability(body)
+    setIsEnhancing(false)
+    if (result.error) {
+      useToastStore.getState().showToast(`AI 편집 실패: ${result.error}`, 'error')
+      return
+    }
+    if (result.enhanced && onAIEnhance) {
+      onAIEnhance(result.enhanced)
+    }
+  }
 
   // Detect active formatting at cursor position
   const detectFormats = useCallback(() => {
@@ -187,6 +217,19 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
         {/* AI buttons — only when API key configured */}
         {hasApiKey && (
           <>
+            <button
+              onClick={handleAIEnhanceClick}
+              disabled={isEnhancing}
+              className="p-2.5 rounded-lg text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors active:scale-95 disabled:opacity-50"
+              title="AI 가독성 편집"
+              aria-label="AI 가독성 편집"
+            >
+              {isEnhancing ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Wand2 className="w-5 h-5" />
+              )}
+            </button>
             <button
               onClick={handleMicClick}
               className="p-2.5 rounded-lg text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors active:scale-95"

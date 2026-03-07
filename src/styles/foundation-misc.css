@@ -15,12 +15,12 @@
   --section-header-border-top: 1px solid #d4d4d8;
   --section-header-title-size: 16px;
   --section-header-title-weight: 700;
-  --section-header-title-color: #09090b;
+  --section-header-title-color: var(--color-text-primary);
   --section-header-action-size: 14px;
-  --section-header-action-color: #71717a;
+  --section-header-action-color: var(--color-text-secondary);
   --section-header-action-weight: 500;
   --section-header-chevron-size: 16px;
-  --section-header-chevron-color: #a1a1aa;
+  --section-header-chevron-color: var(--color-text-tertiary);
 }
 
 /* -----------------------------------------
@@ -28,8 +28,8 @@
    ----------------------------------------- */
 :root {
   --empty-icon-size: 56px;
-  --empty-icon-color: #a1a1aa;
-  --empty-icon-bg: #f4f4f5;
+  --empty-icon-color: var(--color-text-tertiary);
+  --empty-icon-bg: var(--color-bg-tertiary);
   --empty-icon-radius: 18px;
   --empty-title-size: 16px;
   --empty-title-weight: 600;
@@ -44,7 +44,7 @@
    3. Context Menu Tokens
    ----------------------------------------- */
 :root {
-  --ctx-menu-bg: white;
+  --ctx-menu-bg: var(--color-bg-elevated);
   --ctx-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
   --ctx-menu-radius: 14px;
   --ctx-menu-padding: 6px;
@@ -56,7 +56,7 @@
   --ctx-menu-item-font-size: 14px;
   --ctx-menu-item-color: #18181b;
   --ctx-menu-item-icon-size: 20px;
-  --ctx-menu-item-icon-color: #71717a;
+  --ctx-menu-item-icon-color: var(--color-text-secondary);
   --ctx-menu-hover-bg: #f4f4f5;
   --ctx-menu-pressed-bg: #e4e4e7;
   --ctx-menu-transition: background-color 150ms ease;
@@ -101,7 +101,7 @@
   --completion-icon-radius: 50%;
   --completion-title-size: 20px;
   --completion-title-weight: 700;
-  --completion-title-color: #09090b;
+  --completion-title-color: var(--color-text-primary);
   --completion-desc-size: 14px;
   --completion-desc-color: #71717a;
   --completion-button-margin-top: 24px;
@@ -130,20 +130,14 @@
 .dark {
   /* Section Header */
   --section-header-border-top: 1px solid #3f3f46;
-  --section-header-title-color: #f4f4f5;
-  --section-header-chevron-color: #71717a;
 
   /* Empty State */
-  --empty-icon-color: #71717a;
-  --empty-icon-bg: #27272a;
   --empty-title-color: #d4d4d8;
   --empty-desc-color: #71717a;
 
   /* Context Menu */
-  --ctx-menu-bg: #27272a;
   --ctx-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
   --ctx-menu-item-color: #f4f4f5;
-  --ctx-menu-item-icon-color: #a1a1aa;
   --ctx-menu-hover-bg: #3f3f46;
   --ctx-menu-pressed-bg: #52525b;
 
@@ -155,7 +149,6 @@
   /* Completion Page */
   --completion-icon-bg: #f4f4f5;
   --completion-icon-color: #09090b;
-  --completion-title-color: #f4f4f5;
   --completion-desc-color: #71717a;
 
   /* File Upload */
@@ -333,11 +326,8 @@
 
 .ctx-menu__divider {
   height: 1px;
-  background: #e4e4e7;
+  background: var(--color-border-default);
   margin: 4px 0;
-}
-.dark .ctx-menu__divider {
-  background: #3f3f46;
 }
 
 .ctx-menu__item--danger {
@@ -626,7 +616,7 @@
 .toggle-tooltip {
   position: absolute;
   background: var(--tooltip-bg);
-  color: #09090b;
+  color: var(--color-text-primary);
   box-shadow: var(--tooltip-shadow);
   border-radius: var(--tooltip-border-radius);
   padding: var(--tooltip-padding);
@@ -636,9 +626,6 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 150ms ease;
-}
-.dark .toggle-tooltip {
-  color: #f4f4f5;
 }
 
 .toggle-tooltip--visible {
@@ -661,7 +648,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #a1a1aa;
+  color: var(--color-text-tertiary);
   border-radius: 50%;
   transition: background-color 150ms ease;
 }

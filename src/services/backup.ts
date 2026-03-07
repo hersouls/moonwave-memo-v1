@@ -20,8 +20,13 @@ export async function createBackup(): Promise<BackupFile> {
   const folders = await getAllFolders()
   const memoImages = await db.memoImages.toArray()
   const memoVersions = await db.memoVersions.toArray()
-  const settingsStr = localStorage.getItem('memo-settings')
-  const settings = settingsStr ? JSON.parse(settingsStr).state?.settings : {}
+  const ambientImages = await db.ambientImages.toArray()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let settings: any = {}
+  try {
+    const settingsStr = localStorage.getItem('memo-settings')
+    if (settingsStr) settings = JSON.parse(settingsStr).state?.settings ?? {}
+  } catch { /* corrupted settings — export with defaults */ }
 
   return {
     version: BACKUP_CONFIG.CURRENT_VERSION,
@@ -32,6 +37,7 @@ export async function createBackup(): Promise<BackupFile> {
       folders,
       memoImages,
       memoVersions,
+      ambientImages,
       settings: {
         theme: settings.theme || 'light',
         colorPalette: settings.colorPalette || 'default',
@@ -136,11 +142,12 @@ export async function restoreFromBackup(
       createdAt: f.createdAt || new Date().toISOString(),
     }))
 
-    await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions], async () => {
+    await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages], async () => {
       await db.memos.clear()
       await db.folders.clear()
       await db.memoImages.clear()
       await db.memoVersions.clear()
+      await db.ambientImages.clear()
 
       if (folders.length > 0) {
         await db.folders.bulkAdd(folders)
@@ -158,17 +165,23 @@ export async function restoreFromBackup(
       if (backupVersions.length > 0) {
         await db.memoVersions.bulkAdd(backupVersions as never[])
       }
+      const backupAmbient = (backup.data as Record<string, unknown>).ambientImages as unknown[] || []
+      if (backupAmbient.length > 0) {
+        await db.ambientImages.bulkAdd(backupAmbient as never[])
+      }
     })
 
     // Restore settings
     if (backup.data.settings) {
-      const currentSettings = localStorage.getItem('memo-settings')
-      const parsed = currentSettings ? JSON.parse(currentSettings) : { state: { settings: {} } }
-      parsed.state.settings = {
-        ...parsed.state.settings,
-        ...backup.data.settings,
-      }
-      localStorage.setItem('memo-settings', JSON.stringify(parsed))
+      try {
+        const currentSettings = localStorage.getItem('memo-settings')
+        const parsed = currentSettings ? JSON.parse(currentSettings) : { state: { settings: {} } }
+        parsed.state.settings = {
+          ...parsed.state.settings,
+          ...backup.data.settings,
+        }
+        localStorage.setItem('memo-settings', JSON.stringify(parsed))
+      } catch { /* settings restore failed — non-critical */ }
     }
 
     return { success: true }
@@ -185,6 +198,7 @@ export async function clearAllData(): Promise<void> {
   await db.folders.clear()
   await db.memoImages.clear()
   await db.memoVersions.clear()
+  await db.ambientImages.clear()
 
   // Recreate default folders
   const now = nowISO()

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState } from '@/lib/types'
+import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState, LivingWorkspaceSettings } from '@/lib/types'
 import { FONT_FAMILIES, FONT_SIZES } from '@/utils/constants'
 
 interface SettingsState {
@@ -26,6 +26,7 @@ interface SettingsState {
   toggleAIAutocomplete: () => void
   toggleHighContrast: () => void
   updateGamification: (data: Partial<GamificationState>) => void
+  updateLivingWorkspace: (data: Partial<LivingWorkspaceSettings>) => void
 }
 
 export function applyTheme(theme: ThemeMode) {
@@ -97,6 +98,15 @@ export const useSettingsStore = create<SettingsState>()(
           totalMemosCreated: 0,
           lastActiveDate: '',
           badges: [],
+        },
+        livingWorkspace: {
+          environmentThemeEnabled: false,
+          survivalModeEnabled: false,
+          completionEffectsEnabled: true,
+          timeCapsuleEnabled: true,
+          soundSyncEnabled: false,
+          ambientImagesEnabled: false,
+          worldBuildingEnabled: false,
         },
       },
 
@@ -279,10 +289,19 @@ export const useSettingsStore = create<SettingsState>()(
           },
         }))
       },
+
+      updateLivingWorkspace: (data) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            livingWorkspace: { ...state.settings.livingWorkspace, ...data },
+          },
+        }))
+      },
     }),
     {
       name: 'memo-settings',
-      version: 2,
+      version: 3,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as { settings: Record<string, unknown> & { ai?: Record<string, unknown> } }
         if (version < 1 && state?.settings?.ai) {
@@ -322,6 +341,23 @@ export const useSettingsStore = create<SettingsState>()(
           if (ai && ai.aiAutocomplete === undefined) {
             ai.aiAutocomplete = false
           }
+        }
+        // v2→v3: add livingWorkspace settings
+        if (version < 3 && state?.settings) {
+          if (!state.settings.livingWorkspace) {
+            state.settings.livingWorkspace = {
+              environmentThemeEnabled: false,
+              survivalModeEnabled: false,
+              completionEffectsEnabled: true,
+              timeCapsuleEnabled: true,
+              soundSyncEnabled: false,
+              ambientImagesEnabled: false,
+              worldBuildingEnabled: false,
+            }
+          }
+          const lw = state.settings.livingWorkspace as Record<string, unknown>
+          if (lw.ambientImagesEnabled === undefined) lw.ambientImagesEnabled = false
+          if (lw.worldBuildingEnabled === undefined) lw.worldBuildingEnabled = false
         }
         return state
       },

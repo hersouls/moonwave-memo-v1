@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Memo, Folder, MemoImage, MemoVersion } from '@/lib/types'
+import type { Memo, Folder, MemoImage, MemoVersion, AmbientImage } from '@/lib/types'
 import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
@@ -9,6 +9,7 @@ class MemoDatabase extends Dexie {
   folders!: Table<Folder>
   memoImages!: Table<MemoImage>
   memoVersions!: Table<MemoVersion>
+  ambientImages!: Table<AmbientImage>
 
   constructor() {
     super('MemoApp')
@@ -29,6 +30,14 @@ class MemoDatabase extends Dexie {
       folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
       memoImages: '++id, memoId, syncId, createdAt',
       memoVersions: '++id, memoId, createdAt',
+    })
+
+    this.version(4).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
+      ambientImages: '++id, type, generatedAt, expiresAt',
     })
 
     this.on('populate', () => {
@@ -117,7 +126,7 @@ export async function getMemosByFolder(folderId: number): Promise<Memo[]> {
 }
 
 export async function getStarredMemos(): Promise<Memo[]> {
-  return db.memos.where('isStarred').equals(1).filter((m) => !m.deletedAt).toArray()
+  return db.memos.filter((m) => m.isStarred && !m.deletedAt).toArray()
 }
 
 export async function getDeletedMemos(): Promise<Memo[]> {
@@ -175,9 +184,12 @@ export async function updateFolder(id: number, updates: Partial<Folder>): Promis
 
 export async function deleteFolder(id: number): Promise<void> {
   // Move all memos from this folder to the default folder
-  const defaultFolder = await db.folders.where('isDefault').equals(1).first()
+  const defaultFolder = await db.folders.filter((f) => f.isDefault).first()
   if (defaultFolder?.id) {
     await db.memos.where('folderId').equals(id).modify({ folderId: defaultFolder.id })
+  } else {
+    // Fallback: set folderId to null so memos are not orphaned
+    await db.memos.where('folderId').equals(id).modify({ folderId: null })
   }
   await db.folders.delete(id)
 }
@@ -219,7 +231,8 @@ export async function addMemoVersion(version: Omit<MemoVersion, 'id'>): Promise<
 }
 
 export async function getVersionsByMemoId(memoId: number): Promise<MemoVersion[]> {
-  return db.memoVersions.where('memoId').equals(memoId).reverse().sortBy('createdAt')
+  const versions = await db.memoVersions.where('memoId').equals(memoId).sortBy('createdAt')
+  return versions.reverse()
 }
 
 export async function getMemoVersion(id: number): Promise<MemoVersion | undefined> {
@@ -228,4 +241,30 @@ export async function getMemoVersion(id: number): Promise<MemoVersion | undefine
 
 export async function deleteVersionsByMemoId(memoId: number): Promise<void> {
   await db.memoVersions.where('memoId').equals(memoId).delete()
+}
+
+// ─── AmbientImage CRUD ──────────────────────────
+
+export async function getAmbientImage(type: 'ambient' | 'world-building'): Promise<AmbientImage | undefined> {
+  const now = new Date().toISOString()
+  const imgs = await db.ambientImages
+    .where('type').equals(type)
+    .filter((img) => img.expiresAt > now)
+    .sortBy('generatedAt')
+  return imgs.at(-1) // most recently generated
+}
+
+export async function saveAmbientImage(image: Omit<AmbientImage, 'id'>): Promise<number> {
+  // Remove old images of the same type (keep max 3)
+  const existing = await db.ambientImages.where('type').equals(image.type).sortBy('generatedAt')
+  if (existing.length >= 3) {
+    const toDelete = existing.slice(0, existing.length - 2).map((i) => i.id!).filter(Boolean)
+    await db.ambientImages.bulkDelete(toDelete)
+  }
+  return db.ambientImages.add(image as AmbientImage) as unknown as number
+}
+
+export async function clearExpiredAmbientImages(): Promise<void> {
+  const now = new Date().toISOString()
+  await db.ambientImages.filter((img) => img.expiresAt <= now).delete()
 }

@@ -366,10 +366,19 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
                 <span
                   key={tag}
                   role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation()
                     setActiveTag(tag)
                     navigate('/memos')
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setActiveTag(tag)
+                      navigate('/memos')
+                    }
                   }}
                   className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800/50 transition-colors cursor-pointer"
                 >

@@ -23,14 +23,21 @@ import { TemplateSelectModal } from './components/editor/TemplateSelectModal'
 import { FAB } from './components/ui/FAB'
 import { VoiceUploadModal } from './components/voice/VoiceUploadModal'
 import { ImageOCRModal } from './components/ocr/ImageOCRModal'
+import { TimeCapsuleBanner } from './components/ui/TimeCapsuleBanner'
+import { FloatingTimer } from './components/editor/FloatingTimer'
+import { AmbientBackground } from './components/ui/AmbientBackground'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
+import { useCognitiveLoadDetector } from '@/hooks/useCognitiveLoadDetector'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from './stores/settingsStore'
 import { useUIStore } from './stores/uiStore'
 import { useAuthStore } from './stores/authStore'
 import { useUndoStore } from './stores/undoStore'
+import { useThemeOrchestrator } from './stores/themeOrchestratorStore'
 import { registerRefreshCallbacks } from './services/firestoreSync'
+import { getCachedPosition, requestAndCachePosition, getSolarMode } from './services/solarCalculator'
+import { fetchWeather } from './services/weatherService'
 
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false)
@@ -143,6 +150,38 @@ export default function App() {
     return () => mql.removeEventListener('change', handleChange)
   }, [])
 
+  // Living Workspace: Cognitive load detector
+  useCognitiveLoadDetector()
+
+  // Living Workspace: Environment sync (solar + weather)
+  useEffect(() => {
+    const lw = useSettingsStore.getState().settings.livingWorkspace
+    if (!lw.environmentThemeEnabled) return
+
+    const syncEnvironment = async () => {
+      let pos = getCachedPosition()
+      if (!pos) pos = await requestAndCachePosition()
+      if (!pos) return
+
+      const solarMode = getSolarMode(pos.latitude, pos.longitude)
+      const weather = await fetchWeather(pos.latitude, pos.longitude)
+
+      useThemeOrchestrator.getState().setEnvironment(
+        weather?.condition ?? null,
+        solarMode
+      )
+    }
+
+    syncEnvironment()
+    const interval = setInterval(syncEnvironment, 60 * 60 * 1000) // every hour
+    return () => clearInterval(interval)
+  }, [])
+
+  // Living Workspace: resolve orchestrator on settings change
+  useEffect(() => {
+    useThemeOrchestrator.getState().resolve()
+  }, [])
+
   // Sync currentView with URL
   const location = useLocation()
   const setCurrentView = useUIStore((state) => state.setCurrentView)
@@ -165,6 +204,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex flex-col">
+      <AmbientBackground />
+
       {/* A11Y: sr-only theme change announcement */}
       {themeAnnouncement && (
         <div className="sr-only" role="status" aria-live="polite">{themeAnnouncement}</div>
@@ -226,6 +267,8 @@ export default function App() {
       <ToastContainer />
       <UpdateBanner />
       <IOSInstallBanner />
+      <TimeCapsuleBanner />
+      {!isMemoRoute && <FloatingTimer />}
     </div>
   )
 }

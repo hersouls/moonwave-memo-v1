@@ -12,11 +12,11 @@ export function useMemoFilters() {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const sortBy = useUIStore((s) => s.sortBy)
   const searchFilters = useUIStore((s) => s.searchFilters)
-  const getTrashFolder = useFolderStore((s) => s.getTrashFolder)
+  const folders = useFolderStore((s) => s.folders)
 
   return useMemo(() => {
     // B-01: Support trash view - show deleted memos when in trash folder
-    const trashFolder = getTrashFolder()
+    const trashFolder = folders.find((f) => f.isSystem)
     const isTrashView = trashFolder != null && activeFolderId === trashFolder.id
 
     let filtered: typeof memos
@@ -97,5 +97,5 @@ export function useMemoFilters() {
     unpinned.sort(sortFn)
 
     return [...pinned, ...unpinned]
-  }, [memos, activeFilter, activeFolderId, activeTag, searchQuery, sortBy, searchFilters, getTrashFolder])
+  }, [memos, activeFilter, activeFolderId, activeTag, searchQuery, sortBy, searchFilters, folders])
 }

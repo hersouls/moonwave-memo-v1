@@ -26,6 +26,7 @@ import {
   Upload,
   User,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react'
 import { useSettingsStore, applyTheme, applyColorPalette } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -270,7 +271,7 @@ function ToggleItem({
 }
 
 // ─── Settings Tabs ──────────────────────────────────
-type SettingsTab = 'general' | 'account' | 'data' | 'memo' | 'ai' | 'system'
+type SettingsTab = 'general' | 'account' | 'data' | 'memo' | 'ai' | 'workspace' | 'system'
 
 export function SettingsModal() {
   const isOpen = useUIStore((state) => state.isSettingsModalOpen)
@@ -1433,6 +1434,127 @@ export function SettingsModal() {
     </div>
   )
 
+  // ─── Tab Content: Workspace ─────────────────────────
+  const renderWorkspaceSettings = () => {
+    const lw = settings.livingWorkspace
+    const handleToggle = (key: keyof typeof lw) => {
+      useSettingsStore.getState().updateLivingWorkspace({ [key]: !lw[key] })
+    }
+
+    return (
+      <div className="space-y-8">
+        <section>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
+            Living Workspace
+          </h3>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+            사용자의 환경과 행동에 반응하는 생동감 있는 작업 공간 설정
+          </p>
+
+          <div className="space-y-3">
+            {/* Environment Theme */}
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">환경 동기화 테마</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">날씨/시간에 따라 테마 자동 변경</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={lw.environmentThemeEnabled}
+                onChange={() => handleToggle('environmentThemeEnabled')}
+                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
+              />
+            </label>
+
+            {/* Survival Mode */}
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">서바이벌 모드</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">인지 부하 시 모노크롬 미니멀 모드 자동 진입</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={lw.survivalModeEnabled}
+                onChange={() => handleToggle('survivalModeEnabled')}
+                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
+              />
+            </label>
+
+            {/* Completion Effects */}
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">완료 카타르시스</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">긴 메모 완성 시 시각 효과 표시</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={lw.completionEffectsEnabled}
+                onChange={() => handleToggle('completionEffectsEnabled')}
+                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
+              />
+            </label>
+
+            {/* Time Capsule */}
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">타임캡슐</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">과거 같은 날 기록을 발견하면 특별 테마 적용</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={lw.timeCapsuleEnabled}
+                onChange={() => handleToggle('timeCapsuleEnabled')}
+                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
+              />
+            </label>
+
+            {/* Sound Sync */}
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">사운드 동기화</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">테마에 맞는 인터랙션 사운드 재생</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={lw.soundSyncEnabled}
+                onChange={() => handleToggle('soundSyncEnabled')}
+                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
+              />
+            </label>
+
+            {/* Ambient Images */}
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">AI 감성 배경 이미지</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">계절/날씨에 맞는 AI 배경 이미지 자동 생성 (OpenAI 키 필요)</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={lw.ambientImagesEnabled}
+                onChange={() => handleToggle('ambientImagesEnabled')}
+                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
+              />
+            </label>
+
+            {/* World Building */}
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">지식의 숲 (World Building)</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">작성량과 태그 기반 배경 일러스트 자동 건축 (OpenAI 키 필요)</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={lw.worldBuildingEnabled}
+                onChange={() => handleToggle('worldBuildingEnabled')}
+                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
+              />
+            </label>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
   // ─── Tab Definitions ──────────────────────────────
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { id: 'general', label: '일반', icon: <Settings className="w-4 h-4" /> },
@@ -1440,6 +1562,7 @@ export function SettingsModal() {
     { id: 'data', label: '데이터', icon: <HardDrive className="w-4 h-4" /> },
     { id: 'memo', label: '메모', icon: <StickyNote className="w-4 h-4" /> },
     { id: 'ai', label: 'AI 서비스', icon: <Mic className="w-4 h-4" /> },
+    { id: 'workspace', label: '워크스페이스', icon: <Sparkles className="w-4 h-4" /> },
     { id: 'system', label: '시스템', icon: <Shield className="w-4 h-4" /> },
   ]
 
@@ -1518,6 +1641,7 @@ export function SettingsModal() {
                 {activeTab === 'data' && renderDataSettings()}
                 {activeTab === 'memo' && renderMemoSettings()}
                 {activeTab === 'ai' && renderAISettings()}
+                {activeTab === 'workspace' && renderWorkspaceSettings()}
                 {activeTab === 'system' && renderSystemSettings()}
               </div>
             </div>

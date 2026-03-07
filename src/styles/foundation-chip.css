@@ -38,7 +38,7 @@
    3. Text Chip Color Tokens
    ----------------------------------------- */
 :root {
-  --chip-text-bg: white;
+  --chip-text-bg: var(--color-bg-elevated);
   --chip-text-color: #3f3f46;
   --chip-text-bg-hover: #f4f4f5;
   --chip-text-bg-pressed: #71717a;
@@ -50,7 +50,7 @@
    4. Badge Chip Color Tokens
    ----------------------------------------- */
 :root {
-  --chip-badge-bg: white;
+  --chip-badge-bg: var(--color-bg-elevated);
   --chip-badge-color: #3f3f46;
   --chip-badge-bg-pressed: #e4e4e7;
   --chip-badge-icon-size: 20px;
@@ -77,7 +77,6 @@
    ----------------------------------------- */
 .dark {
   /* Text Chip */
-  --chip-text-bg: #27272a;
   --chip-text-color: #d4d4d8;
   --chip-text-bg-hover: #3f3f46;
   --chip-text-bg-pressed: #a1a1aa;
@@ -85,7 +84,6 @@
   --chip-text-border-color: #52525b;
 
   /* Badge Chip */
-  --chip-badge-bg: #27272a;
   --chip-badge-color: #d4d4d8;
   --chip-badge-bg-pressed: #52525b;
   --chip-badge-icon-color: #52525b;
@@ -281,11 +279,10 @@
    15. Badge Semantic Variants
    ----------------------------------------- */
 .badge--neutral {
-  background: #f4f4f5;
+  background: var(--color-bg-tertiary);
   color: #3f3f46;
 }
 .dark .badge--neutral {
-  background: #27272a;
   color: #d4d4d8;
 }
 
