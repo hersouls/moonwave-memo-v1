@@ -4,7 +4,6 @@ import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
-import { useVisualViewport } from '@/hooks/useVisualViewport'
 import { ImageInsertButton } from './ImageInsertButton'
 
 interface EditorToolbarProps {
@@ -19,7 +18,6 @@ interface EditorToolbarProps {
 
 export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo, memoId }: EditorToolbarProps) {
   const hasApiKey = useSettingsStore((s) => !!s.settings.ai?.openaiApiKey || !!s.settings.ai?.anthropicApiKey)
-  const { isKeyboardOpen, keyboardHeight } = useVisualViewport()
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
 
   // Detect active formatting at cursor position
@@ -128,11 +126,7 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
 
   return (
     <div
-      className={clsx(
-        'bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 px-2 py-2',
-        isKeyboardOpen ? 'fixed left-0 right-0 z-20' : 'sticky bottom-0'
-      )}
-      style={isKeyboardOpen ? { bottom: `${keyboardHeight}px` } : undefined}
+      className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-2 py-2 sticky top-0 z-10"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {/* Undo/Redo */}

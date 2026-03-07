@@ -489,7 +489,7 @@ export function MemoEditor() {
           onKeyDown={handleBodyKeyDown}
           placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
           className={clsx(
-            'w-full flex-1 fold:min-h-[150px] min-h-[200px] sm:min-h-[300px] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed',
+            'w-full flex-1 fold:min-h-[40vh] min-h-[50vh] sm:min-h-[60vh] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed',
             isFocusMode && 'min-h-[60vh]'
           )}
           style={{ fontFamily: editorFontFamily }}
@@ -656,6 +656,19 @@ export function MemoEditor() {
         )}
       </div>
 
+      {/* Editor toolbar (above editor area, not in focus mode) */}
+      {(activeTab === 'edit' || isSplit) && !isFocusMode && (
+        <EditorToolbar
+          textareaRef={bodyRef}
+          onContentChange={handleBodyChange}
+          onUndo={undoText}
+          onRedo={redoText}
+          canUndo={undoStack.current.length > 0}
+          canRedo={redoStack.current.length > 0}
+          memoId={memoId}
+        />
+      )}
+
       {/* Editor stats footer */}
       {isFocusMode ? (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
@@ -698,19 +711,6 @@ export function MemoEditor() {
           saveStatus === 'modified' && 'bg-zinc-300 dark:bg-zinc-600',
           saveStatus === 'error' && 'bg-danger-500'
         )} />
-      )}
-
-      {/* Editor toolbar (not in focus/split mode) */}
-      {(activeTab === 'edit' || isSplit) && !isFocusMode && (
-        <EditorToolbar
-          textareaRef={bodyRef}
-          onContentChange={handleBodyChange}
-          onUndo={undoText}
-          onRedo={redoText}
-          canUndo={undoStack.current.length > 0}
-          canRedo={redoStack.current.length > 0}
-          memoId={memoId}
-        />
       )}
 
       {/* Floating toolbar for text selection */}
