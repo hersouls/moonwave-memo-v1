@@ -1,4 +1,5 @@
 import type { MemoColor } from '@/lib/types'
+import { useTemplateStore } from '@/stores/templateStore'
 
 export interface MemoTemplate {
   id: string
@@ -7,6 +8,15 @@ export interface MemoTemplate {
   color: MemoColor
   title: string
   body: string
+}
+
+export function getAllTemplates(): MemoTemplate[] {
+  const custom = useTemplateStore.getState().customTemplates
+  return [...MEMO_TEMPLATES, ...custom]
+}
+
+export function isBuiltinTemplate(id: string): boolean {
+  return MEMO_TEMPLATES.some((t) => t.id === id)
 }
 
 export const MEMO_TEMPLATES: MemoTemplate[] = [

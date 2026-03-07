@@ -5,9 +5,10 @@ import {
   DialogTitle,
   Dialog as HeadlessDialog,
 } from '@headlessui/react'
+import { useDrag } from '@use-gesture/react'
 import { clsx } from 'clsx'
 import { X } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 interface DialogProps {
   open: boolean
@@ -30,18 +31,50 @@ const sizeStyles = {
 }
 
 export function Dialog({ open, onClose, children, size = 'lg', noPadding = false }: DialogProps) {
+  const [dragY, setDragY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const bind = useDrag(
+    ({ active, movement: [, my], velocity: [, vy] }) => {
+      if (my < 0) {
+        setDragY(0)
+        return
+      }
+      setIsDragging(active)
+      if (active) {
+        setDragY(Math.max(0, my))
+      } else {
+        if (my > 100 || vy > 0.5) {
+          onClose()
+        }
+        setDragY(0)
+      }
+    },
+    { axis: 'y', filterTaps: true, pointer: { touch: true } }
+  )
+
+  const progress = Math.min(dragY / 200, 1)
+
   return (
-    <HeadlessDialog open={open} onClose={onClose} className="relative z-50">
+    <HeadlessDialog
+      open={open}
+      onClose={onClose}
+      className="relative z-50"
+      onTransitionEnd={() => { if (!open) { setDragY(0); setIsDragging(false) } }}
+    >
       <DialogBackdrop
         transition
         className={clsx(
-          'fixed inset-0 backdrop-blur-[2px]',
+          'fixed inset-0',
           'transition data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in'
         )}
-        style={{ background: 'var(--dialog-overlay-bg)' }}
+        style={{
+          background: 'var(--dialog-overlay-bg)',
+          opacity: dragY > 0 ? 1 - progress * 0.5 : undefined,
+        }}
       />
 
-      <div className="fixed inset-0 overflow-y-auto pt-6 sm:pt-0">
+      <div className="fixed inset-0 overflow-y-auto pt-6 sm:pt-0" style={{ overscrollBehavior: 'contain' }}>
         <div className="grid min-h-full grid-rows-[1fr_auto] justify-items-center sm:grid-rows-[1fr_auto_3fr] sm:p-4">
           <DialogPanel
             transition
@@ -55,8 +88,19 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
               'transition duration-300 data-[closed]:translate-y-12 data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:ease-in',
               'sm:data-[closed]:translate-y-0 sm:data-[closed]:scale-95 sm:data-[closed]:data-[enter]:duration-300 sm:data-[closed]:data-[leave]:duration-200'
             )}
-            style={{ background: 'var(--dialog-bg)', boxShadow: 'var(--dialog-shadow)' }}
+            style={{
+              background: 'var(--dialog-bg)',
+              boxShadow: 'var(--dialog-shadow)',
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch',
+              transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+              transition: isDragging ? 'none' : undefined,
+            }}
           >
+            {/* Mobile drag handle */}
+            <div {...bind()} className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing sm:hidden touch-none">
+              <div className="w-9 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+            </div>
             {children}
           </DialogPanel>
         </div>
@@ -86,7 +130,7 @@ export function DialogHeader({ title, description, onClose }: DialogHeaderProps)
         <div className="absolute right-0 top-0">
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="p-3 rounded-lg text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             aria-label="닫기"
           >
             <X className="w-5 h-5" />

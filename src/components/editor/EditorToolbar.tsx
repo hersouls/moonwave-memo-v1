@@ -126,7 +126,7 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
 
   return (
     <div
-      className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-2 py-2 sticky top-0 z-10"
+      className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-2 py-2 shrink-0"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {/* Undo/Redo */}

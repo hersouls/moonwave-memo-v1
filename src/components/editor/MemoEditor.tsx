@@ -28,7 +28,7 @@ import { FONT_FAMILIES } from '@/utils/constants'
 import { setLastViewedMemo } from '@/components/ui/ContinueBanner'
 import { useToastStore } from '@/stores/toastStore'
 import { toggleChecklistItem, getChecklistStats } from '@/utils/checklistParser'
-import { MEMO_TEMPLATES } from '@/utils/memoTemplates'
+import { getAllTemplates } from '@/utils/memoTemplates'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 type EditorTab = 'edit' | 'preview'
@@ -56,7 +56,7 @@ export function MemoEditor() {
 
   // Template pre-fill for new memos
   const templateId = isNew ? searchParams.get('template') : null
-  const template = templateId ? MEMO_TEMPLATES.find((t) => t.id === templateId) : null
+  const template = templateId ? getAllTemplates().find((t) => t.id === templateId) : null
 
   const [title, setTitle] = useState(memo?.title || template?.title || '')
   const [body, setBody] = useState(memo?.body || template?.body || '')
@@ -546,8 +546,8 @@ export function MemoEditor() {
 
   return (
     <div className={clsx(
-      'flex flex-col h-[calc(100vh-4rem)] lg:h-full',
-      isFocusMode && 'h-screen'
+      'flex flex-col h-[calc(100dvh-4rem)] lg:h-full',
+      isFocusMode && 'h-dvh'
     )}>
       {!isFocusMode && (
         <EditorHeader
@@ -566,6 +566,19 @@ export function MemoEditor() {
             setMemoColor(color)
             if (memoId) updateMemo(memoId, { color })
           }}
+        />
+      )}
+
+      {/* Editor toolbar (above content, not in focus mode) */}
+      {(activeTab === 'edit' || isSplit) && !isFocusMode && (
+        <EditorToolbar
+          textareaRef={bodyRef}
+          onContentChange={handleBodyChange}
+          onUndo={undoText}
+          onRedo={redoText}
+          canUndo={undoStack.current.length > 0}
+          canRedo={redoStack.current.length > 0}
+          memoId={memoId}
         />
       )}
 
@@ -653,19 +666,6 @@ export function MemoEditor() {
           </div>
         )}
       </div>
-
-      {/* Editor toolbar (above editor area, not in focus mode) */}
-      {(activeTab === 'edit' || isSplit) && !isFocusMode && (
-        <EditorToolbar
-          textareaRef={bodyRef}
-          onContentChange={handleBodyChange}
-          onUndo={undoText}
-          onRedo={redoText}
-          canUndo={undoStack.current.length > 0}
-          canRedo={redoStack.current.length > 0}
-          memoId={memoId}
-        />
-      )}
 
       {/* Editor stats footer */}
       {isFocusMode ? (
