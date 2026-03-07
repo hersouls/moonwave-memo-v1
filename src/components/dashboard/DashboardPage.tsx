@@ -14,7 +14,6 @@ import { AnalyticsWidget } from './AnalyticsWidget'
 import { KnowledgeGraph } from './KnowledgeGraph'
 import { BriefingWidget } from './BriefingWidget'
 import { InsightsWidget } from './InsightsWidget'
-import { FAB } from '@/components/ui/FAB'
 
 export function DashboardPage() {
   return (
@@ -50,7 +49,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <FAB />
     </div>
   )
 }

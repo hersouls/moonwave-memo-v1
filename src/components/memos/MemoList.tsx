@@ -11,7 +11,6 @@ import { MemoContextMenu } from './MemoContextMenu'
 import { MemoEmptyState } from './MemoEmptyState'
 import { BatchActionBar } from './BatchActionBar'
 import { QuickMemoInput } from './QuickMemoInput'
-import { FAB } from '@/components/ui/FAB'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { useMemoFilters } from '@/hooks/useMemoFilters'
@@ -284,9 +283,6 @@ export function MemoList() {
 
       {/* Selection mode bar */}
       {isSelectionMode && <BatchActionBar />}
-
-      {/* FAB - hidden in selection mode */}
-      {!isSelectionMode && <FAB />}
 
       {/* Context menu bottom sheet */}
       <MemoContextMenu />

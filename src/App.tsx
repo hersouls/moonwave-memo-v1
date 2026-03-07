@@ -20,6 +20,7 @@ import { KeyboardShortcutsModal } from './components/ui/KeyboardShortcutsModal'
 import { IOSInstallBanner } from './components/ui/IOSInstallBanner'
 import { FolderSelectModal } from './components/folders/FolderSelectModal'
 import { TemplateSelectModal } from './components/editor/TemplateSelectModal'
+import { FAB } from './components/ui/FAB'
 import { VoiceUploadModal } from './components/voice/VoiceUploadModal'
 import { ImageOCRModal } from './components/ocr/ImageOCRModal'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
@@ -206,6 +207,7 @@ export default function App() {
         {!isMemoRoute && !isFocusMode && <Footer />}
       </div>
 
+      {!isFocusMode && <FAB />}
       {!isFocusMode && <BottomNav />}
       {!isFocusMode && <MobileNav />}
 
