@@ -467,7 +467,7 @@ export function MemoEditor() {
   }
 
   const editContent = (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       {/* UX-18: maxLength={100} on title */}
       <input
         ref={titleRef}
@@ -480,18 +480,15 @@ export function MemoEditor() {
         style={{ fontFamily: editorFontFamily }}
       />
 
-      <div className="relative flex-1">
-        {/* UX-03: Apply user font, UX-20: Responsive min-height */}
+      <div className="relative flex-1 flex flex-col min-h-0">
+        {/* UX-03: Apply user font, UX-20: Fills remaining space */}
         <textarea
           ref={bodyRef}
           value={body}
           onChange={handleBodyInput}
           onKeyDown={handleBodyKeyDown}
           placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
-          className={clsx(
-            'w-full flex-1 fold:min-h-[40vh] min-h-[50vh] sm:min-h-[60vh] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed',
-            isFocusMode && 'min-h-[60vh]'
-          )}
+          className="w-full flex-1 min-h-0 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed"
           style={{ fontFamily: editorFontFamily }}
         />
         {/* AI Autocomplete ghost text */}
@@ -533,7 +530,7 @@ export function MemoEditor() {
           )}
         </div>
       )}
-    </>
+    </div>
   )
 
   const previewContent = (
@@ -549,8 +546,8 @@ export function MemoEditor() {
 
   return (
     <div className={clsx(
-      'flex flex-col h-full min-h-[calc(100vh-4rem)] lg:min-h-0',
-      isFocusMode && 'min-h-screen'
+      'flex flex-col h-[calc(100vh-4rem)] lg:h-full',
+      isFocusMode && 'h-screen'
     )}>
       {!isFocusMode && (
         <EditorHeader
@@ -573,7 +570,7 @@ export function MemoEditor() {
       )}
 
       <div className={clsx(
-        'flex-1',
+        'flex-1 flex flex-col min-h-0 overflow-y-auto',
         isFocusMode
           ? 'max-w-2xl mx-auto w-full px-6 pt-12'
           : 'px-4 lg:px-8 max-w-4xl mx-auto w-full'
@@ -638,6 +635,7 @@ export function MemoEditor() {
               role="tabpanel"
               id={activeTab === 'edit' ? 'panel-edit' : 'panel-preview'}
               aria-labelledby={activeTab === 'edit' ? 'tab-edit' : 'tab-preview'}
+              className="flex-1 flex flex-col min-h-0"
             >
               {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
             </div>
