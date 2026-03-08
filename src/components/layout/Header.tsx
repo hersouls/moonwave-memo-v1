@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { IconButton } from '@/components/ui/IconButton'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
+import { WeatherWidget } from '@/components/ui/WeatherWidget'
 
 export function Header() {
   const location = useLocation()
@@ -106,7 +107,8 @@ export function Header() {
         <div className="flex-1" />
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <WeatherWidget />
           <ConnectionStatus />
 
           {/* User avatar with dropdown */}

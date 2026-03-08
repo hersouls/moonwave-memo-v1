@@ -31,6 +31,7 @@ import {
 import { useSettingsStore, applyTheme, applyColorPalette } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useFolderStore } from '@/stores/folderStore'
+import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
 import { useUIStore } from '@/stores/uiStore'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
@@ -270,6 +271,57 @@ function ToggleItem({
   )
 }
 
+// ─── Theme Status Banner ────────────────────────────
+function ThemeStatusBanner() {
+  const activeSource = useThemeOrchestrator((s) => s.activeSource)
+  const signals = useThemeOrchestrator((s) => s.signals)
+
+  if (activeSource === 'default' || activeSource === 'manual-override') return null
+
+  let message = ''
+  let description = ''
+  let bgClass = 'bg-primary-50 dark:bg-primary-900/20'
+  let borderClass = 'border-primary-200 dark:border-primary-800'
+  let textClass = 'text-primary-800 dark:text-primary-200'
+  let icon = <Sparkles className="w-5 h-5" />
+
+  if (activeSource === 'survival') {
+    message = '서바이벌 모드 동작 중'
+    description = '인지 부하를 줄이기 위해 흑백 테마가 강제 적용 중입니다.'
+    bgClass = 'bg-zinc-100 dark:bg-zinc-800'
+    borderClass = 'border-zinc-300 dark:border-zinc-700'
+    textClass = 'text-zinc-800 dark:text-zinc-200'
+    icon = <Shield className="w-5 h-5" />
+  } else if (activeSource === 'special-event') {
+    message = '타임캡슐 모드 동작 중'
+    description = '과거의 뜻깊은 기록을 발견하여 특별 테마가 적용 중입니다.'
+    bgClass = 'bg-amber-50 dark:bg-amber-900/20'
+    borderClass = 'border-amber-200 dark:border-amber-800'
+    textClass = 'text-amber-800 dark:text-amber-200'
+    icon = <Clock className="w-5 h-5" />
+  } else if (activeSource === 'environment') {
+    message = '환경 동기화 테마 적용 중'
+    const conditionMap: Record<string, string> = { clear: '맑음', rain: '비', snow: '눈', overcast: '흐림' }
+    const condition = signals.environment.weather ? conditionMap[signals.environment.weather] || '알 수 없음' : ''
+    const solar = signals.environment.solarMode === 'light' ? '낮' : '밤'
+    description = `현재 날씨(${condition}) 및 시간(${solar})에 맞춰 테마가 자동 적용되었습니다.`
+    bgClass = 'bg-blue-50 dark:bg-blue-900/20'
+    borderClass = 'border-blue-200 dark:border-blue-800'
+    textClass = 'text-blue-800 dark:text-blue-200'
+    icon = <Cloud className="w-5 h-5" />
+  }
+
+  return (
+    <div className={clsx('flex items-start gap-3 p-4 mb-6 rounded-xl border', bgClass, borderClass, textClass)}>
+      <div className="mt-0.5">{icon}</div>
+      <div>
+        <h4 className="text-sm font-semibold">{message}</h4>
+        <p className="text-xs opacity-80 mt-1">{description}</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Settings Tabs ──────────────────────────────────
 type SettingsTab = 'general' | 'account' | 'data' | 'memo' | 'ai' | 'workspace' | 'system'
 
@@ -298,6 +350,8 @@ export function SettingsModal() {
   const addFolder = useFolderStore((s) => s.addFolder)
   const updateFolder = useFolderStore((s) => s.updateFolder)
   const deleteFolder = useFolderStore((s) => s.deleteFolder)
+
+  const activeSource = useThemeOrchestrator((s) => s.activeSource)
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
   const [localTheme, setLocalTheme] = useState<ThemeMode>(settings.theme)
@@ -504,8 +558,12 @@ export function SettingsModal() {
   const positionLabel: Record<InputStartPosition, string> = { title: '제목', body: '본문' }
 
   // ─── Tab Content: General ─────────────────────────
-  const renderGeneralSettings = () => (
+  const renderGeneralSettings = () => {
+    const isThemeOverridden = activeSource !== 'default' && activeSource !== 'manual-override'
+    return (
     <div className="space-y-8">
+      {isThemeOverridden && <ThemeStatusBanner />}
+
       {/* Theme Selection */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
@@ -544,18 +602,26 @@ export function SettingsModal() {
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             강조 색상
           </h3>
-          {localTheme === 'dark' && (
+          {isThemeOverridden ? (
+            <span className="text-xs text-primary-500 dark:text-primary-400">
+              상단 알림 참조 (테마 제어 중)
+            </span>
+          ) : localTheme === 'dark' ? (
             <span className="text-xs text-zinc-400 dark:text-zinc-500">
               다크 모드에서는 색상이 자동 조정됩니다
             </span>
-          )}
+          ) : null}
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+        <div className={clsx(
+          'grid grid-cols-3 sm:grid-cols-5 gap-3',
+          isThemeOverridden && 'opacity-40 pointer-events-none'
+        )}>
           {Object.values(COLOR_PALETTES).map((palette) => (
             <button
               key={palette.id}
               type="button"
               onClick={() => setLocalPalette(palette.id)}
+              disabled={isThemeOverridden}
               className={clsx(
                 'group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 hover:scale-105',
                 localPalette === palette.id
@@ -670,7 +736,7 @@ export function SettingsModal() {
         </div>
       </section>
     </div>
-  )
+  )}
 
   // ─── Tab Content: Account ─────────────────────────
   const renderAccountSettings = () => (
@@ -1441,8 +1507,12 @@ export function SettingsModal() {
       useSettingsStore.getState().updateLivingWorkspace({ [key]: !lw[key] })
     }
 
+    const isThemeOverridden = activeSource !== 'default' && activeSource !== 'manual-override'
+
     return (
       <div className="space-y-8">
+        {isThemeOverridden && <ThemeStatusBanner />}
+        
         <section>
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
             Living Workspace

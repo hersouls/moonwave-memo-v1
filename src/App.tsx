@@ -85,6 +85,9 @@ export default function App() {
           () => useFolderStore.getState().refreshFromDb(),
         )
         useAuthStore.getState().initialize()
+
+        // Re-resolve orchestrator after initSettings to restore environment/event palette
+        useThemeOrchestrator.getState().resolve()
       } finally {
         setIsInitialized(true)
       }
@@ -154,9 +157,13 @@ export default function App() {
   useCognitiveLoadDetector()
 
   // Living Workspace: Environment sync (solar + weather)
+  const environmentThemeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.environmentThemeEnabled)
   useEffect(() => {
-    const lw = useSettingsStore.getState().settings.livingWorkspace
-    if (!lw.environmentThemeEnabled) return
+    if (!environmentThemeEnabled) {
+      // 꺼지면 환경 시그널 초기화 → 사용자 기본 팔레트로 복원
+      useThemeOrchestrator.getState().setEnvironment(null, null, null)
+      return
+    }
 
     const syncEnvironment = async () => {
       let pos = getCachedPosition()
@@ -168,6 +175,7 @@ export default function App() {
 
       useThemeOrchestrator.getState().setEnvironment(
         weather?.condition ?? null,
+        weather?.temperature ?? null,
         solarMode
       )
     }
@@ -175,7 +183,7 @@ export default function App() {
     syncEnvironment()
     const interval = setInterval(syncEnvironment, 60 * 60 * 1000) // every hour
     return () => clearInterval(interval)
-  }, [])
+  }, [environmentThemeEnabled])
 
   // Living Workspace: resolve orchestrator on settings change
   useEffect(() => {

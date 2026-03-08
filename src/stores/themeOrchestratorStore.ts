@@ -11,7 +11,7 @@ interface ThemeSignals {
   manualOverride: { active: boolean; palette: ExtendedPalette | null }
   survival: { active: boolean }
   specialEvent: { active: boolean; type: 'anniversary' | 'milestone' | null; memoTitle?: string }
-  environment: { weather: WeatherCondition | null; solarMode: 'light' | 'dark' | null }
+  environment: { weather: WeatherCondition | null; temperature: number | null; solarMode: 'light' | 'dark' | null }
 }
 
 interface ThemeOrchestratorState {
@@ -23,7 +23,7 @@ interface ThemeOrchestratorState {
   clearManualOverride: () => void
   setSurvivalMode: (active: boolean) => void
   setSpecialEvent: (event: { type: 'anniversary' | 'milestone'; memoTitle?: string } | null) => void
-  setEnvironment: (weather: WeatherCondition | null, solarMode: 'light' | 'dark' | null) => void
+  setEnvironment: (weather: WeatherCondition | null, temperature: number | null, solarMode: 'light' | 'dark' | null) => void
   resolve: () => void
 }
 
@@ -43,7 +43,7 @@ export const useThemeOrchestrator = create<ThemeOrchestratorState>()((set, get) 
     manualOverride: { active: false, palette: null },
     survival: { active: false },
     specialEvent: { active: false, type: null },
-    environment: { weather: null, solarMode: null },
+    environment: { weather: null, temperature: null, solarMode: null },
   },
 
   setManualOverride: (palette) => {
@@ -79,9 +79,9 @@ export const useThemeOrchestrator = create<ThemeOrchestratorState>()((set, get) 
     get().resolve()
   },
 
-  setEnvironment: (weather, solarMode) => {
+  setEnvironment: (weather, temperature, solarMode) => {
     set((s) => ({
-      signals: { ...s.signals, environment: { weather, solarMode } },
+      signals: { ...s.signals, environment: { weather, temperature, solarMode } },
     }))
     get().resolve()
   },
