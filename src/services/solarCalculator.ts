@@ -74,10 +74,17 @@ export function getCachedPosition(): GeoPosition | null {
   }
 }
 
-export function requestAndCachePosition(): Promise<GeoPosition | null> {
+// Fallback: Seoul, South Korea
+const DEFAULT_POSITION: GeoPosition = {
+  latitude: 37.5665,
+  longitude: 126.9780,
+  cachedAt: 0,
+}
+
+export function requestAndCachePosition(): Promise<GeoPosition> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      resolve(null)
+      resolve(DEFAULT_POSITION)
       return
     }
 
@@ -93,7 +100,7 @@ export function requestAndCachePosition(): Promise<GeoPosition | null> {
         } catch { /* storage full */ }
         resolve(geo)
       },
-      () => resolve(null),
+      () => resolve(DEFAULT_POSITION),
       { timeout: 10000, enableHighAccuracy: false }
     )
   })

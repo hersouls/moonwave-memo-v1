@@ -100,7 +100,7 @@ export const useSettingsStore = create<SettingsState>()(
           badges: [],
         },
         livingWorkspace: {
-          environmentThemeEnabled: false,
+          environmentThemeEnabled: true,
           survivalModeEnabled: false,
           completionEffectsEnabled: true,
           timeCapsuleEnabled: true,
@@ -346,7 +346,7 @@ export const useSettingsStore = create<SettingsState>()(
         if (version < 3 && state?.settings) {
           if (!state.settings.livingWorkspace) {
             state.settings.livingWorkspace = {
-              environmentThemeEnabled: false,
+              environmentThemeEnabled: true,
               survivalModeEnabled: false,
               completionEffectsEnabled: true,
               timeCapsuleEnabled: true,
