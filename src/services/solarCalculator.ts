@@ -81,27 +81,57 @@ const DEFAULT_POSITION: GeoPosition = {
   cachedAt: 0,
 }
 
-export function requestAndCachePosition(): Promise<GeoPosition> {
-  return new Promise((resolve) => {
+function cachePosition(geo: GeoPosition) {
+  try {
+    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(geo))
+  } catch { /* storage full */ }
+}
+
+// IP-based geolocation fallback (no API key required)
+async function getPositionByIP(): Promise<GeoPosition | null> {
+  try {
+    const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(5000) })
+    if (!res.ok) return null
+    const data = await res.json()
+    const lat = parseFloat(data.latitude)
+    const lon = parseFloat(data.longitude)
+    if (isNaN(lat) || isNaN(lon)) return null
+    return { latitude: lat, longitude: lon, cachedAt: Date.now() }
+  } catch {
+    return null
+  }
+}
+
+export async function requestAndCachePosition(): Promise<GeoPosition> {
+  // 1) Try browser Geolocation API
+  const browserPos = await new Promise<GeoPosition | null>((resolve) => {
     if (!navigator.geolocation) {
-      resolve(DEFAULT_POSITION)
+      resolve(null)
       return
     }
-
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const geo: GeoPosition = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          cachedAt: Date.now(),
-        }
-        try {
-          localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(geo))
-        } catch { /* storage full */ }
-        resolve(geo)
-      },
-      () => resolve(DEFAULT_POSITION),
+      (pos) => resolve({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        cachedAt: Date.now(),
+      }),
+      () => resolve(null),
       { timeout: 10000, enableHighAccuracy: false }
     )
   })
+
+  if (browserPos) {
+    cachePosition(browserPos)
+    return browserPos
+  }
+
+  // 2) Fallback: IP-based geolocation
+  const ipPos = await getPositionByIP()
+  if (ipPos) {
+    cachePosition(ipPos)
+    return ipPos
+  }
+
+  // 3) Last resort: Seoul default
+  return DEFAULT_POSITION
 }
