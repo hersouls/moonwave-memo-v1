@@ -53,7 +53,7 @@ export function FAB() {
 
   return (
     <div
-      className={`fab-button fixed right-4 z-[45] flex flex-col items-center gap-3 md:right-8 ${isEditorRoute ? 'lg:hidden' : ''}`}
+      className={`fab-button fixed right-4 z-50 flex flex-col items-center gap-3 md:right-8 ${isEditorRoute ? 'lg:hidden' : ''}`}
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
     >
       {/* Voice memo + Image OCR — only when API key configured */}

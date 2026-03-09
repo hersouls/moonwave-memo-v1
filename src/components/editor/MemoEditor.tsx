@@ -690,7 +690,7 @@ export function MemoEditor() {
         !isKeyboardOpen && 'h-[calc(100dvh-4rem-5rem)]',
         isFocusMode && '!h-dvh'
       )}
-      style={isKeyboardOpen && !isFocusMode ? { height: `calc(100dvh - 4rem - ${keyboardHeight}px)` } : undefined}
+      style={isKeyboardOpen && !isFocusMode ? { height: `calc(100dvh - 4rem - ${Math.max(0, keyboardHeight || 0)}px)` } : undefined}
     >
       {!isFocusMode && (
         <EditorHeader
@@ -832,7 +832,7 @@ export function MemoEditor() {
       {showAlterEgo && alterEgoEnabled && !isFocusMode && (
         <>
           <div className="lg:hidden fixed inset-0 z-30 bg-black/30" onClick={() => setShowAlterEgo(false)} />
-          <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 h-[60vh] bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 rounded-t-2xl shadow-2xl flex flex-col">
+          <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 h-[60dvh] bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 rounded-t-2xl shadow-2xl flex flex-col">
             <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mx-auto mt-2 mb-1 shrink-0" />
             <AlterEgoPanel body={body} onClose={() => setShowAlterEgo(false)} />
           </div>

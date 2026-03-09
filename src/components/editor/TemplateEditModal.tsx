@@ -113,7 +113,7 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <DialogPanel className="w-full max-w-md bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-h-[85vh] overflow-y-auto">
+            <DialogPanel className="w-full max-w-md bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-h-[85dvh] overflow-y-auto">
               <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-4">
                 {isEditing ? '템플릿 편집' : '새 템플릿'}
               </DialogTitle>

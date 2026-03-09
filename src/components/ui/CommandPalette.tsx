@@ -111,7 +111,7 @@ export function CommandPalette() {
 
   if (smartMode) {
     return (
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20dvh]">
         <div className="fixed inset-0 bg-black/50" onClick={close} />
         <div className="relative w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden">
           <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
@@ -174,7 +174,7 @@ export function CommandPalette() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20dvh]">
       <div className="fixed inset-0 bg-black/50" onClick={close} />
       <Command
         className="relative w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden"

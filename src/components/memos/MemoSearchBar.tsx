@@ -159,6 +159,7 @@ export function MemoSearchBar() {
           <input
             ref={inputRef}
             type="text"
+            inputMode="search"
             value={localQuery}
             onChange={(e) => handleQueryChange(e.target.value)}
             onFocus={() => setShowRecent(true)}

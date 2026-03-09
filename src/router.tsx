@@ -16,7 +16,7 @@ function SuspenseRoute({ children }: { children: React.ReactNode }) {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex items-center justify-center min-h-[50dvh]">
           <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
         </div>
       }

@@ -17,7 +17,8 @@ export function usePullToRefresh(onRefresh: () => Promise<void>) {
       }
 
       // Only activate when scrolled to top
-      const scrollTop = containerRef.current?.scrollTop ?? window.scrollY
+      if (!containerRef.current) return
+      const scrollTop = containerRef.current.scrollTop
       if (scrollTop > 0) {
         setPullDistance(0)
         return

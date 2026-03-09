@@ -95,7 +95,7 @@ export function KanbanView({ memos }: KanbanViewProps) {
           </div>
 
           {/* Column body */}
-          <div className="flex flex-col gap-2 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 p-2 flex-1 overflow-y-auto max-h-[calc(100vh-220px)]">
+          <div className="flex flex-col gap-2 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 p-2 flex-1 overflow-y-auto max-h-[calc(100dvh-220px)]">
             {column.memos.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-zinc-300 dark:text-zinc-600">
                 <FolderIcon className="w-8 h-8" />
