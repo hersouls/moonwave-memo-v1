@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useState, useEffect, useRef, useCallback, memo } from 'react'
-import { Star, CheckCircle, Trash2, Pin } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
+import { Star, CheckCircle, Trash2, Pin, Flame, RotateCcw } from 'lucide-react'
 import clsx from 'clsx'
 import type { Memo, MemoColor } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
@@ -12,6 +12,7 @@ import { maskSensitiveData, stripMarkdown } from '@/utils/textUtils'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useViewTransition } from '@/hooks/useViewTransition'
+import { useMemoryDecay } from '@/hooks/useMemoryDecay'
 
 const MEMO_CARD_BG: Record<MemoColor, string> = {
   white: 'bg-white dark:bg-zinc-800',
@@ -73,9 +74,10 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 interface MemoCardProps {
   memo: Memo
   viewMode?: 'list' | 'grid'
+  isTrashView?: boolean
 }
 
-export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: MemoCardProps) {
+export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTrashView = false }: MemoCardProps) {
   const navigate = useNavigate()
   const { navigateWithTransition } = useViewTransition()
   const location = useLocation()
@@ -92,15 +94,15 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setActiveTag = useUIStore((s) => s.setActiveTag)
   const defaultColor = useSettingsStore((s) => s.settings.memoSettings.defaultColor)
+  const digitalGardenEnabled = useSettingsStore((s) => s.settings.livingWorkspace.digitalGardenEnabled)
   const toggleStar = useMemoStore((s) => s.toggleStar)
   const softDelete = useMemoStore((s) => s.softDelete)
+  const restore = useMemoStore((s) => s.restore)
+  const permanentDelete = useMemoStore((s) => s.permanentDelete)
   const pushUndo = useUndoStore((s) => s.pushUndo)
 
-  if (!memo.id) return null
+  const { style: decayStyle, isRecent } = useMemoryDecay(memo.updatedAt, digitalGardenEnabled)
 
-  const isSelected = selectedMemoIds.includes(memo.id)
-  const isActive = location.pathname === `/memo/${memo.id}`
-  const isGrid = viewMode === 'grid'
   const [starPulse, setStarPulse] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -129,6 +131,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
   }, [memo.isStarred])
 
   const enterSelectionMode = useUIStore((s) => s.enterSelectionMode)
+
+  if (!memo.id) return null
+
+  const isSelected = selectedMemoIds.includes(memo.id)
+  const isActive = location.pathname === `/memo/${memo.id}`
+  const isGrid = viewMode === 'grid'
 
   // Touch gesture handlers (mobile only)
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -196,46 +204,70 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
 
     const threshold = getSwipeThreshold()
     if (swipeX > threshold && memo.id) {
-      // Right swipe → toggle star
       navigator.vibrate?.(15)
-      toggleStar(memo.id)
+      if (isTrashView) {
+        // Right swipe in trash → restore
+        setIsDeleting(true)
+        const memoId = memo.id
+        setTimeout(async () => {
+          await restore(memoId)
+          useToastStore.getState().showToast('메모가 복원되었습니다', 'success')
+        }, 300)
+      } else {
+        // Right swipe → toggle star
+        toggleStar(memo.id)
+      }
     } else if (swipeX < -threshold && memo.id) {
-      // Left swipe → delete with shrink animation
       navigator.vibrate?.(25)
-      setIsDeleting(true)
-      const memoId = memo.id
-      setTimeout(async () => {
-        try {
-          const deleted = await softDelete(memoId)
-          if (deleted) {
-            pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
+      if (isTrashView) {
+        // Left swipe in trash → permanent delete
+        setIsDeleting(true)
+        const memoId = memo.id
+        setTimeout(async () => {
+          await permanentDelete(memoId)
+          useToastStore.getState().showToast('메모가 영구 삭제되었습니다', 'info')
+        }, 300)
+      } else {
+        // Left swipe → soft delete with shrink animation
+        setIsDeleting(true)
+        const memoId = memo.id
+        setTimeout(async () => {
+          try {
+            const deleted = await softDelete(memoId)
+            if (deleted) {
+              pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
+            }
+          } catch (err) {
+            console.error('Failed to delete memo:', err)
+            setIsDeleting(false)
+            useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
           }
-        } catch (err) {
-          console.error('Failed to delete memo:', err)
-          setIsDeleting(false)
-          useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
-        }
-      }, 300)
+        }, 300)
+      }
     }
 
     setSwipeX(0)
     setIsSwiping(false)
     // Reset long-press flag after a tick to prevent click
     setTimeout(() => { isLongPressed.current = false }, 0)
-  }, [swipeX, memo.id, isSelectionMode, toggleStar, softDelete, pushUndo])
+  }, [swipeX, memo.id, isSelectionMode, toggleStar, softDelete, pushUndo, isTrashView, restore, permanentDelete])
 
   const handleClick = () => {
     if (isSwiping || isLongPressed.current || !memo.id) return
     if (isSelectionMode) {
       toggleMemoSelection(memo.id)
+    } else if (isTrashView) {
+      // In trash view, tap enters selection mode instead of opening editor
+      enterSelectionMode(memo.id)
     } else {
       navigateWithTransition(`/memo/${memo.id}`)
     }
   }
 
-  // SEC-01 + UX-13: mask sensitive data and strip markdown for preview
-  const bodyText = stripMarkdown(
-    maskSensitiveData(memo.body.replace(/!\[.*?\]\(memo-image:\d+\)/g, '[이미지]'))
+  // PERF: Memoize expensive body text processing (regex + stripMarkdown + mask)
+  const bodyText = useMemo(
+    () => stripMarkdown(maskSensitiveData(memo.body.replace(/!\[.*?\]\(memo-image:\d+\)/g, '[이미지]'))),
+    [memo.body]
   )
 
   return (
@@ -246,7 +278,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
         const iconScale = 0.8 + swipeProgress * 0.6
         return (
           <>
-            {/* Right swipe: star */}
+            {/* Right swipe: star (normal) / restore (trash) */}
             <div
               className={clsx(
                 'absolute inset-0 flex items-center pl-5 rounded-2xl transition-opacity',
@@ -254,16 +286,23 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
               )}
               style={{
                 background: swipeX > 0
-                  ? `linear-gradient(90deg, oklch(0.78 0.18 70 / ${swipeProgress * 0.9}), transparent 80%)`
+                  ? `linear-gradient(90deg, oklch(${isTrashView ? '0.65 0.17 145' : '0.78 0.18 70'} / ${swipeProgress * 0.9}), transparent 80%)`
                   : undefined,
               }}
             >
-              <Star
-                className="text-white fill-white transition-transform"
-                style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
-              />
+              {isTrashView ? (
+                <RotateCcw
+                  className="text-white transition-transform"
+                  style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
+                />
+              ) : (
+                <Star
+                  className="text-white fill-white transition-transform"
+                  style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
+                />
+              )}
             </div>
-            {/* Left swipe: delete */}
+            {/* Left swipe: delete (normal) / permanent delete (trash) */}
             <div
               className={clsx(
                 'absolute inset-0 flex items-center justify-end pr-5 rounded-2xl transition-opacity',
@@ -299,10 +338,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
           isSelected && 'ring-2 ring-primary-500',
           // UX-07: stronger active highlight
           isActive && 'lg:ring-1 lg:ring-primary-300 lg:dark:ring-primary-700 lg:bg-primary-50/50 lg:dark:bg-primary-900/10',
-          isGrid ? 'flex-col' : 'flex-row gap-0'
+          isGrid ? 'flex-col' : 'flex-row gap-0',
+          isRecent && digitalGardenEnabled && 'memo-glow-active'
         )}
         onContextMenu={(e) => e.preventDefault()}
         style={{
+          ...decayStyle,
           transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined,
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
         }}
@@ -404,7 +445,14 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list' }: Memo
                 <span>·</span>
               </>
             )}
-            <span className="shrink-0">{formatMemoDate(memo.updatedAt)}</span>
+            <span className="shrink-0 inline-flex items-center gap-1">
+              {memo.ephemeralExpiresAt && <Flame className="h-3 w-3 text-amber-500" />}
+              {isTrashView && memo.deletedAt ? (
+                <><Trash2 className="h-3 w-3" />{formatMemoDate(memo.deletedAt)}</>
+              ) : (
+                formatMemoDate(memo.updatedAt)
+              )}
+            </span>
           </div>
         </div>
       </button>

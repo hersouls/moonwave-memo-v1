@@ -1,19 +1,26 @@
+import { lazy, Suspense } from 'react'
 import { ProfileCard } from './ProfileCard'
 import { StatsRow } from './StatsRow'
 import { FolderList } from './FolderList'
 import { TagCloud } from './TagCloud'
 import { StreakCounter } from './StreakCounter'
-import { ActivityHeatmap } from './ActivityHeatmap'
 import { RecentWorkWidget } from './RecentWorkWidget'
-import { MemoryLaneWidget } from './MemoryLaneWidget'
-import { WeeklyDigestWidget } from './WeeklyDigestWidget'
-import { MoodGraphWidget } from './MoodGraphWidget'
-import { TodoWidget } from './TodoWidget'
-import { WritingPromptWidget } from './WritingPromptWidget'
-import { AnalyticsWidget } from './AnalyticsWidget'
-import { KnowledgeGraph } from './KnowledgeGraph'
 import { BriefingWidget } from './BriefingWidget'
-import { InsightsWidget } from './InsightsWidget'
+
+// PERF: Lazy-load below-the-fold and heavy widgets
+const ActivityHeatmap = lazy(() => import('./ActivityHeatmap').then((m) => ({ default: m.ActivityHeatmap })))
+const MemoryLaneWidget = lazy(() => import('./MemoryLaneWidget').then((m) => ({ default: m.MemoryLaneWidget })))
+const WeeklyDigestWidget = lazy(() => import('./WeeklyDigestWidget').then((m) => ({ default: m.WeeklyDigestWidget })))
+const MoodGraphWidget = lazy(() => import('./MoodGraphWidget').then((m) => ({ default: m.MoodGraphWidget })))
+const TodoWidget = lazy(() => import('./TodoWidget').then((m) => ({ default: m.TodoWidget })))
+const WritingPromptWidget = lazy(() => import('./WritingPromptWidget').then((m) => ({ default: m.WritingPromptWidget })))
+const AnalyticsWidget = lazy(() => import('./AnalyticsWidget').then((m) => ({ default: m.AnalyticsWidget })))
+const KnowledgeGraph = lazy(() => import('./KnowledgeGraph').then((m) => ({ default: m.KnowledgeGraph })))
+const InsightsWidget = lazy(() => import('./InsightsWidget').then((m) => ({ default: m.InsightsWidget })))
+
+function WidgetFallback() {
+  return <div className="h-32 rounded-2xl bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+}
 
 export function DashboardPage() {
   return (
@@ -30,22 +37,22 @@ export function DashboardPage() {
           <ProfileCard />
           <StreakCounter />
           <StatsRow />
-          <MemoryLaneWidget />
-          <WeeklyDigestWidget />
+          <Suspense fallback={<WidgetFallback />}><MemoryLaneWidget /></Suspense>
+          <Suspense fallback={<WidgetFallback />}><WeeklyDigestWidget /></Suspense>
         </div>
 
         {/* Right column: Heatmap + Folders + Tags + Widgets */}
         <div className="flex flex-col gap-4">
           <BriefingWidget />
-          <ActivityHeatmap />
-          <MoodGraphWidget />
+          <Suspense fallback={<WidgetFallback />}><ActivityHeatmap /></Suspense>
+          <Suspense fallback={<WidgetFallback />}><MoodGraphWidget /></Suspense>
           <FolderList />
           <TagCloud />
-          <TodoWidget />
-          <WritingPromptWidget />
-          <AnalyticsWidget />
-          <KnowledgeGraph />
-          <InsightsWidget />
+          <Suspense fallback={<WidgetFallback />}><TodoWidget /></Suspense>
+          <Suspense fallback={<WidgetFallback />}><WritingPromptWidget /></Suspense>
+          <Suspense fallback={<WidgetFallback />}><AnalyticsWidget /></Suspense>
+          <Suspense fallback={<WidgetFallback />}><KnowledgeGraph /></Suspense>
+          <Suspense fallback={<WidgetFallback />}><InsightsWidget /></Suspense>
         </div>
       </div>
 

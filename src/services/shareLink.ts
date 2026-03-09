@@ -1,5 +1,10 @@
 function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 export function generateShareHTML(title: string, body: string, tags: string[]): string {
@@ -18,7 +23,7 @@ export function generateShareHTML(title: string, body: string, tags: string[]): 
     .replace(/\n/g, '<br>')
 
   // Escape title for use in HTML
-  const safeTitle = (title || 'Memo').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = escapeHtml(title || 'Memo')
 
   return `<!DOCTYPE html>
 <html lang="ko">

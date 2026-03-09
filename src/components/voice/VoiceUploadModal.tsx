@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, memo as reactMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Mic,
@@ -53,23 +53,22 @@ function WaveformAnimation() {
 }
 
 // ─── Audio Level Bars ────────────────────────────
-function AudioLevelBars({ level }: { level: number }) {
-  const bars = 12
+// Pre-computed sin offsets to avoid Math.sin on every render
+const BAR_SIN_OFFSETS = Array.from({ length: 12 }, (_, i) => 1 + Math.sin(i * 0.8) * 0.5)
+
+const AudioLevelBars = reactMemo(function AudioLevelBars({ level }: { level: number }) {
   return (
     <div className="flex items-center justify-center gap-0.5 h-8">
-      {Array.from({ length: bars }).map((_, i) => {
-        const barLevel = Math.max(0.05, level * (1 + Math.sin(i * 0.8) * 0.5))
-        return (
-          <div
-            key={i}
-            className="w-1 rounded-full bg-danger-400 dark:bg-danger-500 transition-all duration-75"
-            style={{ height: `${Math.max(4, barLevel * 32)}px` }}
-          />
-        )
-      })}
+      {BAR_SIN_OFFSETS.map((offset, i) => (
+        <div
+          key={i}
+          className="w-1 rounded-full bg-danger-400 dark:bg-danger-500"
+          style={{ height: `${Math.max(4, Math.max(0.05, level * offset) * 32)}px` }}
+        />
+      ))}
     </div>
   )
-}
+})
 
 // ─── Step 1: File Selection ─────────────────────
 function StepFileSelect({

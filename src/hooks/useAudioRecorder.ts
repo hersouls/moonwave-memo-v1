@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 export type RecorderStatus = 'idle' | 'requesting-permission' | 'recording' | 'paused' | 'stopped' | 'error'
 
 const MAX_DURATION = 600 // 10 minutes in seconds
+const LEVEL_UPDATE_INTERVAL = 80 // ~12fps for audio level — enough for smooth bars, 5x less work than 60fps
 
 function getSupportedMimeType(): string {
   const types = [
@@ -29,21 +30,35 @@ export function useAudioRecorder() {
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef(0)
   const pausedDurationRef = useRef(0)
-  const rafRef = useRef<number | null>(null)
   const stoppedRef = useRef(false)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
+  const statusRef = useRef<RecorderStatus>('idle')
+  const durationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const levelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Reusable buffer to avoid allocation per frame
+  const frequencyDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
+
+  // Keep statusRef in sync
+  useEffect(() => {
+    statusRef.current = status
+  }, [status])
 
   const cleanup = useCallback(() => {
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
+    if (durationTimerRef.current) {
+      clearInterval(durationTimerRef.current)
+      durationTimerRef.current = null
+    }
+    if (levelTimerRef.current) {
+      clearInterval(levelTimerRef.current)
+      levelTimerRef.current = null
     }
     if (audioContextRef.current?.state !== 'closed') {
       audioContextRef.current?.close().catch(() => {})
     }
     audioContextRef.current = null
     analyserRef.current = null
+    frequencyDataRef.current = null
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
     mediaRecorderRef.current = null
@@ -52,44 +67,38 @@ export function useAudioRecorder() {
   // Cleanup on unmount
   useEffect(() => cleanup, [cleanup])
 
-  const updateDurationAndLevel = useCallback(() => {
-    if (status !== 'recording' || stoppedRef.current) return
+  // Duration timer: update every 1s (not every frame)
+  const startDurationTimer = useCallback(() => {
+    if (durationTimerRef.current) clearInterval(durationTimerRef.current)
+    durationTimerRef.current = setInterval(() => {
+      if (statusRef.current !== 'recording' || stoppedRef.current) return
+      const elapsed = pausedDurationRef.current + (Date.now() - startTimeRef.current) / 1000
+      setDuration(Math.floor(elapsed))
+      // Auto-stop at max duration
+      if (elapsed >= MAX_DURATION) {
+        stoppedRef.current = true
+        mediaRecorderRef.current?.stop()
+      }
+    }, 1000)
+  }, [])
 
-    const elapsed = pausedDurationRef.current + (Date.now() - startTimeRef.current) / 1000
-    setDuration(Math.floor(elapsed))
-
-    // Auto-stop at max duration
-    if (elapsed >= MAX_DURATION) {
-      stoppedRef.current = true
-      mediaRecorderRef.current?.stop()
-      return
-    }
-
-    // Audio level
-    if (analyserRef.current) {
-      const data = new Uint8Array(analyserRef.current.frequencyBinCount)
-      analyserRef.current.getByteFrequencyData(data)
+  // Audio level timer: update at throttled rate (~12fps)
+  const startLevelTimer = useCallback(() => {
+    if (levelTimerRef.current) clearInterval(levelTimerRef.current)
+    levelTimerRef.current = setInterval(() => {
+      if (statusRef.current !== 'recording' || !analyserRef.current) return
+      const analyser = analyserRef.current
+      if (!frequencyDataRef.current) {
+        frequencyDataRef.current = new Uint8Array(analyser.frequencyBinCount)
+      }
+      const data = frequencyDataRef.current
+      analyser.getByteFrequencyData(data)
       let sum = 0
       for (let i = 0; i < data.length; i++) sum += data[i]
       const avg = sum / data.length / 255
       setAudioLevel(avg)
-    }
-
-    rafRef.current = requestAnimationFrame(updateDurationAndLevel)
-  }, [status])
-
-  // Start RAF loop when recording
-  useEffect(() => {
-    if (status === 'recording') {
-      rafRef.current = requestAnimationFrame(updateDurationAndLevel)
-    } else {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
-      }
-      setAudioLevel(0)
-    }
-  }, [status, updateDurationAndLevel])
+    }, LEVEL_UPDATE_INTERVAL)
+  }, [])
 
   const start = useCallback(async () => {
     setError(null)
@@ -109,6 +118,7 @@ export function useAudioRecorder() {
       const source = audioContext.createMediaStreamSource(stream)
       const analyser = audioContext.createAnalyser()
       analyser.fftSize = 256
+      analyser.smoothingTimeConstant = 0.7 // Smooth out jitter
       source.connect(analyser)
       audioContextRef.current = audioContext
       analyserRef.current = analyser
@@ -132,6 +142,8 @@ export function useAudioRecorder() {
       recorder.start(250) // Collect data every 250ms
       startTimeRef.current = Date.now()
       setStatus('recording')
+      startDurationTimer()
+      startLevelTimer()
     } catch (err) {
       cleanup()
       if (err instanceof DOMException) {
@@ -147,12 +159,21 @@ export function useAudioRecorder() {
       }
       setStatus('error')
     }
-  }, [cleanup])
+  }, [cleanup, startDurationTimer, startLevelTimer])
 
   const pause = useCallback(() => {
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.pause()
       pausedDurationRef.current += (Date.now() - startTimeRef.current) / 1000
+      if (levelTimerRef.current) {
+        clearInterval(levelTimerRef.current)
+        levelTimerRef.current = null
+      }
+      if (durationTimerRef.current) {
+        clearInterval(durationTimerRef.current)
+        durationTimerRef.current = null
+      }
+      setAudioLevel(0)
       setStatus('paused')
     }
   }, [])
@@ -162,8 +183,10 @@ export function useAudioRecorder() {
       mediaRecorderRef.current.resume()
       startTimeRef.current = Date.now()
       setStatus('recording')
+      startDurationTimer()
+      startLevelTimer()
     }
-  }, [])
+  }, [startDurationTimer, startLevelTimer])
 
   const stop = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {

@@ -89,7 +89,7 @@
   --toast-icon-size: 20px;
   --toast-close-size: 16px;
   --toast-close-touch-target: 32px;
-  --toast-offset-bottom: 24px;
+  --toast-offset-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
 
   /* Success */
   --toast-success-bg: var(--color-success-50);

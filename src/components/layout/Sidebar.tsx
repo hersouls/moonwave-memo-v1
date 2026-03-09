@@ -127,6 +127,14 @@ export function Sidebar() {
 
   const handleDeleteFolder = async () => {
     if (!contextMenu) return
+    const folder = folders.find((f) => f.id === contextMenu.folderId)
+    const confirmed = window.confirm(
+      `"${folder?.name || '폴더'}"를 삭제하시겠습니까?\n이 폴더의 메모는 기본 폴더로 이동됩니다.`
+    )
+    if (!confirmed) {
+      setContextMenu(null)
+      return
+    }
     await deleteFolder(contextMenu.folderId)
     setContextMenu(null)
   }

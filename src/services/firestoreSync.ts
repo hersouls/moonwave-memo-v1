@@ -264,56 +264,60 @@ function startListeners(userId: string) {
     async (snapshot) => {
       if (mergeInProgress) return
 
-      for (const change of snapshot.docChanges()) {
-        const syncId = change.doc.id
-        if (recentlyPushed.has(`memo-${syncId}`)) continue
+      try {
+        for (const change of snapshot.docChanges()) {
+          const syncId = change.doc.id
+          if (recentlyPushed.has(`memo-${syncId}`)) continue
 
-        const remote = change.doc.data()
+          const remote = change.doc.data()
 
-        if (change.type === 'added' || change.type === 'modified') {
-          const local = await database.getMemoBySyncId(syncId)
-          // Resolve folderSyncId → local folderId (with legacy fallback)
-          const folderId = remote.folderSyncId
-            ? await resolveFolderSyncId(remote.folderSyncId)
-            : (remote.folderId ?? null)
+          if (change.type === 'added' || change.type === 'modified') {
+            const local = await database.getMemoBySyncId(syncId)
+            // Resolve folderSyncId → local folderId (with legacy fallback)
+            const folderId = remote.folderSyncId
+              ? await resolveFolderSyncId(remote.folderSyncId)
+              : (remote.folderId ?? null)
 
-          if (!local) {
-            await database.addMemo({
-              title: remote.title || '',
-              body: remote.body || '',
-              folderId,
-              tags: remote.tags || [],
-              isStarred: remote.isStarred ?? false,
-              color: remote.color || 'white',
-              isPinned: remote.isPinned ?? false,
-              syncId,
-              createdAt: remote.createdAt || new Date().toISOString(),
-              updatedAt: remote.updatedAt || new Date().toISOString(),
-              deletedAt: remote.deletedAt || undefined,
-            })
-          } else if (remote.updatedAt && remote.updatedAt > local.updatedAt) {
-            await database.updateMemo(local.id!, {
-              title: remote.title,
-              body: remote.body,
-              folderId,
-              tags: remote.tags || [],
-              isStarred: remote.isStarred,
-              color: remote.color,
-              isPinned: remote.isPinned,
-              deletedAt: remote.deletedAt || undefined,
-            })
+            if (!local) {
+              await database.addMemo({
+                title: remote.title || '',
+                body: remote.body || '',
+                folderId,
+                tags: remote.tags || [],
+                isStarred: remote.isStarred ?? false,
+                color: remote.color || 'white',
+                isPinned: remote.isPinned ?? false,
+                syncId,
+                createdAt: remote.createdAt || new Date().toISOString(),
+                updatedAt: remote.updatedAt || new Date().toISOString(),
+                deletedAt: remote.deletedAt || undefined,
+              })
+            } else if (remote.updatedAt && remote.updatedAt > local.updatedAt) {
+              await database.updateMemo(local.id!, {
+                title: remote.title,
+                body: remote.body,
+                folderId,
+                tags: remote.tags || [],
+                isStarred: remote.isStarred,
+                color: remote.color,
+                isPinned: remote.isPinned,
+                deletedAt: remote.deletedAt || undefined,
+              })
+            }
+          }
+
+          if (change.type === 'removed') {
+            const local = await database.getMemoBySyncId(syncId)
+            if (local) {
+              await database.permanentDeleteMemo(local.id!)
+            }
           }
         }
 
-        if (change.type === 'removed') {
-          const local = await database.getMemoBySyncId(syncId)
-          if (local) {
-            await database.permanentDeleteMemo(local.id!)
-          }
-        }
+        if (refreshMemos) await refreshMemos()
+      } catch (err) {
+        console.error('Memo sync listener error:', err)
       }
-
-      if (refreshMemos) await refreshMemos()
     }
   )
 
@@ -322,43 +326,47 @@ function startListeners(userId: string) {
     async (snapshot) => {
       if (mergeInProgress) return
 
-      for (const change of snapshot.docChanges()) {
-        const syncId = change.doc.id
-        if (recentlyPushed.has(`folder-${syncId}`)) continue
+      try {
+        for (const change of snapshot.docChanges()) {
+          const syncId = change.doc.id
+          if (recentlyPushed.has(`folder-${syncId}`)) continue
 
-        const remote = change.doc.data()
+          const remote = change.doc.data()
 
-        if (change.type === 'added' || change.type === 'modified') {
-          const local = await database.getFolderBySyncId(syncId)
-          if (!local) {
-            await database.addFolder({
-              name: remote.name,
-              color: remote.color,
-              sortOrder: remote.sortOrder ?? 0,
-              isDefault: remote.isDefault ?? false,
-              isSystem: remote.isSystem ?? false,
-              syncId,
-              createdAt: remote.createdAt || new Date().toISOString(),
-              updatedAt: remote.updatedAt,
-            })
-          } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
-            await database.updateFolder(local.id!, {
-              name: remote.name,
-              color: remote.color,
-              sortOrder: remote.sortOrder,
-            })
+          if (change.type === 'added' || change.type === 'modified') {
+            const local = await database.getFolderBySyncId(syncId)
+            if (!local) {
+              await database.addFolder({
+                name: remote.name,
+                color: remote.color,
+                sortOrder: remote.sortOrder ?? 0,
+                isDefault: remote.isDefault ?? false,
+                isSystem: remote.isSystem ?? false,
+                syncId,
+                createdAt: remote.createdAt || new Date().toISOString(),
+                updatedAt: remote.updatedAt,
+              })
+            } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
+              await database.updateFolder(local.id!, {
+                name: remote.name,
+                color: remote.color,
+                sortOrder: remote.sortOrder,
+              })
+            }
+          }
+
+          if (change.type === 'removed') {
+            const local = await database.getFolderBySyncId(syncId)
+            if (local && !local.isDefault && !local.isSystem) {
+              await database.deleteFolder(local.id!)
+            }
           }
         }
 
-        if (change.type === 'removed') {
-          const local = await database.getFolderBySyncId(syncId)
-          if (local && !local.isDefault && !local.isSystem) {
-            await database.deleteFolder(local.id!)
-          }
-        }
+        if (refreshFolders) await refreshFolders()
+      } catch (err) {
+        console.error('Folder sync listener error:', err)
       }
-
-      if (refreshFolders) await refreshFolders()
     }
   )
 }

@@ -28,6 +28,9 @@ import { FloatingTimer } from './components/editor/FloatingTimer'
 import { AmbientBackground } from './components/ui/AmbientBackground'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { useCognitiveLoadDetector } from '@/hooks/useCognitiveLoadDetector'
+import { useEphemeralGarbageCollector } from '@/hooks/useEphemeralGarbageCollector'
+import { useContextSurfacing } from '@/hooks/useContextSurfacing'
+import { ContextSuggestionBanner } from './components/ui/ContextSuggestionBanner'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from './stores/settingsStore'
@@ -99,8 +102,10 @@ export default function App() {
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Z: Undo
+      // Ctrl+Z: Undo (only for memo deletion undo — skip when inside text inputs)
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'TEXTAREA' || tag === 'INPUT') return // let editor handle its own undo
         e.preventDefault()
         useUndoStore.getState().undo()
       }
@@ -109,8 +114,10 @@ export default function App() {
         e.preventDefault()
         navigate('/memo/new')
       }
-      // Ctrl+K: Command palette
+      // Ctrl+K: Command palette (skip in textarea — editor handles Ctrl+K for links)
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'TEXTAREA') return // let editor handle link insertion
         e.preventDefault()
         const ui = useUIStore.getState()
         if (ui.isCommandPaletteOpen) {
@@ -142,7 +149,7 @@ export default function App() {
 
   // F-09: Galaxy Fold narrow screen detection
   useEffect(() => {
-    const mql = window.matchMedia('(max-width: 400px) and (min-height: 600px)')
+    const mql = window.matchMedia('(max-width: 420px) and (min-height: 600px)')
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       const isFold = e.matches
       useUIStore.setState({ isNarrowFold: isFold })
@@ -155,6 +162,13 @@ export default function App() {
 
   // Living Workspace: Cognitive load detector
   useCognitiveLoadDetector()
+
+  // Beyond UX: Ephemeral brain-dump garbage collector
+  useEphemeralGarbageCollector()
+
+  // Beyond UX: Context-aware zero-click surfacing
+  const contextSurfacingEnabled = useSettingsStore((s) => s.settings.livingWorkspace.contextSurfacingEnabled)
+  const { suggestedMemo, dismiss: dismissContextSuggestion } = useContextSurfacing(contextSurfacingEnabled)
 
   // Living Workspace: Environment sync (solar + weather)
   const environmentThemeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.environmentThemeEnabled)
@@ -276,6 +290,9 @@ export default function App() {
       <UpdateBanner />
       <IOSInstallBanner />
       <TimeCapsuleBanner />
+      {suggestedMemo && !isFocusMode && !isMemoRoute && (
+        <ContextSuggestionBanner memo={suggestedMemo} onDismiss={dismissContextSuggestion} />
+      )}
       {!isMemoRoute && <FloatingTimer />}
     </div>
   )

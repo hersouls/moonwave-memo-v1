@@ -1,6 +1,19 @@
 // ─── Core Memo Types ───────────────────────────────
 export type MemoColor = 'white' | 'yellow' | 'green' | 'blue' | 'pink' | 'purple'
 
+export interface ContextSnapshot {
+  weather: WeatherCondition | null
+  temperature: number | null
+  hour: number
+  solarMode: 'light' | 'dark'
+}
+
+export interface MemoAccessEntry {
+  timestamp: string
+  lat?: number
+  lon?: number
+}
+
 export interface Memo {
   id?: number
   syncId?: string
@@ -14,6 +27,9 @@ export interface Memo {
   createdAt: string
   updatedAt: string
   deletedAt?: string
+  ephemeralExpiresAt?: string
+  contextSnapshot?: ContextSnapshot
+  accessLog?: MemoAccessEntry[]
 }
 
 export interface Folder {
@@ -80,6 +96,16 @@ export interface LivingWorkspaceSettings {
   soundSyncEnabled: boolean
   ambientImagesEnabled: boolean
   worldBuildingEnabled: boolean
+  // Beyond UX
+  digitalGardenEnabled: boolean
+  breathingTypographyEnabled: boolean
+  ephemeralBrainDumpEnabled: boolean
+  timeMachineEnabled: boolean
+  contextSurfacingEnabled: boolean
+  organicAuraEnabled: boolean
+  ambientSoundscapeEnabled: boolean
+  semanticCanvasEnabled: boolean
+  alterEgoEnabled: boolean
 }
 
 // ─── Ambient Image Types ─────────────────────────

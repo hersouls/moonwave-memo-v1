@@ -1,8 +1,17 @@
-import { useMemo } from 'react'
-import Fuse from 'fuse.js'
+import { useMemo, useRef } from 'react'
+import Fuse, { type IFuseOptions } from 'fuse.js'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
+import type { Memo } from '@/lib/types'
+
+// PERF: Stable Fuse.js options object — avoids re-creating on every render
+const FUSE_OPTIONS: IFuseOptions<Memo> = {
+  keys: ['title', 'body', 'tags'],
+  threshold: 0.3,
+  ignoreLocation: true,
+  minMatchCharLength: 1,
+}
 
 export function useMemoFilters() {
   const memos = useMemoStore((s) => s.memos)
@@ -13,6 +22,13 @@ export function useMemoFilters() {
   const sortBy = useUIStore((s) => s.sortBy)
   const searchFilters = useUIStore((s) => s.searchFilters)
   const folders = useFolderStore((s) => s.folders)
+
+  // PERF: Cache Fuse index — only rebuild when memos array changes
+  const fuseRef = useRef<{ memos: typeof memos; index: Fuse<Memo> } | null>(null)
+  if (!fuseRef.current || fuseRef.current.memos !== memos) {
+    const activeMemos = memos.filter((m) => !m.deletedAt)
+    fuseRef.current = { memos, index: new Fuse(activeMemos, FUSE_OPTIONS) }
+  }
 
   return useMemo(() => {
     // B-01: Support trash view - show deleted memos when in trash folder
@@ -41,19 +57,15 @@ export function useMemoFilters() {
       filtered = filtered.filter((m) => m.tags.includes(activeTag))
     }
 
-    // Filter by search query (fuzzy with Fuse.js)
+    // PERF: Use cached Fuse index for search instead of creating new instance per query
     if (searchQuery.trim()) {
-      const fuse = new Fuse(filtered, {
-        keys: ['title', 'body', 'tags'],
-        threshold: 0.3,
-        ignoreLocation: true,
-        minMatchCharLength: 1,
-      })
-      filtered = fuse.search(searchQuery.trim()).map((r) => r.item)
+      const fuseResults = fuseRef.current!.index.search(searchQuery.trim())
+      const matchIds = new Set(fuseResults.map((r) => r.item.id))
+      filtered = filtered.filter((m) => matchIds.has(m.id))
     }
 
-    // Advanced search filters
-    if (searchFilters.starredOnly) {
+    // Advanced search filters (skip if already filtered by starred via activeFilter)
+    if (searchFilters.starredOnly && activeFilter !== 'starred') {
       filtered = filtered.filter((m) => m.isStarred)
     }
 

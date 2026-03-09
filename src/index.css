@@ -91,8 +91,8 @@ html {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -101,11 +101,19 @@ html {
 
 ::-webkit-scrollbar-thumb {
   background: oklch(0.7 0 0 / 0.3);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.6 0 0 / 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.5 0 0 / 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0 0 / 0.6);
 }
 
 .scrollbar-none {
@@ -627,6 +635,42 @@ html.completion-catharsis .completion-flash-overlay {
 }
 
 /* ========================================
+   Digital Garden: Memory Decay Glow
+   ======================================== */
+
+@keyframes memoGlow {
+  0%, 100% { box-shadow: 0 0 0 transparent; }
+  50% { box-shadow: 0 0 16px oklch(0.7 0.12 var(--hue-primary, 250)); }
+}
+
+.memo-glow-active {
+  animation: memoGlow 3s ease-in-out infinite;
+}
+
+/* ========================================
+   Breathing Typography
+   ======================================== */
+
+@keyframes breathe {
+  0%, 100% { letter-spacing: 0; line-height: 1.6; }
+  50% { letter-spacing: 0.03em; line-height: 1.85; }
+}
+
+.breathing-active textarea {
+  animation: breathe 10s ease-in-out infinite;
+}
+
+/* ========================================
+   Ephemeral Brain-Dump: Burn Away
+   ======================================== */
+
+@keyframes burnAway {
+  0% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.6; filter: brightness(1.5) sepia(0.5); }
+  100% { opacity: 0; filter: brightness(2) sepia(1); transform: scale(0.95); }
+}
+
+/* ========================================
    Reduced Motion Support
    ======================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -638,6 +682,9 @@ html.completion-catharsis .completion-flash-overlay {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  .memo-glow-active { animation: none; }
+  .breathing-active textarea { animation: none; }
 }
 
 /* ========================================
@@ -704,6 +751,21 @@ html.completion-catharsis .completion-flash-overlay {
    ======================================== */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* FAB narrow fold sizing */
+[data-narrow-fold] .fab-button {
+  right: 0.75rem;
+  gap: 0.5rem;
+}
+
+[data-narrow-fold] .fab-button button {
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 /* FAB desktop positioning override */
@@ -787,4 +849,26 @@ html[data-high-contrast].dark .text-zinc-500 { color: oklch(0.60 0 0); }
   [data-narrow-fold] {
     --fold-transition: padding 200ms ease, gap 200ms ease;
   }
+}
+
+/* ─── Organic UI Aura ──────────── */
+html[data-aura] {
+  --aura-hue: 250;
+  --aura-saturation: 0;
+}
+
+html[data-aura]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse at 50% 0%,
+    oklch(0.95 var(--aura-saturation, 0) var(--aura-hue, 250) / 0.25),
+    transparent 70%);
+  transition: all 3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-aura]::before { transition: none; }
 }

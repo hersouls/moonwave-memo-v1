@@ -53,6 +53,6 @@ export const useTemplateStore = create<TemplateState>()(
         }))
       },
     }),
-    { name: 'memo-custom-templates' }
+    { name: 'memo-custom-templates', version: 1 }
   )
 )

@@ -41,7 +41,8 @@ export function useAIAutocomplete(body: string, textareaRef: React.RefObject<HTM
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [body, isEnabled, hasApiKey, textareaRef])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [body, isEnabled, hasApiKey])
 
   const acceptSuggestion = useCallback(() => {
     if (!ghostText) return false

@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Mic, Pencil, Camera, FileText } from 'lucide-react'
+import { Mic, Pencil, Camera, FileText, Flame } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -8,6 +8,7 @@ export function FAB() {
   const navigate = useNavigate()
   const location = useLocation()
   const hasApiKey = useSettingsStore((s) => !!s.settings.ai?.openaiApiKey || !!s.settings.ai?.anthropicApiKey)
+  const ephemeralBrainDumpEnabled = useSettingsStore((s) => s.settings.livingWorkspace.ephemeralBrainDumpEnabled)
 
   // BUG-03: hide FAB on desktop when in editor view
   const isEditorRoute = /^\/memo\/\d+$/.test(location.pathname) || location.pathname === '/memo/new'
@@ -52,8 +53,8 @@ export function FAB() {
 
   return (
     <div
-      className={`fab-button fixed right-4 z-40 flex flex-col items-center gap-3 md:right-8 ${isEditorRoute ? 'lg:hidden' : ''}`}
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
+      className={`fab-button fixed right-4 z-[45] flex flex-col items-center gap-3 md:right-8 ${isEditorRoute ? 'lg:hidden' : ''}`}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
     >
       {/* Voice memo + Image OCR — only when API key configured */}
       {hasApiKey && (
@@ -73,6 +74,17 @@ export function FAB() {
             <Camera className="h-5 w-5" />
           </button>
         </>
+      )}
+
+      {/* Brain dump button */}
+      {ephemeralBrainDumpEnabled && (
+        <button
+          onClick={() => navigate('/memo/new?ephemeral=true')}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-600 shadow-md transition-transform hover:scale-105 active:scale-95 dark:bg-amber-900/40 dark:text-amber-400"
+          aria-label="브레인 덤프"
+        >
+          <Flame className="h-5 w-5" />
+        </button>
       )}
 
       {/* Template memo button */}

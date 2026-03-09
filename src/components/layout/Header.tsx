@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, Moon, Sun, Monitor, StickyNote, Settings, LogOut, Cloud } from 'lucide-react'
+import { Menu, StickyNote, Settings, LogOut, Cloud } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
-import type { ThemeMode } from '@/lib/types'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { IconButton } from '@/components/ui/IconButton'
@@ -12,8 +11,6 @@ import { WeatherWidget } from '@/components/ui/WeatherWidget'
 
 export function Header() {
   const location = useLocation()
-  const theme = useSettingsStore((state) => state.settings.theme)
-  const setTheme = useSettingsStore((state) => state.setTheme)
   const openSettingsModal = useUIStore((state) => state.openSettingsModal)
   const openMobileMenu = useUIStore((state) => state.openMobileMenu)
   const user = useAuthStore((state) => state.user)
@@ -42,35 +39,6 @@ export function Header() {
 
   // UX-08: hide header on desktop when viewing editor
   const isEditorRoute = /^\/memo\/\d+$/.test(location.pathname) || location.pathname === '/memo/new'
-
-  const cycleTheme = () => {
-    const themeOrder: ThemeMode[] = ['light', 'dark', 'system']
-    const currentIndex = themeOrder.indexOf(theme)
-    const nextIndex = (currentIndex + 1) % themeOrder.length
-    setTheme(themeOrder[nextIndex])
-  }
-
-  const getThemeIcon = () => {
-    switch (theme) {
-      case 'light':
-        return <Sun className="w-5 h-5" />
-      case 'dark':
-        return <Moon className="w-5 h-5" />
-      default:
-        return <Monitor className="w-5 h-5" />
-    }
-  }
-
-  const themeLabels: Record<ThemeMode, string> = {
-    light: '라이트 모드',
-    dark: '다크 모드',
-    system: '시스템 설정',
-  }
-
-  // UX-10: tooltip shows current → next mode
-  const themeOrder: ThemeMode[] = ['light', 'dark', 'system']
-  const nextTheme = themeOrder[(themeOrder.indexOf(theme) + 1) % themeOrder.length]
-  const themeTooltip = `${themeLabels[theme]} → ${themeLabels[nextTheme]}`
 
   const syncStatusLabel = syncStatus === 'syncing' ? '동기화 중...' : syncStatus === 'synced' ? '동기화 완료' : syncStatus === 'error' ? '동기화 오류' : '로컬 전용'
 
@@ -138,8 +106,8 @@ export function Header() {
 
               {showProfileMenu && (
                 <>
-                  <div className="fixed inset-0 z-20" onClick={() => setShowProfileMenu(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-30" role="menu">
+                  <div className="fixed inset-0 z-50" onClick={() => setShowProfileMenu(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-50" role="menu">
                     {/* User info */}
                     <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700">
                       <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user.displayName || '사용자'}</p>
@@ -174,29 +142,20 @@ export function Header() {
             </div>
           )}
 
-          {/* Settings button */}
-          <Tooltip content="설정" placement="bottom">
-            <IconButton
-              plain
-              color="secondary"
-              onClick={openSettingsModal}
-              aria-label="설정 열기"
-            >
-              <Settings className="w-5 h-5" />
-            </IconButton>
-          </Tooltip>
+          {/* Settings button — only show when not logged in (logged-in users have it in profile menu) */}
+          {!user && (
+            <Tooltip content="설정" placement="bottom">
+              <IconButton
+                plain
+                color="secondary"
+                onClick={openSettingsModal}
+                aria-label="설정 열기"
+              >
+                <Settings className="w-5 h-5" />
+              </IconButton>
+            </Tooltip>
+          )}
 
-          {/* Theme toggle */}
-          <Tooltip content={themeTooltip} placement="bottom">
-            <IconButton
-              plain
-              color="secondary"
-              onClick={cycleTheme}
-              aria-label={`테마 변경 (현재: ${themeLabels[theme]})`}
-            >
-              {getThemeIcon()}
-            </IconButton>
-          </Tooltip>
         </div>
       </nav>
     </header>

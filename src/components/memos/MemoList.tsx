@@ -256,7 +256,7 @@ export function MemoList() {
                 animationFillMode: 'both',
               }}
             >
-              <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} />
+              <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} isTrashView={isTrashView} />
               {showSwipeHint && index === 0 && (
                 <FeatureHint id="swipe-onboarding" message="좌우로 밀어 중요 표시/삭제할 수 있습니다. 길게 눌러 선택 모드로 진입합니다." />
               )}
@@ -282,7 +282,7 @@ export function MemoList() {
       )}
 
       {/* Selection mode bar */}
-      {isSelectionMode && <BatchActionBar />}
+      {isSelectionMode && <BatchActionBar isTrashView={isTrashView} />}
 
       {/* Context menu bottom sheet */}
       <MemoContextMenu />

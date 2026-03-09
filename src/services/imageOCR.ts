@@ -140,11 +140,16 @@ async function extractTextWithAnthropic(
   signal?: AbortSignal
 ): Promise<OCRResult> {
   // Parse data URL -> base64 + media type
-  const match = imageDataUrl.match(/^data:(image\/\w+);base64,(.+)$/)
+  const match = imageDataUrl.match(/^data:(image\/[\w+]+);base64,(.+)$/)
   if (!match) {
     throw new Error('이미지 데이터 형식이 올바르지 않습니다')
   }
-  const mediaType = match[1] as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+  const rawMediaType = match[1]
+  const allowedMediaTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
+  if (!allowedMediaTypes.includes(rawMediaType as typeof allowedMediaTypes[number])) {
+    throw new Error(`지원하지 않는 이미지 형식입니다: ${rawMediaType}`)
+  }
+  const mediaType = rawMediaType as typeof allowedMediaTypes[number]
   const base64Data = match[2]
 
   let res: Response

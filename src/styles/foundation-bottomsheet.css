@@ -9,9 +9,9 @@
 :root {
   --sheet-radius-top: 20px;
   --sheet-bg: white;
-  --sheet-max-height: 85vh;
-  --sheet-max-height-fold: 70vh;
-  --sheet-top-offset: 64px;
+  --sheet-max-height: 85dvh;
+  --sheet-max-height-fold: 70dvh;
+  --sheet-top-offset: calc(env(safe-area-inset-top, 0px) + 64px);
 }
 
 /* -----------------------------------------

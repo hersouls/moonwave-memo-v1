@@ -38,8 +38,12 @@ export const useFolderStore = create<FolderState>()(
       },
 
       refreshFromDb: async () => {
-        const folders = await database.getAllFolders()
-        set({ folders })
+        try {
+          const folders = await database.getAllFolders()
+          set({ folders })
+        } catch (err) {
+          console.error('Failed to refresh folders:', err)
+        }
       },
 
       addFolder: async (name, color) => {
@@ -66,14 +70,18 @@ export const useFolderStore = create<FolderState>()(
       },
 
       updateFolder: async (id, updates) => {
-        await database.updateFolder(id, updates)
-        set((state) => ({
-          folders: state.folders.map((f) =>
-            f.id === id ? { ...f, ...updates, updatedAt: nowISO() } : f
-          ),
-        }))
-        const updated = await database.getFolder(id)
-        if (updated) pushFolder(updated).catch(console.error)
+        try {
+          await database.updateFolder(id, updates)
+          set((state) => ({
+            folders: state.folders.map((f) =>
+              f.id === id ? { ...f, ...updates, updatedAt: nowISO() } : f
+            ),
+          }))
+          const updated = await database.getFolder(id)
+          if (updated) pushFolder(updated).catch(console.error)
+        } catch (err) {
+          console.error('Failed to update folder:', err)
+        }
       },
 
       deleteFolder: async (id) => {
@@ -81,31 +89,39 @@ export const useFolderStore = create<FolderState>()(
         if (folder?.isSystem) return
         const syncId = folder?.syncId
 
-        await database.deleteFolder(id)
-        set((state) => ({
-          folders: state.folders.filter((f) => f.id !== id),
-        }))
-        if (syncId) deleteFolderFromCloud(syncId).catch(console.error)
+        try {
+          await database.deleteFolder(id)
+          set((state) => ({
+            folders: state.folders.filter((f) => f.id !== id),
+          }))
+          if (syncId) deleteFolderFromCloud(syncId).catch(console.error)
+        } catch (err) {
+          console.error('Failed to delete folder:', err)
+        }
       },
 
       reorderFolders: async (orderedIds) => {
-        const updates = orderedIds.map((id, index) =>
-          database.updateFolder(id, { sortOrder: index })
-        )
-        await Promise.all(updates)
-        const orderMap = new Map(orderedIds.map((id, idx) => [id, idx]))
-        set((state) => ({
-          folders: state.folders
-            .map((f) => ({
-              ...f,
-              sortOrder: orderMap.get(f.id!) ?? f.sortOrder,
-            }))
-            .sort((a, b) => a.sortOrder - b.sortOrder),
-        }))
-        await Promise.all(orderedIds.map(async (id) => {
-          const folder = await database.getFolder(id)
-          if (folder) pushFolder(folder).catch(console.error)
-        }))
+        try {
+          const updates = orderedIds.map((id, index) =>
+            database.updateFolder(id, { sortOrder: index })
+          )
+          await Promise.all(updates)
+          const orderMap = new Map(orderedIds.map((id, idx) => [id, idx]))
+          set((state) => ({
+            folders: state.folders
+              .map((f) => ({
+                ...f,
+                sortOrder: orderMap.get(f.id!) ?? f.sortOrder,
+              }))
+              .sort((a, b) => a.sortOrder - b.sortOrder),
+          }))
+          await Promise.all(orderedIds.map(async (id) => {
+            const folder = await database.getFolder(id)
+            if (folder) pushFolder(folder).catch(console.error)
+          }))
+        } catch (err) {
+          console.error('Failed to reorder folders:', err)
+        }
       },
 
       getDefaultFolder: () => get().folders.find((f) => f.isDefault),

@@ -25,6 +25,6 @@ export const usePwaUpdateStore = create<PwaUpdateState>()((set, get) => ({
   },
 
   dismiss: () => {
-    set({ isUpdateAvailable: false })
+    set({ isUpdateAvailable: false, waitingWorker: null })
   },
 }))

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bold, Italic, Code, Link2, List, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2 } from 'lucide-react'
+import { Bold, Italic, Code, Link2, List, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -17,9 +17,11 @@ interface EditorToolbarProps {
   memoId?: number
   body?: string
   onAIEnhance?: (enhanced: string) => void
+  onToggleAlterEgo?: () => void
+  alterEgoEnabled?: boolean
 }
 
-export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance }: EditorToolbarProps) {
+export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled }: EditorToolbarProps) {
   const hasApiKey = useSettingsStore((s) => !!s.settings.ai?.openaiApiKey || !!s.settings.ai?.anthropicApiKey)
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
   const [isEnhancing, setIsEnhancing] = useState(false)
@@ -148,17 +150,17 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
   const tools = [
     { icon: <Bold className="w-5 h-5" />, label: '굵게', title: '굵게 (Ctrl+B)', formatKey: 'bold', action: () => insertAtCursor('**', '**') },
     { icon: <Italic className="w-5 h-5" />, label: '기울임', title: '기울임 (Ctrl+I)', formatKey: 'italic', action: () => insertAtCursor('*', '*') },
-    { icon: <Code className="w-5 h-5" />, label: '코드', title: '코드 (Ctrl+E)', formatKey: 'code', action: () => insertAtCursor('`', '`') },
-    { icon: <Link2 className="w-5 h-5" />, label: '링크', title: '링크 (Ctrl+K)', formatKey: 'link', action: () => insertAtCursor('[', '](url)') },
+    { icon: <Code className="w-5 h-5" />, label: '코드', title: '인라인 코드 (Ctrl+E)', formatKey: 'code', action: () => insertAtCursor('`', '`') },
+    { icon: <Link2 className="w-5 h-5" />, label: '링크', title: '링크 삽입 (Ctrl+K)', formatKey: 'link', action: () => insertAtCursor('[', '](url)') },
     { icon: <List className="w-5 h-5" />, label: '목록', title: '목록', formatKey: 'list', action: () => insertAtCursor('- ') },
     { icon: <Heading2 className="w-5 h-5" />, label: '제목', title: '제목', formatKey: 'heading', action: () => insertAtCursor('## ') },
   ]
 
   return (
     <div
-      className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-2 py-2 shrink-0"
+      className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 py-2 shrink-0 overflow-x-auto scrollbar-none"
     >
-      <div className="flex items-center justify-around max-w-md mx-auto">
+      <div className="flex items-center justify-center gap-0.5 px-2 w-max min-w-full mx-auto">
         {/* Undo/Redo */}
         {onUndo && (
           <>
@@ -247,6 +249,18 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
               <Camera className="w-5 h-5" />
             </button>
           </>
+        )}
+
+        {/* Alter Ego (데미안) button */}
+        {alterEgoEnabled && onToggleAlterEgo && (
+          <button
+            onClick={onToggleAlterEgo}
+            className="p-2.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors active:scale-95"
+            title="데미안 (AI 대화)"
+            aria-label="데미안"
+          >
+            <Brain className="w-5 h-5" />
+          </button>
         )}
       </div>
     </div>

@@ -140,7 +140,7 @@ export function MobileNav() {
         >
           <DialogPanel
             {...bindDrag()}
-            className="fixed inset-y-0 left-0 w-full max-w-xs bg-white dark:bg-zinc-950 shadow-xl dark:shadow-zinc-900/50 flex flex-col"
+            className="fixed inset-y-0 left-0 w-full max-w-xs pt-safe bg-white dark:bg-zinc-950 shadow-xl dark:shadow-zinc-900/50 flex flex-col"
             aria-labelledby="mobile-nav-title"
             style={{
               transform: dragX < 0 ? `translateX(${dragX}px)` : undefined,

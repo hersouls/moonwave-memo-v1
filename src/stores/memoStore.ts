@@ -7,6 +7,8 @@ import { extractTags } from '@/lib/tagParser'
 import * as database from '@/services/database'
 import { pushMemo, deleteMemoFromCloud } from '@/services/firestoreSync'
 import { calculateStreak, checkMilestones } from '@/services/gamification'
+import { captureContext } from '@/services/contextCapture'
+import { getCachedPosition } from '@/services/solarCalculator'
 import { useSettingsStore } from './settingsStore'
 
 // Track last version snapshot time per memo
@@ -20,7 +22,8 @@ interface MemoState {
   initialize: () => Promise<void>
   refreshFromDb: () => Promise<void>
 
-  addMemo: (data: { title: string; body: string; folderId: number | null; color?: MemoColor }) => Promise<number | undefined>
+  addMemo: (data: { title: string; body: string; folderId: number | null; color?: MemoColor; ephemeral?: boolean }) => Promise<number | undefined>
+  saveEphemeral: (id: number) => Promise<void>
   updateMemo: (id: number, updates: Partial<Memo>) => Promise<void>
   softDelete: (id: number) => Promise<Memo | undefined>
   restore: (id: number) => Promise<void>
@@ -30,10 +33,13 @@ interface MemoState {
   togglePin: (id: number) => Promise<void>
   moveToFolder: (id: number, folderId: number) => Promise<void>
 
+  recordAccess: (memoId: number) => Promise<void>
+
   batchDelete: (ids: number[]) => Promise<Memo[]>
   batchMove: (ids: number[], folderId: number) => Promise<void>
   batchStar: (ids: number[], starred: boolean) => Promise<void>
   batchPin: (ids: number[], pinned: boolean) => Promise<void>
+  batchRestore: (ids: number[]) => Promise<void>
   seedWelcomeMemos: () => Promise<void>
 }
 
@@ -56,8 +62,12 @@ export const useMemoStore = create<MemoState>()(
       },
 
       refreshFromDb: async () => {
-        const memos = await database.getAllMemos()
-        set({ memos })
+        try {
+          const memos = await database.getAllMemos()
+          set({ memos })
+        } catch (err) {
+          console.error('Failed to refresh memos:', err)
+        }
       },
 
       addMemo: async (data) => {
@@ -75,6 +85,8 @@ export const useMemoStore = create<MemoState>()(
             syncId: generateSyncId(),
             createdAt: now,
             updatedAt: now,
+            contextSnapshot: captureContext(),
+            ...(data.ephemeral ? { ephemeralExpiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() } : {}),
           }
           const id = await database.addMemo(memo)
           const newMemo = await database.getMemo(id)
@@ -108,6 +120,21 @@ export const useMemoStore = create<MemoState>()(
           console.error('Failed to add memo:', err)
           set({ error: '메모 생성에 실패했습니다.' })
           return undefined
+        }
+      },
+
+      saveEphemeral: async (id) => {
+        try {
+          await database.updateMemo(id, { ephemeralExpiresAt: undefined })
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              m.id === id ? { ...m, ephemeralExpiresAt: undefined, updatedAt: nowISO() } : m
+            ),
+          }))
+          const updated = await database.getMemo(id)
+          if (updated) pushMemo(updated).catch(console.error)
+        } catch (err) {
+          console.error('Failed to save ephemeral memo:', err)
         }
       },
 
@@ -215,16 +242,23 @@ export const useMemoStore = create<MemoState>()(
         const memo = get().memos.find((m) => m.id === id)
         if (!memo) return
         const newStarred = !memo.isStarred
+        // When starring an ephemeral memo, also clear ephemeralExpiresAt
+        const clearEphemeral = newStarred && !!memo.ephemeralExpiresAt
 
         // Optimistic update
         set((state) => ({
           memos: state.memos.map((m) =>
-            m.id === id ? { ...m, isStarred: newStarred, updatedAt: nowISO() } : m
+            m.id === id
+              ? { ...m, isStarred: newStarred, updatedAt: nowISO(), ...(clearEphemeral ? { ephemeralExpiresAt: undefined } : {}) }
+              : m
           ),
         }))
 
         try {
-          await database.updateMemo(id, { isStarred: newStarred })
+          await database.updateMemo(id, {
+            isStarred: newStarred,
+            ...(clearEphemeral ? { ephemeralExpiresAt: undefined } : {}),
+          })
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
         } catch (err) {
@@ -280,60 +314,122 @@ export const useMemoStore = create<MemoState>()(
         }
       },
 
+      recordAccess: async (memoId) => {
+        try {
+          const memo = get().memos.find((m) => m.id === memoId)
+          if (!memo) return
+
+          const now = nowISO()
+          const entry: { timestamp: string; lat?: number; lon?: number } = { timestamp: now }
+          const pos = getCachedPosition()
+          if (pos) {
+            entry.lat = pos.latitude
+            entry.lon = pos.longitude
+          }
+
+          const currentLog = memo.accessLog || []
+          const updatedLog = [...currentLog, entry]
+          // Cap at 20 entries (remove oldest)
+          while (updatedLog.length > 20) updatedLog.shift()
+
+          await database.updateMemo(memoId, { accessLog: updatedLog })
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              m.id === memoId ? { ...m, accessLog: updatedLog } : m
+            ),
+          }))
+        } catch (err) {
+          console.error('Failed to record access:', err)
+        }
+      },
+
       batchDelete: async (ids) => {
         const memosToDelete = get().memos.filter((m) => ids.includes(m.id!))
-        await database.bulkSoftDeleteMemos(ids)
-        const now = nowISO()
-        set((state) => ({
-          memos: state.memos.map((m) =>
-            ids.includes(m.id!) ? { ...m, deletedAt: now, updatedAt: now } : m
-          ),
-        }))
-        await Promise.all(ids.map(async (id) => {
-          const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
-        }))
+        try {
+          await database.bulkSoftDeleteMemos(ids)
+          const now = nowISO()
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              ids.includes(m.id!) ? { ...m, deletedAt: now, updatedAt: now } : m
+            ),
+          }))
+          await Promise.all(ids.map(async (id) => {
+            const updated = await database.getMemo(id)
+            if (updated) pushMemo(updated).catch(console.error)
+          }))
+        } catch (err) {
+          console.error('Failed to batch delete memos:', err)
+        }
         return memosToDelete
       },
 
       batchMove: async (ids, folderId) => {
-        await database.bulkMoveMemos(ids, folderId)
-        set((state) => ({
-          memos: state.memos.map((m) =>
-            ids.includes(m.id!) ? { ...m, folderId, updatedAt: nowISO() } : m
-          ),
-        }))
-        await Promise.all(ids.map(async (id) => {
-          const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
-        }))
+        try {
+          await database.bulkMoveMemos(ids, folderId)
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              ids.includes(m.id!) ? { ...m, folderId, updatedAt: nowISO() } : m
+            ),
+          }))
+          await Promise.all(ids.map(async (id) => {
+            const updated = await database.getMemo(id)
+            if (updated) pushMemo(updated).catch(console.error)
+          }))
+        } catch (err) {
+          console.error('Failed to batch move memos:', err)
+        }
       },
 
       batchStar: async (ids, starred) => {
-        await database.bulkUpdateMemos(ids, { isStarred: starred })
-        set((state) => ({
-          memos: state.memos.map((m) =>
-            ids.includes(m.id!) ? { ...m, isStarred: starred, updatedAt: nowISO() } : m
-          ),
-        }))
-        await Promise.all(ids.map(async (id) => {
-          const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
-        }))
+        try {
+          await database.bulkUpdateMemos(ids, { isStarred: starred })
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              ids.includes(m.id!) ? { ...m, isStarred: starred, updatedAt: nowISO() } : m
+            ),
+          }))
+          await Promise.all(ids.map(async (id) => {
+            const updated = await database.getMemo(id)
+            if (updated) pushMemo(updated).catch(console.error)
+          }))
+        } catch (err) {
+          console.error('Failed to batch star memos:', err)
+        }
       },
 
       batchPin: async (ids, pinned) => {
-        await database.bulkUpdateMemos(ids, { isPinned: pinned })
-        set((state) => ({
-          memos: state.memos.map((m) =>
-            ids.includes(m.id!) ? { ...m, isPinned: pinned, updatedAt: nowISO() } : m
-          ),
-        }))
-        await Promise.all(ids.map(async (id) => {
-          const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
-        }))
+        try {
+          await database.bulkUpdateMemos(ids, { isPinned: pinned })
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              ids.includes(m.id!) ? { ...m, isPinned: pinned, updatedAt: nowISO() } : m
+            ),
+          }))
+          await Promise.all(ids.map(async (id) => {
+            const updated = await database.getMemo(id)
+            if (updated) pushMemo(updated).catch(console.error)
+          }))
+        } catch (err) {
+          console.error('Failed to batch pin memos:', err)
+        }
       },
+      batchRestore: async (ids) => {
+        try {
+          await database.bulkUpdateMemos(ids, { deletedAt: undefined })
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              ids.includes(m.id!) ? { ...m, deletedAt: undefined, updatedAt: nowISO() } : m
+            ),
+          }))
+          await Promise.all(ids.map(async (id) => {
+            const updated = await database.getMemo(id)
+            if (updated) pushMemo(updated).catch(console.error)
+          }))
+        } catch (err) {
+          console.error('Failed to batch restore memos:', err)
+        }
+      },
+
       seedWelcomeMemos: async () => {
         const addMemo = get().addMemo
 

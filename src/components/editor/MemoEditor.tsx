@@ -19,7 +19,16 @@ import { FeatureHint } from '@/components/ui/FeatureHint'
 import { extractTags } from '@/lib/tagParser'
 import { useAITagSuggestions } from '@/hooks/useAIFeatures'
 import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
+import { useVisualViewport } from '@/hooks/useVisualViewport'
 import { useTypingSounds } from '@/hooks/useTypingSounds'
+import { useBreathingTypography } from '@/hooks/useBreathingTypography'
+import { useTimeMachine } from '@/hooks/useTimeMachine'
+import { useOrganicAura } from '@/hooks/useOrganicAura'
+import { useAmbientSoundscape } from '@/hooks/useAmbientSoundscape'
+import { AlterEgoPanel } from './AlterEgoPanel'
+import { analyzeSentiment } from '@/services/sentimentAnalysis'
+import { TimeMachineBanner } from './TimeMachineBanner'
+import { EphemeralBanner } from './EphemeralBanner'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -49,10 +58,27 @@ export function MemoEditor() {
   const folders = useFolderStore((s) => s.folders)
   const getDefaultFolder = useFolderStore((s) => s.getDefaultFolder)
   const isFocusMode = useUIStore((s) => s.isFocusMode)
+  const breathingTypographyEnabled = useSettingsStore((s) => s.settings.livingWorkspace.breathingTypographyEnabled)
+  const ephemeralBrainDumpEnabled = useSettingsStore((s) => s.settings.livingWorkspace.ephemeralBrainDumpEnabled)
+  const timeMachineEnabled = useSettingsStore((s) => s.settings.livingWorkspace.timeMachineEnabled)
+  const organicAuraEnabled = useSettingsStore((s) => s.settings.livingWorkspace.organicAuraEnabled)
+  const ambientSoundscapeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.ambientSoundscapeEnabled)
+  const alterEgoEnabled = useSettingsStore((s) => s.settings.livingWorkspace.alterEgoEnabled)
+  const { keyboardHeight, isKeyboardOpen } = useVisualViewport()
   const { playKeySound } = useTypingSounds(isFocusMode)
+  const { isBreathing, recordKeystroke } = useBreathingTypography(breathingTypographyEnabled)
+  const saveEphemeral = useMemoStore((s) => s.saveEphemeral)
+  const recordAccess = useMemoStore((s) => s.recordAccess)
 
   const isNew = !id || id === 'new'
   const memo = isNew ? null : memos.find((m) => m.id === Number(id))
+
+  // Guard: redirect if memo is in trash (should not be edited)
+  useEffect(() => {
+    if (!isNew && memo?.deletedAt) {
+      navigate('/memos', { replace: true })
+    }
+  }, [isNew, memo?.deletedAt, navigate])
 
   // Template pre-fill for new memos
   const templateId = isNew ? searchParams.get('template') : null
@@ -69,6 +95,10 @@ export function MemoEditor() {
   const [activeTab, setActiveTab] = useState<EditorTab>('edit')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
 
+  // Ephemeral brain-dump
+  const isEphemeralParam = searchParams.get('ephemeral') === 'true'
+  const [ephemeralExpiresAt, setEphemeralExpiresAt] = useState<string | undefined>(memo?.ephemeralExpiresAt)
+
   // Slash command state
   const [slashOpen, setSlashOpen] = useState(false)
   const [slashQuery, setSlashQuery] = useState('')
@@ -77,6 +107,9 @@ export function MemoEditor() {
 
   // Version history
   const [showVersionHistory, setShowVersionHistory] = useState(false)
+
+  // Alter Ego panel
+  const [showAlterEgo, setShowAlterEgo] = useState(false)
 
   // Split view
   const [isLg, setIsLg] = useState(false)
@@ -94,6 +127,8 @@ export function MemoEditor() {
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasCreated = useRef(false)
+  // Auto-title: track whether title was set by user or auto-generated
+  const isAutoTitle = useRef(!memo?.title && !template?.title)
   const latestDataRef = useRef({ memoId, title, body, folderId, color: memoColor })
   latestDataRef.current = { memoId, title, body, folderId, color: memoColor }
 
@@ -115,6 +150,31 @@ export function MemoEditor() {
   // UX-06: Extract current tags from body
   const currentTags = extractTags(body)
 
+  // Beyond UX: Time Machine — replay context when opening old memos
+  const { isActive: timeMachineActive, dismiss: dismissTimeMachine } = useTimeMachine(
+    memo?.contextSnapshot,
+    timeMachineEnabled && !isNew
+  )
+
+  // Beyond UX: Organic Aura — subtle color overlay based on sentiment
+  useOrganicAura(body, organicAuraEnabled)
+
+  // Beyond UX: Ambient Soundscape — generative audio while writing
+  const sentimentForSound = useMemo(() => analyzeSentiment(body), [body])
+  const { playNote: playAmbientNote } = useAmbientSoundscape({
+    enabled: ambientSoundscapeEnabled,
+    bodyLength: body.length,
+    sentiment: sentimentForSound,
+  })
+
+  // Beyond UX: Record access for context-aware surfacing
+  useEffect(() => {
+    if (!isNew && memoId) {
+      recordAccess(memoId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memoId])
+
   // Focus on mount + track last viewed memo
   useEffect(() => {
     if (isNew) {
@@ -135,6 +195,9 @@ export function MemoEditor() {
   const undoStack = useRef<string[]>([])
   const redoStack = useRef<string[]>([])
   const lastSnapshotRef = useRef(body)
+  // State-based counters to trigger re-render for toolbar button disabled states
+  const [undoCount, setUndoCount] = useState(0)
+  const [redoCount, setRedoCount] = useState(0)
 
   // BUG-05: Prevent concurrent autoSave execution
   const savingRef = useRef(false)
@@ -156,11 +219,19 @@ export function MemoEditor() {
           body,
           folderId,
           color: memoColor,
+          ...(isEphemeralParam && ephemeralBrainDumpEnabled ? { ephemeral: true } : {}),
         })
         if (newId) {
           hasCreated.current = true
           setMemoId(newId)
           navigate(`/memo/${newId}`, { replace: true })
+          // Set ephemeral expiry for display
+          if (isEphemeralParam && ephemeralBrainDumpEnabled) {
+            const createdMemo = useMemoStore.getState().memos.find((m) => m.id === newId)
+            if (createdMemo?.ephemeralExpiresAt) {
+              setEphemeralExpiresAt(createdMemo.ephemeralExpiresAt)
+            }
+          }
         }
         setSaveStatus('saved')
       }
@@ -197,6 +268,8 @@ export function MemoEditor() {
     if (undoStack.current.length > 50) undoStack.current.shift()
     redoStack.current = []
     lastSnapshotRef.current = text
+    setUndoCount(undoStack.current.length)
+    setRedoCount(0)
   }, [])
 
   const undoText = useCallback(() => {
@@ -205,6 +278,8 @@ export function MemoEditor() {
     redoStack.current.push(body)
     setBody(prev)
     lastSnapshotRef.current = prev
+    setUndoCount(undoStack.current.length)
+    setRedoCount(redoStack.current.length)
     setSaveStatus('modified')
     scheduleAutoSave()
   }, [body, scheduleAutoSave])
@@ -215,6 +290,8 @@ export function MemoEditor() {
     undoStack.current.push(body)
     setBody(next)
     lastSnapshotRef.current = next
+    setUndoCount(undoStack.current.length)
+    setRedoCount(redoStack.current.length)
     setSaveStatus('modified')
     scheduleAutoSave()
   }, [body, scheduleAutoSave])
@@ -237,6 +314,7 @@ export function MemoEditor() {
   }, [])
 
   const handleTitleChange = (value: string) => {
+    isAutoTitle.current = false
     setTitle(value)
     setSaveStatus('modified')
     scheduleAutoSave()
@@ -245,6 +323,15 @@ export function MemoEditor() {
   const handleBodyChange = useCallback((value: string) => {
     pushUndoSnapshot(value)
     setBody(value)
+
+    // Auto-title: extract first line as title when user hasn't manually set one
+    if (isAutoTitle.current) {
+      const firstLine = value.split('\n').find((l) => l.trim())?.trim() || ''
+      // Strip leading markdown markers (# - * > 1.)
+      const cleaned = firstLine.replace(/^(?:[#\-*>]+|\d+\.)\s*/, '').slice(0, 50)
+      setTitle(cleaned)
+    }
+
     setSaveStatus('modified')
     scheduleAutoSave()
     dismissSuggestion()
@@ -278,7 +365,8 @@ export function MemoEditor() {
 
   // UX-06: Remove tag from body
   const handleRemoveTag = (tag: string) => {
-    const newBody = body.replace(new RegExp(`#${tag}\\s?`, 'g'), '').trim()
+    const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const newBody = body.replace(new RegExp(`#${escaped}\\s?`, 'g'), '').trim()
     handleBodyChange(newBody)
   }
 
@@ -328,15 +416,27 @@ export function MemoEditor() {
       setSlashQuery(query)
       setSlashOpen(true)
 
+      // Estimate cursor position based on line/column within textarea
       const rect = textarea.getBoundingClientRect()
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 24
+      const paddingTop = parseInt(getComputedStyle(textarea).paddingTop) || 0
+      const paddingLeft = parseInt(getComputedStyle(textarea).paddingLeft) || 0
+      const linesBeforeCursor = value.substring(0, pos).split('\n').length
+      const cursorTop = rect.top + paddingTop + (linesBeforeCursor * lineHeight) - textarea.scrollTop
       setSlashPos({
-        top: rect.top + 24 + window.scrollY,
-        left: rect.left + 16,
+        top: Math.min(cursorTop + lineHeight + window.scrollY, rect.bottom + window.scrollY - 10),
+        left: rect.left + paddingLeft,
       })
     } else if (slashOpen) {
       setSlashOpen(false)
     }
     playKeySound()
+    recordKeystroke()
+    // Ambient soundscape: play note for last typed character
+    if (value.length > 0) {
+      const lastChar = value.charCodeAt(value.length - 1)
+      playAmbientNote(lastChar)
+    }
   }
 
   const handleSlashSelect = (insert: string) => {
@@ -420,14 +520,30 @@ export function MemoEditor() {
         e.preventDefault()
         insertMarkdown('*', '*')
       }
+      if (e.key === 'e') {
+        e.preventDefault()
+        insertMarkdown('`', '`')
+      }
       if (e.key === 'k') {
-        // Don't intercept Ctrl+K if it's for command palette
+        e.preventDefault()
+        insertMarkdown('[', '](url)')
+      }
+      if (e.key === 'z') {
+        e.preventDefault()
+        undoText()
         return
       }
     }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') {
-      e.preventDefault()
-      insertMarkdown('```\n', '\n```')
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+      if (e.key.toLowerCase() === 'c') {
+        e.preventDefault()
+        insertMarkdown('```\n', '\n```')
+      }
+      if (e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        redoText()
+        return
+      }
     }
   }
 
@@ -475,8 +591,22 @@ export function MemoEditor() {
     }
   }
 
+  const handleSaveEphemeral = () => {
+    if (memoId) {
+      saveEphemeral(memoId)
+      setEphemeralExpiresAt(undefined)
+    }
+  }
+
   const editContent = (
     <div className="flex flex-col flex-1 min-h-0">
+      {/* Ephemeral brain-dump banner */}
+      {ephemeralExpiresAt && (
+        <div className="mb-3">
+          <EphemeralBanner expiresAt={ephemeralExpiresAt} onSave={handleSaveEphemeral} />
+        </div>
+      )}
+
       {/* UX-18: maxLength={100} on title */}
       <input
         ref={titleRef}
@@ -489,7 +619,7 @@ export function MemoEditor() {
         style={{ fontFamily: editorFontFamily }}
       />
 
-      <div className="relative flex-1 flex flex-col min-h-0">
+      <div className={clsx('relative flex-1 flex flex-col min-h-0', isBreathing && 'breathing-active')}>
         {/* UX-03: Apply user font, UX-20: Fills remaining space */}
         <textarea
           ref={bodyRef}
@@ -554,10 +684,14 @@ export function MemoEditor() {
   )
 
   return (
-    <div className={clsx(
-      'flex flex-col h-[calc(100dvh-4rem)] lg:h-full',
-      isFocusMode && 'h-dvh'
-    )}>
+    <div
+      className={clsx(
+        'flex flex-col lg:h-full min-h-0',
+        !isKeyboardOpen && 'h-[calc(100dvh-4rem-5rem)]',
+        isFocusMode && '!h-dvh'
+      )}
+      style={isKeyboardOpen && !isFocusMode ? { height: `calc(100dvh - 4rem - ${keyboardHeight}px)` } : undefined}
+    >
       {!isFocusMode && (
         <EditorHeader
           isStarred={isStarred}
@@ -578,6 +712,11 @@ export function MemoEditor() {
         />
       )}
 
+      {/* Time Machine banner */}
+      {timeMachineActive && memo?.contextSnapshot && !isFocusMode && (
+        <TimeMachineBanner snapshot={memo.contextSnapshot} onDismiss={dismissTimeMachine} />
+      )}
+
       {/* Editor toolbar (above content, not in focus mode) */}
       {(activeTab === 'edit' || isSplit) && !isFocusMode && (
         <EditorToolbar
@@ -585,98 +724,120 @@ export function MemoEditor() {
           onContentChange={handleBodyChange}
           onUndo={undoText}
           onRedo={redoText}
-          canUndo={undoStack.current.length > 0}
-          canRedo={redoStack.current.length > 0}
+          canUndo={undoCount > 0}
+          canRedo={redoCount > 0}
           memoId={memoId}
           body={body}
           onAIEnhance={handleAIEnhance}
+          onToggleAlterEgo={() => setShowAlterEgo((prev) => !prev)}
+          alterEgoEnabled={alterEgoEnabled}
         />
       )}
 
-      <div className={clsx(
-        'flex-1 flex flex-col min-h-0 overflow-y-auto',
-        isFocusMode
-          ? 'max-w-2xl mx-auto w-full px-6 pt-12'
-          : 'px-4 lg:px-8 max-w-4xl mx-auto w-full'
-      )}>
-        {!isFocusMode && (
-          <FolderSelector
-            currentFolder={currentFolder}
-            onFolderChange={handleFolderChange}
-          />
-        )}
+      <div className="flex-1 flex min-h-0">
+        <div className={clsx(
+          'flex-1 flex flex-col min-h-0 overflow-y-auto',
+          isFocusMode
+            ? 'max-w-2xl mx-auto w-full px-6 pt-12'
+            : 'px-4 lg:px-8 max-w-4xl mx-auto w-full'
+        )}>
+          {!isFocusMode && (
+            <FolderSelector
+              currentFolder={currentFolder}
+              onFolderChange={handleFolderChange}
+            />
+          )}
 
-        {isSplit ? (
-          /* Split view: side-by-side edit + preview */
-          <div className="flex gap-0 flex-1 min-h-[300px] border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
-            <div className="flex-1 flex flex-col p-4 overflow-auto">
-              {editContent}
-            </div>
-            <div className="w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
-            <div className="flex-1 p-4 overflow-auto">
-              {previewContent}
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* A11Y-02: Tab bar with proper ARIA roles */}
-            {!isFocusMode && (
-              <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700" role="tablist" aria-label="편집기 모드">
-                <button
-                  role="tab"
-                  aria-selected={activeTab === 'edit'}
-                  id="tab-edit"
-                  aria-controls="panel-edit"
-                  onClick={() => setActiveTab('edit')}
-                  className={clsx(
-                    'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-                    activeTab === 'edit'
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-                  )}
-                >
-                  편집
-                </button>
-                <button
-                  role="tab"
-                  aria-selected={activeTab === 'preview'}
-                  id="tab-preview"
-                  aria-controls="panel-preview"
-                  onClick={() => setActiveTab('preview')}
-                  className={clsx(
-                    'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-                    activeTab === 'preview'
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-                  )}
-                >
-                  미리보기
-                </button>
+          {isSplit ? (
+            /* Split view: side-by-side edit + preview */
+            <div className="flex gap-0 flex-1 min-h-[300px] border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+              <div className="flex-1 flex flex-col p-4 overflow-auto">
+                {editContent}
               </div>
-            )}
-
-            <div
-              role="tabpanel"
-              id={activeTab === 'edit' ? 'panel-edit' : 'panel-preview'}
-              aria-labelledby={activeTab === 'edit' ? 'tab-edit' : 'tab-preview'}
-              className="flex-1 flex flex-col min-h-0"
-            >
-              {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
+              <div className="w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+              <div className="flex-1 p-4 overflow-auto">
+                {previewContent}
+              </div>
             </div>
-          </>
-        )}
+          ) : (
+            <>
+              {/* A11Y-02: Tab bar with proper ARIA roles */}
+              {!isFocusMode && (
+                <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700" role="tablist" aria-label="편집기 모드">
+                  <button
+                    role="tab"
+                    aria-selected={activeTab === 'edit'}
+                    id="tab-edit"
+                    aria-controls="panel-edit"
+                    onClick={() => setActiveTab('edit')}
+                    className={clsx(
+                      'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
+                      activeTab === 'edit'
+                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                    )}
+                  >
+                    편집
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={activeTab === 'preview'}
+                    id="tab-preview"
+                    aria-controls="panel-preview"
+                    onClick={() => setActiveTab('preview')}
+                    className={clsx(
+                      'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
+                      activeTab === 'preview'
+                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                    )}
+                  >
+                    미리보기
+                  </button>
+                </div>
+              )}
 
-        {/* AI Summary + Backlinks panels (below editor, not in focus mode) */}
-        {!isFocusMode && memoId && (
-          <div className="mt-4 space-y-3 pb-4">
-            <AISummaryPanel content={body} />
-            <BacklinksPanel memoId={memoId} title={title} />
-            <Suspense fallback={null}>
-              <RelatedMemosPanel memoId={memoId} tags={currentTags} body={body} />
-            </Suspense>
+              <div
+                role="tabpanel"
+                id={activeTab === 'edit' ? 'panel-edit' : 'panel-preview'}
+                aria-labelledby={activeTab === 'edit' ? 'tab-edit' : 'tab-preview'}
+                className="flex-1 flex flex-col min-h-0"
+              >
+                {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
+              </div>
+            </>
+          )}
+
+          {/* AI Summary + Backlinks panels (below editor, not in focus mode) */}
+          {!isFocusMode && memoId && (
+            <div className="mt-4 space-y-3 pb-4">
+              <AISummaryPanel content={body} />
+              <BacklinksPanel memoId={memoId} title={title} />
+              <Suspense fallback={null}>
+                <RelatedMemosPanel memoId={memoId} tags={currentTags} body={body} />
+              </Suspense>
+            </div>
+          )}
+        </div>
+
+        {/* Alter Ego (데미안) side panel — desktop */}
+        {showAlterEgo && alterEgoEnabled && !isFocusMode && (
+          <div className="hidden lg:flex w-80 shrink-0">
+            <AlterEgoPanel body={body} onClose={() => setShowAlterEgo(false)} />
           </div>
         )}
       </div>
+
+      {/* Alter Ego (데미안) bottom sheet — mobile */}
+      {showAlterEgo && alterEgoEnabled && !isFocusMode && (
+        <>
+          <div className="lg:hidden fixed inset-0 z-30 bg-black/30" onClick={() => setShowAlterEgo(false)} />
+          <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 h-[60vh] bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 rounded-t-2xl shadow-2xl flex flex-col">
+            <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mx-auto mt-2 mb-1 shrink-0" />
+            <AlterEgoPanel body={body} onClose={() => setShowAlterEgo(false)} />
+          </div>
+        </>
+      )}
 
       {/* Editor stats footer */}
       {isFocusMode ? (

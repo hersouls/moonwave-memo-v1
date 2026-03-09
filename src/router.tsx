@@ -10,6 +10,7 @@ const MemosLayout = lazy(() => import('./components/memos/MemosLayout').then((m)
 const MemosPage = lazy(() => import('./components/memos/MemosPage').then((m) => ({ default: m.MemosPage })))
 const MemoEditor = lazy(() => import('./components/editor/MemoEditor').then((m) => ({ default: m.MemoEditor })))
 const CalendarPage = lazy(() => import('./components/calendar/CalendarPage').then((m) => ({ default: m.CalendarPage })))
+const SemanticCanvas = lazy(() => import('./components/dashboard/SemanticCanvas'))
 
 function SuspenseRoute({ children }: { children: React.ReactNode }) {
   return (
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
       {
         path: 'calendar',
         element: <SuspenseRoute><CalendarPage /></SuspenseRoute>,
+      },
+      {
+        path: 'canvas',
+        element: <SuspenseRoute><SemanticCanvas /></SuspenseRoute>,
       },
       {
         element: <SuspenseRoute><MemosLayout /></SuspenseRoute>,

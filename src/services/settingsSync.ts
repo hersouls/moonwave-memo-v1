@@ -11,7 +11,8 @@ import {
 
 let unsubSettings: Unsubscribe | null = null
 let unsubStoreListener: (() => void) | null = null
-let recentlyPushed = false
+let lastPushTime = 0
+const PUSH_COOLDOWN = 3000
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 // Fields safe to sync (exclude API keys and device-specific data)
@@ -48,14 +49,16 @@ function settingsDocRef(uid: string) {
 
 async function pushSettings(uid: string, settings: Settings) {
   try {
-    recentlyPushed = true
+    lastPushTime = Date.now()
     const syncable = pickSyncableFields(settings)
     await setDoc(settingsDocRef(uid), syncable, { merge: true })
-    setTimeout(() => { recentlyPushed = false }, 3000)
   } catch (err) {
     console.error('Push settings failed:', err)
-    recentlyPushed = false
   }
+}
+
+function isRecentlyPushed(): boolean {
+  return Date.now() - lastPushTime < PUSH_COOLDOWN
 }
 
 async function pullAndMergeSettings(uid: string) {
@@ -88,12 +91,11 @@ async function pullAndMergeSettings(uid: string) {
     }
 
     if (Object.keys(merged).length > 0) {
-      recentlyPushed = true
+      lastPushTime = Date.now()
       useSettingsStore.setState((state) => ({
         settings: { ...state.settings, ...merged },
       }))
       applyVisualSettings({ ...local, ...merged })
-      setTimeout(() => { recentlyPushed = false }, 3000)
     }
   } catch (err) {
     console.error('Pull settings failed:', err)
@@ -107,7 +109,7 @@ function startSettingsListener(uid: string) {
   }
 
   unsubSettings = onSnapshot(settingsDocRef(uid), (snapshot) => {
-    if (recentlyPushed || !snapshot.exists()) return
+    if (isRecentlyPushed() || !snapshot.exists()) return
 
     const remote = snapshot.data() as Partial<SyncableSettings>
     const local = useSettingsStore.getState().settings
@@ -128,12 +130,11 @@ function startSettingsListener(uid: string) {
     }
 
     if (Object.keys(merged).length > 0) {
-      recentlyPushed = true
+      lastPushTime = Date.now()
       useSettingsStore.setState((state) => ({
         settings: { ...state.settings, ...merged },
       }))
       applyVisualSettings({ ...local, ...merged })
-      setTimeout(() => { recentlyPushed = false }, 3000)
     }
   })
 }
@@ -147,7 +148,7 @@ function startStoreSubscription(uid: string) {
   let previousSettings = JSON.stringify(pickSyncableFields(useSettingsStore.getState().settings))
 
   unsubStoreListener = useSettingsStore.subscribe((state) => {
-    if (recentlyPushed) return
+    if (isRecentlyPushed()) return
 
     const current = JSON.stringify(pickSyncableFields(state.settings))
     if (current === previousSettings) return
@@ -171,5 +172,5 @@ export function stopSettingsSync() {
   if (unsubSettings) { unsubSettings(); unsubSettings = null }
   if (unsubStoreListener) { unsubStoreListener(); unsubStoreListener = null }
   if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null }
-  recentlyPushed = false
+  lastPushTime = 0
 }

@@ -59,6 +59,9 @@ export function applyFontSize(sizeId: FontSize) {
   }
 }
 
+// Stable reference for system theme listener to prevent duplicate registrations
+let systemThemeListenerRegistered = false
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
@@ -107,6 +110,15 @@ export const useSettingsStore = create<SettingsState>()(
           soundSyncEnabled: false,
           ambientImagesEnabled: false,
           worldBuildingEnabled: false,
+          digitalGardenEnabled: false,
+          breathingTypographyEnabled: false,
+          ephemeralBrainDumpEnabled: false,
+          timeMachineEnabled: false,
+          contextSurfacingEnabled: false,
+          organicAuraEnabled: false,
+          ambientSoundscapeEnabled: false,
+          semanticCanvasEnabled: false,
+          alterEgoEnabled: false,
         },
       },
 
@@ -118,13 +130,17 @@ export const useSettingsStore = create<SettingsState>()(
         applyFontFamily(fontFamily)
         applyFontSize(fontSize)
 
-        window
-          .matchMedia('(prefers-color-scheme: dark)')
-          .addEventListener('change', () => {
-            if (get().settings.theme === 'system') {
-              applyTheme('system')
-            }
-          })
+        // Guard against multiple registrations
+        if (!systemThemeListenerRegistered) {
+          systemThemeListenerRegistered = true
+          window
+            .matchMedia('(prefers-color-scheme: dark)')
+            .addEventListener('change', () => {
+              if (get().settings.theme === 'system') {
+                applyTheme('system')
+              }
+            })
+        }
       },
 
       setTheme: (theme) => {
@@ -301,7 +317,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'memo-settings',
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as { settings: Record<string, unknown> & { ai?: Record<string, unknown> } }
         if (version < 1 && state?.settings?.ai) {
@@ -358,6 +374,19 @@ export const useSettingsStore = create<SettingsState>()(
           const lw = state.settings.livingWorkspace as Record<string, unknown>
           if (lw.ambientImagesEnabled === undefined) lw.ambientImagesEnabled = false
           if (lw.worldBuildingEnabled === undefined) lw.worldBuildingEnabled = false
+        }
+        // v3→v4: add Beyond UX features to livingWorkspace
+        if (version < 4 && state?.settings) {
+          const lw = (state.settings.livingWorkspace ?? {}) as Record<string, unknown>
+          if (lw.digitalGardenEnabled === undefined) lw.digitalGardenEnabled = false
+          if (lw.breathingTypographyEnabled === undefined) lw.breathingTypographyEnabled = false
+          if (lw.ephemeralBrainDumpEnabled === undefined) lw.ephemeralBrainDumpEnabled = false
+          if (lw.timeMachineEnabled === undefined) lw.timeMachineEnabled = false
+          if (lw.contextSurfacingEnabled === undefined) lw.contextSurfacingEnabled = false
+          if (lw.organicAuraEnabled === undefined) lw.organicAuraEnabled = false
+          if (lw.ambientSoundscapeEnabled === undefined) lw.ambientSoundscapeEnabled = false
+          if (lw.semanticCanvasEnabled === undefined) lw.semanticCanvasEnabled = false
+          if (lw.alterEgoEnabled === undefined) lw.alterEgoEnabled = false
         }
         return state
       },

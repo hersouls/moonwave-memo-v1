@@ -27,6 +27,9 @@ import {
   User,
   AlertTriangle,
   Sparkles,
+  ExternalLink,
+  XCircle,
+  CheckCircle,
 } from 'lucide-react'
 import { useSettingsStore, applyTheme, applyColorPalette } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -417,17 +420,23 @@ export function SettingsModal() {
     }
   }, [])
 
-  // Real-time theme preview
+  // Real-time theme preview (skip when orchestrator is overriding)
   useEffect(() => {
     if (isOpen) {
-      applyTheme(localTheme)
+      const source = useThemeOrchestrator.getState().activeSource
+      if (source === 'default' || source === 'manual-override') {
+        applyTheme(localTheme)
+      }
     }
   }, [localTheme, isOpen])
 
-  // Real-time palette preview
+  // Real-time palette preview (skip when orchestrator is overriding)
   useEffect(() => {
     if (isOpen) {
-      applyColorPalette(localPalette)
+      const source = useThemeOrchestrator.getState().activeSource
+      if (source === 'default' || source === 'manual-override') {
+        applyColorPalette(localPalette)
+      }
     }
   }, [localPalette, isOpen])
 
@@ -442,13 +451,14 @@ export function SettingsModal() {
   const handleSave = () => {
     setTheme(localTheme)
     setColorPalette(localPalette)
+    // Re-resolve orchestrator so environment theme overrides if active
+    useThemeOrchestrator.getState().resolve()
     closeModal()
   }
 
   const handleClose = () => {
-    // Rollback preview changes
-    applyTheme(settings.theme)
-    applyColorPalette(settings.colorPalette)
+    // Restore correct theme via orchestrator (handles both default and overridden cases)
+    useThemeOrchestrator.getState().resolve()
     closeModal()
   }
 
@@ -1160,6 +1170,8 @@ export function SettingsModal() {
   const [openAIKeySaved, setOpenAIKeySaved] = useState(false)
   const [anthropicKeySaved, setAnthropicKeySaved] = useState(false)
   const [testingProvider, setTestingProvider] = useState<string | null>(null)
+  const [openAITestResult, setOpenAITestResult] = useState<'success' | 'error' | null>(null)
+  const [anthropicTestResult, setAnthropicTestResult] = useState<'success' | 'error' | null>(null)
 
   // Sync local keys when modal opens
   useEffect(() => {
@@ -1168,6 +1180,8 @@ export function SettingsModal() {
       setLocalAnthropicKey(settings.ai?.anthropicApiKey || '')
       setOpenAIKeySaved(false)
       setAnthropicKeySaved(false)
+      setOpenAITestResult(null)
+      setAnthropicTestResult(null)
     }
   }, [isOpen, settings.ai?.openaiApiKey, settings.ai?.anthropicApiKey])
 
@@ -1176,6 +1190,7 @@ export function SettingsModal() {
     if (!isOpen) return
     if (localOpenAIKey === (settings.ai?.openaiApiKey || '')) return
     setOpenAIKeySaved(false)
+    setOpenAITestResult(null)
     const timer = setTimeout(() => {
       setOpenAIApiKey(localOpenAIKey)
       if (localOpenAIKey.trim()) setOpenAIKeySaved(true)
@@ -1189,6 +1204,7 @@ export function SettingsModal() {
     if (!isOpen) return
     if (localAnthropicKey === (settings.ai?.anthropicApiKey || '')) return
     setAnthropicKeySaved(false)
+    setAnthropicTestResult(null)
     const timer = setTimeout(() => {
       setAnthropicApiKey(localAnthropicKey)
       if (localAnthropicKey.trim()) setAnthropicKeySaved(true)
@@ -1204,6 +1220,8 @@ export function SettingsModal() {
       return
     }
     setTestingProvider(provider)
+    const setResult = provider === 'openai' ? setOpenAITestResult : setAnthropicTestResult
+    setResult(null)
     try {
       let res: Response
       if (provider === 'anthropic') {
@@ -1220,11 +1238,14 @@ export function SettingsModal() {
         })
       }
       if (res.ok) {
+        setResult('success')
         showToast('연결 성공', 'success')
       } else {
+        setResult('error')
         showToast('API 키를 확인해주세요', 'error')
       }
     } catch {
+      setResult('error')
       showToast('네트워크 오류가 발생했습니다', 'error')
     } finally {
       setTestingProvider(null)
@@ -1255,9 +1276,34 @@ export function SettingsModal() {
 
       {/* OpenAI */}
       <section>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          OpenAI
-        </h3>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              OpenAI
+            </h3>
+            {openAITestResult === 'success' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                <CheckCircle className="w-3 h-3" />
+                연결됨
+              </span>
+            )}
+            {openAITestResult === 'error' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400">
+                <XCircle className="w-3 h-3" />
+                연결 실패
+              </span>
+            )}
+          </div>
+          <a
+            href="https://platform.openai.com/api-keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
+          >
+            API 키 발급
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
         <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
@@ -1307,9 +1353,34 @@ export function SettingsModal() {
 
       {/* Anthropic */}
       <section>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          Anthropic
-        </h3>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              Anthropic
+            </h3>
+            {anthropicTestResult === 'success' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                <CheckCircle className="w-3 h-3" />
+                연결됨
+              </span>
+            )}
+            {anthropicTestResult === 'error' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400">
+                <XCircle className="w-3 h-3" />
+                연결 실패
+              </span>
+            )}
+          </div>
+          <a
+            href="https://console.anthropic.com/settings/keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
+          >
+            API 키 발급
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
         <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
@@ -1618,6 +1689,105 @@ export function SettingsModal() {
                 onChange={() => handleToggle('worldBuildingEnabled')}
                 className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
               />
+            </label>
+          </div>
+        </section>
+
+        {/* Beyond UX: 감각 경험 */}
+        <section>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
+            감각 경험
+          </h3>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+            글쓰기를 다감각적으로 확장하는 몰입 기능
+          </p>
+          <div className="space-y-3">
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">디지털 정원</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">방치된 메모는 퇴색, 활발한 메모는 빛남</p>
+              </div>
+              <input type="checkbox" checked={lw.digitalGardenEnabled} onChange={() => handleToggle('digitalGardenEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">호흡 타이포그래피</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">빠른 타이핑 시 자간이 심호흡 리듬으로 맥동</p>
+              </div>
+              <input type="checkbox" checked={lw.breathingTypographyEnabled} onChange={() => handleToggle('breathingTypographyEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">소멸의 공간 (브레인 덤프)</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">1시간 후 자동 소멸되는 임시 메모 모드</p>
+              </div>
+              <input type="checkbox" checked={lw.ephemeralBrainDumpEnabled} onChange={() => handleToggle('ephemeralBrainDumpEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">앰비언트 사운드스케이프</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">타이핑이 앰비언트 음악을 생성</p>
+              </div>
+              <input type="checkbox" checked={lw.ambientSoundscapeEnabled} onChange={() => handleToggle('ambientSoundscapeEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">유기적 UI 아우라</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">글쓰기 감정에 따라 UI 색상 미세 변화</p>
+              </div>
+              <input type="checkbox" checked={lw.organicAuraEnabled} onChange={() => handleToggle('organicAuraEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+          </div>
+        </section>
+
+        {/* Beyond UX: 지능형 보조 */}
+        <section>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
+            지능형 보조
+          </h3>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+            맥락을 이해하는 스마트 기능
+          </p>
+          <div className="space-y-3">
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">공감각 타임머신</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">과거 메모 열람 시 작성 당시 환경(날씨/시간) 재현</p>
+              </div>
+              <input type="checkbox" checked={lw.timeMachineEnabled} onChange={() => handleToggle('timeMachineEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">맥락 자동 제안</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">시간/요일 패턴으로 필요한 메모 자동 추천</p>
+              </div>
+              <input type="checkbox" checked={lw.contextSurfacingEnabled} onChange={() => handleToggle('contextSurfacingEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+          </div>
+        </section>
+
+        {/* Beyond UX: AI 고급 */}
+        <section>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
+            AI 고급
+          </h3>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+            AI API를 활용하는 고급 기능 (API 키 필요)
+          </p>
+          <div className="space-y-3">
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">시맨틱 캔버스</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">의미 유사도 기반 2D 메모 클러스터링 (OpenAI 키 필요)</p>
+              </div>
+              <input type="checkbox" checked={lw.semanticCanvasEnabled} onChange={() => handleToggle('semanticCanvasEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">데미안 모드 (AI 대화)</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">과거 글쓰기 스타일의 AI가 소크라테스식 문답 (API 키 필요)</p>
+              </div>
+              <input type="checkbox" checked={lw.alterEgoEnabled} onChange={() => handleToggle('alterEgoEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
             </label>
           </div>
         </section>
