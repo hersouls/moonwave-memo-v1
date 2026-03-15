@@ -75,7 +75,7 @@ async function callOpenAI(messages: Array<{ role: string; content: string }>, ma
         Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-nano',
         messages,
         max_tokens: maxTokens,
         temperature: 0.7,
@@ -113,7 +113,7 @@ async function callAnthropic(messages: Array<{ role: string; content: string }>,
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: anthropicMessages,

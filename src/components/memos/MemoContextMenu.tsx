@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { CheckCircle, LayoutGrid, LayoutList, ArrowUpDown } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useUIStore } from '@/stores/uiStore'
@@ -39,16 +38,7 @@ export function MemoContextMenu() {
   }
 
   // UX-09: desktop uses dropdown popover, mobile uses BottomSheet
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(min-width:1024px)').matches
-  )
-
-  useEffect(() => {
-    const mql = window.matchMedia('(min-width:1024px)')
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
-    mql.addEventListener('change', handler)
-    return () => mql.removeEventListener('change', handler)
-  }, [])
+  const isDesktop = useUIStore((s) => s.isDesktop)
 
   const menuItems = (
     <>

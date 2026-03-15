@@ -19,7 +19,7 @@ let refreshMemos: (() => Promise<void>) | null = null
 let refreshFolders: (() => Promise<void>) | null = null
 
 const recentlyPushed = new Set<string>()
-let mergeInProgress = false
+let mergePromise: Promise<void> | null = null
 
 function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const result: Record<string, unknown> = {}
@@ -130,8 +130,12 @@ export async function deleteFolderFromCloud(syncId: string) {
 // ─── Initial Merge ─────────────────────────────────
 
 async function initialMerge(userId: string) {
-  if (mergeInProgress) return
-  mergeInProgress = true
+  if (mergePromise) return mergePromise
+  mergePromise = doInitialMerge(userId)
+  return mergePromise
+}
+
+async function doInitialMerge(userId: string) {
 
   try {
     // Patch local folders missing updatedAt (legacy fix)
@@ -158,7 +162,7 @@ async function initialMerge(userId: string) {
           isSystem: remote.isSystem ?? false,
           syncId,
           createdAt: remote.createdAt || new Date().toISOString(),
-          updatedAt: remote.updatedAt,
+          updatedAt: remote.updatedAt || new Date().toISOString(),
         })
       } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
         await database.updateFolder(local.id!, {
@@ -248,7 +252,7 @@ async function initialMerge(userId: string) {
     if (refreshFolders) await refreshFolders()
     if (refreshMemos) await refreshMemos()
   } finally {
-    mergeInProgress = false
+    mergePromise = null
   }
 }
 
@@ -262,7 +266,7 @@ function startListeners(userId: string) {
   unsubMemos = onSnapshot(
     collection(firestore, `users/${userId}/memos`),
     async (snapshot) => {
-      if (mergeInProgress) return
+      if (mergePromise) return
 
       try {
         for (const change of snapshot.docChanges()) {
@@ -324,7 +328,7 @@ function startListeners(userId: string) {
   unsubFolders = onSnapshot(
     collection(firestore, `users/${userId}/folders`),
     async (snapshot) => {
-      if (mergeInProgress) return
+      if (mergePromise) return
 
       try {
         for (const change of snapshot.docChanges()) {
@@ -344,7 +348,7 @@ function startListeners(userId: string) {
                 isSystem: remote.isSystem ?? false,
                 syncId,
                 createdAt: remote.createdAt || new Date().toISOString(),
-                updatedAt: remote.updatedAt,
+                updatedAt: remote.updatedAt || new Date().toISOString(),
               })
             } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
               await database.updateFolder(local.id!, {

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState, LivingWorkspaceSettings } from '@/lib/types'
+import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState, LivingWorkspaceSettings, AIProvider } from '@/lib/types'
 import { FONT_FAMILIES, FONT_SIZES } from '@/utils/constants'
 
 interface SettingsState {
@@ -20,6 +20,8 @@ interface SettingsState {
   setLastBackupDate: (date: Date) => void
   setOpenAIApiKey: (apiKey: string) => void
   setAnthropicApiKey: (apiKey: string) => void
+  setGeminiApiKey: (apiKey: string) => void
+  setAIProvider: (provider: AIProvider) => void
   setSTTLanguage: (language: STTLanguage) => void
   setOCRProvider: (provider: OCRProvider) => void
   setEditorMode: (mode: EditorMode) => void
@@ -89,6 +91,8 @@ export const useSettingsStore = create<SettingsState>()(
         ai: {
           openaiApiKey: '',
           anthropicApiKey: '',
+          geminiApiKey: '',
+          aiProvider: 'anthropic',
           whisperModel: 'whisper-1',
           language: 'ko',
           ocrProvider: 'openai',
@@ -253,6 +257,24 @@ export const useSettingsStore = create<SettingsState>()(
         }))
       },
 
+      setGeminiApiKey: (apiKey) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            ai: { ...state.settings.ai, geminiApiKey: apiKey },
+          },
+        }))
+      },
+
+      setAIProvider: (provider) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            ai: { ...state.settings.ai, aiProvider: provider },
+          },
+        }))
+      },
+
       setSTTLanguage: (language) => {
         set((state) => ({
           settings: {
@@ -328,6 +350,8 @@ export const useSettingsStore = create<SettingsState>()(
             state.settings.ai = {
               openaiApiKey: oldProvider === 'openai' ? oldKey : '',
               anthropicApiKey: oldProvider === 'anthropic' ? oldKey : '',
+              geminiApiKey: '',
+              aiProvider: 'anthropic',
               whisperModel: 'whisper-1',
               language: (ai.language as string) || 'ko',
               ocrProvider: 'openai',
@@ -387,6 +411,10 @@ export const useSettingsStore = create<SettingsState>()(
           if (lw.ambientSoundscapeEnabled === undefined) lw.ambientSoundscapeEnabled = false
           if (lw.semanticCanvasEnabled === undefined) lw.semanticCanvasEnabled = false
           if (lw.alterEgoEnabled === undefined) lw.alterEgoEnabled = false
+          // Ensure new AI fields exist for existing users
+          const ai = (state.settings.ai ?? {}) as Record<string, unknown>
+          if (ai.geminiApiKey === undefined) ai.geminiApiKey = ''
+          if (ai.aiProvider === undefined) ai.aiProvider = 'anthropic'
         }
         return state
       },

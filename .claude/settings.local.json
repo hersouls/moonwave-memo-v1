@@ -72,7 +72,21 @@
       "Bash(node:*)",
       "Bash(npm uninstall:*)",
       "Bash(npx vite:*)",
-      "Bash(wc -l /d/Moonwave_Web/Memo_v1.0/src/components/**/*.tsx)"
+      "Bash(wc -l /d/Moonwave_Web/Memo_v1.0/src/components/**/*.tsx)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(sed:*)",
+      "mcp__playwright__browser_wait_for",
+      "Bash(rm:*)",
+      "Bash(npx eslint:*)",
+      "Bash(xxd:*)",
+      "Bash(firebase:*)",
+      "mcp__playwright__browser_resize",
+      "Bash(pkill:*)",
+      "Bash(npx vercel:*)",
+      "Bash(sort:*)",
+      "Bash(find /d/Moonwave_Web/Memo_v1.0 -type f \\\\\\( -name \"*memo*\" -o -name \"*edit*\" \\\\\\) -iname \"*.tsx\" -o -iname \"*.ts\" 2>/dev/null | head -20)",
+      "Bash(cd:*)"
     ]
   }
 }

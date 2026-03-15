@@ -29,8 +29,13 @@ interface UIState {
   isCommandPaletteOpen: boolean
   isKeyboardShortcutsOpen: boolean
   isTemplateModalOpen: boolean
+  slideViewMemoId: number | null
   isFocusMode: boolean
   isNarrowFold: boolean
+  isDesktop: boolean
+  isWideDesktop: boolean
+  isKeyboardOpen: boolean
+  keyboardHeight: number
   searchFilters: SearchFilters
 
   // Selection
@@ -72,10 +77,13 @@ interface UIState {
   closeKeyboardShortcuts: () => void
   openTemplateModal: () => void
   closeTemplateModal: () => void
+  openSlideView: (memoId: number) => void
+  closeSlideView: () => void
   toggleFocusMode: () => void
   setSearchFilters: (filters: Partial<SearchFilters>) => void
   resetSearchFilters: () => void
 
+  setKeyboardState: (isOpen: boolean, height: number) => void
   toggleSelectionMode: () => void
   enterSelectionMode: (memoId: number) => void
   toggleMemoSelection: (id: number) => void
@@ -108,8 +116,13 @@ export const useUIStore = create<UIState>()(
       isCommandPaletteOpen: false,
       isKeyboardShortcutsOpen: false,
       isTemplateModalOpen: false,
+      slideViewMemoId: null,
       isFocusMode: false,
       isNarrowFold: false,
+      isDesktop: false,
+      isWideDesktop: false,
+      isKeyboardOpen: false,
+      keyboardHeight: 0,
       searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null },
 
       isSelectionMode: false,
@@ -121,9 +134,9 @@ export const useUIStore = create<UIState>()(
       openMobileMenu: () => set({ isMobileMenuOpen: true }),
       closeMobileMenu: () => set({ isMobileMenuOpen: false }),
 
-      setActiveFolderId: (id) => set({ activeFolderId: id, activeFilter: 'all', activeTag: null }),
-      setActiveFilter: (filter) => set({ activeFilter: filter, activeFolderId: null, activeTag: null }),
-      setActiveTag: (tag) => set({ activeTag: tag, activeFolderId: null, activeFilter: 'all' }),
+      setActiveFolderId: (id) => set({ activeFolderId: id, activeFilter: 'all', activeTag: null, isSelectionMode: false, selectedMemoIds: [] }),
+      setActiveFilter: (filter) => set({ activeFilter: filter, activeFolderId: null, activeTag: null, isSelectionMode: false, selectedMemoIds: [] }),
+      setActiveTag: (tag) => set({ activeTag: tag, activeFolderId: null, activeFilter: 'all', isSelectionMode: false, selectedMemoIds: [] }),
       setSearchQuery: (query) => set({ searchQuery: query }),
       setSortBy: (sort) => set({ sortBy: sort }),
       setViewMode: (mode) => set({ viewMode: mode }),
@@ -149,10 +162,13 @@ export const useUIStore = create<UIState>()(
       closeKeyboardShortcuts: () => set({ isKeyboardShortcutsOpen: false }),
       openTemplateModal: () => set({ isTemplateModalOpen: true }),
       closeTemplateModal: () => set({ isTemplateModalOpen: false }),
+      openSlideView: (memoId) => set({ slideViewMemoId: memoId }),
+      closeSlideView: () => set({ slideViewMemoId: null }),
       toggleFocusMode: () => set((s) => ({ isFocusMode: !s.isFocusMode })),
       setSearchFilters: (filters) => set((s) => ({ searchFilters: { ...s.searchFilters, ...filters } })),
       resetSearchFilters: () => set({ searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null } }),
 
+      setKeyboardState: (isOpen, height) => set({ isKeyboardOpen: isOpen, keyboardHeight: height }),
       toggleSelectionMode: () =>
         set((s) => ({
           isSelectionMode: !s.isSelectionMode,

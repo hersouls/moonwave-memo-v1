@@ -51,6 +51,7 @@ export default defineConfig({
           'vendor-d3': ['d3-force', 'd3-selection'],
           'vendor-media': ['html-to-image', 'canvas-confetti'],
           'vendor-diff': ['diff'],
+          'vendor-tiptap': ['@tiptap/react', '@tiptap/starter-kit', 'tiptap-markdown'],
         },
       },
     },

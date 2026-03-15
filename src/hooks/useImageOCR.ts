@@ -48,13 +48,7 @@ export function useImageOCR() {
   const processImage = useCallback(async (file: File) => {
     const ai = useSettingsStore.getState().settings.ai
     const provider = ai?.ocrProvider || 'openai'
-    const apiKey = provider === 'anthropic' ? ai?.anthropicApiKey : ai?.openaiApiKey
-
-    if (!apiKey) {
-      setError(`설정 > AI 서비스에서 ${provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} API 키를 먼저 입력해주세요`)
-      setStatus('error')
-      return
-    }
+    const apiKey = provider === 'anthropic' ? ai?.anthropicApiKey : provider === 'gemini' ? ai?.geminiApiKey : ai?.openaiApiKey
 
     // Validate
     setStatus('validating')

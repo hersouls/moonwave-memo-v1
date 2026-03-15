@@ -1,4 +1,4 @@
-import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download, ImagePlus, FileCode2 } from 'lucide-react'
+import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download, ImagePlus, FileCode2, Type } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 import { useMemoStore } from '@/stores/memoStore'
@@ -7,7 +7,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
 import { MEMO_COLORS } from '@/utils/constants'
-import type { MemoColor } from '@/lib/types'
+import type { MemoColor, EditorMode } from '@/lib/types'
 import { ShareCardModal } from './ShareCardModal'
 import { ShareLinkModal } from './ShareLinkModal'
 
@@ -159,14 +159,26 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           <X className="f-icon--muted w-5 h-5" />
         </button>
 
-        {/* Split/Tab toggle — desktop only */}
+        {/* Editor mode toggle — desktop only (tabs → split → tiptap → tabs) */}
         <button
-          onClick={() => setEditorMode(editorMode === 'split' ? 'tabs' : 'split')}
+          onClick={() => {
+            const modes: EditorMode[] = ['tabs', 'split', 'tiptap']
+            const idx = modes.indexOf(editorMode)
+            setEditorMode(modes[(idx + 1) % modes.length])
+          }}
           className="f-icon-btn hidden lg:inline-flex"
-          aria-label={editorMode === 'split' ? '탭 모드' : '분할 모드'}
-          title={editorMode === 'split' ? '탭 모드' : '분할 모드'}
+          aria-label={
+            editorMode === 'tabs' ? '분할 모드' :
+            editorMode === 'split' ? 'WYSIWYG 모드' : '탭 모드'
+          }
+          title={
+            editorMode === 'tabs' ? '분할 모드' :
+            editorMode === 'split' ? 'WYSIWYG 모드' : '탭 모드'
+          }
         >
-          {editorMode === 'split' ? (
+          {editorMode === 'tiptap' ? (
+            <Type className="f-icon--muted w-5 h-5" />
+          ) : editorMode === 'split' ? (
             <Rows2 className="f-icon--muted w-5 h-5" />
           ) : (
             <Columns2 className="f-icon--muted w-5 h-5" />

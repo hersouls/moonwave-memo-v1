@@ -21,6 +21,8 @@ const SHORTCUT_GROUPS = [
       { keys: ['Ctrl', 'Shift', 'C'], desc: '코드 블록' },
       { keys: ['/'], desc: '슬래시 명령' },
       { keys: ['Tab'], desc: 'AI 자동완성 수락' },
+      { keys: ['F5'], desc: '슬라이드 보기' },
+      { keys: ['Ctrl', 'Shift', 'P'], desc: '슬라이드 보기' },
     ],
   },
 ]

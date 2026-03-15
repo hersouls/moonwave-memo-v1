@@ -15,19 +15,23 @@ export function CalendarPage() {
   const selectedMemos = selectedDate ? getMemosForDate(selectedDate) : []
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 lg:px-8 lg:py-6">
-      <div className="flex flex-col gap-4">
-        <CalendarGrid
-          currentMonth={currentMonth}
-          onMonthChange={setCurrentMonth}
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          memoCounts={memoCounts}
-        />
-        <CalendarMemoList
-          memos={selectedMemos}
-          selectedDate={selectedDate}
-        />
+    <div className="mx-auto w-full max-w-2xl xl:max-w-5xl px-4 py-4 lg:px-8 lg:py-6">
+      <div className="flex flex-col xl:flex-row xl:items-start gap-4">
+        <div className="xl:w-[420px] xl:shrink-0 xl:sticky xl:top-0">
+          <CalendarGrid
+            currentMonth={currentMonth}
+            onMonthChange={setCurrentMonth}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            memoCounts={memoCounts}
+          />
+        </div>
+        <div className="xl:flex-1 xl:min-w-0">
+          <CalendarMemoList
+            memos={selectedMemos}
+            selectedDate={selectedDate}
+          />
+        </div>
       </div>
       <FAB />
     </div>

@@ -140,6 +140,7 @@ export async function restoreFromBackup(
     const folders = (backup.data.folders || []).map((f: Folder) => ({
       ...f,
       createdAt: f.createdAt || new Date().toISOString(),
+      updatedAt: f.updatedAt || f.createdAt || new Date().toISOString(),
     }))
 
     await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages], async () => {
@@ -157,17 +158,17 @@ export async function restoreFromBackup(
       }
 
       // B-11: Restore memoImages and memoVersions
-      const backupImages = (backup.data as Record<string, unknown>).memoImages as unknown[] || []
+      const backupImages = backup.data.memoImages || []
       if (backupImages.length > 0) {
-        await db.memoImages.bulkAdd(backupImages as never[])
+        await db.memoImages.bulkAdd(backupImages)
       }
-      const backupVersions = (backup.data as Record<string, unknown>).memoVersions as unknown[] || []
+      const backupVersions = backup.data.memoVersions || []
       if (backupVersions.length > 0) {
-        await db.memoVersions.bulkAdd(backupVersions as never[])
+        await db.memoVersions.bulkAdd(backupVersions)
       }
-      const backupAmbient = (backup.data as Record<string, unknown>).ambientImages as unknown[] || []
+      const backupAmbient = backup.data.ambientImages || []
       if (backupAmbient.length > 0) {
-        await db.ambientImages.bulkAdd(backupAmbient as never[])
+        await db.ambientImages.bulkAdd(backupAmbient)
       }
     })
 
@@ -212,6 +213,7 @@ export async function clearAllData(): Promise<void> {
       isSystem: f.isSystem,
       syncId: generateSyncId(),
       createdAt: now,
+      updatedAt: now,
     }))
   )
 

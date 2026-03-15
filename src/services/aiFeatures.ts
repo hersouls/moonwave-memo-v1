@@ -1,54 +1,47 @@
 import { useSettingsStore } from '@/stores/settingsStore'
-import { auth, callable } from '@/lib/firebase'
+import { useToastStore } from '@/stores/toastStore'
+import { useUIStore } from '@/stores/uiStore'
+import { incrementAIUsage, isAILimitReached } from './aiUsage'
+import type { AIProvider } from '@/lib/types'
 
 interface AIResponse {
   text: string
   error?: string
 }
 
-// B-03: Cloud Functions callable
-const aiChatFn = callable<
-  { prompt: string; systemPrompt: string; provider?: 'openai' | 'anthropic' },
-  { text: string }
->('aiChat')
-
-function getApiKeys() {
+function getAISettings() {
   const ai = useSettingsStore.getState().settings.ai
   return {
     openaiKey: ai.openaiApiKey,
     anthropicKey: ai.anthropicApiKey,
+    geminiKey: ai.geminiApiKey,
+    provider: ai.aiProvider || 'openai',
   }
 }
 
-// ─── Cloud Functions proxy ───────────────────────────
-
-async function callViaProxy(prompt: string, systemPrompt: string): Promise<AIResponse> {
-  if (!auth.currentUser) return { text: '', error: 'proxy-unavailable' }
-
-  try {
-    const result = await aiChatFn({ prompt, systemPrompt })
-    return { text: result.data.text }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Cloud Function 호출 실패'
-    return { text: '', error: message }
+function getUserApiKey(provider: AIProvider): string | undefined {
+  const { openaiKey, anthropicKey, geminiKey } = getAISettings()
+  switch (provider) {
+    case 'openai': return openaiKey || undefined
+    case 'anthropic': return anthropicKey || undefined
+    case 'gemini': return geminiKey || undefined
   }
 }
 
-// ─── Direct API calls (fallback) ─────────────────────
+function hasAnyUserKey(): boolean {
+  const { openaiKey, anthropicKey, geminiKey } = getAISettings()
+  return !!(openaiKey || anthropicKey || geminiKey)
+}
 
-async function callOpenAI(prompt: string, systemPrompt: string, maxTokens = 500): Promise<AIResponse> {
-  const { openaiKey } = getApiKeys()
-  if (!openaiKey) return { text: '', error: 'OpenAI API 키가 설정되지 않았습니다.' }
+// ─── Direct API calls (when user has their own key) ─────
 
+async function callOpenAIDirect(apiKey: string, prompt: string, systemPrompt: string, maxTokens: number): Promise<AIResponse> {
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiKey}`,
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-nano',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt },
@@ -57,12 +50,10 @@ async function callOpenAI(prompt: string, systemPrompt: string, maxTokens = 500)
         temperature: 0.3,
       }),
     })
-
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
     }
-
     const data = await res.json()
     return { text: data.choices?.[0]?.message?.content?.trim() || '' }
   } catch (err) {
@@ -70,32 +61,27 @@ async function callOpenAI(prompt: string, systemPrompt: string, maxTokens = 500)
   }
 }
 
-async function callAnthropic(prompt: string, systemPrompt: string, maxTokens = 500): Promise<AIResponse> {
-  const { anthropicKey } = getApiKeys()
-  if (!anthropicKey) return { text: '', error: 'Anthropic API 키가 설정되지 않았습니다.' }
-
+async function callAnthropicDirect(apiKey: string, prompt: string, systemPrompt: string, maxTokens: number): Promise<AIResponse> {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
-
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
     }
-
     const data = await res.json()
     const textBlock = data.content?.find((c: { type: string }) => c.type === 'text')
     return { text: textBlock?.text?.trim() || '' }
@@ -104,24 +90,97 @@ async function callAnthropic(prompt: string, systemPrompt: string, maxTokens = 5
   }
 }
 
-// ─── Unified AI call: proxy first, then direct fallback ──
+async function callGeminiDirect(apiKey: string, prompt: string, systemPrompt: string, maxTokens: number): Promise<AIResponse> {
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: maxTokens * 4, temperature: 0.3 },
+        }),
+      }
+    )
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
+    }
+    const data = await res.json()
+    return { text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '' }
+  } catch (err) {
+    return { text: '', error: `요청 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+  }
+}
 
-async function callAI(prompt: string, systemPrompt: string, maxTokens = 500): Promise<AIResponse> {
-  // Try Cloud Functions proxy first (secure, no client-side API keys)
-  const proxyResult = await callViaProxy(prompt, systemPrompt)
-  if (!proxyResult.error) return proxyResult
+// ─── Server proxy call (uses Vercel API route with server keys) ──
 
-  // Fallback to direct API calls with user-provided keys
-  const { openaiKey, anthropicKey } = getApiKeys()
-  if (openaiKey) return callOpenAI(prompt, systemPrompt, maxTokens)
-  if (anthropicKey) return callAnthropic(prompt, systemPrompt, maxTokens)
-
-  // If proxy failed with a real error (not just unavailable), show it
-  if (proxyResult.error !== 'proxy-unavailable') {
-    return proxyResult
+async function callViaServerProxy(prompt: string, systemPrompt: string, provider: AIProvider, maxTokens: number): Promise<AIResponse> {
+  // Check daily limit before calling
+  if (isAILimitReached()) {
+    useToastStore.getState().showToast(
+      '오늘의 무료 AI 사용 횟수(50회)를 초과했습니다',
+      'warning',
+      { action: { label: 'API 키 등록', onClick: () => useUIStore.getState().openSettingsModal() } }
+    )
+    return { text: '', error: 'daily_limit_exceeded' }
   }
 
-  return { text: '', error: 'AI 서비스를 사용하려면 로그인하거나 설정에서 API 키를 입력해 주세요.' }
+  try {
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, systemPrompt, provider, maxTokens }),
+    })
+
+    if (res.status === 429) {
+      useToastStore.getState().showToast(
+        '오늘의 무료 AI 사용 횟수를 초과했습니다',
+        'warning',
+        { action: { label: 'API 키 등록', onClick: () => useUIStore.getState().openSettingsModal() } }
+      )
+      return { text: '', error: 'daily_limit_exceeded' }
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return { text: '', error: err.error || `서버 오류: ${res.status}` }
+    }
+
+    const data = await res.json()
+    // Count usage if server key was used
+    if (data.usingServerKey) incrementAIUsage()
+    return { text: data.text || '' }
+  } catch (err) {
+    return { text: '', error: `서버 연결 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+  }
+}
+
+// ─── Unified AI call: user key first, then server proxy ──
+
+async function callAI(prompt: string, systemPrompt: string, maxTokens = 500): Promise<AIResponse> {
+  const { provider } = getAISettings()
+  const userKey = getUserApiKey(provider)
+
+  // 1. User has their own API key → direct call (unlimited)
+  if (userKey) {
+    switch (provider) {
+      case 'anthropic': return callAnthropicDirect(userKey, prompt, systemPrompt, maxTokens)
+      case 'gemini': return callGeminiDirect(userKey, prompt, systemPrompt, maxTokens)
+      default: return callOpenAIDirect(userKey, prompt, systemPrompt, maxTokens)
+    }
+  }
+
+  // 2. No user key → server proxy (daily limited)
+  return callViaServerProxy(prompt, systemPrompt, provider, maxTokens)
+}
+
+// ─── Public API ─────────────────────────────────────────
+
+export function isAIAvailable(): boolean {
+  return hasAnyUserKey() || !isAILimitReached()
 }
 
 export async function suggestTags(content: string): Promise<{ tags: string[]; error?: string }> {
@@ -138,7 +197,6 @@ export async function suggestTags(content: string): Promise<{ tags: string[]; er
       return { tags: parsed.filter((t): t is string => typeof t === 'string').slice(0, 5) }
     }
   } catch {
-    // Try to extract tags from text
     const match = result.text.match(/\[.*\]/)
     if (match) {
       try {
@@ -188,11 +246,7 @@ export async function enhanceReadability(content: string): Promise<{ enhanced: s
 - Write in the same language as the input
 - Return ONLY the reformatted content, no explanations`
 
-  const result = await callAI(
-    content.slice(0, 5000),
-    systemPrompt,
-    2000
-  )
+  const result = await callAI(content.slice(0, 5000), systemPrompt, 2000)
   if (result.error) return { enhanced: '', error: result.error }
   return { enhanced: result.text }
 }

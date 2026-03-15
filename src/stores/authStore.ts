@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
     unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        set({ user: toAuthUser(firebaseUser), isLoading: false, isSigningIn: false, syncStatus: 'syncing' })
+        set({ user: toAuthUser(firebaseUser), isLoading: false, isSigningIn: false, error: null, syncStatus: 'syncing' })
         try {
           await initSync(firebaseUser.uid)
           set({ syncStatus: 'synced', lastSyncTime: new Date().toISOString() })

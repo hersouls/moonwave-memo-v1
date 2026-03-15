@@ -57,8 +57,8 @@ export interface MemoImage {
   createdAt: string
 }
 
-export type OCRProvider = 'openai' | 'anthropic'
-export type EditorMode = 'tabs' | 'split'
+export type OCRProvider = 'openai' | 'anthropic' | 'gemini'
+export type EditorMode = 'tabs' | 'split' | 'tiptap'
 
 // ─── Version History Types ────────────────────────
 export interface MemoVersion {
@@ -127,12 +127,14 @@ export type SortBy = 'updatedAt' | 'createdAt' | 'title'
 export type ViewMode = 'list' | 'grid' | 'timeline' | 'kanban'
 export type InputStartPosition = 'title' | 'body'
 export type ColorPalette = 'default' | 'ocean' | 'rose' | 'purple' | 'forest'
-export type AIProvider = 'openai' | 'anthropic' | 'google'
+export type AIProvider = 'openai' | 'anthropic' | 'gemini'
 export type STTLanguage = 'ko' | 'en' | 'ja' | 'zh'
 
 export interface AISettings {
   openaiApiKey: string
   anthropicApiKey: string
+  geminiApiKey: string
+  aiProvider: AIProvider
   whisperModel: 'whisper-1'
   language: STTLanguage
   ocrProvider: OCRProvider

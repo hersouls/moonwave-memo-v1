@@ -25,8 +25,12 @@ import { useBreathingTypography } from '@/hooks/useBreathingTypography'
 import { useTimeMachine } from '@/hooks/useTimeMachine'
 import { useOrganicAura } from '@/hooks/useOrganicAura'
 import { useAmbientSoundscape } from '@/hooks/useAmbientSoundscape'
+import { TiptapEditorContent } from './TiptapEditorContent'
+import { useTiptapEditor } from '@/hooks/useTiptapEditor'
 import { AlterEgoPanel } from './AlterEgoPanel'
+import { EditorOutline } from './EditorOutline'
 import { analyzeSentiment } from '@/services/sentimentAnalysis'
+import { X } from 'lucide-react'
 import { TimeMachineBanner } from './TimeMachineBanner'
 import { EphemeralBanner } from './EphemeralBanner'
 import { useMemoStore } from '@/stores/memoStore'
@@ -111,17 +115,15 @@ export function MemoEditor() {
   // Alter Ego panel
   const [showAlterEgo, setShowAlterEgo] = useState(false)
 
-  // Split view
-  const [isLg, setIsLg] = useState(false)
-  const isSplit = editorMode === 'split' && isLg && !isFocusMode
+  // Outline panel (desktop only)
+  const [showOutline, setShowOutline] = useState(false)
 
-  useEffect(() => {
-    const mql = window.matchMedia('(min-width: 1024px)')
-    setIsLg(mql.matches)
-    const handler = (e: MediaQueryListEvent) => setIsLg(e.matches)
-    mql.addEventListener('change', handler)
-    return () => mql.removeEventListener('change', handler)
-  }, [])
+  // Split view
+  const isLg = useUIStore((s) => s.isDesktop)
+  const isTiptap = editorMode === 'tiptap'
+  const isTiptapRef = useRef(isTiptap)
+  isTiptapRef.current = isTiptap
+  const isSplit = editorMode === 'split' && isLg && !isFocusMode
 
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
@@ -138,6 +140,37 @@ export function MemoEditor() {
 
   // TECH-01: Ref for handleBodyChange to avoid stale closure in insertMarkdown
   const handleBodyChangeRef = useRef<(value: string) => void>(() => {})
+
+  // Outline: scroll to specific line in textarea (legacy mode)
+  const handleOutlineScrollToLine = useCallback((line: number) => {
+    const textarea = bodyRef.current
+    if (!textarea) return
+    const lines = textarea.value.split('\n')
+    let charIndex = 0
+    for (let i = 0; i < line && i < lines.length; i++) {
+      charIndex += lines[i].length + 1
+    }
+    textarea.focus()
+    textarea.setSelectionRange(charIndex, charIndex)
+    const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 24
+    textarea.scrollTop = Math.max(0, line * lineHeight - textarea.clientHeight / 3)
+  }, [])
+
+  // Outline: scroll to heading by sequential index (Tiptap mode)
+  const handleOutlineScrollToHeadingIndex = useCallback((index: number) => {
+    if (!tiptapEditorRef.current) return
+    let headingCount = 0
+    tiptapEditorRef.current.state.doc.descendants((node: any, pos: number) => {
+      if (node.type.name === 'heading') {
+        if (headingCount === index) {
+          const dom = tiptapEditorRef.current?.view.nodeDOM(pos)
+          ;(dom as HTMLElement)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          return false
+        }
+        headingCount++
+      }
+    })
+  }, [])
 
   // AI features
   const { tags: aiTags, isLoading: aiTagsLoading } = useAITagSuggestions(body)
@@ -175,21 +208,30 @@ export function MemoEditor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memoId])
 
-  // Focus on mount + track last viewed memo
+  // Capture stable viewport height to prevent iOS Safari dvh jumps
+  useEffect(() => {
+    document.documentElement.style.setProperty('--stable-vh', `${window.innerHeight}px`)
+    return () => { document.documentElement.style.removeProperty('--stable-vh') }
+  }, [])
+
+  // Focus on mount + track last viewed memo (uses tiptapEditorRef to avoid ordering issues)
+  const tiptapEditorRef = useRef<any>(null)
   useEffect(() => {
     if (isNew) {
       setTimeout(() => {
         if (inputStartPosition === 'title') {
           titleRef.current?.focus()
+        } else if (editorMode === 'tiptap' && tiptapEditorRef.current) {
+          tiptapEditorRef.current.commands.focus('end')
         } else {
           bodyRef.current?.focus()
         }
-      }, 100)
+      }, 150) // Slightly longer delay to ensure Tiptap editor is initialized
     }
     if (memoId) {
       setLastViewedMemo(memoId)
     }
-  }, [isNew, inputStartPosition, memoId])
+  }, [isNew, inputStartPosition, memoId, editorMode])
 
   // Text undo/redo stack refs (logic defined after scheduleAutoSave)
   const undoStack = useRef<string[]>([])
@@ -232,8 +274,8 @@ export function MemoEditor() {
               setEphemeralExpiresAt(createdMemo.ephemeralExpiresAt)
             }
           }
+          setSaveStatus('saved')
         }
-        setSaveStatus('saved')
       }
     } catch (err) {
       console.error('AutoSave failed:', err)
@@ -242,7 +284,7 @@ export function MemoEditor() {
     } finally {
       savingRef.current = false
     }
-  }, [memoId, title, body, folderId, memoColor, updateMemo, addMemo, navigate])
+  }, [memoId, title, body, folderId, memoColor, updateMemo, addMemo, navigate, isEphemeralParam, ephemeralBrainDumpEnabled])
 
   // Auto-clear saved status after 2s
   useEffect(() => {
@@ -321,7 +363,8 @@ export function MemoEditor() {
   }
 
   const handleBodyChange = useCallback((value: string) => {
-    pushUndoSnapshot(value)
+    // Tiptap uses its own History extension — skip manual undo stack
+    if (!isTiptapRef.current) pushUndoSnapshot(value)
     setBody(value)
 
     // Auto-title: extract first line as title when user hasn't manually set one
@@ -339,6 +382,25 @@ export function MemoEditor() {
 
   // TECH-01: Keep ref up to date
   handleBodyChangeRef.current = handleBodyChange
+
+  // Tiptap WYSIWYG editor (always initialized to satisfy hook rules)
+  const handleTiptapUpdate = useCallback((markdown: string) => {
+    handleBodyChange(markdown)
+    playKeySound()
+    recordKeystroke()
+    // Ambient soundscape: generate note from last character
+    if (markdown.length > 0) {
+      const lastChar = markdown.charCodeAt(markdown.length - 1)
+      playAmbientNote(lastChar)
+    }
+  }, [handleBodyChange, playKeySound, recordKeystroke, playAmbientNote])
+
+  const { editor: tiptapEditor, characterCount: tiptapCharCount } = useTiptapEditor({
+    initialContent: body,
+    placeholder: '메모를 입력하세요. 마크다운을 사용할 수 있습니다.',
+    onUpdate: handleTiptapUpdate,
+  })
+  tiptapEditorRef.current = tiptapEditor
 
   // UX-12: handleFolderChange triggers save for new memos too
   const handleFolderChange = (newFolderId: number) => {
@@ -507,6 +569,9 @@ export function MemoEditor() {
       return
     }
 
+    // Tiptap handles its own formatting shortcuts (Ctrl+B/I/Z etc.)
+    if (isTiptap) return
+
     if (activeTab !== 'edit' && !isSplit) return
     const textarea = bodyRef.current
     if (!textarea || document.activeElement !== textarea) return
@@ -564,7 +629,7 @@ export function MemoEditor() {
   const currentFolder = folders.find((f) => f.id === folderId)
 
   // Stats: char count, reading time, checklist progress
-  const charCount = body.length
+  const charCount = isTiptap ? tiptapCharCount : body.length
   const readingTime = Math.max(1, Math.ceil(charCount / 400)) // Korean: ~400 chars/min
   const checklistStats = useMemo(() => getChecklistStats(body), [body])
 
@@ -598,10 +663,19 @@ export function MemoEditor() {
     }
   }
 
+  // Tiptap body area (replaces textarea in editContent when isTiptap)
+  const tiptapBodyContent = (
+    <TiptapEditorContent
+      editor={tiptapEditor}
+      fontFamily={editorFontFamily}
+      isBreathing={isBreathing}
+    />
+  )
+
   const editContent = (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Ephemeral brain-dump banner */}
-      {ephemeralExpiresAt && (
+      {ephemeralExpiresAt && !isKeyboardOpen && (
         <div className="mb-3">
           <EphemeralBanner expiresAt={ephemeralExpiresAt} onSave={handleSaveEphemeral} />
         </div>
@@ -619,31 +693,37 @@ export function MemoEditor() {
         style={{ fontFamily: editorFontFamily }}
       />
 
-      <div className={clsx('relative flex-1 flex flex-col min-h-0', isBreathing && 'breathing-active')}>
-        {/* UX-03: Apply user font, UX-20: Fills remaining space */}
-        <textarea
-          ref={bodyRef}
-          value={body}
-          onChange={handleBodyInput}
-          onKeyDown={handleBodyKeyDown}
-          placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
-          className="w-full flex-1 min-h-0 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed"
-          style={{ fontFamily: editorFontFamily }}
-        />
-        {/* AI Autocomplete ghost text */}
-        {ghostText && (
-          <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-zinc-400 dark:text-zinc-600 italic truncate max-w-full px-1">
-            Tab을 눌러 수락: <span className="text-zinc-500 dark:text-zinc-500">{ghostText.slice(0, 80)}{ghostText.length > 80 ? '...' : ''}</span>
+      {isTiptap ? (
+        tiptapBodyContent
+      ) : (
+        <>
+          <div className={clsx('relative flex-1 flex flex-col min-h-0', isBreathing && 'breathing-active')}>
+            {/* UX-03: Apply user font, UX-20: Fills remaining space */}
+            <textarea
+              ref={bodyRef}
+              value={body}
+              onChange={handleBodyInput}
+              onKeyDown={handleBodyKeyDown}
+              placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
+              className="w-full flex-1 min-h-0 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed"
+              style={{ fontFamily: editorFontFamily }}
+            />
+            {/* AI Autocomplete ghost text */}
+            {ghostText && (
+              <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-zinc-400 dark:text-zinc-600 italic truncate max-w-full px-1">
+                Tab을 눌러 수락: <span className="text-zinc-500 dark:text-zinc-500">{ghostText.slice(0, 80)}{ghostText.length > 80 ? '...' : ''}</span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Feature hint: slash commands */}
-      {!isFocusMode && !body && (
-        <FeatureHint
-          id="slash-commands"
-          message="'/' 키를 입력하면 슬래시 커맨드를 사용할 수 있습니다. 제목, 구분선, 코드 블록 등을 빠르게 삽입해보세요."
-        />
+          {/* Feature hint: slash commands */}
+          {!isFocusMode && !body && (
+            <FeatureHint
+              id="slash-commands"
+              message="'/' 키를 입력하면 슬래시 커맨드를 사용할 수 있습니다. 제목, 구분선, 코드 블록 등을 빠르게 삽입해보세요."
+            />
+          )}
+        </>
       )}
 
       {/* UX-06: TagInput for current tags */}
@@ -687,12 +767,12 @@ export function MemoEditor() {
     <div
       className={clsx(
         'flex flex-col lg:h-full min-h-0',
-        !isKeyboardOpen && 'h-[calc(100dvh-4rem-5rem)]',
-        isFocusMode && '!h-dvh'
+        !isKeyboardOpen && 'h-[calc(var(--stable-vh,100svh)-4rem-5rem)]',
+        isFocusMode && '!h-[var(--stable-vh,100svh)]'
       )}
-      style={isKeyboardOpen && !isFocusMode ? { height: `calc(100dvh - 4rem - ${Math.max(0, keyboardHeight || 0)}px)` } : undefined}
+      style={isKeyboardOpen && !isFocusMode ? { height: `calc(var(--stable-vh, 100svh) - 4rem - ${Math.max(0, keyboardHeight || 0)}px)` } : undefined}
     >
-      {!isFocusMode && (
+      {!isFocusMode && !isKeyboardOpen && (
         <EditorHeader
           isStarred={isStarred}
           onBack={handleBack}
@@ -713,24 +793,27 @@ export function MemoEditor() {
       )}
 
       {/* Time Machine banner */}
-      {timeMachineActive && memo?.contextSnapshot && !isFocusMode && (
+      {timeMachineActive && memo?.contextSnapshot && !isFocusMode && !isKeyboardOpen && (
         <TimeMachineBanner snapshot={memo.contextSnapshot} onDismiss={dismissTimeMachine} />
       )}
 
       {/* Editor toolbar (above content, not in focus mode) */}
-      {(activeTab === 'edit' || isSplit) && !isFocusMode && (
+      {(isTiptap || activeTab === 'edit' || isSplit) && !isFocusMode && (
         <EditorToolbar
           textareaRef={bodyRef}
+          tiptapEditor={isTiptap ? tiptapEditor : undefined}
           onContentChange={handleBodyChange}
-          onUndo={undoText}
-          onRedo={redoText}
-          canUndo={undoCount > 0}
-          canRedo={redoCount > 0}
+          onUndo={isTiptap ? () => tiptapEditor?.commands.undo() : undoText}
+          onRedo={isTiptap ? () => tiptapEditor?.commands.redo() : redoText}
+          canUndo={isTiptap ? (tiptapEditor?.can().undo() ?? false) : undoCount > 0}
+          canRedo={isTiptap ? (tiptapEditor?.can().redo() ?? false) : redoCount > 0}
           memoId={memoId}
           body={body}
           onAIEnhance={handleAIEnhance}
           onToggleAlterEgo={() => setShowAlterEgo((prev) => !prev)}
           alterEgoEnabled={alterEgoEnabled}
+          onToggleOutline={() => setShowOutline((prev) => !prev)}
+          onSlideView={memoId ? () => useUIStore.getState().openSlideView(memoId) : undefined}
         />
       )}
 
@@ -741,14 +824,19 @@ export function MemoEditor() {
             ? 'max-w-2xl mx-auto w-full px-6 pt-12'
             : 'px-4 lg:px-8 max-w-4xl mx-auto w-full'
         )}>
-          {!isFocusMode && (
+          {!isFocusMode && !isKeyboardOpen && (
             <FolderSelector
               currentFolder={currentFolder}
               onFolderChange={handleFolderChange}
             />
           )}
 
-          {isSplit ? (
+          {isTiptap ? (
+            /* Tiptap WYSIWYG: single-pane editing IS the preview */
+            <div className="flex-1 flex flex-col min-h-0">
+              {editContent}
+            </div>
+          ) : isSplit ? (
             /* Split view: side-by-side edit + preview */
             <div className="flex gap-0 flex-1 min-h-[300px] border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
               <div className="flex-1 flex flex-col p-4 overflow-auto">
@@ -762,7 +850,7 @@ export function MemoEditor() {
           ) : (
             <>
               {/* A11Y-02: Tab bar with proper ARIA roles */}
-              {!isFocusMode && (
+              {!isFocusMode && !isKeyboardOpen && (
                 <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700" role="tablist" aria-label="편집기 모드">
                   <button
                     role="tab"
@@ -820,6 +908,13 @@ export function MemoEditor() {
           )}
         </div>
 
+        {/* Outline panel — desktop only */}
+        {showOutline && isLg && !isFocusMode && (
+          <div className="hidden lg:block w-52 shrink-0">
+            <EditorOutline body={body} onScrollToLine={handleOutlineScrollToLine} onScrollToHeadingIndex={isTiptap ? handleOutlineScrollToHeadingIndex : undefined} onClose={() => setShowOutline(false)} />
+          </div>
+        )}
+
         {/* Alter Ego (데미안) side panel — desktop */}
         {showAlterEgo && alterEgoEnabled && !isFocusMode && (
           <div className="hidden lg:flex w-80 shrink-0">
@@ -839,6 +934,17 @@ export function MemoEditor() {
         </>
       )}
 
+      {/* Focus mode: semi-transparent close button for touch devices / PWA */}
+      {isFocusMode && 'ontouchstart' in window && (
+        <button
+          onClick={() => useUIStore.getState().toggleFocusMode()}
+          className="fixed top-4 right-4 z-50 p-2 rounded-full bg-zinc-900/20 dark:bg-zinc-100/20 text-zinc-500 dark:text-zinc-400 backdrop-blur-sm opacity-30 hover:opacity-80 active:opacity-100 transition-opacity"
+          aria-label="포커스 모드 나가기"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
+
       {/* Editor stats footer */}
       {isFocusMode ? (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
@@ -848,9 +954,14 @@ export function MemoEditor() {
           <span>·</span>
           <span>읽기 약 {readingTime}분</span>
           <span>·</span>
-          <span className="text-zinc-300 dark:text-zinc-600">ESC로 나가기</span>
+          <button
+            onClick={() => useUIStore.getState().toggleFocusMode()}
+            className="text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 transition-colors"
+          >
+            나가기
+          </button>
         </div>
-      ) : (activeTab === 'edit' || isSplit) && charCount > 0 && (
+      ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && (
         <div className="flex items-center gap-3 px-4 lg:px-8 max-w-4xl mx-auto w-full py-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
           <span>{charCount.toLocaleString()}자</span>
           <span>·</span>
@@ -883,13 +994,13 @@ export function MemoEditor() {
         )} />
       )}
 
-      {/* Floating toolbar for text selection */}
-      {(activeTab === 'edit' || isSplit) && (
+      {/* Floating toolbar for text selection (legacy mode only) */}
+      {!isTiptap && (activeTab === 'edit' || isSplit) && (
         <FloatingToolbar textareaRef={bodyRef} onInsert={insertMarkdown} />
       )}
 
-      {/* Slash command menu */}
-      {slashOpen && (
+      {/* Slash command menu (legacy mode only) */}
+      {!isTiptap && slashOpen && (
         <SlashCommandMenu
           query={slashQuery}
           position={slashPos}

@@ -185,6 +185,7 @@ export const useMemoStore = create<MemoState>()(
             memos: state.memos.map((m) =>
               m.id === id ? { ...m, deletedAt: now, updatedAt: now } : m
             ),
+            error: null,
           }))
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
@@ -202,6 +203,7 @@ export const useMemoStore = create<MemoState>()(
             memos: state.memos.map((m) =>
               m.id === id ? { ...m, deletedAt: undefined, updatedAt: nowISO() } : m
             ),
+            error: null,
           }))
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
@@ -217,6 +219,7 @@ export const useMemoStore = create<MemoState>()(
           await database.permanentDeleteMemo(id)
           set((state) => ({
             memos: state.memos.filter((m) => m.id !== id),
+            error: null,
           }))
           if (syncId) deleteMemoFromCloud(syncId).catch(console.error)
         } catch (err) {
@@ -231,6 +234,7 @@ export const useMemoStore = create<MemoState>()(
           await database.emptyTrash()
           set((state) => ({
             memos: state.memos.filter((m) => !m.deletedAt),
+            error: null,
           }))
           syncIds.forEach((syncId) => deleteMemoFromCloud(syncId).catch(console.error))
         } catch (err) {
@@ -263,10 +267,10 @@ export const useMemoStore = create<MemoState>()(
           if (updated) pushMemo(updated).catch(console.error)
         } catch (err) {
           console.error('Failed to toggle star:', err)
-          // Rollback
+          // Rollback: use inverse of newStarred to avoid stale closure
           set((state) => ({
             memos: state.memos.map((m) =>
-              m.id === id ? { ...m, isStarred: memo.isStarred, updatedAt: memo.updatedAt } : m
+              m.id === id ? { ...m, isStarred: !newStarred } : m
             ),
           }))
         }
@@ -290,10 +294,10 @@ export const useMemoStore = create<MemoState>()(
           if (updated) pushMemo(updated).catch(console.error)
         } catch (err) {
           console.error('Failed to toggle pin:', err)
-          // Rollback
+          // Rollback: use inverse of newPinned to avoid stale closure
           set((state) => ({
             memos: state.memos.map((m) =>
-              m.id === id ? { ...m, isPinned: memo.isPinned, updatedAt: memo.updatedAt } : m
+              m.id === id ? { ...m, isPinned: !newPinned } : m
             ),
           }))
         }

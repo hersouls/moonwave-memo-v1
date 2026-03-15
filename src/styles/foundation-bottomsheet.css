@@ -204,6 +204,7 @@
   flex-direction: column;
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  overscroll-behavior: contain;
 }
 
 .sheet-panel--fullscreen {
@@ -290,7 +291,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 0 var(--sheet-padding-x);
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .sheet-footer {

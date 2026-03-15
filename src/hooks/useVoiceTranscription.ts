@@ -41,11 +41,6 @@ export function useVoiceTranscription() {
 
   const uploadAndTranscribe = useCallback(async (file: File) => {
     const ai = useSettingsStore.getState().settings.ai
-    if (!ai?.openaiApiKey) {
-      setError('설정 > AI 서비스에서 OpenAI API 키를 먼저 입력해주세요')
-      setStatus('error')
-      return
-    }
 
     // Validate
     setStatus('validating')
@@ -65,8 +60,8 @@ export function useVoiceTranscription() {
     try {
       const sttResult = await transcribeAudio(
         file,
-        ai.openaiApiKey,
-        ai.language || 'ko',
+        ai?.openaiApiKey || '',
+        ai?.language || 'ko',
         abortRef.current.signal
       )
       stopProgressSimulation()

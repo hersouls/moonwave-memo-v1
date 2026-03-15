@@ -34,7 +34,7 @@ async function trimCache(cacheName, maxItems) {
     const keys = await cache.keys()
     if (keys.length > maxItems) {
       const toDelete = keys.slice(0, keys.length - maxItems)
-      await Promise.all(toDelete.map((key) => cache.delete(key)))
+      await Promise.allSettled(toDelete.map((key) => cache.delete(key)))
     }
   } catch (e) {
     // Cache trim is best-effort

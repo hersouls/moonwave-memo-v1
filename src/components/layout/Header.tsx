@@ -44,7 +44,7 @@ export function Header() {
 
   // UX-08: hide on desktop when in editor
   return (
-    <header className={`sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ${isEditorRoute ? 'lg:hidden' : ''} ${headerHidden ? '-translate-y-full' : ''}`}>
+    <header className={`sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm will-change-transform border-b border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ${isEditorRoute ? 'lg:hidden' : ''} ${headerHidden ? '-translate-y-full' : ''}`}>
       <nav className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left: Mobile menu + Logo */}
         <div className="flex items-center gap-3">
@@ -65,8 +65,8 @@ export function Header() {
         </div>
 
         {/* Greeting */}
-        {user && (
-          <p className="hidden sm:block fold:!hidden text-sm text-zinc-600 dark:text-zinc-400 ml-4 truncate max-w-[200px]">
+        {user && !isNarrowFold && (
+          <p className="hidden sm:block text-sm text-zinc-600 dark:text-zinc-400 ml-4 truncate max-w-[200px]">
             안녕하세요, <span className="font-semibold text-zinc-900 dark:text-zinc-100">{displayName}</span>님!
           </p>
         )}

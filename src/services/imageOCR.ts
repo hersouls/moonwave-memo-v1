@@ -163,7 +163,7 @@ async function extractTextWithAnthropic(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         messages: [
           {
@@ -227,7 +227,24 @@ export async function extractTextFromImage(
   const proxyResult = await extractTextViaProxy(imageDataUrl, provider, language)
   if (proxyResult) return proxyResult
 
+  // Try Vercel API proxy (server keys)
+  if (!apiKey) {
+    try {
+      const res = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageDataUrl, provider, language }),
+        signal,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return { text: data.text || '', provider }
+      }
+    } catch { /* fall through */ }
+  }
+
   // Fallback to direct API calls with user-provided key
+  if (!apiKey) throw new Error('OCR을 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
   if (provider === 'anthropic') {
     return extractTextWithAnthropic(imageDataUrl, apiKey, language, signal)
   }

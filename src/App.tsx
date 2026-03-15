@@ -17,6 +17,7 @@ import { AppLoadingScreen } from './components/ui/AppLoadingScreen'
 import { CommandPalette } from './components/ui/CommandPalette'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { KeyboardShortcutsModal } from './components/ui/KeyboardShortcutsModal'
+import { SlideView } from './components/slideview/SlideView'
 import { IOSInstallBanner } from './components/ui/IOSInstallBanner'
 import { FolderSelectModal } from './components/folders/FolderSelectModal'
 import { TemplateSelectModal } from './components/editor/TemplateSelectModal'
@@ -41,6 +42,7 @@ import { useThemeOrchestrator } from './stores/themeOrchestratorStore'
 import { registerRefreshCallbacks } from './services/firestoreSync'
 import { getCachedPosition, requestAndCachePosition, getSolarMode } from './services/solarCalculator'
 import { fetchWeather } from './services/weatherService'
+import { MEDIA } from '@/utils/breakpoints'
 
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false)
@@ -140,6 +142,21 @@ export default function App() {
         e.preventDefault()
         useUIStore.getState().openKeyboardShortcuts()
       }
+      // F5 or Ctrl+Shift+P: Slide view (only in editor route)
+      // Use window.location to avoid stale closure (this handler has [] deps)
+      const currentPath = window.location.pathname
+      const isEditorRoute = currentPath.startsWith('/memo/')
+      if (isEditorRoute && (
+        e.key === 'F5' ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p')
+      )) {
+        e.preventDefault()
+        const memoIdStr = currentPath.split('/memo/')[1]
+        const memoId = Number(memoIdStr)
+        if (memoId && !isNaN(memoId)) {
+          useUIStore.getState().openSlideView(memoId)
+        }
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -149,7 +166,7 @@ export default function App() {
 
   // F-09: Galaxy Fold narrow screen detection
   useEffect(() => {
-    const mql = window.matchMedia('(max-width: 420px) and (min-height: 600px)')
+    const mql = window.matchMedia(MEDIA.fold)
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       const isFold = e.matches
       useUIStore.setState({ isNarrowFold: isFold })
@@ -158,6 +175,41 @@ export default function App() {
     handleChange(mql) // Initial check
     mql.addEventListener('change', handleChange)
     return () => mql.removeEventListener('change', handleChange)
+  }, [])
+
+  // Desktop breakpoint detection (single source of truth)
+  useEffect(() => {
+    const mql = window.matchMedia(MEDIA.desktop)
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      useUIStore.setState({ isDesktop: e.matches })
+    }
+    handleChange(mql)
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
+  }, [])
+
+  // Wide desktop breakpoint detection (xl: 1280px+)
+  useEffect(() => {
+    const mql = window.matchMedia(MEDIA.wideDesktop)
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      useUIStore.setState({ isWideDesktop: e.matches })
+    }
+    handleChange(mql)
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
+  }, [])
+
+  // Global keyboard state sync via VisualViewport API
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      const isOpen = vv.height < window.innerHeight * 0.75
+      useUIStore.getState().setKeyboardState(isOpen, isOpen ? window.innerHeight - vv.height : 0)
+    }
+    update()
+    vv.addEventListener('resize', update)
+    return () => vv.removeEventListener('resize', update)
   }, [])
 
   // Living Workspace: Cognitive load detector
@@ -284,6 +336,7 @@ export default function App() {
       <ImageOCRModal />
       <CommandPalette />
       <KeyboardShortcutsModal />
+      <SlideView />
 
       <UndoToast />
       <ToastContainer />

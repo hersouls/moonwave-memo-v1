@@ -8,6 +8,7 @@
   @import "./styles/foundation-toast.css";
   @import "./styles/foundation-chip.css";
   @import "./styles/foundation-misc.css";
+  @import "./styles/foundation-slideview.css";
 }
 
 /* Enable class-based dark mode for Tailwind CSS 4 */
@@ -418,11 +419,6 @@ html.dark[data-palette="weather-overcast"] {
   --color-primary-900: oklch(0.90 0.01 40);
 }
 
-/* Theme transition for smooth palette changes */
-html {
-  transition: --color-primary-500 500ms ease;
-}
-
 /* ========================================
    Animation Utilities
    ======================================== */
@@ -773,6 +769,14 @@ html.completion-catharsis .completion-flash-overlay {
   .fab-button {
     bottom: 2rem !important;
     right: 2rem;
+  }
+}
+
+/* Graceful degradation: disable backdrop-blur for reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop-blur-sm {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 

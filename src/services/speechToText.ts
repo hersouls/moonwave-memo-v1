@@ -109,7 +109,29 @@ export async function transcribeAudio(
   const proxyResult = await transcribeViaProxy(file, language)
   if (proxyResult) return proxyResult
 
+  // Try Vercel API proxy (server keys)
+  if (!apiKey) {
+    try {
+      const reader = new FileReader()
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.readAsDataURL(file)
+      })
+      const res = await fetch('/api/stt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audioBase64: base64, fileName: file.name, language }),
+        signal,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return { text: data.text || '', language, duration: 0, segments: data.segments || [] }
+      }
+    } catch { /* fall through */ }
+  }
+
   // Fallback to direct API call with user-provided key
+  if (!apiKey) throw new Error('음성 인식을 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
   const formData = new FormData()
   formData.append('file', file)
   formData.append('model', 'whisper-1')

@@ -148,8 +148,6 @@ function startStoreSubscription(uid: string) {
   let previousSettings = JSON.stringify(pickSyncableFields(useSettingsStore.getState().settings))
 
   unsubStoreListener = useSettingsStore.subscribe((state) => {
-    if (isRecentlyPushed()) return
-
     const current = JSON.stringify(pickSyncableFields(state.settings))
     if (current === previousSettings) return
     previousSettings = current
@@ -157,6 +155,7 @@ function startStoreSubscription(uid: string) {
     // Debounce push to avoid thrashing
     if (debounceTimer) clearTimeout(debounceTimer)
     debounceTimer = setTimeout(() => {
+      if (isRecentlyPushed()) return
       pushSettings(uid, state.settings)
     }, 300)
   })

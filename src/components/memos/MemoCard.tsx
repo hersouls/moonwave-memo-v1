@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
-import { Star, CheckCircle, Trash2, Pin, Flame, RotateCcw } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { Star, CheckCircle, Trash2, Pin, Flame, RotateCcw, MonitorPlay } from 'lucide-react'
 import clsx from 'clsx'
 import type { Memo, MemoColor } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
@@ -13,6 +14,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { useMemoryDecay } from '@/hooks/useMemoryDecay'
+import { MemoHoverPreview } from './MemoHoverPreview'
 
 const MEMO_CARD_BG: Record<MemoColor, string> = {
   white: 'bg-white dark:bg-zinc-800',
@@ -25,7 +27,7 @@ const MEMO_CARD_BG: Record<MemoColor, string> = {
 
 // F-06: Dynamic swipe threshold for fold screens
 function getSwipeThreshold() {
-  return window.innerWidth <= 400
+  return useUIStore.getState().isNarrowFold
     ? Math.round(window.innerWidth * 0.25)
     : 80
 }
@@ -103,8 +105,18 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
 
   const { style: decayStyle, isRecent } = useMemoryDecay(memo.updatedAt, digitalGardenEnabled)
 
+  const isDesktop = useUIStore((s) => s.isDesktop)
+  const openSlideView = useUIStore((s) => s.openSlideView)
   const [starPulse, setStarPulse] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null)
+
+  // Hover preview state (desktop only)
+  const [showHoverPreview, setShowHoverPreview] = useState(false)
+  const hoverEnterTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hoverLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cardContainerRef = useRef<HTMLDivElement>(null)
+  const [hoverAnchorRect, setHoverAnchorRect] = useState<DOMRect | null>(null)
 
   // Swipe gesture state
   const [swipeX, setSwipeX] = useState(0)
@@ -132,16 +144,74 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
 
   const enterSelectionMode = useUIStore((s) => s.enterSelectionMode)
 
+  // Hover preview handlers
+  const handleMouseEnter = useCallback(() => {
+    if (!isDesktop || isSelectionMode || isTrashView) return
+    // isActive is derived after hooks, check at call time
+    if (location.pathname === `/memo/${memo.id}`) return
+    if (hoverLeaveTimer.current) { clearTimeout(hoverLeaveTimer.current); hoverLeaveTimer.current = null }
+    hoverEnterTimer.current = setTimeout(() => {
+      if (cardContainerRef.current) setHoverAnchorRect(cardContainerRef.current.getBoundingClientRect())
+      setShowHoverPreview(true)
+    }, 400)
+  }, [isDesktop, isSelectionMode, isTrashView, location.pathname, memo.id])
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverEnterTimer.current) { clearTimeout(hoverEnterTimer.current); hoverEnterTimer.current = null }
+    hoverLeaveTimer.current = setTimeout(() => setShowHoverPreview(false), 100)
+  }, [])
+
+  // Close preview on scroll
+  useEffect(() => {
+    if (!showHoverPreview) return
+    const handleScroll = () => setShowHoverPreview(false)
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true })
+    return () => window.removeEventListener('scroll', handleScroll, { capture: true })
+  }, [showHoverPreview])
+
+  useEffect(() => {
+    return () => {
+      if (hoverEnterTimer.current) clearTimeout(hoverEnterTimer.current)
+      if (hoverLeaveTimer.current) clearTimeout(hoverLeaveTimer.current)
+    }
+  }, [])
+
+  // Close context menu on Escape
+  useEffect(() => {
+    if (!ctxMenu) return
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setCtxMenu(null); e.stopPropagation() }
+    }
+    window.addEventListener('keydown', handleEsc, true)
+    return () => window.removeEventListener('keydown', handleEsc, true)
+  }, [ctxMenu])
+
   if (!memo.id) return null
 
   const isSelected = selectedMemoIds.includes(memo.id)
   const isActive = location.pathname === `/memo/${memo.id}`
   const isGrid = viewMode === 'grid'
 
+  // Haptic feedback with visual fallback for iOS (no Vibration API support)
+  const hapticFeedback = useCallback((intensity: number = 30) => {
+    if (navigator.vibrate) {
+      navigator.vibrate(intensity)
+    } else if (cardRef.current) {
+      // Visual bounce fallback for iOS
+      const el = cardRef.current
+      el.style.transition = 'transform 0.15s ease'
+      el.style.transform = 'scale(0.97)'
+      setTimeout(() => { el.style.transform = '' }, 150)
+    }
+  }, [])
+
   // Touch gesture handlers (mobile only)
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!isTouchDevice || isSelectionMode) return
-    touchStartX.current = e.touches[0].clientX
+    // Ignore touches starting near screen edges (iOS Safari back/forward gesture zone)
+    const startX = e.touches[0].clientX
+    if (startX < 30 || startX > window.innerWidth - 30) return
+    touchStartX.current = startX
     touchStartY.current = e.touches[0].clientY
     isLongPressed.current = false
     setIsSwiping(false)
@@ -153,7 +223,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     longPressTimer.current = setTimeout(() => {
       if (memo.id) {
         enterSelectionMode(memo.id)
-        navigator.vibrate?.(30)
+        hapticFeedback(30)
         isLongPressed.current = true
         setIsLongPressing(false)
       }
@@ -181,10 +251,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     // Only swipe if horizontal movement > vertical
     if (!isSwiping && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       setIsSwiping(true)
+      e.preventDefault() // Prevent iOS Safari back/forward gesture
     }
 
     if (isSwiping || Math.abs(dx) > 10) {
       setSwipeX(dx)
+      if (isSwiping) e.preventDefault()
     }
   }, [isSelectionMode, isSwiping])
 
@@ -204,7 +276,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
 
     const threshold = getSwipeThreshold()
     if (swipeX > threshold && memo.id) {
-      navigator.vibrate?.(15)
+      hapticFeedback(15)
       if (isTrashView) {
         // Right swipe in trash → restore
         setIsDeleting(true)
@@ -218,7 +290,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         toggleStar(memo.id)
       }
     } else if (swipeX < -threshold && memo.id) {
-      navigator.vibrate?.(25)
+      hapticFeedback(25)
       if (isTrashView) {
         // Left swipe in trash → permanent delete
         setIsDeleting(true)
@@ -270,8 +342,25 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     [memo.body]
   )
 
+  // Drag & drop handler (desktop only)
+  const handleDragStart = useCallback((e: React.DragEvent) => {
+    if (!isDesktop || isSelectionMode || isTrashView || !memo.id) {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.setData('application/memo-id', String(memo.id))
+    e.dataTransfer.effectAllowed = 'move'
+  }, [isDesktop, isSelectionMode, isTrashView, memo.id])
+
   return (
-    <div className={clsx('relative overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}>
+    <div
+      ref={cardContainerRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      draggable={isDesktop && !isSelectionMode && !isTrashView}
+      onDragStart={handleDragStart}
+      className={clsx('relative overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}
+    >
       {/* Swipe action backgrounds with progressive visual feedback */}
       {isTouchDevice && !isSelectionMode && (() => {
         const swipeProgress = Math.min(Math.abs(swipeX) / getSwipeThreshold(), 1)
@@ -341,8 +430,16 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           isGrid ? 'flex-col' : 'flex-row gap-0',
           isRecent && digitalGardenEnabled && 'memo-glow-active'
         )}
-        onContextMenu={(e) => e.preventDefault()}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          if (isDesktop && !isSelectionMode && !isTrashView && memo.id != null) {
+            const x = Math.min(e.clientX, window.innerWidth - 200)
+            const y = Math.min(e.clientY, window.innerHeight - 60)
+            setCtxMenu({ x, y })
+          }
+        }}
         style={{
+          touchAction: 'pan-y',
           ...decayStyle,
           transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined,
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
@@ -411,6 +508,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                   onClick={(e) => {
                     e.stopPropagation()
                     setActiveTag(tag)
+                    useUIStore.getState().setSearchQuery('')
                     navigate('/memos')
                   }}
                   onKeyDown={(e) => {
@@ -418,6 +516,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                       e.preventDefault()
                       e.stopPropagation()
                       setActiveTag(tag)
+                      useUIStore.getState().setSearchQuery('')
                       navigate('/memos')
                     }
                   }}
@@ -456,6 +555,29 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           </div>
         </div>
       </button>
+      {showHoverPreview && hoverAnchorRect && (
+        <MemoHoverPreview memo={memo} anchorRect={hoverAnchorRect} />
+      )}
+
+      {/* Right-click context menu */}
+      {ctxMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-[70]" onClick={() => setCtxMenu(null)} onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null) }} />
+          <div
+            className="fixed z-[71] min-w-[180px] bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-1.5 animate-in fade-in zoom-in-95 duration-150"
+            style={{ left: ctxMenu.x, top: ctxMenu.y }}
+          >
+            <button
+              onClick={() => { openSlideView(memo.id!); setCtxMenu(null) }}
+              className="ctx-menu__item w-full"
+            >
+              <MonitorPlay className="ctx-menu__item-icon" />
+              슬라이드로 보기
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   )
 })

@@ -53,6 +53,9 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
     { axis: 'y', filterTaps: true, pointer: { touch: true } }
   )
 
+  // Headless UI Dialog handles body scroll lock internally (including iOS)
+  // Do NOT add useBodyScrollLock here — it would conflict with Headless UI's own scroll lock
+
   const progress = Math.min(dragY / 200, 1)
 
   return (
@@ -92,7 +95,6 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
               background: 'var(--dialog-bg)',
               boxShadow: 'var(--dialog-shadow)',
               overscrollBehavior: 'contain',
-              WebkitOverflowScrolling: 'touch',
               transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
               transition: isDragging ? 'none' : undefined,
             }}

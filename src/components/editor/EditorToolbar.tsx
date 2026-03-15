@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bold, Italic, Code, Link2, List, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain } from 'lucide-react'
+import { Bold, Italic, Code, Link2, List, ListTree, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain, MonitorPlay } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
-import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
 import { ImageInsertButton } from './ImageInsertButton'
 import { enhanceReadability } from '@/services/aiFeatures'
+import type { Editor } from '@tiptap/react'
 
 interface EditorToolbarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   onContentChange: (value: string) => void
+  tiptapEditor?: Editor | null
   onUndo?: () => void
   onRedo?: () => void
   canUndo?: boolean
@@ -19,22 +20,15 @@ interface EditorToolbarProps {
   onAIEnhance?: (enhanced: string) => void
   onToggleAlterEgo?: () => void
   alterEgoEnabled?: boolean
+  onToggleOutline?: () => void
+  onSlideView?: () => void
 }
 
-export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled }: EditorToolbarProps) {
-  const hasApiKey = useSettingsStore((s) => !!s.settings.ai?.openaiApiKey || !!s.settings.ai?.anthropicApiKey)
+export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled, onToggleOutline, onSlideView }: EditorToolbarProps) {
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
   const [isEnhancing, setIsEnhancing] = useState(false)
 
   const handleAIEnhanceClick = async () => {
-    if (!hasApiKey) {
-      useToastStore.getState().showToast(
-        'AI 서비스 설정에서 API 키를 입력해 주세요',
-        'warning',
-        { action: { label: '설정', onClick: () => useUIStore.getState().openSettingsModal() } }
-      )
-      return
-    }
     if (!body || body.trim().length < 20) {
       useToastStore.getState().showToast('내용이 너무 짧습니다 (20자 이상 필요)', 'warning')
       return
@@ -54,12 +48,23 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
 
   // Detect active formatting at cursor position
   const detectFormats = useCallback(() => {
+    if (tiptapEditor) {
+      // Tiptap: use built-in isActive API
+      const formats = new Set<string>()
+      if (tiptapEditor.isActive('bold')) formats.add('bold')
+      if (tiptapEditor.isActive('italic')) formats.add('italic')
+      if (tiptapEditor.isActive('code')) formats.add('code')
+      if (tiptapEditor.isActive('link')) formats.add('link')
+      if (tiptapEditor.isActive('bulletList') || tiptapEditor.isActive('orderedList')) formats.add('list')
+      if (tiptapEditor.isActive('heading')) formats.add('heading')
+      setActiveFormats(formats)
+      return
+    }
     const textarea = textareaRef.current
     if (!textarea) return
     const { selectionStart: start, selectionEnd: end, value } = textarea
     const formats = new Set<string>()
 
-    // Check surrounding markers
     const before = value.substring(0, start)
     const after = value.substring(end)
 
@@ -69,9 +74,20 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
     if (/\[[^\]]*$/.test(before) && /^[^\]]*\]\([^)]*\)/.test(after)) formats.add('link')
 
     setActiveFormats(formats)
-  }, [textareaRef])
+  }, [textareaRef, tiptapEditor])
 
+  // Tiptap: listen to editor transaction events for format detection
   useEffect(() => {
+    if (tiptapEditor) {
+      const handler = () => detectFormats()
+      tiptapEditor.on('selectionUpdate', handler)
+      tiptapEditor.on('transaction', handler)
+      return () => {
+        tiptapEditor.off('selectionUpdate', handler)
+        tiptapEditor.off('transaction', handler)
+      }
+    }
+    // Legacy textarea: listen to keyup/mouseup/select
     const textarea = textareaRef.current
     if (!textarea) return
     const handler = () => requestAnimationFrame(detectFormats)
@@ -83,8 +99,13 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
       textarea.removeEventListener('mouseup', handler)
       textarea.removeEventListener('select', handler)
     }
-  }, [textareaRef, detectFormats])
+  }, [textareaRef, tiptapEditor, detectFormats])
   const insertAtCursor = (before: string, after: string = '') => {
+    // Tiptap mode: insert raw markdown content at cursor
+    if (tiptapEditor) {
+      tiptapEditor.chain().focus().insertContent(before + after).run()
+      return
+    }
     const textarea = textareaRef.current
     if (!textarea) return
 
@@ -109,51 +130,30 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
   }
 
   const handleMicClick = () => {
-    const apiKey = useSettingsStore.getState().settings.ai?.openaiApiKey
-    if (!apiKey) {
-      useToastStore.getState().showToast(
-        'AI 서비스 설정에서 OpenAI API 키를 입력해 주세요',
-        'warning',
-        {
-          action: {
-            label: '설정',
-            onClick: () => useUIStore.getState().openSettingsModal(),
-          },
-        }
-      )
-      return
-    }
     useUIStore.getState().openVoiceModal()
   }
 
   const handleCameraClick = () => {
-    const ai = useSettingsStore.getState().settings.ai
-    const provider = ai?.ocrProvider || 'openai'
-    const apiKey = provider === 'anthropic' ? ai?.anthropicApiKey : ai?.openaiApiKey
-    if (!apiKey) {
-      useToastStore.getState().showToast(
-        `AI 서비스 설정에서 ${provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} API 키를 입력해 주세요`,
-        'warning',
-        {
-          action: {
-            label: '설정',
-            onClick: () => useUIStore.getState().openSettingsModal(),
-          },
-        }
-      )
-      return
-    }
     useUIStore.getState().openImageOCRModal()
   }
 
   // UX-02: shortcut hints in title
+  const e = tiptapEditor
   const tools = [
-    { icon: <Bold className="w-5 h-5" />, label: '굵게', title: '굵게 (Ctrl+B)', formatKey: 'bold', action: () => insertAtCursor('**', '**') },
-    { icon: <Italic className="w-5 h-5" />, label: '기울임', title: '기울임 (Ctrl+I)', formatKey: 'italic', action: () => insertAtCursor('*', '*') },
-    { icon: <Code className="w-5 h-5" />, label: '코드', title: '인라인 코드 (Ctrl+E)', formatKey: 'code', action: () => insertAtCursor('`', '`') },
-    { icon: <Link2 className="w-5 h-5" />, label: '링크', title: '링크 삽입 (Ctrl+K)', formatKey: 'link', action: () => insertAtCursor('[', '](url)') },
-    { icon: <List className="w-5 h-5" />, label: '목록', title: '목록', formatKey: 'list', action: () => insertAtCursor('- ') },
-    { icon: <Heading2 className="w-5 h-5" />, label: '제목', title: '제목', formatKey: 'heading', action: () => insertAtCursor('## ') },
+    { icon: <Bold className="w-5 h-5" />, label: '굵게', title: '굵게 (Ctrl+B)', formatKey: 'bold', action: () => e ? e.chain().focus().toggleBold().run() : insertAtCursor('**', '**') },
+    { icon: <Italic className="w-5 h-5" />, label: '기울임', title: '기울임 (Ctrl+I)', formatKey: 'italic', action: () => e ? e.chain().focus().toggleItalic().run() : insertAtCursor('*', '*') },
+    { icon: <Code className="w-5 h-5" />, label: '코드', title: '인라인 코드 (Ctrl+E)', formatKey: 'code', action: () => e ? e.chain().focus().toggleCode().run() : insertAtCursor('`', '`') },
+    { icon: <Link2 className="w-5 h-5" />, label: '링크', title: '링크 삽입 (Ctrl+K)', formatKey: 'link', action: () => {
+      if (e) {
+        if (e.isActive('link')) { e.chain().focus().unsetLink().run(); return }
+        const url = prompt('URL을 입력하세요:')
+        if (url) e.chain().focus().setLink({ href: url }).run()
+      } else {
+        insertAtCursor('[', '](url)')
+      }
+    } },
+    { icon: <List className="w-5 h-5" />, label: '목록', title: '목록', formatKey: 'list', action: () => e ? e.chain().focus().toggleBulletList().run() : insertAtCursor('- ') },
+    { icon: <Heading2 className="w-5 h-5" />, label: '제목', title: '제목', formatKey: 'heading', action: () => e ? e.chain().focus().toggleHeading({ level: 2 }).run() : insertAtCursor('## ') },
   ]
 
   return (
@@ -207,6 +207,10 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
         <ImageInsertButton
           memoId={memoId}
           onInsert={(markdown) => {
+            if (tiptapEditor) {
+              tiptapEditor.chain().focus().insertContent(markdown).run()
+              return
+            }
             const textarea = textareaRef.current
             if (!textarea) return
             const start = textarea.selectionStart
@@ -216,8 +220,8 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
           }}
         />
 
-        {/* AI buttons — only when API key configured */}
-        {hasApiKey && (
+        {/* AI buttons — always available (server proxy or user key) */}
+        {(
           <>
             <button
               onClick={handleAIEnhanceClick}
@@ -249,6 +253,30 @@ export function EditorToolbar({ textareaRef, onContentChange, onUndo, onRedo, ca
               <Camera className="w-5 h-5" />
             </button>
           </>
+        )}
+
+        {/* Slide view button */}
+        {onSlideView && (
+          <button
+            onClick={onSlideView}
+            className="p-2.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95"
+            title="슬라이드 보기 (F5)"
+            aria-label="슬라이드 보기"
+          >
+            <MonitorPlay className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Outline (목차) button — desktop only */}
+        {onToggleOutline && (
+          <button
+            onClick={onToggleOutline}
+            className="hidden lg:block p-2.5 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95"
+            title="목차 (Outline)"
+            aria-label="목차"
+          >
+            <ListTree className="w-5 h-5" />
+          </button>
         )}
 
         {/* Alter Ego (데미안) button */}

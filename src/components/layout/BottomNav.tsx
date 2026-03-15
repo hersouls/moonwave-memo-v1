@@ -5,6 +5,7 @@ import { useRipple } from '@/hooks/useRipple'
 import { useViewTransition } from '@/hooks/useViewTransition'
 
 export function BottomNav() {
+  const isKeyboardOpen = useUIStore((state) => state.isKeyboardOpen)
   const { navigateWithTransition } = useViewTransition()
   const currentView = useUIStore((state) => state.currentView)
   const setCurrentView = useUIStore((state) => state.setCurrentView)
@@ -12,6 +13,9 @@ export function BottomNav() {
   const openSettingsModal = useUIStore((state) => state.openSettingsModal)
 
   const { createRipple } = useRipple()
+
+  // Hide bottom nav when keyboard is open to prevent iOS fixed element issues
+  if (isKeyboardOpen) return null
 
   const handleNavigate = (target: CurrentView | 'menu' | 'settings') => {
     if (target === 'menu') {
@@ -49,7 +53,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 pb-safe"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm will-change-transform border-t border-zinc-200 dark:border-zinc-800 pb-safe"
       aria-label="하단 메인 네비게이션"
     >
       <ul className="flex items-center justify-around h-16 fold:h-12" role="menubar">

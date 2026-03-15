@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import {
@@ -17,7 +17,9 @@ import {
 import { clsx } from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useFolderStore } from '@/stores/folderStore'
+import { useMemoStore } from '@/stores/memoStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
+import { useToastStore } from '@/stores/toastStore'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { SidebarAmbientImage } from '@/components/ui/SidebarAmbientImage'
 import { FOLDER_COLORS } from '@/utils/constants'
@@ -46,6 +48,39 @@ export function Sidebar() {
 
   const userFolders = folders.filter((f) => !f.isSystem)
   const trashFolder = folders.find((f) => f.isSystem)
+
+  const moveToFolder = useMemoStore((s) => s.moveToFolder)
+
+  // Drag & drop state
+  const [dragOverFolderId, setDragOverFolderId] = useState<number | null>(null)
+
+  const handleFolderDragOver = useCallback((e: React.DragEvent, folderId: number) => {
+    if (!e.dataTransfer.types.includes('application/memo-id')) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverFolderId(folderId)
+  }, [])
+
+  const handleFolderDragLeave = useCallback(() => {
+    setDragOverFolderId(null)
+  }, [])
+
+  const handleFolderDrop = useCallback(async (e: React.DragEvent, folderId: number) => {
+    e.preventDefault()
+    setDragOverFolderId(null)
+    const memoIdStr = e.dataTransfer.getData('application/memo-id')
+    if (!memoIdStr) return
+    const memoId = Number(memoIdStr)
+    if (!Number.isFinite(memoId)) return
+    try {
+      await moveToFolder(memoId, folderId)
+      const currentFolders = useFolderStore.getState().folders
+      const folder = currentFolders.find((f) => f.id === folderId)
+      useToastStore.getState().showToast(`"${folder?.name ?? '폴더'}"로 이동했습니다`, 'success')
+    } catch {
+      useToastStore.getState().showToast('메모 이동에 실패했습니다', 'error')
+    }
+  }, [moveToFolder])
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ folderId: number; folderName: string; folderColor: string; x: number; y: number } | null>(null)
@@ -222,8 +257,14 @@ export function Sidebar() {
                 return (
                   <li
                     key={folder.id}
-                    className={clsx(count === 0 && activeFolderId !== folder.id && 'opacity-50')}
+                    className={clsx(
+                      count === 0 && activeFolderId !== folder.id && 'opacity-50',
+                      dragOverFolderId === folder.id && 'ring-2 ring-primary-500 rounded-lg bg-primary-50 dark:bg-primary-900/20'
+                    )}
                     onContextMenu={(e) => handleContextMenu(e, folder)}
+                    onDragOver={(e) => handleFolderDragOver(e, folder.id!)}
+                    onDragLeave={handleFolderDragLeave}
+                    onDrop={(e) => handleFolderDrop(e, folder.id!)}
                   >
                     {navButton(
                       folder.name,

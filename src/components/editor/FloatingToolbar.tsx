@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, type MutableRefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { Bold, Italic, Code, Link2 } from 'lucide-react'
+import { isIOS } from '@/utils/platform'
 
 interface FloatingToolbarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -12,6 +13,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
   const [position, setPosition] = useState({ top: 0, left: 0 })
   const toolbarRef = useRef<HTMLDivElement>(null)
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null) as MutableRefObject<ReturnType<typeof setTimeout> | null>
+  const iosSelectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null) as MutableRefObject<ReturnType<typeof setTimeout> | null>
 
   const updatePosition = useCallback(() => {
     const textarea = textareaRef.current
@@ -28,7 +30,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
     const rect = textarea.getBoundingClientRect()
     // Approximate position: center of textarea horizontally, above it
     const top = rect.top - 44 + window.scrollY
-    const left = rect.left + rect.width / 2
+    const left = Math.min(window.innerWidth - 100, Math.max(70, rect.left + rect.width / 2))
 
     setPosition({ top: Math.max(8, top), left })
     setVisible(true)
@@ -39,7 +41,18 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
     if (!textarea) return
 
     const handleSelect = () => {
-      requestAnimationFrame(updatePosition)
+      if (isIOS()) {
+        // Delay on iOS to let native Copy/Paste/Select All popover appear first
+        if (iosSelectTimeoutRef.current) clearTimeout(iosSelectTimeoutRef.current)
+        iosSelectTimeoutRef.current = setTimeout(() => {
+          const sel = window.getSelection()
+          if (sel && !sel.isCollapsed && document.activeElement === textarea) {
+            requestAnimationFrame(updatePosition)
+          }
+        }, 350)
+      } else {
+        requestAnimationFrame(updatePosition)
+      }
     }
 
     const handleBlur = (e: FocusEvent) => {
@@ -59,12 +72,16 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
       }
     }
 
+    // On iOS, hide toolbar on new touch to prevent stale positioning
+    const handleTouchStart = isIOS() ? () => setVisible(false) : null
+
     textarea.addEventListener('select', handleSelect)
     textarea.addEventListener('mouseup', handleSelect)
     textarea.addEventListener('keyup', handleSelect)
     textarea.addEventListener('touchend', handleSelect)
     textarea.addEventListener('blur', handleBlur)
     document.addEventListener('selectionchange', handleDocumentSelection)
+    if (handleTouchStart) textarea.addEventListener('touchstart', handleTouchStart)
 
     return () => {
       textarea.removeEventListener('select', handleSelect)
@@ -73,7 +90,9 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
       textarea.removeEventListener('touchend', handleSelect)
       textarea.removeEventListener('blur', handleBlur)
       document.removeEventListener('selectionchange', handleDocumentSelection)
+      if (handleTouchStart) textarea.removeEventListener('touchstart', handleTouchStart)
       if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current)
+      if (iosSelectTimeoutRef.current) clearTimeout(iosSelectTimeoutRef.current)
     }
   }, [textareaRef, updatePosition])
 

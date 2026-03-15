@@ -64,6 +64,7 @@ export function MemoList() {
   const viewMode = useUIStore((s) => s.viewMode)
   const { gridColsClass, handleTouchStart, handleTouchMove } = usePinchZoom()
   const isSelectionMode = useUIStore((s) => s.isSelectionMode)
+  const isNarrowFold = useUIStore((s) => s.isNarrowFold)
   const openContextMenu = useUIStore((s) => s.openContextMenu)
   const activeFolderId = useUIStore((s) => s.activeFolderId)
   const activeFilter = useUIStore((s) => s.activeFilter)
@@ -235,11 +236,14 @@ export function MemoList() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           className={clsx(
-            'mt-3 px-4 fold:px-2.5 pb-4 lg:px-0',
+            'mt-3 pb-4 lg:px-0',
+            isNarrowFold ? 'px-2.5' : 'px-4',
             '@container',
             viewMode === 'grid'
-              ? `grid ${gridColsClass} fold:!grid-cols-1 gap-3 fold:gap-2`
-              : 'flex flex-col gap-2.5 fold:gap-2 @lg:max-w-3xl @lg:mx-auto'
+              ? isNarrowFold
+                ? 'grid grid-cols-1 gap-2'
+                : `grid ${gridColsClass} gap-3`
+              : clsx('flex flex-col', isNarrowFold ? 'gap-2' : 'gap-2.5 @lg:max-w-3xl @lg:mx-auto')
           )}
         >
           {visibleMemos.map((memo, index) => (
@@ -252,7 +256,7 @@ export function MemoList() {
               )}
               style={{
                 animationDuration: '200ms',
-                animationDelay: index < 15 ? `${index * 50}ms` : '0ms',
+                animationDelay: index < 8 ? `${index * 30}ms` : '0ms',
                 animationFillMode: 'both',
               }}
             >
@@ -269,11 +273,14 @@ export function MemoList() {
       {hasMore && (
         <>
           <div className={clsx(
-            'px-4 fold:px-2.5 lg:px-0',
+            'lg:px-0',
+            isNarrowFold ? 'px-2.5' : 'px-4',
             '@container',
             viewMode === 'grid'
-              ? 'grid grid-cols-1 @2xs:grid-cols-2 fold:!grid-cols-1 gap-3 fold:gap-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5'
-              : 'flex flex-col gap-2.5 fold:gap-2 @lg:max-w-3xl @lg:mx-auto'
+              ? isNarrowFold
+                ? 'grid grid-cols-1 gap-2'
+                : 'grid grid-cols-1 @2xs:grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5 gap-3'
+              : clsx('flex flex-col', isNarrowFold ? 'gap-2' : 'gap-2.5 @lg:max-w-3xl @lg:mx-auto')
           )}>
             {Array.from({ length: viewMode === 'grid' ? 4 : 2 }, (_, i) => <SkeletonMemoCard key={i} />)}
           </div>

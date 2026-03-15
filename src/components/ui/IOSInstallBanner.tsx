@@ -1,24 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Share, Plus, X } from 'lucide-react'
+import { isIOSSafari, isPWAStandalone } from '@/utils/platform'
 
 const DISMISSED_KEY = 'memo-ios-install-dismissed'
 const DISMISS_EXPIRY_DAYS = 14
-
-interface IOSNavigator extends Navigator {
-  standalone?: boolean
-}
-
-function isIOSSafari(): boolean {
-  const ua = navigator.userAgent
-  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/.test(ua)
-  return isIOS && isSafari
-}
-
-function isStandalone(): boolean {
-  return (navigator as IOSNavigator).standalone === true
-    || window.matchMedia('(display-mode: standalone)').matches
-}
 
 function isDismissed(): boolean {
   try {
@@ -44,7 +29,7 @@ export function IOSInstallBanner() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    if (isIOSSafari() && !isStandalone() && !isDismissed()) {
+    if (isIOSSafari() && !isPWAStandalone() && !isDismissed()) {
       setVisible(true)
     }
   }, [])

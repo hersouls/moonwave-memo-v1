@@ -99,16 +99,12 @@ export function MobileNav() {
     { axis: 'x', filterTaps: true, pointer: { touch: true } }
   )
 
-  // Body scroll lock when mobile menu is open
+  // Headless UI Dialog handles body scroll lock internally (including iOS)
+
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
+    if (!isMobileMenuOpen) {
       setDragX(0)
       setIsDragging(false)
-    }
-    return () => {
-      document.body.style.overflow = ''
     }
   }, [isMobileMenuOpen])
 

@@ -24,36 +24,29 @@ function WidgetFallback() {
 
 export function DashboardPage() {
   return (
-    <div className="@container mx-auto w-full max-w-5xl px-4 py-4 lg:px-8 lg:py-6">
+    <div className="@container mx-auto w-full max-w-5xl xl:max-w-7xl px-4 py-4 lg:px-8 lg:py-6">
       {/* 최근 작업 위젯 (ContinueBanner 대체) */}
       <div className="mb-4">
         <RecentWorkWidget />
       </div>
 
-      {/* Container-query responsive: 2-column when space allows */}
-      <div className="grid grid-cols-1 @lg:grid-cols-2 gap-4">
-        {/* Left column: Profile + Streak + Stats */}
-        <div className="flex flex-col gap-4">
-          <ProfileCard />
-          <StreakCounter />
-          <StatsRow />
-          <Suspense fallback={<WidgetFallback />}><MemoryLaneWidget /></Suspense>
-          <Suspense fallback={<WidgetFallback />}><WeeklyDigestWidget /></Suspense>
-        </div>
-
-        {/* Right column: Heatmap + Folders + Tags + Widgets */}
-        <div className="flex flex-col gap-4">
-          <BriefingWidget />
-          <Suspense fallback={<WidgetFallback />}><ActivityHeatmap /></Suspense>
-          <Suspense fallback={<WidgetFallback />}><MoodGraphWidget /></Suspense>
-          <FolderList />
-          <TagCloud />
-          <Suspense fallback={<WidgetFallback />}><TodoWidget /></Suspense>
-          <Suspense fallback={<WidgetFallback />}><WritingPromptWidget /></Suspense>
-          <Suspense fallback={<WidgetFallback />}><AnalyticsWidget /></Suspense>
-          <Suspense fallback={<WidgetFallback />}><KnowledgeGraph /></Suspense>
-          <Suspense fallback={<WidgetFallback />}><InsightsWidget /></Suspense>
-        </div>
+      {/* Container-query responsive: 2-col @lg, 3-col @xl */}
+      <div className="grid grid-cols-1 @lg:grid-cols-2 @xl:grid-cols-3 gap-4">
+        <ProfileCard />
+        <BriefingWidget />
+        <StreakCounter />
+        <StatsRow />
+        <Suspense fallback={<WidgetFallback />}><ActivityHeatmap /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><MoodGraphWidget /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><MemoryLaneWidget /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><WeeklyDigestWidget /></Suspense>
+        <FolderList />
+        <TagCloud />
+        <Suspense fallback={<WidgetFallback />}><TodoWidget /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><WritingPromptWidget /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><AnalyticsWidget /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><KnowledgeGraph /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><InsightsWidget /></Suspense>
       </div>
 
     </div>

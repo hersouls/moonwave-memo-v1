@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { suggestTags } from '@/services/aiFeatures'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { suggestTags, isAIAvailable } from '@/services/aiFeatures'
 
 export function useAITagSuggestions(content: string) {
   const [tags, setTags] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastContentRef = useRef('')
-  const hasApiKey = useSettingsStore((s) => !!s.settings.ai.openaiApiKey || !!s.settings.ai.anthropicApiKey)
 
   useEffect(() => {
-    if (!hasApiKey || !content.trim() || content.length < 20) {
+    if (!isAIAvailable() || !content.trim() || content.length < 20) {
       setTags([])
       return
     }
@@ -31,7 +29,7 @@ export function useAITagSuggestions(content: string) {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [content, hasApiKey])
+  }, [content])
 
   return { tags, isLoading }
 }

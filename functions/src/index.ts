@@ -58,7 +58,7 @@ export const aiChat = onCall(
           'Authorization': `Bearer ${oKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4.1-nano',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt },
@@ -80,7 +80,7 @@ export const aiChat = onCall(
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-sonnet-4-6',
           max_tokens: 500,
           system: systemPrompt,
           messages: [{ role: 'user', content: prompt }],
@@ -167,7 +167,7 @@ export const imageOCR = onCall(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         messages: [
           {

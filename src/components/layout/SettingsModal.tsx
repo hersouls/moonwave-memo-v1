@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { clsx } from 'clsx'
 import {
   Check,
+  ChevronDown,
   ChevronRight,
   Clock,
   Cloud,
@@ -31,7 +32,7 @@ import {
   XCircle,
   CheckCircle,
 } from 'lucide-react'
-import { useSettingsStore, applyTheme, applyColorPalette } from '@/stores/settingsStore'
+import { useSettingsStore, applyTheme, applyColorPalette, applyFontFamily, applyFontSize } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
@@ -258,7 +259,7 @@ function ToggleItem({
         aria-checked={enabled}
         onClick={onChange}
         className={clsx(
-          'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+          'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
           enabled ? 'bg-primary-500' : 'bg-zinc-200 dark:bg-zinc-700'
         )}
       >
@@ -384,13 +385,44 @@ export function SettingsModal() {
   const [editingFolderId, setEditingFolderId] = useState<number | null>(null)
   const [editFolderName, setEditFolderName] = useState('')
   const [editFolderColor, setEditFolderColor] = useState('')
+  const [showDeleteFolderConfirm, setShowDeleteFolderConfirm] = useState(false)
+  const [pendingDeleteFolder, setPendingDeleteFolder] = useState<{ id: number; name: string } | null>(null)
+  const [showFolderDropdown, setShowFolderDropdown] = useState(false)
 
+  // AI service states
+  const [showOpenAIKey, setShowOpenAIKey] = useState(false)
+  const [showAnthropicKey, setShowAnthropicKey] = useState(false)
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+  const [localOpenAIKey, setLocalOpenAIKey] = useState(settings.ai?.openaiApiKey || '')
+  const [localAnthropicKey, setLocalAnthropicKey] = useState(settings.ai?.anthropicApiKey || '')
+  const [localGeminiKey, setLocalGeminiKey] = useState(settings.ai?.geminiApiKey || '')
+  const [openAIKeySaved, setOpenAIKeySaved] = useState(false)
+  const [anthropicKeySaved, setAnthropicKeySaved] = useState(false)
+  const [geminiKeySaved, setGeminiKeySaved] = useState(false)
+  const [testingProvider, setTestingProvider] = useState<string | null>(null)
+  const [openAITestResult, setOpenAITestResult] = useState<'success' | 'error' | null>(null)
+  const [anthropicTestResult, setAnthropicTestResult] = useState<'success' | 'error' | null>(null)
+  const [geminiTestResult, setGeminiTestResult] = useState<'success' | 'error' | null>(null)
+  const [showAdvancedKeys, setShowAdvancedKeys] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const contentRef = useRef<HTMLDivElement>(null)
 
   // Detect unsaved changes
-  const hasChanges = localTheme !== settings.theme || localPalette !== settings.colorPalette
+  const hasChanges =
+    localTheme !== settings.theme ||
+    localPalette !== settings.colorPalette ||
+    localFontFamily !== settings.fontFamily ||
+    localFontSize !== settings.fontSize
+
+  // Reset scroll position and close dropdowns on tab switch
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0
+    }
+    setShowFolderDropdown(false)
+  }, [activeTab])
 
   // PWA Install detection
   useEffect(() => {
@@ -440,23 +472,95 @@ export function SettingsModal() {
     }
   }, [localPalette, isOpen])
 
+  // Real-time font family preview
+  useEffect(() => {
+    if (isOpen) applyFontFamily(localFontFamily)
+  }, [localFontFamily, isOpen])
+
+  // Real-time font size preview
+  useEffect(() => {
+    if (isOpen) applyFontSize(localFontSize)
+  }, [localFontSize, isOpen])
+
   // Sync local state when modal opens
   useEffect(() => {
     if (isOpen) {
       setLocalTheme(settings.theme)
       setLocalPalette(settings.colorPalette)
+      setLocalFontFamily(settings.fontFamily)
+      setLocalFontSize(settings.fontSize)
+      setRestoreError(null)
     }
-  }, [isOpen, settings.theme, settings.colorPalette])
+  }, [isOpen, settings.theme, settings.colorPalette, settings.fontFamily, settings.fontSize])
+
+  // Sync local AI keys when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setLocalOpenAIKey(settings.ai?.openaiApiKey || '')
+      setLocalAnthropicKey(settings.ai?.anthropicApiKey || '')
+      setOpenAIKeySaved(false)
+      setAnthropicKeySaved(false)
+      setOpenAITestResult(null)
+      setAnthropicTestResult(null)
+    }
+  }, [isOpen, settings.ai?.openaiApiKey, settings.ai?.anthropicApiKey])
+
+  // Debounce OpenAI key save
+  useEffect(() => {
+    if (!isOpen) return
+    if (localOpenAIKey === (settings.ai?.openaiApiKey || '')) return
+    setOpenAIKeySaved(false)
+    setOpenAITestResult(null)
+    const timer = setTimeout(() => {
+      setOpenAIApiKey(localOpenAIKey)
+      if (localOpenAIKey.trim()) setOpenAIKeySaved(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localOpenAIKey])
+
+  // Debounce Anthropic key save
+  useEffect(() => {
+    if (!isOpen) return
+    if (localAnthropicKey === (settings.ai?.anthropicApiKey || '')) return
+    setAnthropicKeySaved(false)
+    setAnthropicTestResult(null)
+    const timer = setTimeout(() => {
+      setAnthropicApiKey(localAnthropicKey)
+      if (localAnthropicKey.trim()) setAnthropicKeySaved(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localAnthropicKey])
+
+  // Debounce Gemini key save
+  useEffect(() => {
+    if (!isOpen) return
+    if (localGeminiKey === (settings.ai?.geminiApiKey || '')) return
+    setGeminiKeySaved(false)
+    setGeminiTestResult(null)
+    const timer = setTimeout(() => {
+      useSettingsStore.getState().setGeminiApiKey(localGeminiKey)
+      if (localGeminiKey.trim()) setGeminiKeySaved(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localGeminiKey])
 
   const handleSave = () => {
     setTheme(localTheme)
     setColorPalette(localPalette)
+    setFontFamily(localFontFamily)
+    setFontSize(localFontSize)
     // Re-resolve orchestrator so environment theme overrides if active
     useThemeOrchestrator.getState().resolve()
     closeModal()
   }
 
   const handleClose = () => {
+    // Restore font to stored values
+    applyFontFamily(settings.fontFamily)
+    applyFontSize(settings.fontSize)
     // Restore correct theme via orchestrator (handles both default and overridden cases)
     useThemeOrchestrator.getState().resolve()
     closeModal()
@@ -482,6 +586,7 @@ export function SettingsModal() {
       setLastBackupDate(new Date())
     } catch (error) {
       console.error('Backup failed:', error)
+      showToast('백업에 실패했습니다', 'error')
     } finally {
       setIsBackingUp(false)
     }
@@ -547,6 +652,15 @@ export function SettingsModal() {
     } catch (error) {
       console.error('Clear data failed:', error)
     }
+  }
+
+  // Folder delete confirmation handler
+  const handleDeleteFolderConfirm = async () => {
+    if (!pendingDeleteFolder) return
+    await deleteFolder(pendingDeleteFolder.id)
+    showToast(`'${pendingDeleteFolder.name}' 폴더가 삭제되었습니다`, 'info')
+    setShowDeleteFolderConfirm(false)
+    setPendingDeleteFolder(null)
   }
 
   const formatDate = (dateStr?: string) => {
@@ -680,10 +794,7 @@ export function SettingsModal() {
             {FONT_FAMILIES.map((font) => (
               <button
                 key={font.id}
-                onClick={() => {
-                  setLocalFontFamily(font.id)
-                  setFontFamily(font.id)
-                }}
+                onClick={() => setLocalFontFamily(font.id)}
                 className={clsx(
                   'px-3 py-3 rounded-xl border-2 text-sm transition-all text-center',
                   localFontFamily === font.id
@@ -704,10 +815,7 @@ export function SettingsModal() {
               {FONT_SIZES.map((size) => (
                 <button
                   key={size.id}
-                  onClick={() => {
-                    setLocalFontSize(size.id)
-                    setFontSize(size.id)
-                  }}
+                  onClick={() => setLocalFontSize(size.id)}
                   className={clsx(
                     'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
                     localFontSize === size.id
@@ -916,20 +1024,59 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           기본 폴더
         </h3>
-        <button
-          onClick={() => {
-            const currentIdx = folders.findIndex((f) => f.id === settings.memoSettings.defaultFolderId)
-            const nextFolder = folders[(currentIdx + 1) % folders.length]
-            setDefaultFolder(nextFolder?.id ?? null)
-          }}
-          className="w-full flex items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
-        >
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">새 메모 기본 폴더</span>
-          <div className="flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
-            <span>{defaultFolder?.name || '내 메모'}</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowFolderDropdown(!showFolderDropdown)}
+            className="w-full flex items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
+          >
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">새 메모 기본 폴더</span>
+            <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+              {defaultFolder && (
+                <span
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: defaultFolder.color }}
+                />
+              )}
+              <span>{defaultFolder?.name || '전체 메모'}</span>
+              <ChevronRight className={clsx('w-4 h-4 transition-transform', showFolderDropdown && 'rotate-90')} />
+            </div>
+          </button>
+          {showFolderDropdown && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowFolderDropdown(false)} />
+              <div className="absolute z-20 left-0 right-0 mt-1 py-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-lg max-h-48 overflow-y-auto">
+                <button
+                  onClick={() => { setDefaultFolder(null); setShowFolderDropdown(false) }}
+                  className={clsx(
+                    'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left',
+                    !settings.memoSettings.defaultFolderId
+                      ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20'
+                      : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'
+                  )}
+                >
+                  <span>전체 메모</span>
+                  {!settings.memoSettings.defaultFolderId && <Check className="w-4 h-4 ml-auto" />}
+                </button>
+                {folders.map((folder) => (
+                  <button
+                    key={folder.id}
+                    onClick={() => { setDefaultFolder(folder.id!); setShowFolderDropdown(false) }}
+                    className={clsx(
+                      'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left',
+                      settings.memoSettings.defaultFolderId === folder.id
+                        ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20'
+                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'
+                    )}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: folder.color }} />
+                    <span>{folder.name}</span>
+                    {settings.memoSettings.defaultFolderId === folder.id && <Check className="w-4 h-4 ml-auto" />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       <div className="border-t border-zinc-100 dark:border-zinc-800" />
@@ -1143,8 +1290,8 @@ export function SettingsModal() {
                       </button>
                       <button
                         onClick={() => {
-                          deleteFolder(folder.id!)
-                          showToast(`'${folder.name}' 폴더가 삭제되었습니다`, 'info')
+                          setPendingDeleteFolder({ id: folder.id!, name: folder.name })
+                          setShowDeleteFolderConfirm(true)
                         }}
                         className="p-1.5 rounded-lg text-zinc-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                         aria-label={`${folder.name} 삭제`}
@@ -1163,64 +1310,14 @@ export function SettingsModal() {
   )
 
   // ─── Tab Content: AI ────────────────────────────────
-  const [showOpenAIKey, setShowOpenAIKey] = useState(false)
-  const [showAnthropicKey, setShowAnthropicKey] = useState(false)
-  const [localOpenAIKey, setLocalOpenAIKey] = useState(settings.ai?.openaiApiKey || '')
-  const [localAnthropicKey, setLocalAnthropicKey] = useState(settings.ai?.anthropicApiKey || '')
-  const [openAIKeySaved, setOpenAIKeySaved] = useState(false)
-  const [anthropicKeySaved, setAnthropicKeySaved] = useState(false)
-  const [testingProvider, setTestingProvider] = useState<string | null>(null)
-  const [openAITestResult, setOpenAITestResult] = useState<'success' | 'error' | null>(null)
-  const [anthropicTestResult, setAnthropicTestResult] = useState<'success' | 'error' | null>(null)
-
-  // Sync local keys when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setLocalOpenAIKey(settings.ai?.openaiApiKey || '')
-      setLocalAnthropicKey(settings.ai?.anthropicApiKey || '')
-      setOpenAIKeySaved(false)
-      setAnthropicKeySaved(false)
-      setOpenAITestResult(null)
-      setAnthropicTestResult(null)
-    }
-  }, [isOpen, settings.ai?.openaiApiKey, settings.ai?.anthropicApiKey])
-
-  // Debounce OpenAI key save
-  useEffect(() => {
-    if (!isOpen) return
-    if (localOpenAIKey === (settings.ai?.openaiApiKey || '')) return
-    setOpenAIKeySaved(false)
-    setOpenAITestResult(null)
-    const timer = setTimeout(() => {
-      setOpenAIApiKey(localOpenAIKey)
-      if (localOpenAIKey.trim()) setOpenAIKeySaved(true)
-    }, 300)
-    return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localOpenAIKey])
-
-  // Debounce Anthropic key save
-  useEffect(() => {
-    if (!isOpen) return
-    if (localAnthropicKey === (settings.ai?.anthropicApiKey || '')) return
-    setAnthropicKeySaved(false)
-    setAnthropicTestResult(null)
-    const timer = setTimeout(() => {
-      setAnthropicApiKey(localAnthropicKey)
-      if (localAnthropicKey.trim()) setAnthropicKeySaved(true)
-    }, 300)
-    return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localAnthropicKey])
-
-  const handleTestConnection = async (provider: 'openai' | 'anthropic') => {
-    const key = provider === 'openai' ? localOpenAIKey : localAnthropicKey
+  const handleTestConnection = async (provider: 'openai' | 'anthropic' | 'gemini') => {
+    const key = provider === 'openai' ? localOpenAIKey : provider === 'anthropic' ? localAnthropicKey : localGeminiKey
     if (!key.trim()) {
       showToast('API 키를 먼저 입력하세요', 'warning')
       return
     }
     setTestingProvider(provider)
-    const setResult = provider === 'openai' ? setOpenAITestResult : setAnthropicTestResult
+    const setResult = provider === 'openai' ? setOpenAITestResult : provider === 'anthropic' ? setAnthropicTestResult : setGeminiTestResult
     setResult(null)
     try {
       let res: Response
@@ -1232,6 +1329,8 @@ export function SettingsModal() {
             'anthropic-dangerous-direct-browser-access': 'true',
           },
         })
+      } else if (provider === 'gemini') {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`)
       } else {
         res = await fetch('https://api.openai.com/v1/models', {
           headers: { Authorization: `Bearer ${key}` },
@@ -1260,217 +1359,198 @@ export function SettingsModal() {
   ]
 
   const renderAISettings = () => {
-    const hasAnyKey = !!(localOpenAIKey.trim() || localAnthropicKey.trim())
+    const hasAnyKey = !!(localOpenAIKey.trim() || localAnthropicKey.trim() || localGeminiKey.trim())
+    const aiUsage = (() => { try { const raw = localStorage.getItem('memo-ai-usage'); if (!raw) return { count: 0 }; const d = JSON.parse(raw); return d.date === new Date().toISOString().slice(0, 10) ? d : { count: 0 } } catch { return { count: 0 } } })()
+    const providerOptions = [
+      { value: 'openai' as const, label: 'OpenAI (GPT-4.1 nano)' },
+      { value: 'anthropic' as const, label: 'Anthropic (Claude 4.6)' },
+      { value: 'gemini' as const, label: 'Google (Gemini 2.5)' },
+    ]
+    const ocrProviderOptions = [
+      { value: 'openai' as const, label: 'OpenAI (GPT-4o)' },
+      { value: 'anthropic' as const, label: 'Anthropic (Claude 4.6)' },
+      { value: 'gemini' as const, label: 'Google (Gemini 2.5)' },
+    ]
     return (
     <div className="space-y-8">
       {/* AI status banner */}
-      {!hasAnyKey ? (
-        <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-sm text-blue-700 dark:text-blue-300">
-          AI 기능은 선택 사항입니다. API 키 없이도 메모의 모든 기본 기능을 사용할 수 있습니다.
+      <div className="rounded-xl bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
+          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 기능 활성화됨</span>
         </div>
-      ) : (
-        <div className="rounded-lg bg-success-50 dark:bg-success-900/20 p-3 text-sm text-success-700 dark:text-success-300">
-          AI 기능이 활성화되었습니다. 음성 입력, 이미지 OCR, 자동완성을 사용할 수 있습니다.
-        </div>
-      )}
-
-      {/* OpenAI */}
-      <section>
-        <div className="flex items-center justify-between mb-4 px-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              OpenAI
-            </h3>
-            {openAITestResult === 'success' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400">
-                <CheckCircle className="w-3 h-3" />
-                연결됨
-              </span>
-            )}
-            {openAITestResult === 'error' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400">
-                <XCircle className="w-3 h-3" />
-                연결 실패
-              </span>
-            )}
-          </div>
-          <a
-            href="https://platform.openai.com/api-keys"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
-          >
-            API 키 발급
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-              API 키
-            </label>
-            <div className="relative">
-              <input
-                type={showOpenAIKey ? 'text' : 'password'}
-                value={localOpenAIKey}
-                onChange={(e) => setLocalOpenAIKey(e.target.value)}
-                placeholder="sk-..."
-                autoComplete="off"
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowOpenAIKey(!showOpenAIKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 보기'}
-              >
-                {showOpenAIKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            {openAIKeySaved && localOpenAIKey.trim() && (
-              <p className="mt-1.5 text-xs text-success-600 dark:text-success-400 flex items-center gap-1">
-                <Check className="w-3 h-3" />
-                저장됨
-              </p>
-            )}
-          </div>
-          <button
-            onClick={() => handleTestConnection('openai')}
-            disabled={testingProvider === 'openai' || !localOpenAIKey.trim()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {testingProvider === 'openai' ? (
-              <><Loader2 className="w-4 h-4 animate-spin" />테스트 중...</>
-            ) : '연결 테스트'}
-          </button>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            음성 인식(STT), 텍스트 생성 등에 사용됩니다.
+        {hasAnyKey ? (
+          <p className="text-xs text-primary-600 dark:text-primary-400">내 API 키로 무제한 사용 중</p>
+        ) : (
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            오늘 사용: <span className="font-semibold text-zinc-900 dark:text-zinc-100">{aiUsage.count}/50회</span> (서버 키)
+            {aiUsage.count >= 10 && <span className="text-danger-500 ml-1">한도 초과</span>}
           </p>
-        </div>
-      </section>
+        )}
+      </div>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
-
-      {/* Anthropic */}
+      {/* Provider Selection */}
       <section>
-        <div className="flex items-center justify-between mb-4 px-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              Anthropic
-            </h3>
-            {anthropicTestResult === 'success' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400">
-                <CheckCircle className="w-3 h-3" />
-                연결됨
-              </span>
-            )}
-            {anthropicTestResult === 'error' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400">
-                <XCircle className="w-3 h-3" />
-                연결 실패
-              </span>
-            )}
-          </div>
-          <a
-            href="https://console.anthropic.com/settings/keys"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
-          >
-            API 키 발급
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">기본 설정</h3>
+        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-5">
+          {/* AI Provider */}
           <div>
-            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-              API 키
-            </label>
-            <div className="relative">
-              <input
-                type={showAnthropicKey ? 'text' : 'password'}
-                value={localAnthropicKey}
-                onChange={(e) => setLocalAnthropicKey(e.target.value)}
-                placeholder="sk-ant-..."
-                autoComplete="off"
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 보기'}
-              >
-                {showAnthropicKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">AI 프로바이더</label>
+            <div className="grid grid-cols-3 gap-2">
+              {providerOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => useSettingsStore.getState().setAIProvider(opt.value)}
+                  className={clsx(
+                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-all text-center',
+                    settings.ai?.aiProvider === opt.value
+                      ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
-            {anthropicKeySaved && localAnthropicKey.trim() && (
-              <p className="mt-1.5 text-xs text-success-600 dark:text-success-400 flex items-center gap-1">
-                <Check className="w-3 h-3" />
-                저장됨
-              </p>
-            )}
           </div>
-          <button
-            onClick={() => handleTestConnection('anthropic')}
-            disabled={testingProvider === 'anthropic' || !localAnthropicKey.trim()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {testingProvider === 'anthropic' ? (
-              <><Loader2 className="w-4 h-4 animate-spin" />테스트 중...</>
-            ) : '연결 테스트'}
-          </button>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            텍스트 분석, 요약, AI 어시스턴트 등에 사용됩니다.
-          </p>
+
+          {/* OCR Provider */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">OCR 프로바이더</label>
+            <div className="grid grid-cols-3 gap-2">
+              {ocrProviderOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => useSettingsStore.getState().setOCRProvider(opt.value)}
+                  className={clsx(
+                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-all text-center',
+                    settings.ai?.ocrProvider === opt.value
+                      ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* STT Language */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">음성 인식 언어</label>
+            <div className="grid grid-cols-4 gap-2">
+              {languageOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSTTLanguage(opt.value)}
+                  className={clsx(
+                    'px-3 py-2 rounded-xl border-2 text-xs font-medium transition-all',
+                    settings.ai?.language === opt.value
+                      ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Autocomplete */}
+          <ToggleItem
+            label="AI 자동완성"
+            description="입력 중 AI가 다음 문장을 제안합니다 (Tab으로 수락)"
+            enabled={settings.ai?.aiAutocomplete ?? false}
+            onChange={() => useSettingsStore.getState().toggleAIAutocomplete()}
+          />
         </div>
       </section>
 
       <div className="border-t border-zinc-100 dark:border-zinc-800" />
 
-      {/* STT Language Selection */}
+      {/* Advanced: Custom API Keys */}
       <section>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          음성 인식 언어
-        </h3>
-        <div className="grid grid-cols-4 gap-2">
-          {languageOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setSTTLanguage(opt.value)}
-              className={clsx(
-                'px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all',
-                settings.ai?.language === opt.value
-                  ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                  : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </section>
+        <button
+          onClick={() => setShowAdvancedKeys(!showAdvancedKeys)}
+          className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 px-1 w-full"
+        >
+          <ChevronDown className={clsx('w-4 h-4 transition-transform', showAdvancedKeys && 'rotate-180')} />
+          고급: 내 API 키 등록 (무제한)
+        </button>
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 px-1 mb-4">
+          키를 등록하면 서버 키 대신 내 키를 사용합니다. 하루 사용 한도 없이 무제한 AI 기능.
+        </p>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+        {showAdvancedKeys && (
+          <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-5">
+            {/* OpenAI Key */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">OpenAI API 키</label>
+                <div className="flex items-center gap-2">
+                  {openAITestResult === 'success' && <span className="text-[10px] text-success-600"><CheckCircle className="w-3 h-3 inline" /> 연결됨</span>}
+                  {openAITestResult === 'error' && <span className="text-[10px] text-danger-500"><XCircle className="w-3 h-3 inline" /> 실패</span>}
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><ExternalLink className="w-3 h-3 inline" /> 발급</a>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input type={showOpenAIKey ? 'text' : 'password'} value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} placeholder="sk-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-8" />
+                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">{showOpenAIKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                </div>
+                <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0">{testingProvider === 'openai' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+              </div>
+              {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
+            </div>
 
-      {/* AI Autocomplete toggle */}
-      <section>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          AI 자동완성
-        </h3>
-        <ToggleItem
-          label="자동완성 활성화"
-          description="입력 중 AI가 다음 문장을 제안합니다 (Tab으로 수락)"
-          enabled={settings.ai?.aiAutocomplete ?? false}
-          onChange={() => useSettingsStore.getState().toggleAIAutocomplete()}
-        />
+            {/* Anthropic Key */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Anthropic API 키</label>
+                <div className="flex items-center gap-2">
+                  {anthropicTestResult === 'success' && <span className="text-[10px] text-success-600"><CheckCircle className="w-3 h-3 inline" /> 연결됨</span>}
+                  {anthropicTestResult === 'error' && <span className="text-[10px] text-danger-500"><XCircle className="w-3 h-3 inline" /> 실패</span>}
+                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><ExternalLink className="w-3 h-3 inline" /> 발급</a>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input type={showAnthropicKey ? 'text' : 'password'} value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} placeholder="sk-ant-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-8" />
+                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">{showAnthropicKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                </div>
+                <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0">{testingProvider === 'anthropic' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+              </div>
+              {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
+            </div>
+
+            {/* Gemini Key */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Gemini API 키</label>
+                <div className="flex items-center gap-2">
+                  {geminiTestResult === 'success' && <span className="text-[10px] text-success-600"><CheckCircle className="w-3 h-3 inline" /> 연결됨</span>}
+                  {geminiTestResult === 'error' && <span className="text-[10px] text-danger-500"><XCircle className="w-3 h-3 inline" /> 실패</span>}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><ExternalLink className="w-3 h-3 inline" /> 발급</a>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input type={showGeminiKey ? 'text' : 'password'} value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} placeholder="AIza..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-8" />
+                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">{showGeminiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                </div>
+                <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0">{testingProvider === 'gemini' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+              </div>
+              {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Info */}
       <section>
         <div className="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg">
           <Shield className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>API 키는 이 기기에만 저장되며 외부 서버로 전송되지 않습니다.</span>
+          <span>API 키를 등록하지 않아도 하루 50회까지 무료로 AI 기능을 사용할 수 있습니다. 등록된 키는 이 기기에만 저장됩니다.</span>
         </div>
       </section>
     </div>
@@ -1593,103 +1673,13 @@ export function SettingsModal() {
           </p>
 
           <div className="space-y-3">
-            {/* Environment Theme */}
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">환경 동기화 테마</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">날씨/시간에 따라 테마 자동 변경</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={lw.environmentThemeEnabled}
-                onChange={() => handleToggle('environmentThemeEnabled')}
-                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
-              />
-            </label>
-
-            {/* Survival Mode */}
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">서바이벌 모드</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">인지 부하 시 모노크롬 미니멀 모드 자동 진입</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={lw.survivalModeEnabled}
-                onChange={() => handleToggle('survivalModeEnabled')}
-                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
-              />
-            </label>
-
-            {/* Completion Effects */}
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">완료 카타르시스</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">긴 메모 완성 시 시각 효과 표시</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={lw.completionEffectsEnabled}
-                onChange={() => handleToggle('completionEffectsEnabled')}
-                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
-              />
-            </label>
-
-            {/* Time Capsule */}
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">타임캡슐</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">과거 같은 날 기록을 발견하면 특별 테마 적용</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={lw.timeCapsuleEnabled}
-                onChange={() => handleToggle('timeCapsuleEnabled')}
-                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
-              />
-            </label>
-
-            {/* Sound Sync */}
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">사운드 동기화</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">테마에 맞는 인터랙션 사운드 재생</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={lw.soundSyncEnabled}
-                onChange={() => handleToggle('soundSyncEnabled')}
-                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
-              />
-            </label>
-
-            {/* Ambient Images */}
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">AI 감성 배경 이미지</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">계절/날씨에 맞는 AI 배경 이미지 자동 생성 (OpenAI 키 필요)</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={lw.ambientImagesEnabled}
-                onChange={() => handleToggle('ambientImagesEnabled')}
-                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
-              />
-            </label>
-
-            {/* World Building */}
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">지식의 숲 (World Building)</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">작성량과 태그 기반 배경 일러스트 자동 건축 (OpenAI 키 필요)</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={lw.worldBuildingEnabled}
-                onChange={() => handleToggle('worldBuildingEnabled')}
-                className="w-5 h-5 rounded accent-primary-500 cursor-pointer"
-              />
-            </label>
+            <ToggleItem label="환경 동기화 테마" description="날씨/시간에 따라 테마 자동 변경" enabled={lw.environmentThemeEnabled} onChange={() => handleToggle('environmentThemeEnabled')} />
+            <ToggleItem label="서바이벌 모드" description="인지 부하 시 모노크롬 미니멀 모드 자동 진입" enabled={lw.survivalModeEnabled} onChange={() => handleToggle('survivalModeEnabled')} />
+            <ToggleItem label="완료 카타르시스" description="긴 메모 완성 시 시각 효과 표시" enabled={lw.completionEffectsEnabled} onChange={() => handleToggle('completionEffectsEnabled')} />
+            <ToggleItem label="타임캡슐" description="과거 같은 날 기록을 발견하면 특별 테마 적용" enabled={lw.timeCapsuleEnabled} onChange={() => handleToggle('timeCapsuleEnabled')} />
+            <ToggleItem label="사운드 동기화" description="테마에 맞는 인터랙션 사운드 재생" enabled={lw.soundSyncEnabled} onChange={() => handleToggle('soundSyncEnabled')} />
+            <ToggleItem label="AI 감성 배경 이미지" description="계절/날씨에 맞는 AI 배경 이미지 자동 생성 (OpenAI 키 필요)" enabled={lw.ambientImagesEnabled} onChange={() => handleToggle('ambientImagesEnabled')} />
+            <ToggleItem label="지식의 숲 (World Building)" description="작성량과 태그 기반 배경 일러스트 자동 건축 (OpenAI 키 필요)" enabled={lw.worldBuildingEnabled} onChange={() => handleToggle('worldBuildingEnabled')} />
           </div>
         </section>
 
@@ -1702,41 +1692,11 @@ export function SettingsModal() {
             글쓰기를 다감각적으로 확장하는 몰입 기능
           </p>
           <div className="space-y-3">
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">디지털 정원</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">방치된 메모는 퇴색, 활발한 메모는 빛남</p>
-              </div>
-              <input type="checkbox" checked={lw.digitalGardenEnabled} onChange={() => handleToggle('digitalGardenEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">호흡 타이포그래피</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">빠른 타이핑 시 자간이 심호흡 리듬으로 맥동</p>
-              </div>
-              <input type="checkbox" checked={lw.breathingTypographyEnabled} onChange={() => handleToggle('breathingTypographyEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">소멸의 공간 (브레인 덤프)</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">1시간 후 자동 소멸되는 임시 메모 모드</p>
-              </div>
-              <input type="checkbox" checked={lw.ephemeralBrainDumpEnabled} onChange={() => handleToggle('ephemeralBrainDumpEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">앰비언트 사운드스케이프</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">타이핑이 앰비언트 음악을 생성</p>
-              </div>
-              <input type="checkbox" checked={lw.ambientSoundscapeEnabled} onChange={() => handleToggle('ambientSoundscapeEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">유기적 UI 아우라</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">글쓰기 감정에 따라 UI 색상 미세 변화</p>
-              </div>
-              <input type="checkbox" checked={lw.organicAuraEnabled} onChange={() => handleToggle('organicAuraEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
+            <ToggleItem label="디지털 정원" description="방치된 메모는 퇴색, 활발한 메모는 빛남" enabled={lw.digitalGardenEnabled} onChange={() => handleToggle('digitalGardenEnabled')} />
+            <ToggleItem label="호흡 타이포그래피" description="빠른 타이핑 시 자간이 심호흡 리듬으로 맥동" enabled={lw.breathingTypographyEnabled} onChange={() => handleToggle('breathingTypographyEnabled')} />
+            <ToggleItem label="소멸의 공간 (브레인 덤프)" description="1시간 후 자동 소멸되는 임시 메모 모드" enabled={lw.ephemeralBrainDumpEnabled} onChange={() => handleToggle('ephemeralBrainDumpEnabled')} />
+            <ToggleItem label="앰비언트 사운드스케이프" description="타이핑이 앰비언트 음악을 생성" enabled={lw.ambientSoundscapeEnabled} onChange={() => handleToggle('ambientSoundscapeEnabled')} />
+            <ToggleItem label="유기적 UI 아우라" description="글쓰기 감정에 따라 UI 색상 미세 변화" enabled={lw.organicAuraEnabled} onChange={() => handleToggle('organicAuraEnabled')} />
           </div>
         </section>
 
@@ -1749,20 +1709,8 @@ export function SettingsModal() {
             맥락을 이해하는 스마트 기능
           </p>
           <div className="space-y-3">
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">공감각 타임머신</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">과거 메모 열람 시 작성 당시 환경(날씨/시간) 재현</p>
-              </div>
-              <input type="checkbox" checked={lw.timeMachineEnabled} onChange={() => handleToggle('timeMachineEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">맥락 자동 제안</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">시간/요일 패턴으로 필요한 메모 자동 추천</p>
-              </div>
-              <input type="checkbox" checked={lw.contextSurfacingEnabled} onChange={() => handleToggle('contextSurfacingEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
+            <ToggleItem label="공감각 타임머신" description="과거 메모 열람 시 작성 당시 환경(날씨/시간) 재현" enabled={lw.timeMachineEnabled} onChange={() => handleToggle('timeMachineEnabled')} />
+            <ToggleItem label="맥락 자동 제안" description="시간/요일 패턴으로 필요한 메모 자동 추천" enabled={lw.contextSurfacingEnabled} onChange={() => handleToggle('contextSurfacingEnabled')} />
           </div>
         </section>
 
@@ -1775,20 +1723,8 @@ export function SettingsModal() {
             AI API를 활용하는 고급 기능 (API 키 필요)
           </p>
           <div className="space-y-3">
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">시맨틱 캔버스</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">의미 유사도 기반 2D 메모 클러스터링 (OpenAI 키 필요)</p>
-              </div>
-              <input type="checkbox" checked={lw.semanticCanvasEnabled} onChange={() => handleToggle('semanticCanvasEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">데미안 모드 (AI 대화)</span>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">과거 글쓰기 스타일의 AI가 소크라테스식 문답 (API 키 필요)</p>
-              </div>
-              <input type="checkbox" checked={lw.alterEgoEnabled} onChange={() => handleToggle('alterEgoEnabled')} className="w-5 h-5 rounded accent-primary-500 cursor-pointer" />
-            </label>
+            <ToggleItem label="시맨틱 캔버스" description="의미 유사도 기반 2D 메모 클러스터링 (OpenAI 키 필요)" enabled={lw.semanticCanvasEnabled} onChange={() => handleToggle('semanticCanvasEnabled')} />
+            <ToggleItem label="데미안 모드 (AI 대화)" description="과거 글쓰기 스타일의 AI가 소크라테스식 문답 (API 키 필요)" enabled={lw.alterEgoEnabled} onChange={() => handleToggle('alterEgoEnabled')} />
           </div>
         </section>
       </div>
@@ -1870,11 +1806,11 @@ export function SettingsModal() {
                 ))}
               </aside>
               {/* Scroll hint gradient - mobile only */}
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-50 dark:from-zinc-900 pointer-events-none md:hidden" aria-hidden="true" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-50/80 dark:from-zinc-900/50 pointer-events-none md:hidden" aria-hidden="true" />
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-zinc-950">
+            <div ref={contentRef} className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-zinc-950">
               <div className="max-w-2xl mx-auto p-4 md:p-6 lg:p-8">
                 {activeTab === 'general' && renderGeneralSettings()}
                 {activeTab === 'account' && renderAccountSettings()}
@@ -1918,6 +1854,20 @@ export function SettingsModal() {
         title="모든 데이터 삭제"
         description={'정말로 모든 데이터를 삭제하시겠습니까?\n\n모든 메모와 설정이 영구적으로 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.'}
         confirmText="모두 삭제"
+        variant="danger"
+      />
+
+      {/* Folder Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteFolderConfirm}
+        onClose={() => {
+          setShowDeleteFolderConfirm(false)
+          setPendingDeleteFolder(null)
+        }}
+        onConfirm={handleDeleteFolderConfirm}
+        title="폴더 삭제"
+        description={`'${pendingDeleteFolder?.name}' 폴더를 삭제하시겠습니까?\n\n폴더 안의 메모는 삭제되지 않고 기본 폴더로 이동합니다.`}
+        confirmText="삭제"
         variant="danger"
       />
     </>

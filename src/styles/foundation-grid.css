@@ -39,8 +39,8 @@
 /* 2xl: 1920px+ (Foundation xlarge) */
 @media (min-width: 1920px) {
   :root {
-    --grid-margin: 24px;
-    --grid-gutter: 20px;
+    --grid-margin: 32px;
+    --grid-gutter: 24px;
     --grid-columns: 12;
   }
 }

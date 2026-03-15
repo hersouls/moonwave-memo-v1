@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { autocomplete } from '@/services/aiFeatures'
+import { autocomplete, isAIAvailable } from '@/services/aiFeatures'
 import { useSettingsStore } from '@/stores/settingsStore'
 
 export function useAIAutocomplete(body: string, textareaRef: React.RefObject<HTMLTextAreaElement | null>) {
@@ -7,19 +7,16 @@ export function useAIAutocomplete(body: string, textareaRef: React.RefObject<HTM
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastBodyRef = useRef('')
   const isEnabled = useSettingsStore((s) => s.settings.ai.aiAutocomplete)
-  const hasApiKey = useSettingsStore((s) => !!s.settings.ai.openaiApiKey || !!s.settings.ai.anthropicApiKey)
 
   useEffect(() => {
-    if (!isEnabled || !hasApiKey || !body.trim() || body.length < 10) {
+    if (!isEnabled || !isAIAvailable() || !body.trim() || body.length < 10) {
       setGhostText('')
       return
     }
 
-    // Only trigger if content has changed
     if (body === lastBodyRef.current) return
     lastBodyRef.current = body
 
-    // Clear previous ghost text immediately
     setGhostText('')
 
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -28,7 +25,6 @@ export function useAIAutocomplete(body: string, textareaRef: React.RefObject<HTM
       const textarea = textareaRef.current
       if (!textarea) return
 
-      // Get text up to cursor
       const cursorPos = textarea.selectionStart
       const cursorContext = body.slice(0, cursorPos)
 
@@ -42,7 +38,7 @@ export function useAIAutocomplete(body: string, textareaRef: React.RefObject<HTM
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [body, isEnabled, hasApiKey])
+  }, [body, isEnabled])
 
   const acceptSuggestion = useCallback(() => {
     if (!ghostText) return false

@@ -1,6 +1,8 @@
 // Pure math sunrise/sunset calculator — no external API needed
 // Based on NOAA solar calculator equations
 
+import { BREAKPOINTS } from '@/utils/breakpoints'
+
 const LOCATION_CACHE_KEY = 'memo-geolocation'
 
 interface GeoPosition {
@@ -87,24 +89,63 @@ function cachePosition(geo: GeoPosition) {
   } catch { /* storage full */ }
 }
 
-// IP-based geolocation fallback (no API key required)
-async function getPositionByIP(): Promise<GeoPosition | null> {
-  try {
-    const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(5000) })
-    if (!res.ok) return null
-    const data = await res.json()
-    const lat = parseFloat(data.latitude)
-    const lon = parseFloat(data.longitude)
-    if (isNaN(lat) || isNaN(lon)) return null
-    return { latitude: lat, longitude: lon, cachedAt: Date.now() }
-  } catch {
-    return null
-  }
+// Detect desktop device (no touch + wide screen)
+function isDesktop(): boolean {
+  const noTouch = !('ontouchstart' in window) && navigator.maxTouchPoints === 0
+  const wideScreen = window.innerWidth >= BREAKPOINTS.lg
+  return noTouch && wideScreen
 }
 
-export async function requestAndCachePosition(): Promise<GeoPosition> {
-  // 1) Try browser Geolocation API
-  const browserPos = await new Promise<GeoPosition | null>((resolve) => {
+// IP-based geolocation with multiple provider fallback chain
+async function getPositionByIP(): Promise<GeoPosition | null> {
+  const providers = [
+    // Provider 1: geojs.io (no key, CORS-friendly)
+    async (): Promise<GeoPosition | null> => {
+      const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(4000) })
+      if (!res.ok) return null
+      const data = await res.json()
+      const lat = parseFloat(data.latitude)
+      const lon = parseFloat(data.longitude)
+      if (isNaN(lat) || isNaN(lon)) return null
+      return { latitude: lat, longitude: lon, cachedAt: Date.now() }
+    },
+    // Provider 2: ipapi.co (no key, HTTPS, CORS-friendly)
+    async (): Promise<GeoPosition | null> => {
+      const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(4000) })
+      if (!res.ok) return null
+      const data = await res.json()
+      const lat = parseFloat(data.latitude)
+      const lon = parseFloat(data.longitude)
+      if (isNaN(lat) || isNaN(lon)) return null
+      return { latitude: lat, longitude: lon, cachedAt: Date.now() }
+    },
+    // Provider 3: ipwho.is (no key, HTTPS, CORS-friendly)
+    async (): Promise<GeoPosition | null> => {
+      const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(4000) })
+      if (!res.ok) return null
+      const data = await res.json()
+      if (!data.success) return null
+      const lat = parseFloat(data.latitude)
+      const lon = parseFloat(data.longitude)
+      if (isNaN(lat) || isNaN(lon)) return null
+      return { latitude: lat, longitude: lon, cachedAt: Date.now() }
+    },
+  ]
+
+  for (const provider of providers) {
+    try {
+      const pos = await provider()
+      if (pos) return pos
+    } catch {
+      continue
+    }
+  }
+  return null
+}
+
+// Browser Geolocation API wrapper
+function getBrowserPosition(timeoutMs: number): Promise<GeoPosition | null> {
+  return new Promise<GeoPosition | null>((resolve) => {
     if (!navigator.geolocation) {
       resolve(null)
       return
@@ -116,22 +157,44 @@ export async function requestAndCachePosition(): Promise<GeoPosition> {
         cachedAt: Date.now(),
       }),
       () => resolve(null),
-      { timeout: 10000, enableHighAccuracy: false }
+      { timeout: timeoutMs, enableHighAccuracy: false }
     )
   })
+}
 
+export async function requestAndCachePosition(): Promise<GeoPosition> {
+  // Desktop: race IP geolocation vs browser geolocation (IP is usually faster)
+  if (isDesktop()) {
+    const result = await new Promise<GeoPosition | null>((resolve) => {
+      let settled = false
+      const onResult = (pos: GeoPosition | null) => {
+        if (pos && !settled) { settled = true; resolve(pos) }
+      }
+      getPositionByIP().then(onResult)
+      getBrowserPosition(5000).then(onResult)
+      // Timeout: if neither returns within 6s, resolve null
+      setTimeout(() => { if (!settled) resolve(null) }, 6000)
+    })
+
+    if (result) {
+      cachePosition(result)
+      return result
+    }
+    return DEFAULT_POSITION
+  }
+
+  // Mobile: browser geolocation first (GPS available), then IP fallback
+  const browserPos = await getBrowserPosition(10000)
   if (browserPos) {
     cachePosition(browserPos)
     return browserPos
   }
 
-  // 2) Fallback: IP-based geolocation
   const ipPos = await getPositionByIP()
   if (ipPos) {
     cachePosition(ipPos)
     return ipPos
   }
 
-  // 3) Last resort: Seoul default
   return DEFAULT_POSITION
 }

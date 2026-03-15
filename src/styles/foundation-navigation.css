@@ -22,7 +22,7 @@
 
   /* ── Bottom Navigation (신규 토큰만) ──────── */
   --bottom-nav-height-fold: 48px;
-  --bottom-nav-safe-area: 24px;
+  --bottom-nav-safe-area: env(safe-area-inset-bottom, 0px);
   --bottom-nav-border-top: 1px solid #e4e4e7;
   --bottom-nav-columns: 5;
   --bottom-nav-item-min-width: 56px;
