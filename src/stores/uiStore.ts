@@ -130,7 +130,7 @@ export const useUIStore = create<UIState>()(
 
       toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
       setSidebarOpen: (open) => set({ isSidebarOpen: open }),
-      setCurrentView: (view) => set({ currentView: view }),
+      setCurrentView: (view) => set({ currentView: view, isSelectionMode: false, selectedMemoIds: [] }),
       openMobileMenu: () => set({ isMobileMenuOpen: true }),
       closeMobileMenu: () => set({ isMobileMenuOpen: false }),
 

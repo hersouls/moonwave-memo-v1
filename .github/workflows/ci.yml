@@ -19,8 +19,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint
+      - name: Lint (Oxlint)
         run: npm run lint
+
+      - name: Dead Code Check (Knip)
+        run: npx knip --no-exit-code
 
       - name: Type Check
         run: npx tsc -b --noEmit
@@ -30,3 +33,8 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Lighthouse Audit
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun || true

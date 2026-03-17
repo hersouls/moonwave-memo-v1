@@ -938,7 +938,7 @@ export function MemoEditor() {
       {isFocusMode && 'ontouchstart' in window && (
         <button
           onClick={() => useUIStore.getState().toggleFocusMode()}
-          className="fixed top-4 right-4 z-50 p-2 rounded-full bg-zinc-900/20 dark:bg-zinc-100/20 text-zinc-500 dark:text-zinc-400 backdrop-blur-sm opacity-30 hover:opacity-80 active:opacity-100 transition-opacity"
+          className="fixed top-4 right-4 z-50 p-2.5 rounded-full bg-zinc-900/30 dark:bg-zinc-100/30 text-zinc-600 dark:text-zinc-300 backdrop-blur-sm opacity-50 hover:opacity-90 active:opacity-100 transition-opacity"
           aria-label="포커스 모드 나가기"
         >
           <X className="w-5 h-5" />

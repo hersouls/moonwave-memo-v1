@@ -3,7 +3,7 @@ import { BarChart3, ChevronDown, ChevronUp, Type, FileText } from 'lucide-react'
 import clsx from 'clsx'
 import { useWritingAnalytics } from '@/hooks/useWritingAnalytics'
 
-const DAY_LABELS = ['\uC77C', '\uC6D4', '\uD654', '\uC218', '\uBAA9', '\uAE08', '\uD1A0']
+const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 
 export function AnalyticsWidget() {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -24,7 +24,7 @@ export function AnalyticsWidget() {
           <BarChart3 className="h-4 w-4 text-cyan-500" />
         </div>
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex-1 text-left">
-          {'\uC791\uC131 \uBD84\uC11D'}
+          {'작성 분석'}
         </span>
         {isExpanded ? (
           <ChevronUp className="w-4 h-4 text-zinc-400" />
@@ -41,7 +41,7 @@ export function AnalyticsWidget() {
             <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               {analytics.totalWords.toLocaleString()}
             </p>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{'\uCD1D \uB2E8\uC5B4'}</p>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{'총 단어'}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -50,7 +50,7 @@ export function AnalyticsWidget() {
             <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               {analytics.averageLength.toLocaleString()}
             </p>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{'\uD3C9\uADE0 \uAE00\uC790'}</p>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{'평균 글자'}</p>
           </div>
         </div>
       </div>
@@ -61,14 +61,14 @@ export function AnalyticsWidget() {
           {/* Hour distribution */}
           <div>
             <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-              {'\uC2DC\uAC04\uB300\uBCC4 \uC791\uC131 \uBD84\uD3EC'}
+              {'시간대별 작성 분포'}
             </h4>
             <div className="flex items-end gap-[2px] h-16">
               {analytics.hourDistribution.map((count, hour) => (
                 <div
                   key={hour}
                   className="flex-1 group relative"
-                  title={`${hour}\uC2DC: ${count}\uAC1C`}
+                  title={`${hour}시: ${count}개`}
                 >
                   <div
                     className="w-full rounded-sm bg-cyan-400 dark:bg-cyan-500 transition-all group-hover:bg-cyan-500 dark:group-hover:bg-cyan-400"
@@ -93,7 +93,7 @@ export function AnalyticsWidget() {
           {/* Day distribution */}
           <div>
             <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-              {'\uC694\uC77C\uBCC4 \uC791\uC131 \uBD84\uD3EC'}
+              {'요일별 작성 분포'}
             </h4>
             <div className="flex items-end gap-1 h-12">
               {analytics.dayDistribution.map((count, day) => (
@@ -128,7 +128,7 @@ export function AnalyticsWidget() {
           {analytics.monthlyTrend.length > 0 && (
             <div>
               <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                {'\uC6D4\uBCC4 \uCD94\uC138'}
+                {'월별 추세'}
               </h4>
               <div className="flex items-end gap-2 h-12">
                 {analytics.monthlyTrend.map((item) => (
@@ -141,7 +141,7 @@ export function AnalyticsWidget() {
                       }}
                     />
                     <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
-                      {item.month.split('-')[1]}{'\uC6D4'}
+                      {item.month.split('-')[1]}{'월'}
                     </span>
                   </div>
                 ))}
@@ -153,7 +153,7 @@ export function AnalyticsWidget() {
           {analytics.topTags.length > 0 && (
             <div>
               <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                {'\uC0C1\uC704 \uD0DC\uADF8'}
+                {'상위 태그'}
               </h4>
               <div className="flex flex-wrap gap-1.5">
                 {analytics.topTags.map(({ tag, count }) => (

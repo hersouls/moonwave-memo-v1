@@ -3,7 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { usePwaUpdateStore } from './stores/pwaUpdateStore'
+import { initSentry } from './lib/sentry'
 import './index.css'
+
+// Initialize Sentry error monitoring (no-op if DSN not configured)
+initSentry()
 
 // Service Worker for PWA
 if ('serviceWorker' in navigator) {

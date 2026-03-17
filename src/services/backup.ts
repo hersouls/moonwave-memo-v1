@@ -90,7 +90,7 @@ export function validateBackup(data: unknown): BackupValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
 
-  if (!data || typeof data !== 'object') {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return { valid: false, errors: ['유효한 JSON 파일이 아닙니다.'], warnings: [] }
   }
 

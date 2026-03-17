@@ -221,8 +221,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
         />
 
         {/* AI buttons — always available (server proxy or user key) */}
-        {(
-          <>
+        <>
             <button
               onClick={handleAIEnhanceClick}
               disabled={isEnhancing}
@@ -252,8 +251,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
             >
               <Camera className="w-5 h-5" />
             </button>
-          </>
-        )}
+        </>
 
         {/* Slide view button */}
         {onSlideView && (

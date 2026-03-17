@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": ["src/main.tsx", "api/**/*.ts"],
+  "project": ["src/**/*.{ts,tsx}", "api/**/*.ts"],
+  "ignore": ["src/vite-env.d.ts"],
+  "ignoreDependencies": [
+    "@types/*",
+    "autoprefixer",
+    "postcss",
+    "@tailwindcss/vite",
+    "@vercel/node",
+    "@testing-library/*",
+    "langsmith"
+  ]
+}

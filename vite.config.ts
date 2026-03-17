@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { compression } from 'vite-plugin-compression2'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import path from 'path'
 import fs from 'fs'
 
@@ -29,6 +30,14 @@ export default defineConfig({
     swVersionPlugin(),
     compression({ algorithm: 'gzip', exclude: [/\.(br)$/], threshold: 1024 }),
     compression({ algorithm: 'brotliCompress', exclude: [/\.(gz)$/], threshold: 1024 }),
+    // Sentry source map upload (only when auth token is available)
+    ...(process.env.SENTRY_AUTH_TOKEN
+      ? [sentryVitePlugin({
+          org: process.env.SENTRY_ORG,
+          project: process.env.SENTRY_PROJECT,
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+        })]
+      : []),
   ],
   resolve: {
     alias: {
