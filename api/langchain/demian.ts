@@ -130,7 +130,7 @@ ${samples}`
 function buildDemianGraph(provider: Provider, apiKey: string, memoSummaries: Array<{ id: number; title: string; body: string; tags: string[] }>) {
   const tools = createDemianTools(() => memoSummaries)
   const model = createChatModel(provider, apiKey, { temperature: 0.7, maxTokens: 300 })
-  const modelWithTools = model.bindTools(tools)
+  const modelWithTools = model.bindTools!(tools)
   const toolNode = new ToolNode(tools)
 
   async function agentNode(state: typeof DemianState.State) {
