@@ -74,6 +74,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
           set({ syncStatus: 'synced', lastSyncTime: new Date().toISOString() })
         } catch (err) {
           console.error('Sync init failed:', err)
+          stopSync()
           set({ syncStatus: 'error' })
         }
       } else {
@@ -112,7 +113,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   logout: async () => {
     try {
-      stopSync()
       await signOut(auth)
       set({ user: null, syncStatus: 'idle', lastSyncTime: null, error: null })
     } catch (err) {

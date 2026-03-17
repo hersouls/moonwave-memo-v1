@@ -109,6 +109,7 @@ export async function restoreMemo(id: number): Promise<void> {
 
 export async function permanentDeleteMemo(id: number): Promise<void> {
   await db.memoImages.where('memoId').equals(id).delete()
+  await db.memoVersions.where('memoId').equals(id).delete()
   await db.memos.delete(id)
 }
 
@@ -117,6 +118,7 @@ export async function emptyTrash(): Promise<void> {
   const ids = deleted.map((m) => m.id!).filter(Boolean)
   for (const id of ids) {
     await db.memoImages.where('memoId').equals(id).delete()
+    await db.memoVersions.where('memoId').equals(id).delete()
   }
   await db.memos.bulkDelete(ids)
 }

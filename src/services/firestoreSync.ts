@@ -11,6 +11,7 @@ import { firestore } from '@/lib/firebase'
 import type { Memo, Folder } from '@/lib/types'
 import * as database from './database'
 import { generateSyncId } from '@/utils/id'
+import { useToastStore } from '@/stores/toastStore'
 
 let unsubMemos: Unsubscribe | null = null
 let unsubFolders: Unsubscribe | null = null
@@ -77,6 +78,7 @@ export async function pushMemo(memo: Memo) {
   } catch (err) {
     console.error('Push memo failed:', err)
     recentlyPushed.delete(`memo-${memo.syncId}`)
+    useToastStore.getState().showToast('메모 동기화에 실패했습니다', 'warning')
   }
 }
 
@@ -322,6 +324,10 @@ function startListeners(userId: string) {
       } catch (err) {
         console.error('Memo sync listener error:', err)
       }
+    },
+    (err) => {
+      console.error('Memo snapshot listener failed:', err)
+      useToastStore.getState().showToast('메모 동기화 연결이 끊어졌습니다', 'warning')
     }
   )
 
@@ -371,6 +377,10 @@ function startListeners(userId: string) {
       } catch (err) {
         console.error('Folder sync listener error:', err)
       }
+    },
+    (err) => {
+      console.error('Folder snapshot listener failed:', err)
+      useToastStore.getState().showToast('폴더 동기화 연결이 끊어졌습니다', 'warning')
     }
   )
 }
@@ -391,6 +401,8 @@ export function stopSync() {
   if (unsubMemos) { unsubMemos(); unsubMemos = null }
   if (unsubFolders) { unsubFolders(); unsubFolders = null }
   currentUserId = null
+  recentlyPushed.clear()
+  mergePromise = null
 
   // Stop settings sync
   import('./settingsSync').then(({ stopSettingsSync }) => stopSettingsSync())

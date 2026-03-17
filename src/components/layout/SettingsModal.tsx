@@ -50,6 +50,7 @@ import {
   clearAllData,
   type BackupValidationResult,
 } from '@/services/backup'
+import { stopSync } from '@/services/firestoreSync'
 import { useToastStore } from '@/stores/toastStore'
 import type { ThemeMode, ColorPalette, MemoColor, InputStartPosition, STTLanguage } from '@/lib/types'
 import type { SyncStatus } from '@/lib/types'
@@ -624,6 +625,9 @@ export function SettingsModal() {
     setIsRestoring(true)
 
     try {
+      // Stop Firestore listeners to prevent race condition during restore
+      stopSync()
+
       const parseResult = await parseBackupFile(pendingRestore.file)
       if (!parseResult.success || !parseResult.data) {
         throw new Error('파일을 읽을 수 없습니다.')

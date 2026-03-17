@@ -55,9 +55,9 @@ export function useTiptapEditor({
     ],
     content: initialContent,
     editable,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: any }) => {
       if (isExternalUpdateRef.current) return
-      const markdown = (editor.storage as any).markdown.getMarkdown()
+      const markdown = (editor.storage as any)?.markdown?.getMarkdown() ?? ''
       lastEmittedRef.current = markdown
       onUpdateRef.current(markdown)
     },

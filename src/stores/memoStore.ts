@@ -216,6 +216,7 @@ export const useMemoStore = create<MemoState>()(
         try {
           const memo = get().memos.find((m) => m.id === id)
           const syncId = memo?.syncId
+          versionTimestamps.delete(id)
           await database.permanentDeleteMemo(id)
           set((state) => ({
             memos: state.memos.filter((m) => m.id !== id),
