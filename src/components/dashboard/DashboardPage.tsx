@@ -1,11 +1,13 @@
 import { lazy, Suspense } from 'react'
 import { ProfileCard } from './ProfileCard'
 import { StatsRow } from './StatsRow'
-import { FolderList } from './FolderList'
-import { TagCloud } from './TagCloud'
 import { StreakCounter } from './StreakCounter'
 import { RecentWorkWidget } from './RecentWorkWidget'
-import { BriefingWidget } from './BriefingWidget'
+
+// PERF: Lazy-load heavier dashboard widgets
+const BriefingWidget = lazy(() => import('./BriefingWidget').then((m) => ({ default: m.BriefingWidget })))
+const FolderList = lazy(() => import('./FolderList').then((m) => ({ default: m.FolderList })))
+const TagCloud = lazy(() => import('./TagCloud').then((m) => ({ default: m.TagCloud })))
 
 // PERF: Lazy-load below-the-fold and heavy widgets
 const ActivityHeatmap = lazy(() => import('./ActivityHeatmap').then((m) => ({ default: m.ActivityHeatmap })))
@@ -33,15 +35,15 @@ export function DashboardPage() {
       {/* Container-query responsive: 2-col @lg, 3-col @xl */}
       <div className="grid grid-cols-1 @lg:grid-cols-2 @xl:grid-cols-3 gap-4">
         <ProfileCard />
-        <BriefingWidget />
+        <Suspense fallback={<WidgetFallback />}><BriefingWidget /></Suspense>
         <StreakCounter />
         <StatsRow />
         <Suspense fallback={<WidgetFallback />}><ActivityHeatmap /></Suspense>
         <Suspense fallback={<WidgetFallback />}><MoodGraphWidget /></Suspense>
         <Suspense fallback={<WidgetFallback />}><MemoryLaneWidget /></Suspense>
         <Suspense fallback={<WidgetFallback />}><WeeklyDigestWidget /></Suspense>
-        <FolderList />
-        <TagCloud />
+        <Suspense fallback={<WidgetFallback />}><FolderList /></Suspense>
+        <Suspense fallback={<WidgetFallback />}><TagCloud /></Suspense>
         <Suspense fallback={<WidgetFallback />}><TodoWidget /></Suspense>
         <Suspense fallback={<WidgetFallback />}><WritingPromptWidget /></Suspense>
         <Suspense fallback={<WidgetFallback />}><AnalyticsWidget /></Suspense>

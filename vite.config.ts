@@ -61,6 +61,8 @@ export default defineConfig({
           'vendor-media': ['html-to-image', 'canvas-confetti'],
           'vendor-diff': ['diff'],
           'vendor-tiptap': ['@tiptap/react', '@tiptap/starter-kit', 'tiptap-markdown'],
+          'vendor-sentry': ['@sentry/react'],
+          'vendor-highlight': ['highlight.js', 'lowlight'],
         },
       },
     },

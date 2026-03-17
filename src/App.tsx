@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { WifiOff } from 'lucide-react'
 import { Sidebar } from './components/layout/Sidebar'
@@ -7,26 +7,28 @@ import { Header } from './components/layout/Header'
 import { BottomNav } from './components/layout/BottomNav'
 import { MobileNav } from './components/layout/MobileNav'
 import { Footer } from './components/layout/Footer'
-import { SettingsModal } from './components/layout/SettingsModal'
-import { TermsModal } from './components/layout/TermsModal'
-import { FAQModal } from './components/layout/FAQModal'
 import { UndoToast } from './components/ui/UndoToast'
 import { ToastContainer } from './components/ui/Toast'
 import { UpdateBanner } from './components/ui/UpdateBanner'
 import { AppLoadingScreen } from './components/ui/AppLoadingScreen'
-import { CommandPalette } from './components/ui/CommandPalette'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
-import { KeyboardShortcutsModal } from './components/ui/KeyboardShortcutsModal'
-import { SlideView } from './components/slideview/SlideView'
-import { IOSInstallBanner } from './components/ui/IOSInstallBanner'
-import { FolderSelectModal } from './components/folders/FolderSelectModal'
-import { TemplateSelectModal } from './components/editor/TemplateSelectModal'
 import { FAB } from './components/ui/FAB'
-import { VoiceUploadModal } from './components/voice/VoiceUploadModal'
-import { ImageOCRModal } from './components/ocr/ImageOCRModal'
-import { TimeCapsuleBanner } from './components/ui/TimeCapsuleBanner'
-import { FloatingTimer } from './components/editor/FloatingTimer'
 import { AmbientBackground } from './components/ui/AmbientBackground'
+
+// PERF: Lazy-load heavy modals (not needed on initial render)
+const SettingsModal = lazy(() => import('./components/layout/SettingsModal').then((m) => ({ default: m.SettingsModal })))
+const TermsModal = lazy(() => import('./components/layout/TermsModal').then((m) => ({ default: m.TermsModal })))
+const FAQModal = lazy(() => import('./components/layout/FAQModal').then((m) => ({ default: m.FAQModal })))
+const CommandPalette = lazy(() => import('./components/ui/CommandPalette').then((m) => ({ default: m.CommandPalette })))
+const KeyboardShortcutsModal = lazy(() => import('./components/ui/KeyboardShortcutsModal').then((m) => ({ default: m.KeyboardShortcutsModal })))
+const SlideView = lazy(() => import('./components/slideview/SlideView').then((m) => ({ default: m.SlideView })))
+const FolderSelectModal = lazy(() => import('./components/folders/FolderSelectModal').then((m) => ({ default: m.FolderSelectModal })))
+const TemplateSelectModal = lazy(() => import('./components/editor/TemplateSelectModal').then((m) => ({ default: m.TemplateSelectModal })))
+const VoiceUploadModal = lazy(() => import('./components/voice/VoiceUploadModal').then((m) => ({ default: m.VoiceUploadModal })))
+const ImageOCRModal = lazy(() => import('./components/ocr/ImageOCRModal').then((m) => ({ default: m.ImageOCRModal })))
+const IOSInstallBanner = lazy(() => import('./components/ui/IOSInstallBanner').then((m) => ({ default: m.IOSInstallBanner })))
+const TimeCapsuleBanner = lazy(() => import('./components/ui/TimeCapsuleBanner').then((m) => ({ default: m.TimeCapsuleBanner })))
+const FloatingTimer = lazy(() => import('./components/editor/FloatingTimer').then((m) => ({ default: m.FloatingTimer })))
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { useCognitiveLoadDetector } from '@/hooks/useCognitiveLoadDetector'
 import { useEphemeralGarbageCollector } from '@/hooks/useEphemeralGarbageCollector'
@@ -53,6 +55,18 @@ export default function App() {
   const initSettings = useSettingsStore((state) => state.initialize)
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen)
   const isFocusMode = useUIStore((state) => state.isFocusMode)
+
+  // PERF: Subscribe to modal open states for conditional lazy rendering
+  const isSettingsOpen = useUIStore((s) => s.isSettingsModalOpen)
+  const isTermsOpen = useUIStore((s) => s.isTermsModalOpen)
+  const isFAQOpen = useUIStore((s) => s.isFAQModalOpen)
+  const isFolderSelectOpen = useUIStore((s) => s.isFolderSelectOpen)
+  const isTemplateOpen = useUIStore((s) => s.isTemplateModalOpen)
+  const isVoiceOpen = useUIStore((s) => s.isVoiceModalOpen)
+  const isImageOCROpen = useUIStore((s) => s.isImageOCRModalOpen)
+  const isCommandPaletteOpen = useUIStore((s) => s.isCommandPaletteOpen)
+  const isShortcutsOpen = useUIStore((s) => s.isKeyboardShortcutsOpen)
+  const slideViewMemoId = useUIStore((s) => s.slideViewMemoId)
 
   // A11Y: Theme change sr-only announcement
   const theme = useSettingsStore((state) => state.settings.theme)
@@ -326,27 +340,31 @@ export default function App() {
       {!isFocusMode && <BottomNav />}
       {!isFocusMode && <MobileNav />}
 
-      {/* Global Modals */}
-      <SettingsModal />
-      <TermsModal />
-      <FAQModal />
-      <FolderSelectModal />
-      <TemplateSelectModal />
-      <VoiceUploadModal />
-      <ImageOCRModal />
-      <CommandPalette />
-      <KeyboardShortcutsModal />
-      <SlideView />
+      {/* Global Modals — lazy loaded, rendered only when open */}
+      <Suspense fallback={null}>
+        {isSettingsOpen && <SettingsModal />}
+        {isTermsOpen && <TermsModal />}
+        {isFAQOpen && <FAQModal />}
+        {isFolderSelectOpen && <FolderSelectModal />}
+        {isTemplateOpen && <TemplateSelectModal />}
+        {isVoiceOpen && <VoiceUploadModal />}
+        {isImageOCROpen && <ImageOCRModal />}
+        {isCommandPaletteOpen && <CommandPalette />}
+        {isShortcutsOpen && <KeyboardShortcutsModal />}
+        {slideViewMemoId != null && <SlideView />}
+      </Suspense>
 
       <UndoToast />
       <ToastContainer />
       <UpdateBanner />
-      <IOSInstallBanner />
-      <TimeCapsuleBanner />
+      <Suspense fallback={null}>
+        <IOSInstallBanner />
+        <TimeCapsuleBanner />
+      </Suspense>
       {suggestedMemo && !isFocusMode && !isMemoRoute && (
         <ContextSuggestionBanner memo={suggestedMemo} onDismiss={dismissContextSuggestion} />
       )}
-      {!isMemoRoute && <FloatingTimer />}
+      {!isMemoRoute && <Suspense fallback={null}><FloatingTimer /></Suspense>}
     </div>
   )
 }
