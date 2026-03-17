@@ -726,13 +726,13 @@ export function MemoEditor() {
         </>
       )}
 
-      {/* UX-06: TagInput for current tags */}
-      {!isFocusMode && currentTags.length > 0 && (
+      {/* UX-06: TagInput for current tags (hide when keyboard open to maximize edit area) */}
+      {!isFocusMode && !isKeyboardOpen && currentTags.length > 0 && (
         <TagInput tags={currentTags} onRemoveTag={handleRemoveTag} />
       )}
 
-      {/* AI Tag suggestions */}
-      {aiTags.length > 0 && (
+      {/* AI Tag suggestions (hide when keyboard open to maximize edit area) */}
+      {!isKeyboardOpen && aiTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
           <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">AI 태그</span>
           {aiTags.map((tag) => (
@@ -896,8 +896,8 @@ export function MemoEditor() {
             </>
           )}
 
-          {/* AI Summary + Backlinks panels (below editor, not in focus mode) */}
-          {!isFocusMode && memoId && (
+          {/* AI Summary + Backlinks panels (below editor, hidden when keyboard open) */}
+          {!isFocusMode && !isKeyboardOpen && memoId && (
             <div className="mt-4 space-y-3 pb-4">
               <AISummaryPanel content={body} />
               <BacklinksPanel memoId={memoId} title={title} />
