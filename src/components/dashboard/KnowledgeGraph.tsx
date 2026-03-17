@@ -119,7 +119,7 @@ export function KnowledgeGraph() {
       .append('g')
       .attr('cursor', 'pointer')
       .on('click', (_event: MouseEvent, d: SimNode) => {
-        handleNodeClick(d.id)
+        if (d.id) handleNodeClick(d.id)
       })
 
     nodeElements
@@ -175,7 +175,7 @@ export function KnowledgeGraph() {
           <Share2 className="h-4 w-4 text-indigo-500" />
         </div>
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {'\uC9C0\uC2DD \uADF8\uB798\uD504'}
+          {'지식 그래프'}
         </span>
       </div>
 
@@ -186,7 +186,7 @@ export function KnowledgeGraph() {
         {nodes.length < 3 ? (
           <div className="flex items-center justify-center py-8 text-zinc-400 dark:text-zinc-500">
             <p className="text-sm text-center">
-              {'\uD0DC\uADF8\uAC00 \uC788\uB294 \uBA54\uBAA8\uAC00 3\uAC1C \uC774\uC0C1 \uD544\uC694\uD569\uB2C8\uB2E4'}
+              {'태그가 있는 메모가 3개 이상 필요합니다'}
             </p>
           </div>
         ) : (

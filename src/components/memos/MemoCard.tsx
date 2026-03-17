@@ -199,17 +199,20 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     } else if (cardRef.current) {
       // Visual bounce fallback for iOS
       const el = cardRef.current
-      el.style.transition = 'transform 0.15s ease'
-      el.style.transform = 'scale(0.97)'
-      setTimeout(() => { el.style.transform = '' }, 150)
+      el.style.transition = 'transform 0.15s ease, opacity 0.15s ease'
+      el.style.transform = 'scale(0.95)'
+      el.style.opacity = '0.7'
+      setTimeout(() => { el.style.transform = ''; el.style.opacity = '' }, 150)
     }
   }, [])
 
   // Touch gesture handlers (mobile only)
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!isTouchDevice || isSelectionMode) return
+    const touch = e.touches[0]
+    if (!touch) return
     // Ignore touches starting near screen edges (iOS Safari back/forward gesture zone)
-    const startX = e.touches[0].clientX
+    const startX = touch.clientX
     if (startX < 30 || startX > window.innerWidth - 30) return
     touchStartX.current = startX
     touchStartY.current = e.touches[0].clientY

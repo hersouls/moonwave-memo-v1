@@ -60,7 +60,7 @@ function evaluateCondition(condition: SmartFolderCondition, memo: Memo): boolean
       return memo.isStarred === condition.value
     case 'tags':
       if (condition.operator === 'contains') {
-        return memo.tags.some((t) => t.includes(String(condition.value)))
+        return memo.tags.some((t) => t === String(condition.value))
       }
       return false
     case 'createdAt': {

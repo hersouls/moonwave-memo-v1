@@ -47,14 +47,41 @@ async function callOpenAIEmbedding(text: string): Promise<number[] | null> {
   }
 }
 
-// ─── Compute embedding: proxy first, then direct fallback ──
+// ─── LangChain embedding endpoint ───────────────────
+
+async function callLangChainEmbedding(text: string): Promise<number[] | null> {
+  const openaiKey = useSettingsStore.getState().settings.ai.openaiApiKey
+
+  try {
+    const res = await fetch('/api/langchain/embedding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: text.slice(0, 2000),
+        userApiKey: openaiKey || undefined,
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.embedding || null
+  } catch {
+    return null
+  }
+}
+
+// ─── Compute embedding: LangChain first, then proxy, then direct ──
 
 export async function computeEmbedding(text: string): Promise<number[] | null> {
   if (!text.trim()) return null
 
   const truncated = text.slice(0, 2000)
 
-  // Try Cloud Functions proxy first
+  // Try LangChain endpoint first (uses LangSmith tracing)
+  const langchainResult = await callLangChainEmbedding(truncated)
+  if (langchainResult) return langchainResult
+
+  // Try Cloud Functions proxy
   if (auth.currentUser) {
     try {
       const result = await aiEmbeddingFn({ text: truncated })
@@ -66,6 +93,44 @@ export async function computeEmbedding(text: string): Promise<number[] | null> {
 
   // Fallback: direct OpenAI API
   return callOpenAIEmbedding(truncated)
+}
+
+// ─── RAG-enhanced semantic search ───────────────────
+
+export interface RAGSearchResult {
+  id: number
+  title: string
+  body: string
+  tags: string[]
+  semanticScore: number
+  keywordScore: number
+  hybridScore: number
+}
+
+export async function semanticSearchWithRAG(
+  query: string,
+  memoSummaries: Array<{ id: number; title: string; body: string; tags: string[]; embedding?: number[] }>,
+  topK = 10
+): Promise<RAGSearchResult[]> {
+  if (!query.trim() || memoSummaries.length === 0) return []
+
+  const ai = useSettingsStore.getState().settings.ai
+  const provider = ai.aiProvider || 'openai'
+  const userApiKey = ai.openaiApiKey || ai.anthropicApiKey || ai.geminiApiKey || undefined
+
+  try {
+    const res = await fetch('/api/langchain/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, memoSummaries, provider, userApiKey, topK }),
+    })
+
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.results || []
+  } catch {
+    return []
+  }
 }
 
 // ─── Cached embedding retrieval ─────────────────────

@@ -113,8 +113,9 @@ export async function transcribeAudio(
   if (!apiKey) {
     try {
       const reader = new FileReader()
-      const base64 = await new Promise<string>((resolve) => {
+      const base64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다'))
         reader.readAsDataURL(file)
       })
       const res = await fetch('/api/stt', {

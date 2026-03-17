@@ -19,3 +19,50 @@ export function analyzeSentiment(text: string): Mood {
   if (neg > pos + 1) return 'negative'
   return 'neutral'
 }
+
+// ─── AI-powered sentiment analysis ──────────────────
+
+export interface AISentiment {
+  mood: Mood
+  confidence: number
+  emotions: string[]
+}
+
+export async function analyzeAISentiment(
+  text: string,
+  provider: string = 'openai',
+  userApiKey?: string
+): Promise<AISentiment | null> {
+  if (!text.trim() || text.length < 10) return null
+
+  try {
+    const res = await fetch('/api/langchain/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: text.slice(0, 1500),
+        folderNames: [],
+        provider,
+        userApiKey,
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = await res.json()
+
+    if (data.sentiment) {
+      const mood = ['positive', 'neutral', 'negative'].includes(data.sentiment.mood)
+        ? (data.sentiment.mood as Mood)
+        : 'neutral'
+      return {
+        mood,
+        confidence: data.sentiment.confidence || 0,
+        emotions: data.sentiment.emotions || [],
+      }
+    }
+  } catch {
+    // AI sentiment unavailable, caller should use keyword-based fallback
+  }
+
+  return null
+}

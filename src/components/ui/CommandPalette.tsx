@@ -7,7 +7,7 @@ import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { applyTheme } from '@/stores/settingsStore'
-import { classifyMemo } from '@/services/aiFeatures'
+import { analyzeMemo, classifyMemo } from '@/services/aiFeatures'
 
 export function CommandPalette() {
   const isOpen = useUIStore((s) => s.isCommandPaletteOpen)
@@ -40,7 +40,21 @@ export function CommandPalette() {
     setClassifyResult(null)
 
     const folderNames = folders.filter((f) => !f.isSystem).map((f) => f.name)
-    const result = await classifyMemo(smartText, folderNames)
+
+    // Try unified LangGraph analysis pipeline first, fallback to classifyMemo
+    let result: { folder: string | null; tags: string[]; title: string; error?: string }
+
+    const analysis = await analyzeMemo(smartText, folderNames)
+    if (analysis.result) {
+      result = {
+        folder: analysis.result.classification.folder,
+        tags: analysis.result.tags,
+        title: analysis.result.classification.title,
+      }
+    } else {
+      // Fallback to single classify call
+      result = await classifyMemo(smartText, folderNames)
+    }
 
     if (result.error || (!result.title && !result.folder)) {
       // Fallback: create memo with raw text as body

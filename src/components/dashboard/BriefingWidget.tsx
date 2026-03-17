@@ -1,12 +1,14 @@
 import { useMemo } from 'react'
-import { Newspaper, FileText, CheckSquare, Target } from 'lucide-react'
+import { Newspaper, FileText, CheckSquare, Target, Sparkles, Heart, Lightbulb } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { parseChecklist } from '@/utils/checklistParser'
+import { useAIBriefing } from '@/hooks/useAIBriefing'
 
 export function BriefingWidget() {
   const memos = useMemoStore((s) => s.memos)
+  const { briefing: aiBriefing, isLoading: aiLoading } = useAIBriefing()
 
-  const briefing = useMemo(() => {
+  const localBriefing = useMemo(() => {
     const now = new Date()
     const todayStr = now.toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -50,7 +52,7 @@ export function BriefingWidget() {
     let suggestedFocus = ''
     if (recentTags.size > 0) {
       const topTag = [...recentTags.entries()].sort((a, b) => b[1] - a[1])[0]
-      suggestedFocus = `#${topTag[0]} \uAD00\uB828 \uBA54\uBAA8\uB97C \uC774\uC5B4\uAC00 \uBCF4\uC138\uC694`
+      suggestedFocus = `#${topTag[0]} 관련 메모를 이어가 보세요`
     }
 
     return {
@@ -68,49 +70,108 @@ export function BriefingWidget() {
           <Newspaper className="h-4 w-4 text-amber-500" />
         </div>
         <div className="flex-1">
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {'\uC624\uB298\uC758 \uBE0C\uB9AC\uD551'}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              {'오늘의 브리핑'}
+            </span>
+            {aiBriefing && (
+              <Sparkles className="h-3 w-3 text-amber-400" />
+            )}
+          </div>
           <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
-            {briefing.todayStr}
+            {localBriefing.todayStr}
           </p>
         </div>
       </div>
 
       <div className="border-t border-zinc-100 dark:border-zinc-700 px-5 py-4 space-y-3">
-        {/* Yesterday's memo count */}
-        <div className="flex items-center gap-3">
-          <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
-            {'\uC5B4\uC81C'}{' '}
-            <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-              {briefing.yesterdayCount}\uAC1C
-            </span>
-            {'\uC758 \uBA54\uBAA8\uB97C \uC791\uC131\uD588\uC2B5\uB2C8\uB2E4'}
-          </p>
-        </div>
-
-        {/* Pending TODOs */}
-        {briefing.pendingTodos > 0 && (
-          <div className="flex items-center gap-3">
-            <CheckSquare className="w-4 h-4 text-amber-500 shrink-0" />
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {'\uBBF8\uC644\uB8CC TODO'}{' '}
-              <span className="font-semibold text-amber-600 dark:text-amber-400">
-                {briefing.pendingTodos}\uAC1C
-              </span>
-              {'\uAC00 \uB0A8\uC544\uC788\uC2B5\uB2C8\uB2E4'}
+        {/* AI Greeting */}
+        {aiBriefing?.greeting && (
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              {aiBriefing.greeting}
             </p>
           </div>
         )}
 
-        {/* Suggested focus */}
-        {briefing.suggestedFocus && (
-          <div className="flex items-center gap-3">
-            <Target className="w-4 h-4 text-primary-500 shrink-0" />
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {briefing.suggestedFocus}
+        {/* AI Mood Summary */}
+        {aiBriefing?.moodSummary && (
+          <div className="flex items-start gap-3">
+            <Heart className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              {aiBriefing.moodSummary}
             </p>
+          </div>
+        )}
+
+        {/* Fallback: Yesterday's memo count (shown when no AI greeting and not loading) */}
+        {!aiLoading && !aiBriefing?.greeting && (
+          <div className="flex items-center gap-3">
+            <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              {'어제'}{' '}
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                {localBriefing.yesterdayCount}{'개'}
+              </span>
+              {'의 메모를 작성했습니다'}
+            </p>
+          </div>
+        )}
+
+        {/* Pending TODOs */}
+        {localBriefing.pendingTodos > 0 && (
+          <div className="flex items-center gap-3">
+            <CheckSquare className="w-4 h-4 text-amber-500 shrink-0" />
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              {'미완료 TODO'}{' '}
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                {localBriefing.pendingTodos}{'개'}
+              </span>
+              {'가 남아있습니다'}
+            </p>
+          </div>
+        )}
+
+        {/* AI Today Focus or Fallback */}
+        {(aiBriefing?.todayFocus || localBriefing.suggestedFocus) && (
+          <div className="flex items-start gap-3">
+            <Target className="w-4 h-4 text-primary-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              {aiBriefing?.todayFocus || localBriefing.suggestedFocus}
+            </p>
+          </div>
+        )}
+
+        {/* AI Key Topics */}
+        {aiBriefing?.keyTopics && aiBriefing.keyTopics.length > 0 && (
+          <div className="flex items-start gap-3">
+            <Lightbulb className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+            <div className="flex flex-wrap gap-1.5">
+              {aiBriefing.keyTopics.map((topic) => (
+                <span
+                  key={topic}
+                  className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                >
+                  {topic}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* AI Encouragement */}
+        {aiBriefing?.encouragement && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 italic pl-7">
+            {aiBriefing.encouragement}
+          </p>
+        )}
+
+        {/* Loading indicator */}
+        {aiLoading && (
+          <div className="flex items-center gap-2 pl-7">
+            <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[10px] text-zinc-400">{'AI 분석 중...'}</span>
           </div>
         )}
       </div>

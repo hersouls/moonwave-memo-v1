@@ -15,7 +15,7 @@ function getAISettings() {
     openaiKey: ai.openaiApiKey,
     anthropicKey: ai.anthropicApiKey,
     geminiKey: ai.geminiApiKey,
-    provider: ai.aiProvider || 'openai',
+    provider: ai.aiProvider || 'anthropic',
   }
 }
 
@@ -175,6 +175,58 @@ async function callAI(prompt: string, systemPrompt: string, maxTokens = 500): Pr
 
   // 2. No user key → server proxy (daily limited)
   return callViaServerProxy(prompt, systemPrompt, provider, maxTokens)
+}
+
+// ─── LangGraph Analysis Pipeline ────────────────────────
+
+export interface MemoAnalysisResult {
+  sentiment: { mood: string; confidence: number; emotions: string[] }
+  tags: string[]
+  classification: { folder: string | null; title: string }
+  summary: string
+}
+
+export async function analyzeMemo(
+  content: string,
+  folderNames: string[] = []
+): Promise<{ result: MemoAnalysisResult | null; error?: string }> {
+  if (!content.trim() || content.length < 20) return { result: null }
+
+  const { provider } = getAISettings()
+  const userApiKey = getUserApiKey(provider)
+
+  try {
+    const res = await fetch('/api/langchain/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: content.slice(0, 3000),
+        folderNames,
+        provider,
+        userApiKey,
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return { result: null, error: err.error || `서버 오류: ${res.status}` }
+    }
+
+    const data = await res.json()
+    if (data.usingServerKey) incrementAIUsage()
+
+    return {
+      result: {
+        sentiment: data.sentiment,
+        tags: data.tags,
+        classification: data.classification,
+        summary: data.summary,
+      },
+    }
+  } catch {
+    // LangGraph endpoint unavailable, return null to trigger fallback
+    return { result: null, error: 'langchain_unavailable' }
+  }
 }
 
 // ─── Public API ─────────────────────────────────────────
