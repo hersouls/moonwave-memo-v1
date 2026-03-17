@@ -760,6 +760,16 @@ export function MemoEditor() {
         </h1>
       )}
       <MarkdownPreview content={body} onCheckboxToggle={handleCheckboxToggle} />
+      {/* AI Summary + Backlinks — inside preview to avoid overlapping edit area */}
+      {!isFocusMode && memoId && (
+        <div className="mt-4 space-y-3">
+          <AISummaryPanel content={body} />
+          <BacklinksPanel memoId={memoId} title={title} />
+          <Suspense fallback={null}>
+            <RelatedMemosPanel memoId={memoId} tags={currentTags} body={body} />
+          </Suspense>
+        </div>
+      )}
     </div>
   )
 
@@ -797,8 +807,8 @@ export function MemoEditor() {
         <TimeMachineBanner snapshot={memo.contextSnapshot} onDismiss={dismissTimeMachine} />
       )}
 
-      {/* Editor toolbar (above content, not in focus mode) */}
-      {(isTiptap || activeTab === 'edit' || isSplit) && !isFocusMode && (
+      {/* Editor toolbar (above content, hidden when keyboard open to maximize edit area) */}
+      {(isTiptap || activeTab === 'edit' || isSplit) && !isFocusMode && !isKeyboardOpen && (
         <EditorToolbar
           textareaRef={bodyRef}
           tiptapEditor={isTiptap ? tiptapEditor : undefined}
@@ -835,6 +845,15 @@ export function MemoEditor() {
             /* Tiptap WYSIWYG: single-pane editing IS the preview */
             <div className="flex-1 flex flex-col min-h-0">
               {editContent}
+              {!isFocusMode && !isKeyboardOpen && memoId && (
+                <div className="mt-4 space-y-3 pb-4 shrink-0">
+                  <AISummaryPanel content={body} />
+                  <BacklinksPanel memoId={memoId} title={title} />
+                  <Suspense fallback={null}>
+                    <RelatedMemosPanel memoId={memoId} tags={currentTags} body={body} />
+                  </Suspense>
+                </div>
+              )}
             </div>
           ) : isSplit ? (
             /* Split view: side-by-side edit + preview */
@@ -896,16 +915,7 @@ export function MemoEditor() {
             </>
           )}
 
-          {/* AI Summary + Backlinks panels (below editor, hidden when keyboard open) */}
-          {!isFocusMode && !isKeyboardOpen && memoId && (
-            <div className="mt-4 space-y-3 pb-4">
-              <AISummaryPanel content={body} />
-              <BacklinksPanel memoId={memoId} title={title} />
-              <Suspense fallback={null}>
-                <RelatedMemosPanel memoId={memoId} tags={currentTags} body={body} />
-              </Suspense>
-            </div>
-          )}
+          {/* AI Summary + Backlinks moved into previewContent and tiptap section above */}
         </div>
 
         {/* Outline panel — desktop only */}
