@@ -19,6 +19,8 @@
     "@langchain/google-genai": "^2.1.25",
     "@langchain/langgraph": "^1.2.2",
     "@langchain/openai": "^1.2.13",
+    "@sentry/react": "^10.43.0",
+    "@sentry/vite-plugin": "^5.1.1",
     "@tanstack/react-virtual": "^3.13.18",
     "@tiptap/extension-bubble-menu": "^3.20.1",
     "@tiptap/extension-character-count": "^3.20.1",
