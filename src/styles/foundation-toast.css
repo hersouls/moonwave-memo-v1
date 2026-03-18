@@ -328,3 +328,33 @@
   height: auto;
   display: block;
 }
+
+/* -----------------------------------------
+   16. Android HUN Toast
+   ----------------------------------------- */
+.hun-toast {
+  background: rgba(24, 24, 27, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.dark .hun-toast {
+  background: rgba(244, 244, 245, 0.95);
+}
+.dark .hun-toast span:last-of-type {
+  color: #18181b;
+}
+
+/* -----------------------------------------
+   17. iOS Banner Toast
+   ----------------------------------------- */
+.ios-banner-toast {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+}
+.dark .ios-banner-toast {
+  background: rgba(39, 39, 42, 0.82);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.05);
+}

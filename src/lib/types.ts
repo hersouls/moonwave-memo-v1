@@ -173,6 +173,18 @@ export interface Settings {
   highContrastMode: boolean
   gamification: GamificationState
   livingWorkspace: LivingWorkspaceSettings
+  edgeLightingEnabled: boolean
+  appLock: {
+    enabled: boolean
+    timeoutMinutes: number
+    credentialId?: string
+  }
+  notifications: {
+    pushEnabled: boolean
+    dailyBriefing: boolean
+    weeklyDigest: boolean
+    timeCapsule: boolean
+  }
 }
 
 // ─── Search Filter Types ──────────────────────────

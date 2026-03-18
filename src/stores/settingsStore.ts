@@ -29,6 +29,7 @@ interface SettingsState {
   toggleHighContrast: () => void
   updateGamification: (data: Partial<GamificationState>) => void
   updateLivingWorkspace: (data: Partial<LivingWorkspaceSettings>) => void
+  updateAppLock: (data: Partial<Settings['appLock']>) => void
 }
 
 export function applyTheme(theme: ThemeMode) {
@@ -123,6 +124,17 @@ export const useSettingsStore = create<SettingsState>()(
           ambientSoundscapeEnabled: false,
           semanticCanvasEnabled: false,
           alterEgoEnabled: false,
+        },
+        edgeLightingEnabled: true,
+        appLock: {
+          enabled: false,
+          timeoutMinutes: 5,
+        },
+        notifications: {
+          pushEnabled: false,
+          dailyBriefing: true,
+          weeklyDigest: true,
+          timeCapsule: true,
         },
       },
 
@@ -333,6 +345,15 @@ export const useSettingsStore = create<SettingsState>()(
           settings: {
             ...state.settings,
             livingWorkspace: { ...state.settings.livingWorkspace, ...data },
+          },
+        }))
+      },
+
+      updateAppLock: (data) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            appLock: { ...state.settings.appLock, ...data },
           },
         }))
       },

@@ -14,6 +14,10 @@ import { AppLoadingScreen } from './components/ui/AppLoadingScreen'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { FAB } from './components/ui/FAB'
 import { AmbientBackground } from './components/ui/AmbientBackground'
+import { EdgeLighting } from './components/ui/EdgeLighting'
+import { LockScreen } from './components/ui/LockScreen'
+import { useAppLockStore } from './hooks/useAppLock'
+import { clearAppBadge } from './utils/badge'
 
 // PERF: Lazy-load heavy modals (not needed on initial render)
 const SettingsModal = lazy(() => import('./components/layout/SettingsModal').then((m) => ({ default: m.SettingsModal })))
@@ -67,6 +71,58 @@ export default function App() {
   const isCommandPaletteOpen = useUIStore((s) => s.isCommandPaletteOpen)
   const isShortcutsOpen = useUIStore((s) => s.isKeyboardShortcutsOpen)
   const slideViewMemoId = useUIStore((s) => s.slideViewMemoId)
+
+  // ─── App Lock: auto-lock on inactivity ───
+  const appLockEnabled = useSettingsStore((s) => s.settings.appLock?.enabled)
+  const appLockTimeout = useSettingsStore((s) => s.settings.appLock?.timeoutMinutes ?? 5)
+  const lockApp = useAppLockStore((s) => s.lock)
+
+  useEffect(() => {
+    if (!appLockEnabled) return
+    let lastActivity = Date.now()
+    const handleActivity = () => { lastActivity = Date.now() }
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastActivity > appLockTimeout * 60 * 1000) lockApp()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    document.addEventListener('pointerdown', handleActivity)
+    document.addEventListener('keydown', handleActivity)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      document.removeEventListener('pointerdown', handleActivity)
+      document.removeEventListener('keydown', handleActivity)
+    }
+  }, [appLockEnabled, appLockTimeout, lockApp])
+
+  // ─── Badge clear + Background sync listener ───
+  useEffect(() => {
+    clearAppBadge()
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') clearAppBadge()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    // Online event → process pending syncs
+    const handleOnline = () => {
+      import('./services/offlineQueue').then(({ processPendingSyncs }) => processPendingSyncs())
+    }
+    window.addEventListener('online', handleOnline)
+
+    // SW message → process pending syncs
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SYNC_PENDING_MEMOS') {
+        import('./services/offlineQueue').then(({ processPendingSyncs }) => processPendingSyncs())
+      }
+    }
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('online', handleOnline)
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage)
+    }
+  }, [])
 
   // A11Y: Theme change sr-only announcement
   const theme = useSettingsStore((state) => state.settings.theme)
@@ -356,6 +412,8 @@ export default function App() {
 
       <UndoToast />
       <ToastContainer />
+      <EdgeLighting />
+      <LockScreen />
       <UpdateBanner />
       <Suspense fallback={null}>
         <IOSInstallBanner />

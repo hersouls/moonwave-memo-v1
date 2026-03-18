@@ -9,6 +9,7 @@
   @import "./styles/foundation-chip.css";
   @import "./styles/foundation-misc.css";
   @import "./styles/foundation-slideview.css";
+  @import "./styles/foundation-edge-lighting.css";
 }
 
 /* Enable class-based dark mode for Tailwind CSS 4 */

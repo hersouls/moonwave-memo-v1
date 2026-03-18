@@ -22,6 +22,11 @@ export function isPWAStandalone(): boolean {
   )
 }
 
+/** Detect Android device */
+export function isAndroid(): boolean {
+  return /Android/.test(ua)
+}
+
 /** Check if Vibration API is supported (false on iOS) */
 export function supportsVibration(): boolean {
   return typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function'

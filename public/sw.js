@@ -186,6 +186,47 @@ self.addEventListener('message', (event) => {
   }
 })
 
+// ── Background Sync ─────────────────────────
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-memos') {
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then((clientList) => {
+        for (const client of clientList) {
+          client.postMessage({ type: 'SYNC_PENDING_MEMOS' })
+        }
+      })
+    )
+  }
+})
+
+// ── Push Notifications ──────────────────────
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+
+  let payload
+  try {
+    payload = event.data.json()
+  } catch {
+    payload = { notification: { title: 'Memo', body: event.data.text() } }
+  }
+
+  const { title, body, icon, data } = payload.notification || {}
+
+  event.waitUntil(
+    self.registration.showNotification(title || 'Memo', {
+      body: body || '',
+      icon: icon || '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: data || { url: '/' },
+      vibrate: [100, 50, 100],
+      tag: data?.tag || 'default',
+      renotify: true,
+    })
+  )
+})
+
 // ── Notification click ───────────────────────
 
 self.addEventListener('notificationclick', (event) => {

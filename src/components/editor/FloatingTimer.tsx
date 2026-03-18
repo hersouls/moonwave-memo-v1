@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Play, Pause, RotateCcw, X } from 'lucide-react'
-import { useFocusTimerStore, FOCUS_TIMER_DEFAULT_SECONDS } from '@/hooks/useFocusTimer'
+import { useFocusTimerStore, FOCUS_TIMER_DEFAULT_SECONDS, acquireWakeLock } from '@/hooks/useFocusTimer'
 
 export function FloatingTimer() {
   const seconds = useFocusTimerStore((s) => s.seconds)
@@ -21,6 +21,15 @@ export function FloatingTimer() {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [isRunning, tick])
+
+  // Re-acquire wake lock when returning from background
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && isRunning) acquireWakeLock()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [isRunning])
 
   // Don't render if timer hasn't been started (still at default and not running)
   if (seconds === FOCUS_TIMER_DEFAULT_SECONDS && !isRunning) return null

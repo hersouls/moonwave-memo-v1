@@ -94,9 +94,13 @@ export async function pushMemo(memo: Memo) {
     }), { merge: true })
     scheduleRecentlyPushedCleanup(`memo-${memo.syncId}`)
   } catch (err) {
-    console.error('Push memo failed:', err)
     recentlyPushed.delete(`memo-${memo.syncId}`)
-    useToastStore.getState().showToast('메모 동기화에 실패했습니다', 'warning')
+    if (!navigator.onLine && memo.syncId) {
+      import('./offlineQueue').then(({ enqueueSync }) => enqueueSync('memo', 'upsert', memo.syncId!))
+    } else {
+      console.error('Push memo failed:', err)
+      useToastStore.getState().showToast('메모 동기화에 실패했습니다', 'warning')
+    }
   }
 }
 
