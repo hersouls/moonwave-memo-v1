@@ -2,6 +2,8 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useUIStore } from '@/stores/uiStore'
 import { incrementAIUsage, isAILimitReached } from './aiUsage'
+import { generateCacheKey, getCached, setCache } from '@/utils/promptCache'
+import { streamFetch } from '@/utils/streamFetch'
 import type { AIProvider } from '@/lib/types'
 
 interface AIResponse {
@@ -177,6 +179,34 @@ async function callAI(prompt: string, systemPrompt: string, maxTokens = 500): Pr
   return callViaServerProxy(prompt, systemPrompt, provider, maxTokens)
 }
 
+// ─── LangChain endpoint helper ──────────────────────────
+
+async function callLangChain<T>(
+  endpoint: string,
+  body: Record<string, unknown>,
+): Promise<{ data: T | null; usingServerKey: boolean }> {
+  const { provider } = getAISettings()
+  const userApiKey = getUserApiKey(provider)
+
+  if (!userApiKey && isAILimitReached()) {
+    return { data: null, usingServerKey: false }
+  }
+
+  try {
+    const res = await fetch(`/api/langchain/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...body, provider, userApiKey }),
+    })
+    if (!res.ok) return { data: null, usingServerKey: false }
+    const data = await res.json()
+    if (data.usingServerKey) incrementAIUsage()
+    return { data, usingServerKey: !!data.usingServerKey }
+  } catch {
+    return { data: null, usingServerKey: false }
+  }
+}
+
 // ─── LangGraph Analysis Pipeline ────────────────────────
 
 export interface MemoAnalysisResult {
@@ -238,27 +268,35 @@ export function isAIAvailable(): boolean {
 export async function suggestTags(content: string): Promise<{ tags: string[]; error?: string }> {
   if (!content.trim() || content.length < 20) return { tags: [] }
 
+  const cacheKey = generateCacheKey('suggestTags', content)
+  const cached = getCached<{ tags: string[] }>(cacheKey)
+  if (cached) return cached
+
+  // Try LangChain endpoint first
+  const { data } = await callLangChain<{ tags: string[] }>('tags', { content: content.slice(0, 1000) })
+  if (data?.tags && data.tags.length > 0) {
+    const result = { tags: data.tags }
+    setCache(cacheKey, result)
+    return result
+  }
+
+  // Fallback to direct call
   const systemPrompt = `You are a tag suggestion assistant for a Korean memo app. Given the memo content, suggest 3-5 relevant tags in Korean. Return ONLY a JSON array of strings, no other text. Example: ["프로젝트","아이디어","개발"]`
 
-  const result = await callAI(content.slice(0, 1000), systemPrompt)
-  if (result.error) return { tags: [], error: result.error }
+  const aiResult = await callAI(content.slice(0, 1000), systemPrompt)
+  if (aiResult.error) return { tags: [], error: aiResult.error }
 
   try {
-    const parsed = JSON.parse(result.text)
-    if (Array.isArray(parsed)) {
-      return { tags: parsed.filter((t): t is string => typeof t === 'string').slice(0, 5) }
-    }
-  } catch {
-    const match = result.text.match(/\[.*\]/)
+    const match = aiResult.text.match(/\[[\s\S]*\]/)
     if (match) {
-      try {
-        const parsed = JSON.parse(match[0])
-        if (Array.isArray(parsed)) {
-          return { tags: parsed.filter((t): t is string => typeof t === 'string').slice(0, 5) }
-        }
-      } catch { /* ignore */ }
+      const parsed = JSON.parse(match[0])
+      if (Array.isArray(parsed)) {
+        const result = { tags: parsed.filter((t): t is string => typeof t === 'string').slice(0, 5) }
+        setCache(cacheKey, result)
+        return result
+      }
     }
-  }
+  } catch { /* ignore */ }
 
   return { tags: [] }
 }
@@ -266,16 +304,36 @@ export async function suggestTags(content: string): Promise<{ tags: string[]; er
 export async function summarizeMemo(content: string): Promise<{ summary: string; error?: string }> {
   if (!content.trim() || content.length < 50) return { summary: '' }
 
+  const cacheKey = generateCacheKey('summarize', content)
+  const cached = getCached<{ summary: string }>(cacheKey)
+  if (cached) return cached
+
+  // Try LangChain endpoint first
+  const { data } = await callLangChain<{ summary: string }>('summarize', { content: content.slice(0, 3000) })
+  if (data?.summary) {
+    const result = { summary: data.summary }
+    setCache(cacheKey, result)
+    return result
+  }
+
+  // Fallback to direct call
   const systemPrompt = `You are a summarization assistant for a Korean memo app. Summarize the given memo content in 2-3 concise sentences in Korean. Focus on the key points and main ideas. Return only the summary text.`
 
-  const result = await callAI(content.slice(0, 3000), systemPrompt)
-  if (result.error) return { summary: '', error: result.error }
-  return { summary: result.text }
+  const aiResult = await callAI(content.slice(0, 3000), systemPrompt)
+  if (aiResult.error) return { summary: '', error: aiResult.error }
+  const result = { summary: aiResult.text }
+  setCache(cacheKey, result)
+  return result
 }
 
 export async function autocomplete(_content: string, cursorContext: string): Promise<{ suggestion: string; error?: string }> {
   if (!cursorContext.trim() || cursorContext.length < 10) return { suggestion: '' }
 
+  // Try LangChain endpoint first (no caching — content changes constantly)
+  const { data } = await callLangChain<{ suggestion: string }>('autocomplete', { cursorContext: cursorContext.slice(-500) })
+  if (data?.suggestion) return { suggestion: data.suggestion }
+
+  // Fallback to direct call
   const systemPrompt = `You are an autocomplete assistant for a Korean memo app. Given the current text context, suggest a natural continuation (1-2 sentences). Return ONLY the suggested text to append, nothing else. Write in the same language as the input.`
 
   const result = await callAI(
@@ -289,6 +347,19 @@ export async function autocomplete(_content: string, cursorContext: string): Pro
 export async function enhanceReadability(content: string): Promise<{ enhanced: string; error?: string }> {
   if (!content.trim() || content.length < 20) return { enhanced: '' }
 
+  const cacheKey = generateCacheKey('readability', content)
+  const cached = getCached<{ enhanced: string }>(cacheKey)
+  if (cached) return cached
+
+  // Try LangChain endpoint first
+  const { data } = await callLangChain<{ enhanced: string }>('readability', { content: content.slice(0, 5000) })
+  if (data?.enhanced) {
+    const result = { enhanced: data.enhanced }
+    setCache(cacheKey, result)
+    return result
+  }
+
+  // Fallback to direct call
   const systemPrompt = `You are a readability enhancement assistant for a memo app. Reformat the given memo content to improve readability using Markdown formatting. Rules:
 - Use headings (##, ###) to organize sections
 - Use bullet points or numbered lists where appropriate
@@ -300,7 +371,35 @@ export async function enhanceReadability(content: string): Promise<{ enhanced: s
 
   const result = await callAI(content.slice(0, 5000), systemPrompt, 2000)
   if (result.error) return { enhanced: '', error: result.error }
-  return { enhanced: result.text }
+  const enhancedResult = { enhanced: result.text }
+  setCache(cacheKey, enhancedResult)
+  return enhancedResult
+}
+
+export async function enhanceReadabilityStream(
+  content: string,
+  onChunk: (text: string) => void,
+): Promise<{ error?: string }> {
+  if (!content.trim() || content.length < 20) return {}
+
+  const { provider } = getAISettings()
+  const userApiKey = getUserApiKey(provider)
+
+  if (!userApiKey && isAILimitReached()) {
+    return { error: 'daily_limit_exceeded' }
+  }
+
+  try {
+    const { usingServerKey } = await streamFetch(
+      '/api/langchain/stream',
+      { content: content.slice(0, 5000), task: 'readability', provider, userApiKey },
+      onChunk,
+    )
+    if (usingServerKey) incrementAIUsage()
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Stream failed' }
+  }
 }
 
 export async function classifyMemo(
@@ -309,6 +408,21 @@ export async function classifyMemo(
 ): Promise<{ folder: string | null; tags: string[]; title: string; error?: string }> {
   if (!text.trim() || text.length < 5) return { folder: null, tags: [], title: '' }
 
+  const cacheKey = generateCacheKey('classify', text + folderNames.join(','))
+  const cached = getCached<{ folder: string | null; tags: string[]; title: string }>(cacheKey)
+  if (cached) return cached
+
+  // Try LangChain endpoint first
+  const { data } = await callLangChain<{ folder: string | null; tags: string[]; title: string }>(
+    'classify',
+    { content: text.slice(0, 1000), folderNames },
+  )
+  if (data && (data.folder || data.tags?.length || data.title)) {
+    setCache(cacheKey, data)
+    return data
+  }
+
+  // Fallback to direct call
   const systemPrompt = `You are a memo classification assistant for a Korean memo app. Given the user's raw text and the available folder list, classify it automatically.
 
 Available folders: ${JSON.stringify(folderNames)}
@@ -322,16 +436,18 @@ Rules:
 - title should be a concise Korean title (under 30 chars)
 - Do not add any text outside the JSON`
 
-  const result = await callAI(text.slice(0, 1000), systemPrompt)
-  if (result.error) return { folder: null, tags: [], title: '', error: result.error }
+  const aiResult = await callAI(text.slice(0, 1000), systemPrompt)
+  if (aiResult.error) return { folder: null, tags: [], title: '', error: aiResult.error }
 
   try {
-    const parsed = JSON.parse(result.text)
-    return {
+    const parsed = JSON.parse(aiResult.text)
+    const result = {
       folder: typeof parsed.folder === 'string' ? parsed.folder : null,
       tags: Array.isArray(parsed.tags) ? parsed.tags.filter((t: unknown): t is string => typeof t === 'string').slice(0, 5) : [],
       title: typeof parsed.title === 'string' ? parsed.title : '',
     }
+    setCache(cacheKey, result)
+    return result
   } catch {
     return { folder: null, tags: [], title: '' }
   }

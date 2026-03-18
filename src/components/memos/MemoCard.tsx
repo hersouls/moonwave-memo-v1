@@ -131,6 +131,16 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
   const isLongPressed = useRef(false)
   const [isLongPressing, setIsLongPressing] = useState(false)
 
+  // Guard for post-unmount async operations
+  const mountedRef = useRef(true)
+  const swipeActionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+      if (swipeActionTimerRef.current) clearTimeout(swipeActionTimerRef.current)
+    }
+  }, [])
+
   // Track star changes for pulse animation
   const prevStarredRef = useRef(memo.isStarred)
   useEffect(() => {
@@ -284,7 +294,8 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         // Right swipe in trash → restore
         setIsDeleting(true)
         const memoId = memo.id
-        setTimeout(async () => {
+        swipeActionTimerRef.current = setTimeout(async () => {
+          if (!mountedRef.current) return
           await restore(memoId)
           useToastStore.getState().showToast('메모가 복원되었습니다', 'success')
         }, 300)
@@ -298,7 +309,8 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         // Left swipe in trash → permanent delete
         setIsDeleting(true)
         const memoId = memo.id
-        setTimeout(async () => {
+        swipeActionTimerRef.current = setTimeout(async () => {
+          if (!mountedRef.current) return
           await permanentDelete(memoId)
           useToastStore.getState().showToast('메모가 영구 삭제되었습니다', 'info')
         }, 300)
@@ -306,7 +318,8 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         // Left swipe → soft delete with shrink animation
         setIsDeleting(true)
         const memoId = memo.id
-        setTimeout(async () => {
+        swipeActionTimerRef.current = setTimeout(async () => {
+          if (!mountedRef.current) return
           try {
             const deleted = await softDelete(memoId)
             if (deleted) {
@@ -314,8 +327,10 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             }
           } catch (err) {
             console.error('Failed to delete memo:', err)
-            setIsDeleting(false)
-            useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
+            if (mountedRef.current) {
+              setIsDeleting(false)
+              useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
+            }
           }
         }, 300)
       }

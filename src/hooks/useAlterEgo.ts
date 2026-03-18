@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { sendAlterEgoMessage, hasAlterEgoCapability } from '@/services/alterEgoService'
+import { db } from '@/services/database'
 
 interface AlterEgoMessage {
   role: 'user' | 'assistant'
@@ -7,8 +8,9 @@ interface AlterEgoMessage {
 }
 
 const MAX_EXCHANGES = 5
+const MAX_STORED_MESSAGES = 10
 
-export function useAlterEgo(body: string) {
+export function useAlterEgo(body: string, memoId?: number) {
   const [messages, setMessages] = useState<AlterEgoMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,6 +26,42 @@ export function useAlterEgo(body: string) {
   messagesRef.current = messages
   const isLoadingRef = useRef(isLoading)
   isLoadingRef.current = isLoading
+
+  // Restore conversation from Dexie on mount
+  useEffect(() => {
+    if (!memoId) return
+    db.demianChats
+      .where('memoId')
+      .equals(memoId)
+      .first()
+      .then((record) => {
+        if (record?.messages?.length) {
+          const restored = record.messages.slice(-MAX_STORED_MESSAGES) as AlterEgoMessage[]
+          setMessages(restored)
+          if (restored.some((m) => m.role === 'user')) {
+            autoTriggeredRef.current = true
+          }
+        }
+      })
+      .catch(console.error)
+  }, [memoId])
+
+  // Save conversation to Dexie on message change
+  useEffect(() => {
+    if (!memoId || messages.length === 0) return
+    const toStore = messages.slice(-MAX_STORED_MESSAGES)
+    db.demianChats
+      .where('memoId')
+      .equals(memoId)
+      .first()
+      .then((existing) => {
+        if (existing?.id) {
+          return db.demianChats.update(existing.id, { messages: toStore, updatedAt: new Date().toISOString() })
+        }
+        return db.demianChats.add({ memoId, messages: toStore, updatedAt: new Date().toISOString() })
+      })
+      .catch(console.error)
+  }, [memoId, messages])
 
   const sendMessage = useCallback(async (text: string) => {
     const currentMessages = messagesRef.current
@@ -62,7 +100,11 @@ export function useAlterEgo(body: string) {
     setMessages([])
     setError(null)
     autoTriggeredRef.current = false
-  }, [])
+    // Clear Dexie record
+    if (memoId) {
+      db.demianChats.where('memoId').equals(memoId).delete().catch(() => {})
+    }
+  }, [memoId])
 
   // Track typing for auto-trigger (10s pause after 50+ chars typed)
   useEffect(() => {

@@ -73,28 +73,9 @@ export function SlashCommandMenu({ query, position, onSelect, onClose }: SlashCo
     return idx + itemIdx
   }
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setSelectedIndex((i) => (i + 1) % filtered.length)
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelectedIndex((i) => (i - 1 + filtered.length) % filtered.length)
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        const cmd = filtered[selectedIndex]
-        if (cmd) handleSelect(cmd)
-      } else if (e.key === 'Escape') {
-        e.preventDefault()
-        onClose()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown, true)
-    return () => window.removeEventListener('keydown', handleKeyDown, true)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIndex, filtered.length])
+  // Use refs to avoid stale closures in keydown handler
+  const filteredRef = useRef(filtered)
+  filteredRef.current = filtered
 
   const handleSelect = (cmd: SlashCommand) => {
     if (cmd.insert) {
@@ -107,6 +88,31 @@ export function SlashCommandMenu({ query, position, onSelect, onClose }: SlashCo
       onClose()
     }
   }
+
+  const handleSelectRef = useRef(handleSelect)
+  handleSelectRef.current = handleSelect
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex((i) => (i + 1) % (filteredRef.current.length || 1))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex((i) => (i - 1 + filteredRef.current.length) % (filteredRef.current.length || 1))
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        const cmd = filteredRef.current[selectedIndex]
+        if (cmd) handleSelectRef.current(cmd)
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [selectedIndex, onClose])
 
   if (filtered.length === 0) return null
 

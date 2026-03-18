@@ -20,7 +20,25 @@ let refreshMemos: (() => Promise<void>) | null = null
 let refreshFolders: (() => Promise<void>) | null = null
 
 const recentlyPushed = new Set<string>()
+const recentlyPushedTimers = new Map<string, ReturnType<typeof setTimeout>>()
 let mergePromise: Promise<void> | null = null
+
+function scheduleRecentlyPushedCleanup(key: string) {
+  if (recentlyPushedTimers.has(key)) clearTimeout(recentlyPushedTimers.get(key)!)
+  recentlyPushedTimers.set(key, setTimeout(() => {
+    recentlyPushed.delete(key)
+    recentlyPushedTimers.delete(key)
+  }, 5000))
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Sync push timed out')), ms)
+    ),
+  ])
+}
 
 function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const result: Record<string, unknown> = {}
@@ -74,7 +92,7 @@ export async function pushMemo(memo: Memo) {
       updatedAt: memo.updatedAt,
       deletedAt: memo.deletedAt || null,
     }), { merge: true })
-    setTimeout(() => recentlyPushed.delete(`memo-${memo.syncId}`), 5000)
+    scheduleRecentlyPushedCleanup(`memo-${memo.syncId}`)
   } catch (err) {
     console.error('Push memo failed:', err)
     recentlyPushed.delete(`memo-${memo.syncId}`)
@@ -96,7 +114,7 @@ export async function pushFolder(folder: Folder) {
       createdAt: folder.createdAt,
       updatedAt: folder.updatedAt,
     }), { merge: true })
-    setTimeout(() => recentlyPushed.delete(`folder-${folder.syncId}`), 5000)
+    scheduleRecentlyPushedCleanup(`folder-${folder.syncId}`)
   } catch (err) {
     console.error('Push folder failed:', err)
     recentlyPushed.delete(`folder-${folder.syncId}`)
@@ -110,7 +128,7 @@ export async function deleteMemoFromCloud(syncId: string) {
   try {
     recentlyPushed.add(`memo-${syncId}`)
     await deleteDoc(doc(firestore, `users/${currentUserId}/memos`, syncId))
-    setTimeout(() => recentlyPushed.delete(`memo-${syncId}`), 5000)
+    scheduleRecentlyPushedCleanup(`memo-${syncId}`)
   } catch (err) {
     console.error('Delete memo from cloud failed:', err)
     recentlyPushed.delete(`memo-${syncId}`)
@@ -122,7 +140,7 @@ export async function deleteFolderFromCloud(syncId: string) {
   try {
     recentlyPushed.add(`folder-${syncId}`)
     await deleteDoc(doc(firestore, `users/${currentUserId}/folders`, syncId))
-    setTimeout(() => recentlyPushed.delete(`folder-${syncId}`), 5000)
+    scheduleRecentlyPushedCleanup(`folder-${syncId}`)
   } catch (err) {
     console.error('Delete folder from cloud failed:', err)
     recentlyPushed.delete(`folder-${syncId}`)
@@ -184,11 +202,11 @@ async function doInitialMerge(userId: string) {
       }
       const cloudDoc = folderSnap.docs.find((d) => d.id === folder.syncId)
       if (!cloudDoc) {
-        await pushFolder(folder)
+        await withTimeout(pushFolder(folder), 10_000).catch(console.error)
       } else {
         const remote = cloudDoc.data()
         if (!remote.updatedAt) {
-          await pushFolder(folder)
+          await withTimeout(pushFolder(folder), 10_000).catch(console.error)
         }
       }
     }
@@ -242,11 +260,11 @@ async function doInitialMerge(userId: string) {
       }
       const cloudDoc = memoSnap.docs.find((d) => d.id === memo.syncId)
       if (!cloudDoc) {
-        await pushMemo(memo)
+        await withTimeout(pushMemo(memo), 10_000).catch(console.error)
       } else {
         const remote = cloudDoc.data()
         if (memo.folderId != null && !remote.folderSyncId) {
-          await pushMemo(memo)
+          await withTimeout(pushMemo(memo), 10_000).catch(console.error)
         }
       }
     }
@@ -268,7 +286,7 @@ function startListeners(userId: string) {
   unsubMemos = onSnapshot(
     collection(firestore, `users/${userId}/memos`),
     async (snapshot) => {
-      if (mergePromise) return
+      if (mergePromise) await mergePromise
 
       try {
         for (const change of snapshot.docChanges()) {
@@ -334,7 +352,7 @@ function startListeners(userId: string) {
   unsubFolders = onSnapshot(
     collection(firestore, `users/${userId}/folders`),
     async (snapshot) => {
-      if (mergePromise) return
+      if (mergePromise) await mergePromise
 
       try {
         for (const change of snapshot.docChanges()) {
@@ -402,6 +420,8 @@ export function stopSync() {
   if (unsubFolders) { unsubFolders(); unsubFolders = null }
   currentUserId = null
   recentlyPushed.clear()
+  for (const timer of recentlyPushedTimers.values()) clearTimeout(timer)
+  recentlyPushedTimers.clear()
   mergePromise = null
 
   // Stop settings sync

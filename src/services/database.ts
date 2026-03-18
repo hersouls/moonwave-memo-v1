@@ -10,6 +10,7 @@ class MemoDatabase extends Dexie {
   memoImages!: Table<MemoImage>
   memoVersions!: Table<MemoVersion>
   ambientImages!: Table<AmbientImage>
+  demianChats!: Table<{ id?: number; memoId: number; messages: Array<{ role: string; content: string }>; updatedAt: string }>
 
   constructor() {
     super('MemoApp')
@@ -38,6 +39,15 @@ class MemoDatabase extends Dexie {
       memoImages: '++id, memoId, syncId, createdAt',
       memoVersions: '++id, memoId, createdAt',
       ambientImages: '++id, type, generatedAt, expiresAt',
+    })
+
+    this.version(5).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
+      ambientImages: '++id, type, generatedAt, expiresAt',
+      demianChats: '++id, &memoId, updatedAt',
     })
 
     this.on('populate', () => {
