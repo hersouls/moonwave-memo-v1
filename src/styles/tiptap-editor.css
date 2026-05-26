@@ -7,8 +7,22 @@
 .tiptap-editor .tiptap {
   outline: none;
   min-height: 200px;
-  line-height: 1.625;
+  font-size: 1.0625rem;       /* 17px — comfortable reading size */
+  line-height: 1.8;
+  letter-spacing: -0.003em;
   cursor: text;
+  caret-color: var(--color-primary-500);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Selection tint tied to primary palette */
+.tiptap-editor .tiptap ::selection {
+  background-color: var(--color-primary-100);
+}
+
+.dark .tiptap-editor .tiptap ::selection {
+  background-color: color-mix(in oklch, var(--color-primary-900) 55%, transparent);
 }
 
 /* Placeholder text (Tiptap Placeholder extension) */

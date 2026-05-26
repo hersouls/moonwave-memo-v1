@@ -62,11 +62,11 @@ export function ImageInsertButton({ onInsert, memoId }: ImageInsertButtonProps) 
       <button
         onClick={handleClick}
         disabled={isProcessing || !memoId}
-        className="p-2.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95 disabled:opacity-30"
+        className="inline-flex items-center justify-center size-9 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-[background-color,color,transform] duration-150 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 disabled:opacity-30 disabled:pointer-events-none"
         title={'\uC774\uBBF8\uC9C0 \uC0BD\uC785'}
         aria-label={'\uC774\uBBF8\uC9C0 \uC0BD\uC785'}
       >
-        <ImagePlus className="w-5 h-5" />
+        <ImagePlus className="w-[18px] h-[18px]" />
       </button>
       <input
         ref={inputRef}

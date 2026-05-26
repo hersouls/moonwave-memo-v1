@@ -689,7 +689,7 @@ export function MemoEditor() {
         onChange={(e) => handleTitleChange(e.target.value)}
         placeholder="제목"
         maxLength={100}
-        className="w-full text-2xl fold:text-lg font-bold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none mb-3"
+        className="w-full text-[1.75rem] lg:text-[2rem] fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 caret-primary-500 selection:bg-primary-100 dark:selection:bg-primary-900/40 bg-transparent border-none outline-none mb-3"
         style={{ fontFamily: editorFontFamily }}
       />
 
@@ -705,7 +705,7 @@ export function MemoEditor() {
               onChange={handleBodyInput}
               onKeyDown={handleBodyKeyDown}
               placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
-              className="w-full flex-1 min-h-0 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 bg-transparent border-none outline-none resize-none leading-relaxed"
+              className="w-full flex-1 min-h-0 text-[1.0625rem] leading-[1.8] tracking-[-0.003em] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 caret-primary-500 selection:bg-primary-100 dark:selection:bg-primary-900/40 bg-transparent border-none outline-none resize-none"
               style={{ fontFamily: editorFontFamily }}
             />
             {/* AI Autocomplete ghost text */}
@@ -832,7 +832,7 @@ export function MemoEditor() {
           'flex-1 flex flex-col min-h-0 overflow-y-auto',
           isFocusMode
             ? 'max-w-2xl mx-auto w-full px-6 pt-12'
-            : 'px-4 lg:px-8 max-w-4xl mx-auto w-full'
+            : 'px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full'
         )}>
           {!isFocusMode && !isKeyboardOpen && (
             <FolderSelector
@@ -868,39 +868,41 @@ export function MemoEditor() {
             </div>
           ) : (
             <>
-              {/* A11Y-02: Tab bar with proper ARIA roles */}
+              {/* A11Y-02: Segmented control with proper ARIA roles */}
               {!isFocusMode && !isKeyboardOpen && (
-                <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700" role="tablist" aria-label="편집기 모드">
-                  <button
-                    role="tab"
-                    aria-selected={activeTab === 'edit'}
-                    id="tab-edit"
-                    aria-controls="panel-edit"
-                    onClick={() => setActiveTab('edit')}
-                    className={clsx(
-                      'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-                      activeTab === 'edit'
-                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                        : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-                    )}
-                  >
-                    편집
-                  </button>
-                  <button
-                    role="tab"
-                    aria-selected={activeTab === 'preview'}
-                    id="tab-preview"
-                    aria-controls="panel-preview"
-                    onClick={() => setActiveTab('preview')}
-                    className={clsx(
-                      'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-                      activeTab === 'preview'
-                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                        : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-                    )}
-                  >
-                    미리보기
-                  </button>
+                <div className="mb-4" role="tablist" aria-label="편집기 모드">
+                  <div className="inline-flex items-center gap-0.5 p-0.5 rounded-[10px] bg-zinc-100 dark:bg-zinc-800/80">
+                    <button
+                      role="tab"
+                      aria-selected={activeTab === 'edit'}
+                      id="tab-edit"
+                      aria-controls="panel-edit"
+                      onClick={() => setActiveTab('edit')}
+                      className={clsx(
+                        'px-3.5 py-1.5 text-sm font-medium rounded-[7px] transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50',
+                        activeTab === 'edit'
+                          ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-50 shadow-sm'
+                          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+                      )}
+                    >
+                      편집
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={activeTab === 'preview'}
+                      id="tab-preview"
+                      aria-controls="panel-preview"
+                      onClick={() => setActiveTab('preview')}
+                      className={clsx(
+                        'px-3.5 py-1.5 text-sm font-medium rounded-[7px] transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50',
+                        activeTab === 'preview'
+                          ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-50 shadow-sm'
+                          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+                      )}
+                    >
+                      미리보기
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -910,7 +912,9 @@ export function MemoEditor() {
                 aria-labelledby={activeTab === 'edit' ? 'tab-edit' : 'tab-preview'}
                 className="flex-1 flex flex-col min-h-0"
               >
-                {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
+                <div key={activeTab} className="flex-1 flex flex-col min-h-0 animate-in fade-in duration-200">
+                  {(activeTab === 'edit' || isFocusMode) ? editContent : previewContent}
+                </div>
               </div>
             </>
           )}
@@ -972,7 +976,7 @@ export function MemoEditor() {
           </button>
         </div>
       ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && (
-        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-4xl mx-auto w-full py-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
           <span>{charCount.toLocaleString()}자</span>
           <span>·</span>
           <span>읽기 약 {readingTime}분</span>

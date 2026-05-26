@@ -108,7 +108,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
   return createPortal(
     <div
       ref={toolbarRef}
-      className="fixed z-50 flex items-center gap-0.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-1 py-1 shadow-xl animate-in fade-in slide-in-from-bottom duration-150"
+      className="fixed z-50 flex items-center gap-0.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-1 py-1 shadow-xl ring-1 ring-white/10 dark:ring-black/10 animate-in fade-in slide-in-from-bottom duration-150"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
@@ -122,7 +122,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
             e.preventDefault()
             tool.action()
           }}
-          className="p-1.5 rounded-lg text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+          className="p-1.5 rounded-lg text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 dark:focus-visible:ring-black/30"
           title={tool.label}
           aria-label={tool.label}
         >

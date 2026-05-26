@@ -24,6 +24,18 @@ interface EditorToolbarProps {
   onSlideView?: () => void
 }
 
+// Unified toolbar button system — refined, consistent hover/active/focus states
+const toolBtnBase =
+  'inline-flex items-center justify-center size-9 rounded-lg transition-[background-color,color,transform] duration-150 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 disabled:opacity-30 disabled:pointer-events-none'
+const toolBtnDefault =
+  'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
+const toolBtnActive =
+  'bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300'
+const toolBtnAccent =
+  'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10'
+const toolSep = 'h-5 w-px bg-zinc-200/70 dark:bg-zinc-700/70 mx-1 shrink-0'
+const toolIcon = 'w-[18px] h-[18px]'
+
 export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled, onToggleOutline, onSlideView }: EditorToolbarProps) {
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
   const [isEnhancing, setIsEnhancing] = useState(false)
@@ -140,10 +152,10 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
   // UX-02: shortcut hints in title
   const e = tiptapEditor
   const tools = [
-    { icon: <Bold className="w-5 h-5" />, label: '굵게', title: '굵게 (Ctrl+B)', formatKey: 'bold', action: () => e ? e.chain().focus().toggleBold().run() : insertAtCursor('**', '**') },
-    { icon: <Italic className="w-5 h-5" />, label: '기울임', title: '기울임 (Ctrl+I)', formatKey: 'italic', action: () => e ? e.chain().focus().toggleItalic().run() : insertAtCursor('*', '*') },
-    { icon: <Code className="w-5 h-5" />, label: '코드', title: '인라인 코드 (Ctrl+E)', formatKey: 'code', action: () => e ? e.chain().focus().toggleCode().run() : insertAtCursor('`', '`') },
-    { icon: <Link2 className="w-5 h-5" />, label: '링크', title: '링크 삽입 (Ctrl+K)', formatKey: 'link', action: () => {
+    { icon: <Bold className={toolIcon} />, label: '굵게', title: '굵게 (Ctrl+B)', formatKey: 'bold', action: () => e ? e.chain().focus().toggleBold().run() : insertAtCursor('**', '**') },
+    { icon: <Italic className={toolIcon} />, label: '기울임', title: '기울임 (Ctrl+I)', formatKey: 'italic', action: () => e ? e.chain().focus().toggleItalic().run() : insertAtCursor('*', '*') },
+    { icon: <Code className={toolIcon} />, label: '코드', title: '인라인 코드 (Ctrl+E)', formatKey: 'code', action: () => e ? e.chain().focus().toggleCode().run() : insertAtCursor('`', '`') },
+    { icon: <Link2 className={toolIcon} />, label: '링크', title: '링크 삽입 (Ctrl+K)', formatKey: 'link', action: () => {
       if (e) {
         if (e.isActive('link')) { e.chain().focus().unsetLink().run(); return }
         const url = prompt('URL을 입력하세요:')
@@ -152,58 +164,59 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
         insertAtCursor('[', '](url)')
       }
     } },
-    { icon: <List className="w-5 h-5" />, label: '목록', title: '목록', formatKey: 'list', action: () => e ? e.chain().focus().toggleBulletList().run() : insertAtCursor('- ') },
-    { icon: <Heading2 className="w-5 h-5" />, label: '제목', title: '제목', formatKey: 'heading', action: () => e ? e.chain().focus().toggleHeading({ level: 2 }).run() : insertAtCursor('## ') },
+    { icon: <List className={toolIcon} />, label: '목록', title: '목록', formatKey: 'list', action: () => e ? e.chain().focus().toggleBulletList().run() : insertAtCursor('- ') },
+    { icon: <Heading2 className={toolIcon} />, label: '제목', title: '제목', formatKey: 'heading', action: () => e ? e.chain().focus().toggleHeading({ level: 2 }).run() : insertAtCursor('## ') },
   ]
 
   return (
     <div
-      className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 py-2 shrink-0 overflow-x-auto scrollbar-none"
+      className="bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200/60 dark:border-zinc-800 shrink-0 overflow-x-auto scrollbar-none"
     >
-      <div className="flex items-center justify-center gap-0.5 px-2 w-max min-w-full mx-auto">
-        {/* Undo/Redo */}
+      <div className="flex items-center justify-center gap-0.5 px-3 py-1.5 w-max min-w-full mx-auto">
+        {/* Group: history */}
         {onUndo && (
           <>
             <button
               onClick={onUndo}
               disabled={!canUndo}
-              className="p-2.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95 disabled:opacity-30"
+              className={clsx(toolBtnBase, toolBtnDefault)}
               title="실행취소 (Ctrl+Z)"
               aria-label="실행취소"
             >
-              <Undo2 className="w-5 h-5" />
+              <Undo2 className={toolIcon} />
             </button>
             <button
               onClick={onRedo}
               disabled={!canRedo}
-              className="p-2.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95 disabled:opacity-30"
+              className={clsx(toolBtnBase, toolBtnDefault)}
               title="다시실행 (Ctrl+Shift+Z)"
               aria-label="다시실행"
             >
-              <Redo2 className="w-5 h-5" />
+              <Redo2 className={toolIcon} />
             </button>
-            <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <div className={toolSep} />
           </>
         )}
-        {tools.map((tool) => (
-          <button
-            key={tool.label}
-            onClick={tool.action}
-            className={clsx(
-              'p-2.5 rounded-lg transition-colors active:scale-95',
-              activeFormats.has(tool.formatKey)
-                ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
-                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            )}
-            title={tool.title}
-            aria-label={tool.label}
-          >
-            {tool.icon}
-          </button>
-        ))}
 
-        {/* Image insert button */}
-        <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+        {/* Group: formatting */}
+        {tools.map((tool) => {
+          const active = activeFormats.has(tool.formatKey)
+          return (
+            <button
+              key={tool.label}
+              onClick={tool.action}
+              aria-pressed={active}
+              className={clsx(toolBtnBase, active ? toolBtnActive : toolBtnDefault)}
+              title={tool.title}
+              aria-label={tool.label}
+            >
+              {tool.icon}
+            </button>
+          )
+        })}
+
+        {/* Group: insert */}
+        <div className={toolSep} />
         <ImageInsertButton
           memoId={memoId}
           onInsert={(markdown) => {
@@ -220,72 +233,68 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
           }}
         />
 
-        {/* AI buttons — always available (server proxy or user key) */}
-        <>
-            <button
-              onClick={handleAIEnhanceClick}
-              disabled={isEnhancing}
-              className="p-2.5 rounded-lg text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors active:scale-95 disabled:opacity-50"
-              title="AI 가독성 편집"
-              aria-label="AI 가독성 편집"
-            >
-              {isEnhancing ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Wand2 className="w-5 h-5" />
-              )}
-            </button>
-            <button
-              onClick={handleMicClick}
-              className="p-2.5 rounded-lg text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors active:scale-95"
-              title="음성 입력"
-              aria-label="음성 입력"
-            >
-              <Mic className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleCameraClick}
-              className="p-2.5 rounded-lg text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors active:scale-95"
-              title="이미지 OCR"
-              aria-label="이미지 OCR"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
-        </>
+        {/* Group: AI — accent-tinted (server proxy or user key) */}
+        <div className={toolSep} />
+        <button
+          onClick={handleAIEnhanceClick}
+          disabled={isEnhancing}
+          className={clsx(toolBtnBase, toolBtnAccent)}
+          title="AI 가독성 편집"
+          aria-label="AI 가독성 편집"
+        >
+          {isEnhancing ? (
+            <Loader2 className={clsx(toolIcon, 'animate-spin')} />
+          ) : (
+            <Wand2 className={toolIcon} />
+          )}
+        </button>
+        <button
+          onClick={handleMicClick}
+          className={clsx(toolBtnBase, toolBtnAccent)}
+          title="음성 입력"
+          aria-label="음성 입력"
+        >
+          <Mic className={toolIcon} />
+        </button>
+        <button
+          onClick={handleCameraClick}
+          className={clsx(toolBtnBase, toolBtnAccent)}
+          title="이미지 OCR"
+          aria-label="이미지 OCR"
+        >
+          <Camera className={toolIcon} />
+        </button>
 
-        {/* Slide view button */}
+        {/* Group: view */}
+        {(onSlideView || onToggleOutline || (alterEgoEnabled && onToggleAlterEgo)) && <div className={toolSep} />}
         {onSlideView && (
           <button
             onClick={onSlideView}
-            className="p-2.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95"
+            className={clsx(toolBtnBase, toolBtnDefault)}
             title="슬라이드 보기 (F5)"
             aria-label="슬라이드 보기"
           >
-            <MonitorPlay className="w-5 h-5" />
+            <MonitorPlay className={toolIcon} />
           </button>
         )}
-
-        {/* Outline (목차) button — desktop only */}
         {onToggleOutline && (
           <button
             onClick={onToggleOutline}
-            className="hidden lg:block p-2.5 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95"
+            className={clsx(toolBtnBase, toolBtnDefault, 'hidden lg:inline-flex')}
             title="목차 (Outline)"
             aria-label="목차"
           >
-            <ListTree className="w-5 h-5" />
+            <ListTree className={toolIcon} />
           </button>
         )}
-
-        {/* Alter Ego (데미안) button */}
         {alterEgoEnabled && onToggleAlterEgo && (
           <button
             onClick={onToggleAlterEgo}
-            className="p-2.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors active:scale-95"
+            className={clsx(toolBtnBase, 'text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 dark:text-purple-400')}
             title="데미안 (AI 대화)"
             aria-label="데미안"
           >
-            <Brain className="w-5 h-5" />
+            <Brain className={toolIcon} />
           </button>
         )}
       </div>
