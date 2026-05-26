@@ -16,7 +16,7 @@ export function RecentWorkWidget() {
   if (recentMemos.length === 0) return null
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm overflow-hidden">
+    <div className="card overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20">

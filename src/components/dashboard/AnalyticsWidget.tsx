@@ -14,7 +14,7 @@ export function AnalyticsWidget() {
   const maxMonthly = Math.max(...analytics.monthlyTrend.map((m) => m.count), 1)
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm overflow-hidden">
+    <div className="card overflow-hidden">
       {/* Header — always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

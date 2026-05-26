@@ -29,7 +29,7 @@ export const StreakCounter = memo(function StreakCounter() {
   const animatedLongest = useCountUp(longestStreak)
 
   return (
-    <div className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm">
+    <div className="flex items-center gap-3 p-4 card">
       <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-warning-50 dark:bg-warning-900/20">
         <Flame className={`w-6 h-6 ${currentStreak > 0 ? 'text-warning-500' : 'text-zinc-300 dark:text-zinc-600'}`} />
       </div>

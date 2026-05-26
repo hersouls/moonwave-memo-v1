@@ -95,7 +95,7 @@ export function InsightsWidget() {
   if (allInsights.length === 0) return null
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm overflow-hidden">
+    <div className="card overflow-hidden">
       <div className="flex items-center gap-2.5 px-5 py-3.5">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
           <TrendingUp className="h-4 w-4 text-emerald-500" />

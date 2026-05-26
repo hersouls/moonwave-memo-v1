@@ -39,7 +39,7 @@ export function TodoWidget() {
   if (uncheckedTodos.length === 0) return null
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm p-4">
+    <div className="card p-4">
       <div className="flex items-center gap-2 mb-3">
         <CheckSquare className="w-4 h-4 text-primary-500" />
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">

@@ -31,7 +31,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap() {
   const totalCount = heatmapData.reduce((sum, d) => sum + d.count, 0)
 
   return (
-    <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm">
+    <div className="p-4 card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">활동 히트맵</h3>
         <span className="text-xs text-zinc-400 dark:text-zinc-500">

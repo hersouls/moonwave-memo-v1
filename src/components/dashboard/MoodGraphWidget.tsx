@@ -61,7 +61,7 @@ export function MoodGraphWidget() {
   if (!moodData) return null
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm dark:bg-zinc-800">
+    <div className="card">
       <div className="flex items-center gap-2.5 px-5 py-3.5">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20">
           <span className="text-base">{'\u{1F3AF}'}</span>

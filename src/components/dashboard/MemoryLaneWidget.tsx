@@ -37,7 +37,7 @@ export function MemoryLaneWidget() {
   if (anniversaryMemos.length === 0 && !randomRediscovery) return null
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm p-4">
+    <div className="card p-4">
       {anniversaryMemos.length > 0 && (
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2.5">

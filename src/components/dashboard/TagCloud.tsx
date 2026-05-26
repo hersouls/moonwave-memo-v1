@@ -21,7 +21,7 @@ export function TagCloud() {
   }
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm dark:bg-zinc-800">
+    <div className="card">
       {/* Header */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}

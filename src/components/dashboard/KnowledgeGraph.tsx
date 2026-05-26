@@ -169,7 +169,7 @@ export function KnowledgeGraph() {
   }, [nodes, links, dimensions, handleNodeClick])
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm overflow-hidden">
+    <div className="card overflow-hidden">
       <div className="flex items-center gap-2.5 px-5 py-3.5">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
           <Share2 className="h-4 w-4 text-indigo-500" />
