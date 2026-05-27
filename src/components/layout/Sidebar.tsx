@@ -123,9 +123,9 @@ export function Sidebar() {
         </span>
         {isSidebarOpen && (
           <>
-            <span className="text-sm font-medium truncate flex-1 text-left">{label}</span>
+            <span className={clsx('text-sm truncate flex-1 text-left', isActive ? 'font-semibold' : 'font-medium')}>{label}</span>
             {count !== undefined && (
-              <span className="text-xs text-zinc-400 dark:text-zinc-500">{count}</span>
+              <span className={clsx('text-xs tabular-nums', isActive ? 'text-primary-600/70 dark:text-primary-300/70' : 'text-zinc-400 dark:text-zinc-500')}>{count}</span>
             )}
           </>
         )}
