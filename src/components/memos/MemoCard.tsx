@@ -437,10 +437,10 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className={clsx(
-          'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left shadow-sm transition-all duration-200',
+          'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left border border-zinc-950/[0.06] dark:border-white/[0.07] shadow-sm transition-all duration-200',
           MEMO_CARD_BG[memo.color] || MEMO_CARD_BG[defaultColor] || 'bg-white dark:bg-zinc-800',
           isSelectionMode && 'hover:bg-zinc-50 dark:hover:bg-zinc-700',
-          !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]',
+          !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 hover:border-primary-200/70 dark:hover:border-primary-800/40 active:scale-[0.98]',
           isLongPressing && 'scale-[0.97] bg-zinc-100 dark:bg-zinc-700/50',
           isSelected && 'ring-2 ring-primary-500',
           // UX-07: stronger active highlight
