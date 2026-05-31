@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { EditorHeader } from './EditorHeader'
 import { FolderSelector } from './FolderSelector'
 import { EditorToolbar } from './EditorToolbar'
+import { EditorCommandPalette, type EditorCommand } from './EditorCommandPalette'
 import { MarkdownPreview } from './MarkdownPreview'
 import { FloatingToolbar } from './FloatingToolbar'
 import { SlashCommandMenu } from './SlashCommandMenu'
@@ -30,7 +31,7 @@ import { useTiptapEditor } from '@/hooks/useTiptapEditor'
 import { AlterEgoPanel } from './AlterEgoPanel'
 import { EditorOutline } from './EditorOutline'
 import { analyzeSentiment } from '@/services/sentimentAnalysis'
-import { X } from 'lucide-react'
+import { X, Heading2, List, CheckSquare, Code2, Quote, Minus, ListTree, Brain, Maximize2, MonitorPlay, History, Wand2, Download } from 'lucide-react'
 import { TimeMachineBanner } from './TimeMachineBanner'
 import { EphemeralBanner } from './EphemeralBanner'
 import { useMemoStore } from '@/stores/memoStore'
@@ -111,6 +112,7 @@ export function MemoEditor() {
 
   // Version history
   const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [showCommandPalette, setShowCommandPalette] = useState(false)
 
   // Alter Ego panel
   const [showAlterEgo, setShowAlterEgo] = useState(false)
@@ -793,6 +795,53 @@ export function MemoEditor() {
     </div>
   )
 
+  // ── Command palette (complements the `/` slash menu with non-insert actions) ──
+  const insertSnippet = (snippet: string) => {
+    if (isTiptap && tiptapEditor) { tiptapEditor.chain().focus().insertContent(snippet).run(); return }
+    const ta = bodyRef.current
+    if (!ta) { handleBodyChange(body ? `${body}\n${snippet}` : snippet); return }
+    const value = ta.value
+    const start = ta.selectionStart
+    const end = ta.selectionEnd
+    handleBodyChange(value.substring(0, start) + snippet + value.substring(end))
+    requestAnimationFrame(() => { ta.focus(); const p = start + snippet.length; ta.setSelectionRange(p, p) })
+  }
+
+  const runAIEnhanceFromPalette = async () => {
+    if (!body || body.trim().length < 20) { useToastStore.getState().showToast('내용이 너무 짧습니다 (20자 이상 필요)', 'warning'); return }
+    const { enhanceReadability } = await import('@/services/aiFeatures')
+    const result = await enhanceReadability(body)
+    if (result.error) { useToastStore.getState().showToast(`AI 편집 실패: ${result.error}`, 'error'); return }
+    if (result.enhanced) handleAIEnhance(result.enhanced)
+  }
+
+  const exportMarkdownFromPalette = () => {
+    const content = `# ${title || '제목 없음'}\n\n${body || ''}`
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${title || 'memo'}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const paletteCommands: EditorCommand[] = [
+    { id: 'heading', group: '삽입', label: '제목', icon: <Heading2 className="w-4 h-4" />, run: () => insertSnippet('## ') },
+    { id: 'list', group: '삽입', label: '목록', icon: <List className="w-4 h-4" />, run: () => insertSnippet('- ') },
+    { id: 'checklist', group: '삽입', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" />, run: () => insertSnippet('- [ ] ') },
+    { id: 'codeblock', group: '삽입', label: '코드 블록', icon: <Code2 className="w-4 h-4" />, run: () => insertSnippet('```\n\n```') },
+    { id: 'quote', group: '삽입', label: '인용', icon: <Quote className="w-4 h-4" />, run: () => insertSnippet('> ') },
+    { id: 'divider', group: '삽입', label: '구분선', icon: <Minus className="w-4 h-4" />, run: () => insertSnippet('\n---\n') },
+    ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '아웃라인 토글', icon: <ListTree className="w-4 h-4" />, run: () => setShowOutline((p) => !p) }] : []),
+    ...(alterEgoEnabled ? [{ id: 'alterego', group: '보기 · 도구', label: '데미안(AI 대화) 토글', icon: <Brain className="w-4 h-4" />, run: () => setShowAlterEgo((p) => !p) }] : []),
+    { id: 'focus', group: '보기 · 도구', label: '집중 모드', icon: <Maximize2 className="w-4 h-4" />, run: () => useUIStore.getState().toggleFocusMode() },
+    ...(memoId ? [{ id: 'slide', group: '보기 · 도구', label: '슬라이드 보기', icon: <MonitorPlay className="w-4 h-4" />, run: () => useUIStore.getState().openSlideView(memoId) }] : []),
+    ...(memoId ? [{ id: 'versions', group: '보기 · 도구', label: '버전 기록', icon: <History className="w-4 h-4" />, run: () => setShowVersionHistory(true) }] : []),
+    { id: 'ai-enhance', group: 'AI · 내보내기', label: 'AI 가독성 편집', icon: <Wand2 className="w-4 h-4" />, run: runAIEnhanceFromPalette },
+    { id: 'export-md', group: 'AI · 내보내기', label: '마크다운 내보내기', icon: <Download className="w-4 h-4" />, run: exportMarkdownFromPalette },
+  ]
+
   return (
     <div
       className={clsx(
@@ -844,6 +893,7 @@ export function MemoEditor() {
           alterEgoEnabled={alterEgoEnabled}
           onToggleOutline={isMdUp ? () => setShowOutline((prev) => !prev) : undefined}
           onSlideView={memoId ? () => useUIStore.getState().openSlideView(memoId) : undefined}
+          onOpenCommandPalette={() => setShowCommandPalette(true)}
         />
       )}
 
@@ -1072,6 +1122,11 @@ export function MemoEditor() {
             onClose={() => setShowVersionHistory(false)}
           />
         </Suspense>
+      )}
+
+      {/* Editor command palette */}
+      {showCommandPalette && (
+        <EditorCommandPalette commands={paletteCommands} onClose={() => setShowCommandPalette(false)} />
       )}
     </div>
   )

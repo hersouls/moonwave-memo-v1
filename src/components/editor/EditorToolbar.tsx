@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bold, Italic, Code, Link2, List, ListTree, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain, MonitorPlay, ChevronDown } from 'lucide-react'
+import { Bold, Italic, Code, Link2, List, ListTree, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain, MonitorPlay, ChevronDown, Command } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -22,6 +22,7 @@ interface EditorToolbarProps {
   alterEgoEnabled?: boolean
   onToggleOutline?: () => void
   onSlideView?: () => void
+  onOpenCommandPalette?: () => void
   // 'keyboard' = compact, focus-preserving bar pinned above the soft keyboard (mobile/tablet)
   variant?: 'default' | 'keyboard'
   onDismissKeyboard?: () => void
@@ -39,7 +40,7 @@ const toolBtnAccent =
 const toolSep = 'h-5 w-px bg-zinc-200/70 dark:bg-zinc-700/70 mx-1 shrink-0'
 const toolIcon = 'w-[18px] h-[18px]'
 
-export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled, onToggleOutline, onSlideView, variant = 'default', onDismissKeyboard }: EditorToolbarProps) {
+export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled, onToggleOutline, onSlideView, onOpenCommandPalette, variant = 'default', onDismissKeyboard }: EditorToolbarProps) {
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
   const [isEnhancing, setIsEnhancing] = useState(false)
 
@@ -313,7 +314,17 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
         </button>
 
         {/* Group: view */}
-        {(onSlideView || onToggleOutline || (alterEgoEnabled && onToggleAlterEgo)) && <div className={toolSep} />}
+        {(onOpenCommandPalette || onSlideView || onToggleOutline || (alterEgoEnabled && onToggleAlterEgo)) && <div className={toolSep} />}
+        {onOpenCommandPalette && (
+          <button
+            onClick={onOpenCommandPalette}
+            className={clsx(toolBtnBase, toolBtnDefault)}
+            title="명령 팔레트"
+            aria-label="명령 팔레트"
+          >
+            <Command className={toolIcon} />
+          </button>
+        )}
         {onSlideView && (
           <button
             onClick={onSlideView}
