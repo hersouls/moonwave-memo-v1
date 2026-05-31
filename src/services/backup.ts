@@ -1,7 +1,6 @@
 import { db, getAllMemos, getAllFolders } from './database'
 import type { Memo, Folder, BackupFile } from '@/lib/types'
 import { BACKUP_CONFIG, DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
-import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 
 export interface BackupValidationResult {
@@ -211,7 +210,8 @@ export async function clearAllData(): Promise<void> {
       sortOrder: i,
       isDefault: f.isDefault,
       isSystem: f.isSystem,
-      syncId: generateSyncId(),
+      // Stable canonical syncId so seed folders stay unified across devices
+      syncId: f.syncId,
       createdAt: now,
       updatedAt: now,
     }))

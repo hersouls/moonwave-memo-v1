@@ -71,7 +71,8 @@ class MemoDatabase extends Dexie {
           sortOrder: i,
           isDefault: f.isDefault,
           isSystem: f.isSystem,
-          syncId: generateSyncId(),
+          // Stable canonical syncId so seed folders stay unified across devices
+          syncId: f.syncId,
           createdAt: now,
           updatedAt: now,
         })
@@ -223,6 +224,21 @@ export async function getFolderBySyncId(syncId: string): Promise<Folder | undefi
 
 export async function getMemoCountByFolder(folderId: number): Promise<number> {
   return db.memos.where('folderId').equals(folderId).filter((m) => !m.deletedAt).count()
+}
+
+// All memos in a folder, including soft-deleted ones (used by sync dedupe).
+export async function getMemosByFolderId(folderId: number): Promise<Memo[]> {
+  return db.memos.where('folderId').equals(folderId).toArray()
+}
+
+// Move every memo from one folder to another without altering folder records.
+export async function moveMemosToFolder(fromFolderId: number, toFolderId: number): Promise<void> {
+  await db.memos.where('folderId').equals(fromFolderId).modify({ folderId: toFolderId, updatedAt: nowISO() })
+}
+
+// Delete a folder record only — does NOT relocate its memos (caller handles that).
+export async function removeFolderRecord(id: number): Promise<void> {
+  await db.folders.delete(id)
 }
 
 // ─── MemoImage CRUD ───────────────────────────────

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { clsx } from 'clsx'
 import {
   Check,
@@ -35,6 +35,7 @@ import {
 import { useSettingsStore, applyTheme, applyColorPalette, applyFontFamily, applyFontSize } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useFolderStore } from '@/stores/folderStore'
+import { useMemoStore } from '@/stores/memoStore'
 import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
 import { useUIStore } from '@/stores/uiStore'
 import { Button } from '@/components/ui/Button'
@@ -355,6 +356,17 @@ export function SettingsModal() {
   const addFolder = useFolderStore((s) => s.addFolder)
   const updateFolder = useFolderStore((s) => s.updateFolder)
   const deleteFolder = useFolderStore((s) => s.deleteFolder)
+  const memos = useMemoStore((s) => s.memos)
+
+  // Active (non-deleted) memo count per folder, shown in the folder management list.
+  const folderMemoCounts = useMemo(() => {
+    const counts = new Map<number, number>()
+    for (const m of memos) {
+      if (m.deletedAt || m.folderId == null) continue
+      counts.set(m.folderId, (counts.get(m.folderId) ?? 0) + 1)
+    }
+    return counts
+  }, [memos])
 
   const activeSource = useThemeOrchestrator((s) => s.activeSource)
 
@@ -1278,6 +1290,13 @@ export function SettingsModal() {
                   />
                   <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
                     {folder.name}
+                  </span>
+                  <span
+                    className="flex-shrink-0 inline-flex items-center gap-1 text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
+                    aria-label={`메모 ${folderMemoCounts.get(folder.id!) ?? 0}개`}
+                  >
+                    <StickyNote className="w-3 h-3" />
+                    {folderMemoCounts.get(folder.id!) ?? 0}
                   </span>
                   {!folder.isSystem && (
                     <div className="flex items-center gap-1">

@@ -11,7 +11,15 @@ import { firestore } from '@/lib/firebase'
 import type { Memo, Folder } from '@/lib/types'
 import * as database from './database'
 import { generateSyncId } from '@/utils/id'
+import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
 import { useToastStore } from '@/stores/toastStore'
+
+// Canonical seed folders shipped with the app. They share a stable syncId across
+// every device, so sync can recognise them as the same folder instead of cloning.
+const ALL_SEED_FOLDERS = [...DEFAULT_FOLDERS, ...SYSTEM_FOLDERS]
+const SEED_SYNC_IDS = new Set<string>(ALL_SEED_FOLDERS.map((s) => s.syncId))
+const CANONICAL_DEFAULT_SYNC_ID = DEFAULT_FOLDERS.find((s) => s.isDefault)!.syncId
+const CANONICAL_SYSTEM_SYNC_ID = SYSTEM_FOLDERS[0].syncId
 
 let unsubMemos: Unsubscribe | null = null
 let unsubFolders: Unsubscribe | null = null
@@ -172,12 +180,42 @@ async function doInitialMerge(userId: string) {
 
     // Merge folders first (memos reference folders)
     const folderSnap = await getDocs(collection(firestore, `users/${userId}/folders`))
+
+    // A freshly-installed device holds pristine seed folders that still carry their
+    // canonical syncIds. Match incoming cloud folders to those seeds by identity
+    // (flag for the singleton default/trash folders, name for the rest) and adopt the
+    // cloud's syncId, so the two devices unify on one folder instead of duplicating.
+    const localBeforeMerge = await database.getAllFolders()
+    const claimedSeedIds = new Set<number>()
+
     for (const docSnap of folderSnap.docs) {
       const remote = docSnap.data()
       const syncId = docSnap.id
       const local = await database.getFolderBySyncId(syncId)
 
       if (!local) {
+        const seedMatch = localBeforeMerge.find((f) =>
+          f.id != null &&
+          !claimedSeedIds.has(f.id) &&
+          SEED_SYNC_IDS.has(f.syncId ?? '') &&
+          (remote.isSystem
+            ? f.isSystem
+            : remote.isDefault
+              ? f.isDefault
+              : !f.isDefault && !f.isSystem && f.name === remote.name)
+        )
+
+        if (seedMatch?.id != null) {
+          claimedSeedIds.add(seedMatch.id)
+          await database.updateFolder(seedMatch.id, {
+            syncId,
+            name: remote.name,
+            color: remote.color,
+            sortOrder: remote.sortOrder ?? seedMatch.sortOrder,
+          })
+          continue
+        }
+
         await database.addFolder({
           name: remote.name,
           color: remote.color,
@@ -273,10 +311,79 @@ async function doInitialMerge(userId: string) {
       }
     }
 
+    // Collapse any duplicate seed folders left behind by earlier buggy syncs
+    await dedupeSeedFolders()
+
     if (refreshFolders) await refreshFolders()
     if (refreshMemos) await refreshMemos()
   } finally {
     mergePromise = null
+  }
+}
+
+// ─── Seed folder de-duplication ────────────────────
+//
+// Earlier builds seeded the default/system folders with a random per-device syncId,
+// so logging in on a new device cloned them. This collapses any such duplicates that
+// already reached an account: it keeps one folder per seed identity, moves the
+// duplicates' memos onto the survivor, then removes the empty duplicates locally and
+// from the cloud. It runs on every initial merge, so all devices converge on the same
+// survivor deterministically. When nothing is duplicated it is a cheap no-op.
+async function dedupeSeedFolders() {
+  const folders = await database.getAllFolders()
+
+  const groups: { members: Folder[]; canonicalSyncId: string }[] = []
+
+  // Singleton folders: exactly one default and one trash folder must exist. A renamed
+  // default is still caught here because it is matched by flag, not by name.
+  const defaults = folders.filter((f) => f.isDefault)
+  if (defaults.length > 1) {
+    groups.push({ members: defaults, canonicalSyncId: CANONICAL_DEFAULT_SYNC_ID })
+  }
+  const systems = folders.filter((f) => f.isSystem)
+  if (systems.length > 1) {
+    groups.push({ members: systems, canonicalSyncId: CANONICAL_SYSTEM_SYNC_ID })
+  }
+
+  // Named seed folders (스크랩/아이디어/쇼핑): only collapse folders that still match the
+  // seed template exactly (name + colour, ordinary flags), so a user's own folder that
+  // merely shares a name is never merged away.
+  for (const seed of DEFAULT_FOLDERS) {
+    if (seed.isDefault || seed.isSystem) continue
+    const members = folders.filter(
+      (f) => !f.isDefault && !f.isSystem && f.name === seed.name && f.color === seed.color
+    )
+    if (members.length > 1) {
+      groups.push({ members, canonicalSyncId: seed.syncId })
+    }
+  }
+
+  for (const { members, canonicalSyncId } of groups) {
+    // Deterministic survivor so every device keeps the same one: prefer the canonical
+    // syncId, otherwise the lexicographically smallest (syncId is globally consistent).
+    const sorted = [...members].sort((a, b) => {
+      const sa = a.syncId ?? ''
+      const sb = b.syncId ?? ''
+      return sa < sb ? -1 : sa > sb ? 1 : 0
+    })
+    const survivor = sorted.find((f) => f.syncId === canonicalSyncId) ?? sorted[0]
+    if (survivor?.id == null) continue
+
+    for (const loser of members) {
+      if (loser.id == null || loser.id === survivor.id) continue
+
+      // Re-home the duplicate's memos onto the survivor, then push the moved memos so the
+      // cloud copies reference the survivor's folder instead of the one we delete.
+      const moved = await database.getMemosByFolderId(loser.id)
+      await database.moveMemosToFolder(loser.id, survivor.id)
+      for (const m of moved) {
+        const fresh = m.id != null ? await database.getMemo(m.id) : undefined
+        if (fresh) await pushMemo(fresh)
+      }
+
+      await database.removeFolderRecord(loser.id)
+      if (loser.syncId) await deleteFolderFromCloud(loser.syncId)
+    }
   }
 }
 
@@ -367,6 +474,17 @@ function startListeners(userId: string) {
 
           if (change.type === 'added' || change.type === 'modified') {
             const local = await database.getFolderBySyncId(syncId)
+
+            // Never clone the singleton default/trash folder: if one already exists
+            // under a different syncId, skip this change and let the next initial merge
+            // reconcile the identities deterministically.
+            if (!local && (remote.isDefault || remote.isSystem)) {
+              const existingSingleton = (await database.getAllFolders()).find((f) =>
+                remote.isSystem ? f.isSystem : f.isDefault
+              )
+              if (existingSingleton) continue
+            }
+
             if (!local) {
               await database.addFolder({
                 name: remote.name,

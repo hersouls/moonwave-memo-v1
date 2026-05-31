@@ -1,14 +1,18 @@
 import type { MemoColor, ColorPalette, PaletteDefinition } from '@/lib/types'
 
+// Seed folders carry a stable, device-independent `syncId`.
+// Cross-device sync identifies folders by syncId, so seeding with a random id
+// per device made every new device's defaults look distinct from the cloud's,
+// producing duplicates on login. Canonical ids keep them unified everywhere.
 export const DEFAULT_FOLDERS = [
-  { name: '내 메모', color: '#F59E0B', isDefault: true, isSystem: false },
-  { name: '스크랩', color: '#84CC16', isDefault: false, isSystem: false },
-  { name: '아이디어', color: '#22C55E', isDefault: false, isSystem: false },
-  { name: '쇼핑', color: '#06B6D4', isDefault: false, isSystem: false },
+  { name: '내 메모', color: '#F59E0B', isDefault: true, isSystem: false, syncId: 'seed-default-my-memos' },
+  { name: '스크랩', color: '#84CC16', isDefault: false, isSystem: false, syncId: 'seed-default-scrap' },
+  { name: '아이디어', color: '#22C55E', isDefault: false, isSystem: false, syncId: 'seed-default-idea' },
+  { name: '쇼핑', color: '#06B6D4', isDefault: false, isSystem: false, syncId: 'seed-default-shopping' },
 ] as const
 
 export const SYSTEM_FOLDERS = [
-  { name: '삭제된 메모', color: '#A1A1AA', isDefault: false, isSystem: true },
+  { name: '삭제된 메모', color: '#A1A1AA', isDefault: false, isSystem: true, syncId: 'seed-system-trash' },
 ] as const
 
 export const FOLDER_COLORS = [
