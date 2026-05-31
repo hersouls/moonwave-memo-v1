@@ -131,6 +131,22 @@ export function MemoEditor() {
 
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const splitPreviewRef = useRef<HTMLDivElement>(null)
+
+  // Split view (desktop): proportionally mirror the edit textarea's scroll onto the preview pane.
+  useEffect(() => {
+    if (!isSplit) return
+    const ta = bodyRef.current
+    const preview = splitPreviewRef.current
+    if (!ta || !preview) return
+    const onScroll = () => {
+      const denom = ta.scrollHeight - ta.clientHeight
+      if (denom <= 0) return
+      preview.scrollTop = (ta.scrollTop / denom) * (preview.scrollHeight - preview.clientHeight)
+    }
+    ta.addEventListener('scroll', onScroll, { passive: true })
+    return () => ta.removeEventListener('scroll', onScroll)
+  }, [isSplit])
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasCreated = useRef(false)
   // Auto-title: track whether title was set by user or auto-generated
@@ -866,7 +882,7 @@ export function MemoEditor() {
                 {editContent}
               </div>
               <div className="w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
-              <div className="flex-1 p-4 overflow-auto">
+              <div ref={splitPreviewRef} className="flex-1 p-4 overflow-auto">
                 {previewContent}
               </div>
             </div>
