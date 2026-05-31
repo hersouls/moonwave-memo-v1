@@ -1,4 +1,4 @@
-import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download, ImagePlus, FileCode2, Type } from 'lucide-react'
+import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download, ImagePlus, FileCode2, Type, Copy } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 import { useMemoStore } from '@/stores/memoStore'
@@ -78,6 +78,26 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
     if (!memoId) return
     togglePin(memoId)
     setIsMenuOpen(false)
+  }
+
+  const handleCopyText = async () => {
+    setIsMenuOpen(false)
+    const parts: string[] = []
+    if (title && title.trim()) parts.push(title.trim())
+    if (body && body.length) parts.push(body)
+    const fullText = parts.join('\n\n')
+
+    const { useToastStore } = await import('@/stores/toastStore')
+    if (!fullText) {
+      useToastStore.getState().showToast('복사할 내용이 없습니다', 'info')
+      return
+    }
+    const { copyTextToClipboard } = await import('@/utils/share')
+    const ok = await copyTextToClipboard(fullText)
+    useToastStore.getState().showToast(
+      ok ? '전체 텍스트가 복사되었습니다' : '복사에 실패했습니다',
+      ok ? 'success' : 'warning',
+    )
   }
 
   const handleExportMarkdown = () => {
@@ -311,6 +331,14 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 >
                   <FileCode2 className="w-4 h-4" />
                   링크로 공유
+                </button>
+                <button
+                  onClick={handleCopyText}
+                  className="ctx-menu__item w-full"
+                  role="menuitem"
+                >
+                  <Copy className="w-4 h-4" />
+                  전체 텍스트 복사
                 </button>
                 <button
                   onClick={handleExportMarkdown}
