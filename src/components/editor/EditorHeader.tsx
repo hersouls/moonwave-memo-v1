@@ -40,6 +40,14 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
   const editorMode = useSettingsStore((s) => s.settings.memoSettings.editorMode)
   const setEditorMode = useSettingsStore((s) => s.setEditorMode)
   const navigate = useNavigate()
+  const isDesktop = useUIStore((s) => s.isDesktop)
+  const isTablet = useUIStore((s) => s.isTablet)
+  const isMdUp = isTablet || isDesktop
+  // Mode toggle is tier-aware: split needs desktop width, so tablet cycles tabs↔WYSIWYG only.
+  const editorModeCycle: EditorMode[] = isDesktop ? ['tabs', 'split', 'tiptap'] : ['tabs', 'tiptap']
+  const displayEditorMode: EditorMode = !isDesktop && editorMode === 'split' ? 'tabs' : editorMode
+  const nextEditorMode = editorModeCycle[(Math.max(0, editorModeCycle.indexOf(displayEditorMode)) + 1) % editorModeCycle.length]
+  const editorModeLabel: Record<EditorMode, string> = { tabs: '탭 모드', split: '분할 모드', tiptap: 'WYSIWYG 모드' }
 
   const handleDelete = async () => {
     if (!memoId) return
@@ -179,31 +187,24 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           <X className="f-icon--muted w-5 h-5" />
         </button>
 
-        {/* Editor mode toggle — desktop only (tabs → split → tiptap → tabs) */}
-        <button
-          onClick={() => {
-            const modes: EditorMode[] = ['tabs', 'split', 'tiptap']
-            const idx = modes.indexOf(editorMode)
-            setEditorMode(modes[(idx + 1) % modes.length])
-          }}
-          className="f-icon-btn hidden lg:inline-flex"
-          aria-label={
-            editorMode === 'tabs' ? '분할 모드' :
-            editorMode === 'split' ? 'WYSIWYG 모드' : '탭 모드'
-          }
-          title={
-            editorMode === 'tabs' ? '분할 모드' :
-            editorMode === 'split' ? 'WYSIWYG 모드' : '탭 모드'
-          }
-        >
-          {editorMode === 'tiptap' ? (
-            <Type className="f-icon--muted w-5 h-5" />
-          ) : editorMode === 'split' ? (
-            <Rows2 className="f-icon--muted w-5 h-5" />
-          ) : (
-            <Columns2 className="f-icon--muted w-5 h-5" />
-          )}
-        </button>
+        {/* Editor mode toggle — tablet & desktop only (conditional render; CSS `hidden`
+            is unreliable here because .f-icon-btn sets its own display). Tier-aware cycle. */}
+        {isMdUp && (
+          <button
+            onClick={() => setEditorMode(nextEditorMode)}
+            className="f-icon-btn"
+            aria-label={`${editorModeLabel[nextEditorMode]}로 전환`}
+            title={`${editorModeLabel[nextEditorMode]}로 전환`}
+          >
+            {displayEditorMode === 'tiptap' ? (
+              <Type className="f-icon--muted w-5 h-5" />
+            ) : displayEditorMode === 'split' ? (
+              <Rows2 className="f-icon--muted w-5 h-5" />
+            ) : (
+              <Columns2 className="f-icon--muted w-5 h-5" />
+            )}
+          </button>
+        )}
 
         {/* Memo color selector */}
         {onColorChange && (

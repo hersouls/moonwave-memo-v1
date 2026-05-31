@@ -120,6 +120,10 @@ export function MemoEditor() {
 
   // Split view
   const isLg = useUIStore((s) => s.isDesktop)
+  const isTablet = useUIStore((s) => s.isTablet)
+  // Tablet & desktop get the richer editor (outline, side panels, WYSIWYG).
+  // Split view stays desktop-only (isLg) since it needs two readable columns.
+  const isMdUp = isTablet || isLg
   const isTiptap = editorMode === 'tiptap'
   const isTiptapRef = useRef(isTiptap)
   isTiptapRef.current = isTiptap
@@ -822,7 +826,7 @@ export function MemoEditor() {
           onAIEnhance={handleAIEnhance}
           onToggleAlterEgo={() => setShowAlterEgo((prev) => !prev)}
           alterEgoEnabled={alterEgoEnabled}
-          onToggleOutline={() => setShowOutline((prev) => !prev)}
+          onToggleOutline={isMdUp ? () => setShowOutline((prev) => !prev) : undefined}
           onSlideView={memoId ? () => useUIStore.getState().openSlideView(memoId) : undefined}
         />
       )}
@@ -923,25 +927,25 @@ export function MemoEditor() {
         </div>
 
         {/* Outline panel — desktop only */}
-        {showOutline && isLg && !isFocusMode && (
-          <div className="hidden lg:block w-52 shrink-0">
+        {showOutline && isMdUp && !isFocusMode && (
+          <div className="hidden md:block w-52 shrink-0">
             <EditorOutline body={body} onScrollToLine={handleOutlineScrollToLine} onScrollToHeadingIndex={isTiptap ? handleOutlineScrollToHeadingIndex : undefined} onClose={() => setShowOutline(false)} />
           </div>
         )}
 
         {/* Alter Ego (데미안) side panel — desktop */}
         {showAlterEgo && alterEgoEnabled && !isFocusMode && (
-          <div className="hidden lg:flex w-80 shrink-0">
+          <div className="hidden md:flex w-80 shrink-0">
             <AlterEgoPanel body={body} onClose={() => setShowAlterEgo(false)} />
           </div>
         )}
       </div>
 
-      {/* Alter Ego (데미안) bottom sheet — mobile */}
+      {/* Alter Ego (데미안) bottom sheet — mobile only (<md) */}
       {showAlterEgo && alterEgoEnabled && !isFocusMode && (
         <>
-          <div className="lg:hidden fixed inset-0 z-30 bg-black/30" onClick={() => setShowAlterEgo(false)} />
-          <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 h-[60dvh] bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 rounded-t-2xl shadow-2xl flex flex-col">
+          <div className="md:hidden fixed inset-0 z-30 bg-black/30" onClick={() => setShowAlterEgo(false)} />
+          <div className="md:hidden fixed inset-x-0 bottom-0 z-30 h-[60dvh] bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 rounded-t-2xl shadow-2xl flex flex-col">
             <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mx-auto mt-2 mb-1 shrink-0" />
             <AlterEgoPanel body={body} onClose={() => setShowAlterEgo(false)} />
           </div>

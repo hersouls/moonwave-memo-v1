@@ -280,7 +280,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
         {onToggleOutline && (
           <button
             onClick={onToggleOutline}
-            className={clsx(toolBtnBase, toolBtnDefault, 'hidden lg:inline-flex')}
+            className={clsx(toolBtnBase, toolBtnDefault)}
             title="목차 (Outline)"
             aria-label="목차"
           >
