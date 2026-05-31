@@ -44,19 +44,19 @@ export function Header() {
 
   // UX-08: hide on desktop when in editor
   return (
-    <header className={`sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm will-change-transform border-b border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ${isEditorRoute ? 'lg:hidden' : ''} ${headerHidden ? '-translate-y-full' : ''}`}>
+    <header className={`sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm will-change-transform border-b border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ${isEditorRoute ? 'md:hidden' : ''} ${headerHidden ? '-translate-y-full' : ''}`}>
       <nav className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left: Mobile menu + Logo */}
         <div className="flex items-center gap-3">
           <button
             onClick={openMobileMenu}
-            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="md:hidden p-2 -ml-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             aria-label="메뉴 열기"
           >
             <Menu className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
           </button>
 
-          <Link to="/" className="lg:hidden flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+          <Link to="/" className="md:hidden flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
             <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
               <StickyNote className="w-5 h-5 text-white" />
             </div>

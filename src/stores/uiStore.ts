@@ -32,6 +32,10 @@ interface UIState {
   slideViewMemoId: number | null
   isFocusMode: boolean
   isNarrowFold: boolean
+  isMobile: boolean
+  isTablet: boolean
+  // Tablet sidebar starts collapsed (rail); independent of the persisted desktop state.
+  tabletSidebarOpen: boolean
   isDesktop: boolean
   isWideDesktop: boolean
   isKeyboardOpen: boolean
@@ -45,6 +49,7 @@ interface UIState {
   // Actions
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
+  toggleTabletSidebar: () => void
   setCurrentView: (view: CurrentView) => void
   openMobileMenu: () => void
   closeMobileMenu: () => void
@@ -119,6 +124,9 @@ export const useUIStore = create<UIState>()(
       slideViewMemoId: null,
       isFocusMode: false,
       isNarrowFold: false,
+      isMobile: false,
+      isTablet: false,
+      tabletSidebarOpen: false,
       isDesktop: false,
       isWideDesktop: false,
       isKeyboardOpen: false,
@@ -130,6 +138,7 @@ export const useUIStore = create<UIState>()(
 
       toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
       setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+      toggleTabletSidebar: () => set((s) => ({ tabletSidebarOpen: !s.tabletSidebarOpen })),
       setCurrentView: (view) => set({ currentView: view, isSelectionMode: false, selectedMemoIds: [] }),
       openMobileMenu: () => set({ isMobileMenuOpen: true }),
       closeMobileMenu: () => set({ isMobileMenuOpen: false }),

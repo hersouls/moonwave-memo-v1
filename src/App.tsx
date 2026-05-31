@@ -58,7 +58,11 @@ export default function App() {
   const initializeFolders = useFolderStore((state) => state.initialize)
   const initSettings = useSettingsStore((state) => state.initialize)
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen)
+  const isTablet = useUIStore((state) => state.isTablet)
+  const tabletSidebarOpen = useUIStore((state) => state.tabletSidebarOpen)
   const isFocusMode = useUIStore((state) => state.isFocusMode)
+  // Tablet rail keeps its own collapse state; mirror it for the content offset.
+  const sidebarExpanded = isTablet ? tabletSidebarOpen : isSidebarOpen
 
   // PERF: Subscribe to modal open states for conditional lazy rendering
   const isSettingsOpen = useUIStore((s) => s.isSettingsModalOpen)
@@ -269,6 +273,28 @@ export default function App() {
     return () => mql.removeEventListener('change', handleChange)
   }, [])
 
+  // Mobile tier detection (≤767px: touch-first, bottom nav)
+  useEffect(() => {
+    const mql = window.matchMedia(MEDIA.mobile)
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      useUIStore.setState({ isMobile: e.matches })
+    }
+    handleChange(mql)
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
+  }, [])
+
+  // Tablet tier detection (768–1023px: compact sidebar shell)
+  useEffect(() => {
+    const mql = window.matchMedia(MEDIA.tabletOnly)
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      useUIStore.setState({ isTablet: e.matches })
+    }
+    handleChange(mql)
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
+  }, [])
+
   // Global keyboard state sync via VisualViewport API
   useEffect(() => {
     const vv = window.visualViewport
@@ -368,8 +394,9 @@ export default function App() {
       <div
         className={clsx(
           // PERF-04: removed transition-all duration-300 (sidebar has its own transition)
+          // Sidebar appears at md+ (tablet & desktop); mobile (<md) uses bottom nav, no margin.
           'flex-1 flex flex-col',
-          !isFocusMode && (isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16')
+          !isFocusMode && (sidebarExpanded ? 'md:ml-64' : 'md:ml-16')
         )}
       >
         {!isFocusMode && <Header />}
@@ -378,8 +405,9 @@ export default function App() {
           aria-live="polite"
           className={clsx(
             'flex-1',
+            // pb-20 clears the mobile bottom nav; removed at md+ where the sidebar replaces it
             isFocusMode ? '' : 'pb-20',
-            !isFocusMode && (isMemoRoute ? 'lg:pb-0 lg:overflow-hidden' : 'lg:pb-6')
+            !isFocusMode && (isMemoRoute ? 'md:pb-0 lg:overflow-hidden' : 'md:pb-6')
           )}
         >
           {/* TECH-02: ErrorBoundary wraps route content */}

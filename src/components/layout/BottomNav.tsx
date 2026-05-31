@@ -53,7 +53,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm will-change-transform border-t border-zinc-200 dark:border-zinc-800 pb-safe"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm will-change-transform border-t border-zinc-200 dark:border-zinc-800 pb-safe"
       aria-label="하단 메인 네비게이션"
     >
       <ul className="flex items-center justify-around h-16 fold:h-12" role="menubar">

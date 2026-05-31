@@ -70,6 +70,12 @@
   /* Fonts */
   --font-sans: var(--memo-font-family, 'Pretendard'), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+
+  /* Breakpoints — canonical 3-tier scale (see src/utils/breakpoints.ts).
+     xs targets the narrowest recent phones (~360px); 2xl widened to 1920 for large desktops.
+     sm/md/lg/xl keep Tailwind defaults (640/768/1024/1280). */
+  --breakpoint-xs: 360px;
+  --breakpoint-2xl: 1920px;
 }
 
 /* Base styles */
@@ -752,6 +758,41 @@ html.completion-catharsis .completion-flash-overlay {
 
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+.px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ========================================
+   Touch optimization (high-end mobile feel)
+   ======================================== */
+/* Kill the grey tap flash; ripple/active states provide feedback instead */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove the 300ms tap delay and double-tap-zoom on interactive controls.
+   Drag/swipe surfaces set their own touch-action (pan-y/none) via inline style
+   or utility classes, which win over this element-level rule. */
+button,
+a,
+[role="button"],
+[role="menuitem"],
+[role="tab"],
+label,
+summary {
+  touch-action: manipulation;
+}
+
+/* Native momentum scrolling on iOS for every scroll container */
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto,
+.overflow-y-scroll,
+.overflow-x-scroll {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* FAB narrow fold sizing */

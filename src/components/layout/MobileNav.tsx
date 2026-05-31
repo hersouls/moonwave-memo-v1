@@ -110,7 +110,7 @@ export function MobileNav() {
 
   return (
     <Transition show={isMobileMenuOpen} as={Fragment}>
-      <Dialog onClose={closeMobileMenu} className="relative z-50 lg:hidden" id="mobile-nav">
+      <Dialog onClose={closeMobileMenu} className="relative z-50 md:hidden" id="mobile-nav">
         {/* Backdrop */}
         <TransitionChild
           as={Fragment}

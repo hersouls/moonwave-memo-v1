@@ -26,8 +26,15 @@ import { FOLDER_COLORS } from '@/utils/constants'
 
 export function Sidebar() {
   const navigate = useNavigate()
-  const isSidebarOpen = useUIStore((s) => s.isSidebarOpen)
+  const isSidebarOpenStore = useUIStore((s) => s.isSidebarOpen)
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
+  const isTablet = useUIStore((s) => s.isTablet)
+  const tabletSidebarOpen = useUIStore((s) => s.tabletSidebarOpen)
+  const toggleTabletSidebar = useUIStore((s) => s.toggleTabletSidebar)
+  // Tablet (768–1023) shows a collapsible rail with its own non-persisted state,
+  // defaulting to collapsed; desktop keeps the persisted expand/collapse preference.
+  const isSidebarOpen = isTablet ? tabletSidebarOpen : isSidebarOpenStore
+  const handleToggleSidebar = isTablet ? toggleTabletSidebar : toggleSidebar
   const activeFolderId = useUIStore((s) => s.activeFolderId)
   const setActiveFolderId = useUIStore((s) => s.setActiveFolderId)
   const activeFilter = useUIStore((s) => s.activeFilter)
@@ -177,7 +184,7 @@ export function Sidebar() {
   return (
     <aside
       className={clsx(
-        'hidden lg:flex flex-col fixed h-screen bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 z-40',
+        'hidden md:flex flex-col fixed h-screen bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 z-40',
         isSidebarOpen ? 'w-64' : 'w-16'
       )}
       role="complementary"
@@ -303,7 +310,7 @@ export function Sidebar() {
           <div className="mt-6 px-2">
             <Tooltip content={`태그 (${allTags.length})`} placement="right">
               <button
-                onClick={() => toggleSidebar()}
+                onClick={handleToggleSidebar}
                 className="w-full flex items-center justify-center px-3 py-2.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors relative"
                 aria-label="태그 목록 보기"
               >
@@ -402,7 +409,7 @@ export function Sidebar() {
         {!isSidebarOpen ? (
           <Tooltip content="사이드바 펼치기" placement="right">
             <button
-              onClick={toggleSidebar}
+              onClick={handleToggleSidebar}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
               aria-label="사이드바 펼치기"
               aria-expanded={false}

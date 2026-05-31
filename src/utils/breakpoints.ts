@@ -9,8 +9,11 @@ export const BREAKPOINTS = {
   fold: 420,
 } as const
 
-// Pre-built media query strings for JS matchMedia calls
+// Pre-built media query strings for JS matchMedia calls.
+// Three-tier model: mobile (≤767, touch-first) · tablet (768–1023) · desktop (≥1024).
 export const MEDIA = {
+  mobile: `(max-width: ${BREAKPOINTS.md - 1}px)`,
+  tabletOnly: `(min-width: ${BREAKPOINTS.md}px) and (max-width: ${BREAKPOINTS.lg - 1}px)`,
   desktop: `(min-width: ${BREAKPOINTS.lg}px)`,
   wideDesktop: `(min-width: ${BREAKPOINTS.xl}px)`,
   tablet: `(min-width: ${BREAKPOINTS.md}px)`,
