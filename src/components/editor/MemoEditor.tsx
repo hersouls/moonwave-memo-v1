@@ -952,6 +952,24 @@ export function MemoEditor() {
         </>
       )}
 
+      {/* Mobile/tablet keyboard accessory bar — keeps formatting reachable while typing.
+          Pinned just above the soft keyboard; desktop is unaffected (keeps its own toolbar). */}
+      {!isLg && isKeyboardOpen && !isFocusMode && (isTiptap || activeTab === 'edit') && (
+        <div className="fixed inset-x-0 z-40" style={{ bottom: `${Math.max(0, keyboardHeight || 0)}px` }}>
+          <EditorToolbar
+            variant="keyboard"
+            textareaRef={bodyRef}
+            tiptapEditor={isTiptap ? tiptapEditor : undefined}
+            onContentChange={handleBodyChange}
+            onUndo={isTiptap ? () => tiptapEditor?.commands.undo() : undoText}
+            onRedo={isTiptap ? () => tiptapEditor?.commands.redo() : redoText}
+            canUndo={isTiptap ? (tiptapEditor?.can().undo() ?? false) : undoCount > 0}
+            canRedo={isTiptap ? (tiptapEditor?.can().redo() ?? false) : redoCount > 0}
+            onDismissKeyboard={() => { bodyRef.current?.blur(); tiptapEditor?.commands.blur() }}
+          />
+        </div>
+      )}
+
       {/* Focus mode: semi-transparent close button for touch devices / PWA */}
       {isFocusMode && 'ontouchstart' in window && (
         <button

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bold, Italic, Code, Link2, List, ListTree, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain, MonitorPlay } from 'lucide-react'
+import { Bold, Italic, Code, Link2, List, ListTree, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain, MonitorPlay, ChevronDown } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -22,6 +22,9 @@ interface EditorToolbarProps {
   alterEgoEnabled?: boolean
   onToggleOutline?: () => void
   onSlideView?: () => void
+  // 'keyboard' = compact, focus-preserving bar pinned above the soft keyboard (mobile/tablet)
+  variant?: 'default' | 'keyboard'
+  onDismissKeyboard?: () => void
 }
 
 // Unified toolbar button system — refined, consistent hover/active/focus states
@@ -36,7 +39,7 @@ const toolBtnAccent =
 const toolSep = 'h-5 w-px bg-zinc-200/70 dark:bg-zinc-700/70 mx-1 shrink-0'
 const toolIcon = 'w-[18px] h-[18px]'
 
-export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled, onToggleOutline, onSlideView }: EditorToolbarProps) {
+export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUndo, onRedo, canUndo, canRedo, memoId, body, onAIEnhance, onToggleAlterEgo, alterEgoEnabled, onToggleOutline, onSlideView, variant = 'default', onDismissKeyboard }: EditorToolbarProps) {
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set())
   const [isEnhancing, setIsEnhancing] = useState(false)
 
@@ -167,6 +170,50 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
     { icon: <List className={toolIcon} />, label: '목록', title: '목록', formatKey: 'list', action: () => e ? e.chain().focus().toggleBulletList().run() : insertAtCursor('- ') },
     { icon: <Heading2 className={toolIcon} />, label: '제목', title: '제목', formatKey: 'heading', action: () => e ? e.chain().focus().toggleHeading({ level: 2 }).run() : insertAtCursor('## ') },
   ]
+
+  // Compact accessory bar pinned above the soft keyboard. Container-level
+  // onMouseDown preventDefault keeps the editor focused (keyboard stays open) when
+  // tapping format buttons; the dismiss button explicitly blurs to close the keyboard.
+  if (variant === 'keyboard') {
+    return (
+      <div
+        className="flex items-center gap-0.5 px-2 py-1 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 overflow-x-auto scrollbar-none pb-[env(safe-area-inset-bottom,0px)]"
+        onMouseDown={(ev) => ev.preventDefault()}
+      >
+        {onUndo && (
+          <>
+            <button onClick={onUndo} disabled={!canUndo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="실행취소"><Undo2 className={toolIcon} /></button>
+            <button onClick={onRedo} disabled={!canRedo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="다시실행"><Redo2 className={toolIcon} /></button>
+            <div className={toolSep} />
+          </>
+        )}
+        {tools.map((tool) => {
+          const active = activeFormats.has(tool.formatKey)
+          return (
+            <button
+              key={tool.label}
+              onClick={tool.action}
+              aria-pressed={active}
+              className={clsx(toolBtnBase, active ? toolBtnActive : toolBtnDefault)}
+              aria-label={tool.label}
+            >
+              {tool.icon}
+            </button>
+          )
+        })}
+        <div className="flex-1" />
+        {onDismissKeyboard && (
+          <button
+            onClick={onDismissKeyboard}
+            className={clsx(toolBtnBase, toolBtnDefault)}
+            aria-label="키보드 닫기"
+          >
+            <ChevronDown className={toolIcon} />
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div
