@@ -35,6 +35,7 @@ function SemanticCanvas() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [hoveredNode, setHoveredNode] = useState<CanvasNode | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const lastPinchDistRef = useRef<number | null>(null)
 
   // Detect dark mode
   const isDark = useMemo(() => {
@@ -75,6 +76,38 @@ function SemanticCanvas() {
       ...prev,
       scale: Math.min(3, Math.max(0.3, prev.scale * delta)),
     }))
+  }, [])
+
+  // Touch: single-finger pan, two-finger pinch zoom (mobile/tablet)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      if ((e.target as Element).closest?.('.canvas-node')) return
+      const t = e.touches[0]
+      setIsDragging(true)
+      setDragStart({ x: t.clientX - transform.x, y: t.clientY - transform.y })
+    } else if (e.touches.length === 2) {
+      setIsDragging(false)
+      const [a, b] = [e.touches[0], e.touches[1]]
+      lastPinchDistRef.current = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+    }
+  }, [transform.x, transform.y])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isDragging) {
+      const t = e.touches[0]
+      setTransform((prev) => ({ ...prev, x: t.clientX - dragStart.x, y: t.clientY - dragStart.y }))
+    } else if (e.touches.length === 2 && lastPinchDistRef.current) {
+      const [a, b] = [e.touches[0], e.touches[1]]
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+      const ratio = dist / lastPinchDistRef.current
+      lastPinchDistRef.current = dist
+      setTransform((prev) => ({ ...prev, scale: Math.min(3, Math.max(0.3, prev.scale * ratio)) }))
+    }
+  }, [isDragging, dragStart])
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false)
+    lastPinchDistRef.current = null
   }, [])
 
   const handleZoomIn = () => {
@@ -189,6 +222,10 @@ function SemanticCanvas() {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'none' }}
       >
         <g transform={`translate(${transform.x + (svgRef.current?.clientWidth ?? 800) / 2}, ${transform.y + (svgRef.current?.clientHeight ?? 600) / 2}) scale(${transform.scale})`}>
           {/* Connection lines for close nodes (optional visual) */}
