@@ -26,14 +26,14 @@ function WidgetFallback() {
 
 export function DashboardPage() {
   return (
-    <div className="@container mx-auto w-full max-w-5xl xl:max-w-7xl px-4 py-4 lg:px-8 lg:py-6">
+    <div className="@container mx-auto w-full max-w-5xl xl:max-w-7xl 2xl:max-w-[1600px] px-4 py-4 lg:px-8 lg:py-6">
       {/* 최근 작업 위젯 (ContinueBanner 대체) */}
       <div className="mb-4">
         <RecentWorkWidget />
       </div>
 
-      {/* Container-query responsive: 2-col @lg, 3-col @xl */}
-      <div className="grid grid-cols-1 @lg:grid-cols-2 @xl:grid-cols-3 gap-4">
+      {/* Container-query responsive: 2-col @lg, 3-col @xl, 4-col @5xl (wide desktop) */}
+      <div className="grid grid-cols-1 @lg:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4 gap-4">
         <ProfileCard />
         <Suspense fallback={<WidgetFallback />}><BriefingWidget /></Suspense>
         <StreakCounter />

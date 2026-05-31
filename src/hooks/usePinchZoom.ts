@@ -37,10 +37,13 @@ export function usePinchZoom() {
     [zoomLevel]
   )
 
+  // Column counts scale with the list container width (container queries).
+  // @5xl/@7xl tiers add columns on wide/ultrawide desktops while leaving
+  // standard laptops (~1280px) unchanged.
   const gridCols: Record<ZoomLevel, string> = {
-    compact: 'grid-cols-2 @2xs:grid-cols-3 @sm:grid-cols-4 @lg:grid-cols-5 @xl:grid-cols-6',
-    normal: 'grid-cols-1 @2xs:grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5',
-    expanded: 'grid-cols-1 @2xs:grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4',
+    compact: 'grid-cols-2 @2xs:grid-cols-3 @sm:grid-cols-4 @lg:grid-cols-5 @xl:grid-cols-6 @5xl:grid-cols-7 @7xl:grid-cols-8',
+    normal: 'grid-cols-1 @2xs:grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5 @5xl:grid-cols-6 @7xl:grid-cols-7',
+    expanded: 'grid-cols-1 @2xs:grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4 @5xl:grid-cols-5 @7xl:grid-cols-6',
   }
 
   return {

@@ -74,7 +74,7 @@ export function KanbanView({ memos }: KanbanViewProps) {
       {columns.map((column) => (
         <div
           key={column.id ?? 'uncategorized'}
-          className="flex flex-col min-w-[280px] max-w-[320px] shrink-0 snap-start"
+          className="flex flex-col w-[82vw] max-w-[88vw] sm:w-auto sm:min-w-[280px] sm:max-w-[320px] shrink-0 snap-start"
         >
           {/* Column header */}
           <div className="flex items-center gap-2 px-3 py-2.5 mb-2">

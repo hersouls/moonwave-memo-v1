@@ -278,7 +278,7 @@ export function MemoList() {
             viewMode === 'grid'
               ? isNarrowFold
                 ? 'grid grid-cols-1 gap-2'
-                : 'grid grid-cols-1 @2xs:grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5 gap-3'
+                : 'grid grid-cols-1 @2xs:grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5 @5xl:grid-cols-6 @7xl:grid-cols-7 gap-3'
               : clsx('flex flex-col', isNarrowFold ? 'gap-2' : 'gap-2.5 @lg:max-w-3xl @lg:mx-auto')
           )}>
             {Array.from({ length: viewMode === 'grid' ? 4 : 2 }, (_, i) => <SkeletonMemoCard key={i} />)}
