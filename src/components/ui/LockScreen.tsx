@@ -10,7 +10,7 @@ export function LockScreen() {
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl">
-      <Lock className="w-12 h-12 text-zinc-400 dark:text-zinc-500 mb-4" />
+      <Lock className="w-12 h-12 text-zinc-500 dark:text-zinc-400 mb-4" />
       <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
         앱이 잠겨 있습니다
       </h2>

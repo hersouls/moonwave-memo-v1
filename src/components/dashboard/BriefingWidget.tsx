@@ -78,7 +78,7 @@ export function BriefingWidget() {
               <Sparkles className="h-3 w-3 text-amber-400" />
             )}
           </div>
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
             {localBriefing.todayStr}
           </p>
         </div>

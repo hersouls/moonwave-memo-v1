@@ -544,7 +544,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                 </span>
               ))}
               {memo.tags.length > (isGrid ? 2 : 3) && (
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
                   +{memo.tags.length - (isGrid ? 2 : 3)}
                 </span>
               )}
@@ -553,7 +553,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
 
           {/* Footer */}
           <div className={clsx(
-            'flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500',
+            'flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400',
             isGrid ? 'text-[10px] mt-auto pt-1' : 'text-[11px]'
           )}>
             {folder && (

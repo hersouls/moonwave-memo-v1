@@ -59,7 +59,7 @@ export function TodoWidget() {
                 <p className="text-sm text-zinc-700 dark:text-zinc-300 truncate">
                   {todo.text}
                 </p>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
                   {todo.memoTitle}
                 </p>
               </div>

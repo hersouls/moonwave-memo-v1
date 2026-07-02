@@ -88,7 +88,7 @@ export function ConnectionStatusIcon() {
       ) : syncStatus === 'error' ? (
         <CloudOff className="h-4 w-4 text-danger-500" />
       ) : (
-        <Wifi className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+        <Wifi className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
       )}
     </div>
   )

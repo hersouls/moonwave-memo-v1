@@ -60,7 +60,7 @@ export function MemoContextMenu() {
           <LayoutList className="ctx-menu__item-icon" />
         )}
         보기 방식
-        <span className="ml-auto text-xs text-zinc-400 dark:text-zinc-500">
+        <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
           {viewMode === 'list' ? '목록' : '그리드'}
         </span>
       </button>
@@ -71,7 +71,7 @@ export function MemoContextMenu() {
       >
         <ArrowUpDown className="ctx-menu__item-icon" />
         정렬 기준
-        <span className="ml-auto text-xs text-zinc-400 dark:text-zinc-500">
+        <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
           {SORT_LABELS[sortBy]}
         </span>
       </button>

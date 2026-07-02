@@ -72,7 +72,7 @@ export function CalendarGrid({
               'text-center text-xs font-medium py-1.5',
               i === 0 && 'text-danger-500',
               i === 6 && 'text-primary-500',
-              i > 0 && i < 6 && 'text-zinc-400 dark:text-zinc-500'
+              i > 0 && i < 6 && 'text-zinc-500 dark:text-zinc-400'
             )}
           >
             {day}

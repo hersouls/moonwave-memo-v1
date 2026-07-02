@@ -86,7 +86,7 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4 text-purple-500" />
           <span className="font-medium text-sm text-zinc-800 dark:text-zinc-200">데미안</span>
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <span className="text-[10px] text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
             {exchangeCount}/{maxExchanges}
           </span>
         </div>
@@ -114,7 +114,7 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-2 px-4">
             <Brain className="w-8 h-8 text-zinc-200 dark:text-zinc-700" />
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               데미안은 당신의 또 다른 자아입니다.
               <br />
               글쓰기에 대해 질문하거나 생각을 나눠보세요.

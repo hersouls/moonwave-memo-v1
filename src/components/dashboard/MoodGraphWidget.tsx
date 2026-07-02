@@ -69,7 +69,7 @@ export function MoodGraphWidget() {
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           {'감정 트래커'}
         </span>
-        <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">
+        <span className="ml-auto text-[10px] text-zinc-500 dark:text-zinc-400">
           {'최근 30일'}
         </span>
       </div>

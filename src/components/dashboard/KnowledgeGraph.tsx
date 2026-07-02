@@ -184,7 +184,7 @@ export function KnowledgeGraph() {
         className="border-t border-zinc-100 dark:border-zinc-700 px-2 py-3"
       >
         {nodes.length < 3 ? (
-          <div className="flex items-center justify-center py-8 text-zinc-400 dark:text-zinc-500">
+          <div className="flex items-center justify-center py-8 text-zinc-500 dark:text-zinc-400">
             <p className="text-sm text-center">
               {'태그가 있는 메모가 3개 이상 필요합니다'}
             </p>

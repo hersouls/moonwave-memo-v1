@@ -164,7 +164,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
             {saveStatus === 'modified' && (
               <span className="flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500 animate-pulse" />
-                <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500">수정됨</span>
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">수정됨</span>
               </span>
             )}
             {saveStatus === 'error' && (
@@ -250,7 +250,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
             className={`w-5 h-5 ${
               isStarred
                 ? 'fill-primary-500 text-primary-500'
-                : 'text-zinc-400 dark:text-zinc-500'
+                : 'text-zinc-500 dark:text-zinc-400'
             }`}
           />
         </button>

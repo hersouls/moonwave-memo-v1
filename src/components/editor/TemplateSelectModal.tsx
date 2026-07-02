@@ -174,7 +174,7 @@ export function TemplateSelectModal() {
               {isManageMode && (
                 <button
                   onClick={handleAddNew}
-                  className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 hover:border-primary-400 hover:text-primary-500 dark:hover:border-primary-500 dark:hover:text-primary-400 transition-colors"
+                  className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 hover:border-primary-400 hover:text-primary-500 dark:hover:border-primary-500 dark:hover:text-primary-400 transition-colors"
                 >
                   <Plus className="w-6 h-6" />
                   <span className="text-sm font-medium">새 템플릿</span>

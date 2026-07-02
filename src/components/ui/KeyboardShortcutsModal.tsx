@@ -50,7 +50,7 @@ export function KeyboardShortcutsModal() {
         <div className="px-5 py-4 space-y-5 max-h-[60dvh] fold:max-h-[50dvh] overflow-y-auto">
           {SHORTCUT_GROUPS.map((group) => (
             <div key={group.title}>
-              <h3 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mb-2">
+              <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
                 {group.title}
               </h3>
               <div className="space-y-1.5">

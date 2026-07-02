@@ -43,7 +43,7 @@ export function TimelineView({ memos }: TimelineViewProps) {
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 {dateLabel}
               </span>
-              <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+              <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
                 {dateMemos.length}{'\uAC1C'}
               </span>
             </div>

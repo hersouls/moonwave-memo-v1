@@ -133,7 +133,7 @@ function SemanticCanvas() {
           <p className="text-zinc-500 dark:text-zinc-400 mb-4">
             OpenAI API 키가 필요합니다
           </p>
-          <p className="text-sm text-zinc-400 dark:text-zinc-500 max-w-md">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md">
             메모 간의 의미적 유사성을 시각화하려면 OpenAI의 텍스트 임베딩 API가 필요합니다.
             설정에서 API 키를 입력해 주세요.
           </p>
@@ -171,7 +171,7 @@ function SemanticCanvas() {
           <h1 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
             시맨틱 캔버스
           </h1>
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {nodes.length}개 메모
           </span>
         </div>
@@ -318,7 +318,7 @@ function SemanticCanvas() {
           {hoveredNode.tags.length > 0 && (
             <div className="flex gap-1 mt-1">
               {hoveredNode.tags.slice(0, 3).map((tag) => (
-                <span key={tag} className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                <span key={tag} className="text-[10px] text-zinc-500 dark:text-zinc-400">
                   #{tag}
                 </span>
               ))}

@@ -155,7 +155,7 @@ export function MemosLayout() {
           {isOnMemoRoute ? (
             <Outlet />
           ) : (
-            <div className="flex items-center justify-center h-full text-zinc-400 dark:text-zinc-500">
+            <div className="flex items-center justify-center h-full text-zinc-500 dark:text-zinc-400">
               <div className="text-center">
                 <StickyNote className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">메모를 선택하세요</p>

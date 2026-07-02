@@ -58,7 +58,7 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
           </button>
         </div>
       </div>
-      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">Ctrl+Enter로 저장 · Esc로 닫기</p>
+      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">Ctrl+Enter로 저장 · Esc로 닫기</p>
     </div>
   )
 }

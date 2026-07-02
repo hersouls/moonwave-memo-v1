@@ -756,7 +756,7 @@ export function MemoEditor() {
       {/* AI Tag suggestions (hide when keyboard open to maximize edit area) */}
       {!isKeyboardOpen && aiTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">AI 태그</span>
+          <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">AI 태그</span>
           {aiTags.map((tag) => (
             <button
               key={tag}
@@ -1049,7 +1049,7 @@ export function MemoEditor() {
 
       {/* Editor stats footer */}
       {isFocusMode ? (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
           <FocusTimer />
           <span>·</span>
           <span>{charCount}자</span>
@@ -1064,7 +1064,7 @@ export function MemoEditor() {
           </button>
         </div>
       ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && (
-        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
           <span>{charCount.toLocaleString()}자</span>
           <span>·</span>
           <span>읽기 약 {readingTime}분</span>

@@ -37,7 +37,7 @@ export const FolderList = memo(function FolderList() {
           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             폴더
           </span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {userFolders.length}
           </span>
         </div>
@@ -72,7 +72,7 @@ export const FolderList = memo(function FolderList() {
       {!isCollapsed && (
         <div className="border-t border-zinc-100 dark:border-zinc-700">
           {userFolders.length === 0 ? (
-            <p className="px-5 py-4 text-center text-sm text-zinc-400 dark:text-zinc-500">
+            <p className="px-5 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
               폴더가 없습니다
             </p>
           ) : (
@@ -91,7 +91,7 @@ export const FolderList = memo(function FolderList() {
                   <span className="flex-1 text-left text-sm text-zinc-700 dark:text-zinc-300 truncate">
                     {folder.name}
                   </span>
-                  <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
                     {count}
                   </span>
                 </button>

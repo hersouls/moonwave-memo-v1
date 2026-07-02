@@ -125,7 +125,7 @@ export function SlashCommandMenu({ query, position, onSelect, onClose }: SlashCo
     >
       {grouped.map(([category, cmds], catIdx) => (
         <div key={category}>
-          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
             {CATEGORY_LABELS[category]}
           </div>
           {cmds.map((cmd, itemIdx) => {

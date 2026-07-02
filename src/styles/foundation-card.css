@@ -25,7 +25,9 @@
   --card-hairline: rgba(9, 9, 11, 0.06);
   --card-border-outlined: 1px solid #e4e4e7;
   --card-border-divider: 1px solid #f4f4f5;
-  --card-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Scoped (not `all`) so list reflows/layout changes never animate */
+  --card-transition: background-color 0.2s var(--ease-standard), border-color 0.2s var(--ease-standard),
+    box-shadow 0.2s var(--ease-standard), transform 0.2s var(--ease-standard);
   --card-hover-translate: -2px;
 
   /* ── Image + Text Card ──────────────── */
@@ -203,14 +205,17 @@
 
 /* ── Dark Mode ───────────────────────── */
 .dark {
-  /* Card 공통 */
+  /* Card 공통 — dark elevation: deeper black shadow + hairline light ring
+     (hover was previously undefined here, leaving black-on-black = invisible) */
   --card-bg-default: #27272a;
   --card-bg-muted: #18181b;
   --card-bg-elevated: #27272a;
   --card-hairline: rgba(255, 255, 255, 0.08);
   --card-border-outlined: 1px solid #3f3f46;
   --card-border-divider: 1px solid #3f3f46;
-  --card-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --card-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --card-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --card-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
 
   /* Image + Text Card */
   --imgcard-category-color: #71717a;

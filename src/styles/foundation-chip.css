@@ -41,8 +41,9 @@
   --chip-text-bg: var(--color-bg-elevated);
   --chip-text-color: #3f3f46;
   --chip-text-bg-hover: #f4f4f5;
-  --chip-text-bg-pressed: #71717a;
-  --chip-text-color-pressed: white;
+  /* Selected = inverted pill (semantic tokens auto-flip in dark mode) */
+  --chip-text-bg-pressed: var(--color-text-primary);
+  --chip-text-color-pressed: var(--color-bg-primary);
   --chip-text-border-color: #e4e4e7;
 }
 
@@ -76,11 +77,9 @@
    6. Dark Mode Overrides
    ----------------------------------------- */
 .dark {
-  /* Text Chip */
+  /* Text Chip — pressed/selected colors flip automatically via semantic tokens */
   --chip-text-color: #d4d4d8;
   --chip-text-bg-hover: #3f3f46;
-  --chip-text-bg-pressed: #a1a1aa;
-  --chip-text-color-pressed: #18181b;
   --chip-text-border-color: #52525b;
 
   /* Badge Chip */
@@ -116,16 +115,20 @@
 
 /* -----------------------------------------
    8. Text Chip States
+   selected (--pressed) is a persistent state — never scaled;
+   :active is transient press feedback only
    ----------------------------------------- */
 .chip-text:hover {
   background: var(--chip-text-bg-hover);
 }
 
-.chip-text--pressed,
-.chip-text:active {
+.chip-text--pressed {
   background: var(--chip-text-bg-pressed);
   color: var(--chip-text-color-pressed);
-  transform: scale(0.95);
+}
+
+.chip-text:active {
+  transform: scale(0.96);
 }
 
 .chip-text--bordered {

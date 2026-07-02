@@ -80,7 +80,7 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex-1">
           연관 메모
         </span>
-        <span className="text-xs text-zinc-400 dark:text-zinc-500 mr-1">
+        <span className="text-xs text-zinc-500 dark:text-zinc-400 mr-1">
           {relatedMemos.length}
         </span>
         {isExpanded ? (
@@ -102,7 +102,7 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
                   {memo.title || '제목 없음'}
                 </p>
                 {memo.tags.length > 0 && (
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                     {memo.tags.slice(0, 3).map((t) => `#${t}`).join(' ')}
                   </p>
                 )}

@@ -138,13 +138,13 @@ function StepImageSelect({
             )}
           >
             <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-              <ImagePlus className="w-6 h-6 text-zinc-400 dark:text-zinc-500" />
+              <ImagePlus className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 이미지를 여기에 놓거나 클릭하세요
               </p>
-              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 JPG, PNG, GIF, WebP (최대 20MB)
               </p>
             </div>
@@ -257,7 +257,7 @@ function StepProcessing({
         <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
           이미지에서 텍스트를 추출하고 있습니다...
         </p>
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
           이미지 내용에 따라 시간이 걸릴 수 있습니다
         </p>
       </div>

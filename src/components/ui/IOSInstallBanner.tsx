@@ -101,7 +101,7 @@ export function IOSInstallBanner() {
         <div className="px-4 pb-3 flex justify-end">
           <button
             onClick={handleDismiss}
-            className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
           >
             다시 보지 않기
           </button>

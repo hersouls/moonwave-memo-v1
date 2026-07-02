@@ -111,7 +111,7 @@ export function Header() {
                     {/* User info */}
                     <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700">
                       <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user.displayName || '사용자'}</p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate">{user.email}</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
                     </div>
                     {/* Sync status */}
                     <div className="px-4 py-2.5 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">

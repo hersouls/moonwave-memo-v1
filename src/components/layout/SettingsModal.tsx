@@ -165,7 +165,7 @@ function CloudSyncSection() {
                 <SyncStatusBadge status={syncStatus} />
               </div>
               {lastSyncTime && (
-                <span className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {formatSyncTime(lastSyncTime)}
                 </span>
@@ -214,7 +214,7 @@ function CloudSyncSection() {
                 <span>{authError}</span>
               </div>
             )}
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               로그인 없이도 로컬에서 모든 기능을 사용할 수 있습니다.
             </p>
           </div>
@@ -747,7 +747,7 @@ export function SettingsModal() {
               상단 알림 참조 (테마 제어 중)
             </span>
           ) : localTheme === 'dark' ? (
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
               다크 모드에서는 색상이 자동 조정됩니다
             </span>
           ) : null}
@@ -1222,7 +1222,7 @@ export function SettingsModal() {
             <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-center">
               <FolderOpen className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
               <p className="text-sm text-zinc-500 dark:text-zinc-400">폴더가 없습니다</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">새 폴더를 추가하여 메모를 정리하세요</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">새 폴더를 추가하여 메모를 정리하세요</p>
             </div>
           )}
 
@@ -1292,7 +1292,7 @@ export function SettingsModal() {
                     {folder.name}
                   </span>
                   <span
-                    className="flex-shrink-0 inline-flex items-center gap-1 text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
+                    className="flex-shrink-0 inline-flex items-center gap-1 text-xs tabular-nums text-zinc-500 dark:text-zinc-400"
                     aria-label={`메모 ${folderMemoCounts.get(folder.id!) ?? 0}개`}
                   >
                     <StickyNote className="w-3 h-3" />
@@ -1500,7 +1500,7 @@ export function SettingsModal() {
           <ChevronDown className={clsx('w-4 h-4 transition-transform', showAdvancedKeys && 'rotate-180')} />
           고급: 내 API 키 등록 (무제한)
         </button>
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 px-1 mb-4">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 px-1 mb-4">
           키를 등록하면 서버 키 대신 내 키를 사용합니다. 하루 사용 한도 없이 무제한 AI 기능.
         </p>
 
@@ -1691,7 +1691,7 @@ export function SettingsModal() {
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
             Living Workspace
           </h3>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
             사용자의 환경과 행동에 반응하는 생동감 있는 작업 공간 설정
           </p>
 
@@ -1711,7 +1711,7 @@ export function SettingsModal() {
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
             감각 경험
           </h3>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
             글쓰기를 다감각적으로 확장하는 몰입 기능
           </p>
           <div className="space-y-3">
@@ -1728,7 +1728,7 @@ export function SettingsModal() {
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
             지능형 보조
           </h3>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
             맥락을 이해하는 스마트 기능
           </p>
           <div className="space-y-3">
@@ -1742,7 +1742,7 @@ export function SettingsModal() {
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
             AI 고급
           </h3>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4 px-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
             AI API를 활용하는 고급 기능 (API 키 필요)
           </p>
           <div className="space-y-3">
@@ -1818,7 +1818,7 @@ export function SettingsModal() {
                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'
                     )}
                   >
-                    <span className={clsx('transition-colors', activeTab === tab.id ? 'text-primary-500' : 'text-zinc-400 dark:text-zinc-500')}>
+                    <span className={clsx('transition-colors', activeTab === tab.id ? 'text-primary-500' : 'text-zinc-500 dark:text-zinc-400')}>
                       {tab.icon}
                     </span>
                     <span className="truncate">{tab.label}</span>

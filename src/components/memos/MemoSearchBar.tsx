@@ -155,7 +155,7 @@ export function MemoSearchBar() {
     <div className="px-4 lg:px-0" ref={containerRef}>
       <div className="relative">
         <div className="flex items-center gap-2.5 rounded-xl bg-zinc-100 px-4 py-2.5 fold:py-2 dark:bg-zinc-800 ring-1 ring-inset ring-zinc-950/[0.04] dark:ring-white/[0.06] transition-shadow focus-within:ring-2 focus-within:ring-primary-500/40">
-          <Search className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
+          <Search className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
           <input
             ref={inputRef}
             type="text"
@@ -206,7 +206,7 @@ export function MemoSearchBar() {
         {/* Recent searches dropdown */}
         {showRecent && !localQuery && recentSearches.length > 0 && (
           <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 animate-in fade-in slide-in-from-top-1 duration-150">
-            <div className="px-3 py-1.5 text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">
+            <div className="px-3 py-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               최근 검색
             </div>
             {recentSearches.slice(0, isNarrowFold ? FOLD_MAX_RECENT_DISPLAY : MAX_RECENT).map((query) => (

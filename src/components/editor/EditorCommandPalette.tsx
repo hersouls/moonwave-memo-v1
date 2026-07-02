@@ -108,7 +108,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
           ) : (
             groups.map(([group, cmds]) => (
               <div key={group}>
-                <div className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                <div className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   {group}
                 </div>
                 {cmds.map((cmd) => {

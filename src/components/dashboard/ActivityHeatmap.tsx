@@ -34,7 +34,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap() {
     <div className="p-4 card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">활동 히트맵</h3>
-        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
           최근 {weekCount}주 · {totalCount}개 메모
         </span>
       </div>
@@ -45,7 +45,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap() {
           {DAYS.map((day, i) => (
             <div key={i} className="h-3 w-5 flex items-center">
               {(i === 1 || i === 3 || i === 5) && (
-                <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{day}</span>
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{day}</span>
               )}
             </div>
           ))}

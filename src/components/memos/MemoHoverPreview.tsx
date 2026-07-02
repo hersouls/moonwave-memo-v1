@@ -62,7 +62,7 @@ export function MemoHoverPreview({ memo, anchorRect }: MemoHoverPreviewProps) {
         </div>
       )}
 
-      <div className="flex items-center gap-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+      <div className="flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
         {folder && <span className="truncate max-w-[80px]">{folder.name}</span>}
         {folder && <span>·</span>}
         <span>{formatMemoDate(memo.updatedAt)}</span>

@@ -88,7 +88,7 @@ export function WeeklyDigestWidget() {
         {/* AI Themes (or fallback to local tags) */}
         {((aiDigest?.themes?.length ? aiDigest.themes : null) || localDigest.topTags).length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
               {aiDigest?.themes?.length ? '주요 테마' : '상위 태그'}
             </span>
             {(aiDigest?.themes?.length ? aiDigest.themes : localDigest.topTags).map((item) => (

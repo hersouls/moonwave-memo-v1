@@ -63,7 +63,7 @@ export function KanbanView({ memos }: KanbanViewProps) {
 
   if (columns.length === 0) {
     return (
-      <div className="flex items-center justify-center py-20 text-zinc-400 dark:text-zinc-500">
+      <div className="flex items-center justify-center py-20 text-zinc-500 dark:text-zinc-400">
         <p className="text-sm">{'\uBA54\uBAA8\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4'}</p>
       </div>
     )
@@ -84,12 +84,12 @@ export function KanbanView({ memos }: KanbanViewProps) {
                 style={{ backgroundColor: column.color }}
               />
             ) : (
-              <Inbox className="w-4 h-4 text-zinc-400 dark:text-zinc-500 shrink-0" />
+              <Inbox className="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
             )}
             <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
               {column.name}
             </span>
-            <span className="text-xs text-zinc-400 dark:text-zinc-500 ml-auto shrink-0">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-auto shrink-0">
               {column.memos.length}
             </span>
           </div>
@@ -157,7 +157,7 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+      <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400">
         {memo.isStarred && (
           <span className="text-primary-500">{'\u2605'}</span>
         )}

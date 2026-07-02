@@ -14,7 +14,7 @@ export function ProfileCard() {
     return (
       <div className="card flex items-center gap-4 px-5 py-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
-          <span className="text-lg text-zinc-400 dark:text-zinc-500">?</span>
+          <span className="text-lg text-zinc-500 dark:text-zinc-400">?</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">

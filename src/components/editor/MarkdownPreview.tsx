@@ -50,7 +50,7 @@ function MemoImageRenderer({ imageId, alt }: { imageId: number; alt: string }) {
 
   if (!dataUrl) {
     return (
-      <span className="text-zinc-400 dark:text-zinc-500 text-sm italic">
+      <span className="text-zinc-500 dark:text-zinc-400 text-sm italic">
         [이미지를 찾을 수 없습니다]
       </span>
     )
@@ -97,7 +97,7 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
   return (
     <div className="relative group">
       {language && (
-        <div className="absolute top-0 left-0 px-2 py-0.5 text-[10px] font-mono text-zinc-400 dark:text-zinc-500 bg-zinc-800 dark:bg-zinc-900 rounded-br-md rounded-tl-md uppercase">
+        <div className="absolute top-0 left-0 px-2 py-0.5 text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-800 dark:bg-zinc-900 rounded-br-md rounded-tl-md uppercase">
           {language}
         </div>
       )}
@@ -130,7 +130,7 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
   if (!content.trim()) {
     return (
       <div className={`memo-markdown-preview ${className ?? ''}`}>
-        <p className="text-zinc-400 dark:text-zinc-500 italic">
+        <p className="text-zinc-500 dark:text-zinc-400 italic">
           미리보기할 내용이 없습니다.
         </p>
       </div>

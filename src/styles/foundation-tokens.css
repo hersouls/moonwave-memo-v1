@@ -23,6 +23,28 @@
 
   /* Editor reading measure — optimal line length for comfortable writing/reading */
   --editor-measure: 48rem;
+
+  /* Tailwind shadow utilities routed through the semantic elevation tokens
+     so every shadow-* call site inherits correct dark-mode elevation */
+  --shadow-2xs: var(--shadow-1);
+  --shadow-xs: var(--shadow-1);
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-2);
+  --shadow-xl: var(--shadow-3);
+  --shadow-2xl: var(--shadow-3);
+}
+
+/* Motion — easing scale (static: referenced from plain CSS via var(), so
+   they must survive Tailwind's unused-theme-variable pruning)
+   standard: UI state changes (hover, selection, layout)
+   enter/exit: overlays in/out (decelerate in, accelerate out)
+   spring: drag snap-back, sheet release */
+@theme static {
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 :root {
@@ -33,6 +55,20 @@
   --z-level-3: 30;
   --z-dim-overlay: 35;
   --z-level-4: 40;
+
+  /* Motion — duration ramp
+     fast: hover/fade/menu+toast exit · base: menus/popovers/toast enter · slow: dialogs/sheets/drawers */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+
+  /* Accent (filled controls) — tracks the active palette.
+     Dark palettes invert the primary scale, so dark accent maps to lower steps
+     to keep white-on-accent text at AA contrast (see html.dark[data-palette] below). */
+  --color-accent: var(--color-primary-500);
+  --color-accent-hover: var(--color-primary-600);
+  --color-accent-pressed: var(--color-primary-700);
+  --color-on-accent: #ffffff;
 
   /* Typography Scale */
   --text-heading2-size: 1.5rem;
@@ -69,7 +105,8 @@
 
   --color-text-primary: #09090b;
   --color-text-secondary: #71717a;
-  --color-text-tertiary: #a1a1aa;
+  /* WCAG AA: tertiary must stay ≥4.5:1 on bg-primary — reserve lighter grays for placeholders/disabled only */
+  --color-text-tertiary: #71717a;
   --color-text-inverse: white;
 
   --color-border-default: #e4e4e7;
@@ -79,21 +116,25 @@
   --color-surface-active: #f4f4f5;
 }
 
-/* Shadow - Dark Mode */
+/* Shadow - Dark Mode
+   Dark elevation = deeper black shadow + hairline light ring + lighter surface.
+   (White glow shadows read as haze — no high-end dark UI uses them.) */
 .dark {
-  --shadow-1: 0 1px 3px rgba(255, 255, 255, 0.04), 0 1px 2px rgba(255, 255, 255, 0.02);
-  --shadow-2: 0 4px 12px rgba(255, 255, 255, 0.06), 0 2px 4px rgba(255, 255, 255, 0.03);
-  --shadow-3: 0 12px 32px rgba(255, 255, 255, 0.08), 0 4px 8px rgba(255, 255, 255, 0.04);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
 
   /* Semantic Color Tokens - Dark */
   --color-bg-primary: #09090b;
   --color-bg-secondary: #18181b;
   --color-bg-tertiary: #27272a;
-  --color-bg-elevated: #27272a;
+  /* Elevated sits between secondary and tertiary — elevation via surface lightening */
+  --color-bg-elevated: #1e1e21;
 
   --color-text-primary: #fafafa;
   --color-text-secondary: #a1a1aa;
-  --color-text-tertiary: #71717a;
+  /* WCAG AA on #09090b/#18181b — lighter grays are placeholder/disabled only */
+  --color-text-tertiary: #a1a1aa;
   --color-text-inverse: #09090b;
 
   --color-border-default: #3f3f46;
@@ -101,4 +142,13 @@
 
   --color-surface-hover: #3f3f46;
   --color-surface-active: #52525b;
+}
+
+/* Dark palettes invert the primary scale (500/600 become lighter than light mode),
+   which breaks white-on-primary contrast. Map accent to the mid-dark steps instead:
+   400 (~0.50 L) keeps white text ≥4.5:1, and hover still darkens like light mode. */
+html.dark[data-palette] {
+  --color-accent: var(--color-primary-400);
+  --color-accent-hover: var(--color-primary-300);
+  --color-accent-pressed: var(--color-primary-200);
 }

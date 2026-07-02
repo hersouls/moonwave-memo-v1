@@ -115,7 +115,7 @@ export function AnalyticsWidget() {
                     'text-[9px]',
                     day === 0 || day === 6
                       ? 'text-rose-400 dark:text-rose-500'
-                      : 'text-zinc-400 dark:text-zinc-500'
+                      : 'text-zinc-500 dark:text-zinc-400'
                   )}>
                     {DAY_LABELS[day]}
                   </span>
@@ -140,7 +140,7 @@ export function AnalyticsWidget() {
                         minHeight: '3px',
                       }}
                     />
-                    <span className="text-[9px] text-zinc-400 dark:text-zinc-500">
+                    <span className="text-[9px] text-zinc-500 dark:text-zinc-400">
                       {item.month.split('-')[1]}{'월'}
                     </span>
                   </div>

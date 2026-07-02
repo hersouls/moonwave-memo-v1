@@ -44,11 +44,11 @@
   --dialog-btn-accent-disabled-bg: #d4d4d8;
   --dialog-btn-accent-disabled-color: #a1a1aa;
 
-  /* Primary (Brand color) */
-  --dialog-btn-primary-bg: var(--color-primary-500);
-  --dialog-btn-primary-color: white;
-  --dialog-btn-primary-hover-bg: var(--color-primary-600);
-  --dialog-btn-primary-pressed-bg: var(--color-primary-700);
+  /* Primary (Brand color) — accent tokens keep white text at AA in dark palettes */
+  --dialog-btn-primary-bg: var(--color-accent);
+  --dialog-btn-primary-color: var(--color-on-accent);
+  --dialog-btn-primary-hover-bg: var(--color-accent-hover);
+  --dialog-btn-primary-pressed-bg: var(--color-accent-pressed);
   --dialog-btn-primary-disabled-bg: #d4d4d8;
   --dialog-btn-primary-disabled-color: #a1a1aa;
 
@@ -121,16 +121,21 @@
   --z-modal: 50;
   --z-toast: 55;
   --z-tooltip: 60;
+  --z-context-menu: 70;
+  --z-lock: 100;
+
+  /* Canonical scrim for every overlay surface (dialog/sheet/palette/drawer) */
+  --overlay-bg: var(--dialog-overlay-bg);
 }
 
 /* -----------------------------------------
    6. Dark Mode Overrides
    ----------------------------------------- */
 .dark {
-  /* Alert Dialog */
+  /* Alert Dialog — hairline ring keeps the panel edge visible against the dark scrim */
   --dialog-bg: #18181b;
   --dialog-overlay-bg: rgba(0, 0, 0, 0.6);
-  --dialog-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --dialog-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
 
   /* Dialog Button — Accent */
   --dialog-btn-accent-bg: #fafafa;

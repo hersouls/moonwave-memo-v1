@@ -32,7 +32,7 @@ export function TagCloud() {
           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             태그
           </span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {allTags.length}
           </span>
         </div>
@@ -47,7 +47,7 @@ export function TagCloud() {
       {!isCollapsed && (
         <div className="border-t border-zinc-100 px-5 py-4 dark:border-zinc-700">
           {allTags.length === 0 ? (
-            <p className="text-center text-sm text-zinc-400 dark:text-zinc-500">
+            <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
               태그가 없습니다
             </p>
           ) : (

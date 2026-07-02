@@ -41,7 +41,7 @@ export const StreakCounter = memo(function StreakCounter() {
           <span className="text-sm text-zinc-500 dark:text-zinc-400">일 연속</span>
         </div>
         {longestStreak > 0 && (
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
             최장 {animatedLongest}일
           </p>
         )}

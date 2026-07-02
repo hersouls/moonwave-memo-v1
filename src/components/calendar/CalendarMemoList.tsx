@@ -12,7 +12,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
   if (!selectedDate) {
     return (
       <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm p-6 text-center">
-        <p className="text-sm text-zinc-400 dark:text-zinc-500">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           날짜를 선택하면 해당 날짜의 메모를 볼 수 있습니다.
         </p>
       </div>
@@ -27,13 +27,13 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           {dateLabel}
         </h3>
-        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
           {memos.length}개 메모
         </span>
       </div>
 
       {memos.length === 0 ? (
-        <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-4">
           이 날짜에 작성된 메모가 없습니다.
         </p>
       ) : (

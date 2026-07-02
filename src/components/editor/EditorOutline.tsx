@@ -51,7 +51,7 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center px-4 text-center">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 leading-relaxed">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
             마크다운 헤딩(# ~ ####)을<br />사용하면 여기에 목차가<br />자동 생성됩니다.
           </p>
         </div>
@@ -67,7 +67,7 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
         <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
           <List className="w-3.5 h-3.5" />
           목차
-          <span className="ml-1 text-[10px] font-normal text-zinc-400 dark:text-zinc-500">
+          <span className="ml-1 text-[10px] font-normal text-zinc-500 dark:text-zinc-400">
             {headings.length}
           </span>
         </div>

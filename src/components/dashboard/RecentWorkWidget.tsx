@@ -43,11 +43,11 @@ export function RecentWorkWidget() {
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
                 {memo.title || '제목 없음'}
               </p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                 {stripMarkdown(memo.body).slice(0, 60) || '내용 없음'}
               </p>
             </div>
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0">
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 shrink-0">
               {formatMemoDate(memo.updatedAt)}
             </span>
           </button>

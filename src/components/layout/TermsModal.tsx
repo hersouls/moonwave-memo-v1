@@ -325,7 +325,7 @@ export function TermsModal() {
             <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
               본 약관 및 개인정보 처리방침에 대한 문의사항이 있으시면 서비스 내 문의 기능을 이용해 주세요.
             </p>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
               Moonwave · memo.moonwave.kr
             </p>
           </section>

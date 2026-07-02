@@ -208,7 +208,7 @@ export function FAQModal() {
 
         {/* FAQ Categories */}
         {filteredData.length === 0 ? (
-          <p className="text-center text-sm text-zinc-400 dark:text-zinc-500 py-8">
+          <p className="text-center text-sm text-zinc-500 dark:text-zinc-400 py-8">
             검색 결과가 없습니다.
           </p>
         ) : (
