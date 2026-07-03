@@ -902,7 +902,8 @@ export function MemoEditor() {
             ? 'max-w-2xl mx-auto w-full px-6 pt-12'
             : 'px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full'
         )}>
-          {!isFocusMode && !isKeyboardOpen && (
+          {/* tiptap/split 모드: 폴더 선택기 단독 행. 탭 모드에서는 아래 탭과 한 행으로 병합한다. */}
+          {!isFocusMode && !isKeyboardOpen && (isTiptap || isSplit) && (
             <FolderSelector
               currentFolder={currentFolder}
               onFolderChange={handleFolderChange}
@@ -936,9 +937,16 @@ export function MemoEditor() {
             </div>
           ) : (
             <>
-              {/* A11Y-02: Segmented control with proper ARIA roles */}
+              {/* A11Y-02: Segmented control with proper ARIA roles.
+                  폴더 선택기와 한 행으로 병합해 모바일 세로 공간을 절약한다. */}
               {!isFocusMode && !isKeyboardOpen && (
-                <div className="mb-4" role="tablist" aria-label="편집기 모드">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <FolderSelector
+                    currentFolder={currentFolder}
+                    onFolderChange={handleFolderChange}
+                    className=""
+                  />
+                  <div className="shrink-0" role="tablist" aria-label="편집기 모드">
                   <div className="inline-flex items-center gap-0.5 p-0.5 rounded-[10px] bg-zinc-100 dark:bg-zinc-800/80">
                     <button
                       role="tab"
@@ -970,6 +978,7 @@ export function MemoEditor() {
                     >
                       미리보기
                     </button>
+                  </div>
                   </div>
                 </div>
               )}

@@ -123,16 +123,19 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
 
   return (
     // UX-21: bg-zinc-50 matches app background
-    <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10">
+    <div className="flex items-center justify-between px-4 py-2 bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10">
       <div className="flex items-center gap-2">
-        {/* Mobile: back arrow */}
-        <button
-          onClick={onBack}
-          className="f-icon-btn lg:hidden -ml-2"
-          aria-label="뒤로가기"
-        >
-          <ArrowLeft className="f-icon--default w-5 h-5" />
-        </button>
+        {/* Mobile/tablet: back arrow. 조건부 렌더 — .f-icon-btn이 display를 강제해
+            lg:hidden 유틸리티가 무력화되므로 CSS 대신 tier 플래그로 분기한다. */}
+        {!isDesktop && (
+          <button
+            onClick={onBack}
+            className="f-icon-btn -ml-2"
+            aria-label="뒤로가기"
+          >
+            <ArrowLeft className="f-icon--default w-5 h-5" />
+          </button>
+        )}
 
         {saveStatus && saveStatus !== 'idle' && (
           <span className="flex items-center gap-1.5 transition-opacity duration-200" aria-live="polite" role="status">
@@ -178,14 +181,17 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
       </div>
 
       <div className="flex items-center gap-1">
-        {/* Desktop: close button (modal) */}
-        <button
-          onClick={onBack}
-          className="f-icon-btn hidden lg:inline-flex"
-          aria-label="닫기"
-        >
-          <X className="f-icon--muted w-5 h-5" />
-        </button>
+        {/* Desktop only: close button (modal). 조건부 렌더 — lg:inline-flex가
+            .f-icon-btn 때문에 모바일에서도 새어 나와 뒤로가기와 중복되던 문제 수정. */}
+        {isDesktop && (
+          <button
+            onClick={onBack}
+            className="f-icon-btn"
+            aria-label="닫기"
+          >
+            <X className="f-icon--muted w-5 h-5" />
+          </button>
+        )}
 
         {/* Editor mode toggle — tablet & desktop only (conditional render; CSS `hidden`
             is unreliable here because .f-icon-btn sets its own display). Tier-aware cycle. */}

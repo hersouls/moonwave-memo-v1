@@ -53,12 +53,12 @@ export function Header() {
     navigateWithTransition('/')
   }
 
-  // UX-08: hide on desktop when in editor
-  // 포커스 모드: 언마운트 대신 translate+negative margin으로 밀어올려 부드럽게 사라진다
+  // 에디터 화면에서는 전 화면폭에서 글로벌 헤더를 숨긴다 — 에디터가 자체 헤더(뒤로가기 포함)를
+  // 가지므로 중복이고, 특히 모바일에서 작성 영역을 최대로 확보하기 위해 상단 크롬을 제거한다.
   return (
     <header
       inert={isFocusMode || undefined}
-      className={`sticky top-[var(--offline-h,0px)] z-[var(--z-sticky)] bg-[color-mix(in_srgb,var(--color-bg-elevated)_85%,transparent)] backdrop-blur-sm will-change-transform border-b border-zinc-200 dark:border-zinc-800 transition-[transform,margin] duration-200 ${isEditorRoute ? 'md:hidden' : ''} ${headerHidden || isFocusMode ? '-translate-y-full' : ''} ${isFocusMode ? '-mb-16 pointer-events-none' : ''}`}
+      className={`sticky top-[var(--offline-h,0px)] z-[var(--z-sticky)] bg-[color-mix(in_srgb,var(--color-bg-elevated)_85%,transparent)] backdrop-blur-sm will-change-transform border-b border-zinc-200 dark:border-zinc-800 transition-[transform,margin] duration-200 ${isEditorRoute ? 'hidden' : ''} ${headerHidden || isFocusMode ? '-translate-y-full' : ''} ${isFocusMode ? '-mb-16 pointer-events-none' : ''}`}
     >
       <nav className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left: Mobile menu + Logo */}

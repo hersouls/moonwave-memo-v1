@@ -7,9 +7,11 @@ import type { Folder } from '@/lib/types'
 interface FolderSelectorProps {
   currentFolder?: Folder
   onFolderChange: (folderId: number) => void
+  /** 래퍼 마진 오버라이드 — 탭과 한 행으로 병합할 때 mb 제거용 (기본 'mb-4') */
+  className?: string
 }
 
-export function FolderSelector({ currentFolder, onFolderChange }: FolderSelectorProps) {
+export function FolderSelector({ currentFolder, onFolderChange, className = 'mb-4' }: FolderSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const listRef = useRef<HTMLDivElement>(null)
@@ -51,7 +53,7 @@ export function FolderSelector({ currentFolder, onFolderChange }: FolderSelector
   }, [isOpen, focusedIndex, folders, onFolderChange])
 
   return (
-    <div className="relative mb-4" onKeyDown={handleKeyDown}>
+    <div className={clsx('relative', className)} onKeyDown={handleKeyDown}>
       {/* A11Y-05: aria-haspopup + aria-expanded */}
       <button
         onClick={() => setIsOpen(!isOpen)}
