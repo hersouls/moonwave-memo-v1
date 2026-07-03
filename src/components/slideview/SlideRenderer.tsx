@@ -43,9 +43,10 @@ export const SlideRenderer = memo(function SlideRenderer({
         } as React.CSSProperties}
       >
         <h1
-          className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-8"
+          className="font-bold leading-tight tracking-[-0.02em] text-balance mb-8"
           style={{
-            fontSize: `calc(2.5rem * ${fontSize})`,
+            // 뷰포트에 따라 36px~60px로 스케일 + 사용자 글자 크기 컨트롤 반영
+            fontSize: `calc(clamp(2.25rem, 1.2rem + 3.5vw, 3.75rem) * ${fontSize})`,
             color: isDarkTheme ? '#f4f4f5' : '#18181b',
           }}
         >
@@ -85,7 +86,7 @@ export const SlideRenderer = memo(function SlideRenderer({
     >
       {slide.heading && (
         <h2
-          className="font-bold mb-8 leading-tight"
+          className="font-bold mb-8 leading-tight tracking-[-0.015em]"
           style={{
             fontSize: `calc(${slide.headingLevel === 1 ? '2.25rem' : '1.75rem'} * ${fontSize})`,
             color: isDarkTheme ? '#f4f4f5' : '#18181b',

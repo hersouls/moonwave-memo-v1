@@ -6,7 +6,7 @@ export function Footer() {
 
   return (
     <footer
-      className="hidden lg:flex flex-col lg:flex-row gap-4 lg:gap-0 mt-auto py-4 px-6 border-t border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 justify-between items-center"
+      className="hidden lg:flex flex-col lg:flex-row gap-4 lg:gap-0 mt-auto py-4 px-6 border-t border-zinc-200 dark:border-zinc-800 bg-[color-mix(in_srgb,var(--color-bg-elevated)_50%,transparent)] justify-between items-center"
       role="contentinfo"
     >
       <div className="hidden lg:block flex-1" />

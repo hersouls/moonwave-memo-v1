@@ -5,6 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import CharacterCount from '@tiptap/extension-character-count'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import Link from '@tiptap/extension-link'
+import { TaskItem, TaskList } from '@tiptap/extension-list'
 import { common, createLowlight } from 'lowlight'
 import { Markdown } from 'tiptap-markdown'
 
@@ -36,6 +37,9 @@ export function useTiptapEditor({
         codeBlock: false, // Replaced by CodeBlockLowlight
       }),
       CodeBlockLowlight.configure({ lowlight }),
+      // WYSIWYG 체크리스트 — tiptap-markdown이 GFM `- [ ]` 구문으로 직렬화/파싱
+      TaskList,
+      TaskItem.configure({ nested: true }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: { class: 'tiptap-link' },

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CheckSquare } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { parseChecklist } from '@/utils/checklistParser'
+import { WidgetCard } from './WidgetCard'
 
 interface TodoItem {
   text: string
@@ -39,20 +40,13 @@ export function TodoWidget() {
   if (uncheckedTodos.length === 0) return null
 
   return (
-    <div className="card p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <CheckSquare className="w-4 h-4 text-primary-500" />
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {uncheckedTodos.length}개의 할 일
-        </h3>
-      </div>
-
+    <WidgetCard icon={CheckSquare} tint="primary" title={`${uncheckedTodos.length}개의 할 일`}>
       <ul className="space-y-2">
         {uncheckedTodos.map((todo, index) => (
           <li key={`${todo.memoId}-${index}`}>
             <button
               onClick={() => navigate(`/memo/${todo.memoId}`)}
-              className="w-full text-left group flex items-start gap-2 py-1 px-1.5 -mx-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors"
+              className="w-full text-left group flex items-start gap-2 py-1 px-1.5 -mx-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors"
             >
               <span className="mt-1 w-3.5 h-3.5 shrink-0 rounded border border-zinc-300 dark:border-zinc-600" />
               <div className="min-w-0 flex-1">
@@ -67,6 +61,6 @@ export function TodoWidget() {
           </li>
         ))}
       </ul>
-    </div>
+    </WidgetCard>
   )
 }

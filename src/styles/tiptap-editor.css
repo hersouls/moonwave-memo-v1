@@ -3,10 +3,17 @@
    Extends memo-markdown-preview for WYSIWYG editing
    ======================================== */
 
+/* Scroll container — typing runway: keep the active line lifted off the bottom
+   edge (scroll-padding makes caret-follow/scrollIntoView respect the runway) */
+.tiptap-editor {
+  scroll-padding-bottom: 25vh;
+}
+
 /* Base editor — remove browser outline, ensure min height */
 .tiptap-editor .tiptap {
   outline: none;
   min-height: 200px;
+  padding-bottom: 25vh; /* end-of-document runway (iA Writer/Notion pattern) */
   font-size: 1.0625rem;       /* 17px — comfortable reading size */
   line-height: 1.8;
   letter-spacing: -0.003em;
@@ -16,26 +23,20 @@
   text-rendering: optimizeLegibility;
 }
 
-/* Selection tint tied to primary palette */
-.tiptap-editor .tiptap ::selection {
-  background-color: var(--color-primary-100);
-}
+/* Text selection: covered by the global theme-aware ::selection in index.css */
 
-.dark .tiptap-editor .tiptap ::selection {
-  background-color: color-mix(in oklch, var(--color-primary-900) 55%, transparent);
-}
-
-/* Placeholder text (Tiptap Placeholder extension) */
+/* Placeholder text (Tiptap Placeholder extension) — matches the legacy
+   textarea placeholder pair (zinc-400 light / zinc-500 dark) */
 .tiptap-editor .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #d4d4d8;
+  color: var(--color-zinc-400, #a1a1aa);
   pointer-events: none;
   height: 0;
 }
 
 .dark .tiptap-editor .tiptap p.is-editor-empty:first-child::before {
-  color: #52525b;
+  color: var(--color-zinc-500, #71717a);
 }
 
 /* ── Task List (Tiptap DOM structure) ── */
@@ -54,22 +55,50 @@
 .tiptap-editor li[data-type="taskItem"] > label {
   display: flex;
   align-items: center;
-  margin-top: 0.3rem;
+  margin-top: 0.25rem;
   flex-shrink: 0;
 }
 
 .tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 1rem;
-  height: 1rem;
-  min-width: 1rem;
-  border: 1.5px solid #a1a1aa;
+  width: 1.125rem;
+  height: 1.125rem;
+  min-width: 1.125rem;
+  border: 1.5px solid var(--color-text-tertiary);
   border-radius: 0.25rem;
   cursor: pointer;
   position: relative;
   background-color: transparent;
-  transition: all 0.15s ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms var(--ease-spring);
+}
+
+/* Expanded hit area (~42px) without moving layout */
+.tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+
+/* Checkmark is always present — pops in with a spring scale on check */
+.tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5.5px;
+  width: 4.5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"]:active {
+  transform: scale(0.9);
 }
 
 .tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"]:checked {
@@ -78,20 +107,13 @@
 }
 
 .tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"]:checked::after {
-  content: '';
-  position: absolute;
-  top: 1px;
-  left: 4px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+  transform: rotate(45deg) scale(1);
 }
 
 .tiptap-editor li[data-type="taskItem"] > div {
   flex: 1;
   min-width: 0;
+  transition: opacity 200ms var(--ease-standard);
 }
 
 .tiptap-editor li[data-type="taskItem"][data-checked="true"] > div {
@@ -99,61 +121,24 @@
   opacity: 0.6;
 }
 
-/* ── Code Block with Syntax Highlighting ── */
-.tiptap-editor pre {
-  background: var(--color-zinc-50, #fafafa);
-  border: 1px solid var(--color-zinc-200, #e4e4e7);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  overflow-x: auto;
-  margin: 0.75rem 0;
+/* ── Code blocks ──
+   Shared surface + GitHub light/dark syntax tokens live in markdown.css
+   (.memo-markdown-preview pre …). The editor carries the same class, so
+   편집 ↔ 미리보기 render code blocks identically. */
+
+/* ── Tiptap bubble menu enter ──
+   BubbleMenuPlugin toggles inline visibility; TiptapEditorContent replays
+   this keyframe (via MutationObserver) whenever the pill becomes visible. */
+@keyframes bubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
 }
 
-.tiptap-editor pre code {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: var(--color-zinc-700, #3f3f46);
-  background: none;
-  padding: 0;
+.bubble-menu-enter {
+  animation: bubbleIn 150ms var(--ease-enter);
 }
-
-.dark .tiptap-editor pre {
-  background: #1e1e2e;
-  border-color: transparent;
-}
-
-.dark .tiptap-editor pre code {
-  color: #cdd6f4;
-}
-
-/* Lowlight syntax highlighting tokens — Light mode (GitHub-inspired) */
-.tiptap-editor .hljs-keyword { color: #cf222e; }
-.tiptap-editor .hljs-string { color: #0a3069; }
-.tiptap-editor .hljs-number { color: #0550ae; }
-.tiptap-editor .hljs-comment { color: #6e7781; font-style: italic; }
-.tiptap-editor .hljs-function { color: #8250df; }
-.tiptap-editor .hljs-title { color: #8250df; }
-.tiptap-editor .hljs-built_in { color: #0550ae; }
-.tiptap-editor .hljs-type { color: #953800; }
-.tiptap-editor .hljs-attr { color: #0550ae; }
-.tiptap-editor .hljs-variable { color: #24292f; }
-.tiptap-editor .hljs-operator { color: #0550ae; }
-.tiptap-editor .hljs-punctuation { color: #6e7781; }
-
-/* Lowlight syntax highlighting tokens — Dark mode (Catppuccin) */
-.dark .tiptap-editor .hljs-keyword { color: #cba6f7; }
-.dark .tiptap-editor .hljs-string { color: #a6e3a1; }
-.dark .tiptap-editor .hljs-number { color: #fab387; }
-.dark .tiptap-editor .hljs-comment { color: #6c7086; font-style: italic; }
-.dark .tiptap-editor .hljs-function { color: #89b4fa; }
-.dark .tiptap-editor .hljs-title { color: #89b4fa; }
-.dark .tiptap-editor .hljs-built_in { color: #f38ba8; }
-.dark .tiptap-editor .hljs-type { color: #f9e2af; }
-.dark .tiptap-editor .hljs-attr { color: #89dceb; }
-.dark .tiptap-editor .hljs-variable { color: #cdd6f4; }
-.dark .tiptap-editor .hljs-operator { color: #89dceb; }
-.dark .tiptap-editor .hljs-punctuation { color: #9399b2; }
 
 /* Breathing typography animation for Tiptap */
 .breathing-active .tiptap {

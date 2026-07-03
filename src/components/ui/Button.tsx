@@ -1,5 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import clsx from 'clsx'
+import { Spinner } from './Spinner'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'text'
 type ButtonSize = 'sm' | 'md' | 'lg'
@@ -8,20 +9,22 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   fullWidth?: boolean
+  /** 진행 중 상태 — 스피너 표시 + 클릭 비활성화 */
+  loading?: boolean
   children: ReactNode
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 focus-visible:ring-primary-500',
+    'bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] focus-visible:ring-primary-500/60',
   secondary:
-    'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 active:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 focus-visible:ring-zinc-400',
+    'bg-[var(--dialog-btn-secondary-bg)] text-[var(--color-text-primary)] hover:bg-[var(--dialog-btn-secondary-hover-bg)] active:bg-[var(--dialog-btn-secondary-pressed-bg)] focus-visible:ring-zinc-400/60',
   ghost:
-    'bg-transparent text-zinc-600 hover:bg-zinc-100 active:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-800 focus-visible:ring-zinc-400',
+    'bg-transparent text-zinc-600 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-active)] dark:text-zinc-300 focus-visible:ring-zinc-400/60',
   text:
-    'bg-transparent text-zinc-900 hover:bg-zinc-100 active:bg-zinc-200 dark:text-zinc-100 dark:hover:bg-zinc-800 focus-visible:ring-zinc-400',
+    'bg-transparent text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-active)] focus-visible:ring-zinc-400/60',
   danger:
-    'bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-600 focus-visible:ring-danger-500',
+    'bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 focus-visible:ring-danger-500/60',
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -31,21 +34,29 @@ const sizeClasses: Record<ButtonSize, string> = {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', fullWidth, className, children, disabled, ...props }, ref) => {
+  (
+    { variant = 'primary', size = 'md', fullWidth, loading, className, children, disabled, ...props },
+    ref
+  ) => {
+    const isDisabled = disabled || loading
     return (
       <button
         ref={ref}
         className={clsx(
-          'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+          'inline-flex items-center justify-center font-medium',
+          'transition-[background-color,transform,box-shadow] duration-150 ease-standard active:scale-[0.98]',
+          'focus-visible:outline-none focus-visible:ring-2',
           variantClasses[variant],
           sizeClasses[size],
           fullWidth && 'w-full',
-          disabled && 'pointer-events-none opacity-50',
+          isDisabled && 'pointer-events-none opacity-50',
           className
         )}
-        disabled={disabled}
+        disabled={isDisabled}
+        aria-busy={loading || undefined}
         {...props}
       >
+        {loading && <Spinner size="sm" label="" />}
         {children}
       </button>
     )

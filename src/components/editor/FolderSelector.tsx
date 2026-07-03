@@ -1,5 +1,6 @@
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
+import clsx from 'clsx'
 import { useFolderStore } from '@/stores/folderStore'
 import type { Folder } from '@/lib/types'
 
@@ -73,12 +74,12 @@ export function FolderSelector({ currentFolder, onFolderChange }: FolderSelector
       {isOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          {/* A11Y-05: role="listbox" */}
+          {/* A11Y-05: role="listbox" — 공용 .ctx-menu 프리미티브 사용 */}
           <div
             ref={listRef}
             role="listbox"
             aria-label="폴더 선택"
-            className="absolute left-0 top-full mt-1 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20 min-w-[180px]"
+            className="ctx-menu absolute left-0 top-full mt-1 z-[var(--z-dropdown)] min-w-[180px] origin-top-left animate-in fade-in zoom-in-95 slide-in-from-top-1 duration-150 ease-enter"
           >
             {folders.map((folder, index) => (
               <button
@@ -89,15 +90,18 @@ export function FolderSelector({ currentFolder, onFolderChange }: FolderSelector
                   onFolderChange(folder.id!)
                   setIsOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 ${focusedIndex === index ? 'bg-zinc-100 dark:bg-zinc-700' : ''}`}
+                className={clsx(
+                  'ctx-menu__item text-sm',
+                  focusedIndex === index && 'bg-[var(--ctx-menu-hover-bg)]'
+                )}
               >
                 <span
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                   style={{ backgroundColor: folder.color }}
                 />
-                <span>{folder.name}</span>
+                <span className="ctx-menu__item-label truncate">{folder.name}</span>
                 {folder.id === currentFolder?.id && (
-                  <span className="ml-auto text-primary-500">✓</span>
+                  <Check className="w-4 h-4 shrink-0 text-primary-500" aria-hidden="true" />
                 )}
               </button>
             ))}

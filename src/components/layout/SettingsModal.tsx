@@ -32,7 +32,7 @@ import {
   XCircle,
   CheckCircle,
 } from 'lucide-react'
-import { useSettingsStore, applyTheme, applyColorPalette, applyFontFamily, applyFontSize } from '@/stores/settingsStore'
+import { useSettingsStore } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useMemoStore } from '@/stores/memoStore'
@@ -92,6 +92,34 @@ function SyncStatusBadge({ status }: { status: SyncStatus }) {
   }
 }
 
+// ─── Info Banner ────────────────────────────────────
+// 파란색 하드코딩 대신 사용자 팔레트를 따르는 공용 안내 배너
+function InfoBanner({
+  tone = 'info',
+  icon,
+  children,
+  className,
+}: {
+  tone?: 'info' | 'danger'
+  icon: React.ReactNode
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={clsx(
+        'flex items-start gap-2 text-xs p-3 rounded-lg',
+        tone === 'info' && 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/10',
+        tone === 'danger' && 'text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/10',
+        className
+      )}
+    >
+      <span className="shrink-0 mt-0.5" aria-hidden="true">{icon}</span>
+      <span>{children}</span>
+    </div>
+  )
+}
+
 // ─── Cloud Sync Section ─────────────────────────────
 function CloudSyncSection() {
   const user = useAuthStore((s) => s.user)
@@ -122,7 +150,7 @@ function CloudSyncSection() {
         클라우드 동기화
       </h3>
 
-      <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm">
+      <div className="p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm">
         {user ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -153,13 +181,13 @@ function CloudSyncSection() {
               <button
                 type="button"
                 onClick={logout}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-danger-600 bg-zinc-50 hover:bg-danger-50 dark:bg-zinc-800 dark:hover:bg-danger-900/20 transition-colors border border-zinc-200 dark:border-zinc-700 hover:border-danger-200 dark:hover:border-danger-800"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-danger-600 bg-zinc-50 hover:bg-danger-50 dark:bg-zinc-800 dark:hover:bg-danger-900/20 transition-colors border border-[var(--color-border-default)] hover:border-danger-200 dark:hover:border-danger-800"
               >
                 로그아웃
               </button>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-[var(--color-border-subtle)]">
               <div className="flex-1 flex items-center gap-2">
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">상태:</span>
                 <SyncStatusBadge status={syncStatus} />
@@ -172,15 +200,14 @@ function CloudSyncSection() {
               )}
             </div>
 
-            <div className="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg">
-              <Cloud className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>다른 기기에서 같은 계정으로 로그인하면 자동으로 동기화됩니다.</span>
-            </div>
+            <InfoBanner icon={<Cloud className="w-4 h-4" />}>
+              다른 기기에서 같은 계정으로 로그인하면 자동으로 동기화됩니다.
+            </InfoBanner>
           </div>
         ) : (
           <div className="text-center py-6 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-2">
-              <Cloud className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+            <div className="w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mx-auto mb-2">
+              <Cloud className="w-8 h-8 text-primary-500 dark:text-primary-400" />
             </div>
             <div className="space-y-1">
               <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">
@@ -194,7 +221,7 @@ function CloudSyncSection() {
               type="button"
               onClick={login}
               disabled={isSigningIn}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#4285F4] hover:bg-[#3367D6] text-white font-medium shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 min-w-[200px]"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#4285F4] hover:bg-[#3367D6] text-white font-medium transition-[background-color,transform] active:scale-95 disabled:opacity-50 disabled:scale-100 min-w-[200px]"
             >
               {isSigningIn ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -209,10 +236,9 @@ function CloudSyncSection() {
               {isSigningIn ? '로그인 중...' : 'Google로 로그인'}
             </button>
             {authError && (
-              <div className="flex items-start gap-2 text-xs text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/10 p-3 rounded-lg mx-auto max-w-xs text-left">
-                <CloudOff className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{authError}</span>
-              </div>
+              <InfoBanner tone="danger" icon={<CloudOff className="w-4 h-4" />} className="mx-auto max-w-xs text-left">
+                {authError}
+              </InfoBanner>
             )}
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               로그인 없이도 로컬에서 모든 기능을 사용할 수 있습니다.
@@ -239,7 +265,7 @@ function ToggleItem({
   onChange: () => void
 }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/50">
+    <div className="flex items-center justify-between p-3 rounded-lg border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50">
       <div className="flex items-center gap-3">
         {icon && (
           <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
@@ -261,8 +287,9 @@ function ToggleItem({
         aria-checked={enabled}
         onClick={onChange}
         className={clsx(
-          'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-          enabled ? 'bg-primary-500' : 'bg-zinc-200 dark:bg-zinc-700'
+          // 포커스 링은 전역 :focus-visible 아웃라인 토큰에 위임 (다크 halo 방지)
+          'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
+          enabled ? 'bg-[var(--color-accent)]' : 'bg-zinc-200 dark:bg-zinc-700'
         )}
       >
         <span
@@ -311,9 +338,7 @@ function ThemeStatusBanner() {
     const condition = signals.environment.weather ? conditionMap[signals.environment.weather] || '알 수 없음' : ''
     const solar = signals.environment.solarMode === 'light' ? '낮' : '밤'
     description = `현재 날씨(${condition}) 및 시간(${solar})에 맞춰 테마가 자동 적용되었습니다.`
-    bgClass = 'bg-blue-50 dark:bg-blue-900/20'
-    borderClass = 'border-blue-200 dark:border-blue-800'
-    textClass = 'text-blue-800 dark:text-blue-200'
+    // 기본값(primary 토큰)을 그대로 사용 — 사용자 팔레트를 따른다
     icon = <Cloud className="w-5 h-5" />
   }
 
@@ -371,10 +396,6 @@ export function SettingsModal() {
   const activeSource = useThemeOrchestrator((s) => s.activeSource)
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
-  const [localTheme, setLocalTheme] = useState<ThemeMode>(settings.theme)
-  const [localPalette, setLocalPalette] = useState<ColorPalette>(settings.colorPalette)
-  const [localFontFamily, setLocalFontFamily] = useState(settings.fontFamily)
-  const [localFontSize, setLocalFontSize] = useState(settings.fontSize)
 
   // PWA Install state
   const [canInstallPWA, setCanInstallPWA] = useState(false)
@@ -422,13 +443,6 @@ export function SettingsModal() {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const contentRef = useRef<HTMLDivElement>(null)
 
-  // Detect unsaved changes
-  const hasChanges =
-    localTheme !== settings.theme ||
-    localPalette !== settings.colorPalette ||
-    localFontFamily !== settings.fontFamily ||
-    localFontSize !== settings.fontSize
-
   // Reset scroll position and close dropdowns on tab switch
   useEffect(() => {
     if (contentRef.current) {
@@ -465,46 +479,12 @@ export function SettingsModal() {
     }
   }, [])
 
-  // Real-time theme preview (skip when orchestrator is overriding)
+  // Reset transient error state when modal opens
   useEffect(() => {
     if (isOpen) {
-      const source = useThemeOrchestrator.getState().activeSource
-      if (source === 'default' || source === 'manual-override') {
-        applyTheme(localTheme)
-      }
-    }
-  }, [localTheme, isOpen])
-
-  // Real-time palette preview (skip when orchestrator is overriding)
-  useEffect(() => {
-    if (isOpen) {
-      const source = useThemeOrchestrator.getState().activeSource
-      if (source === 'default' || source === 'manual-override') {
-        applyColorPalette(localPalette)
-      }
-    }
-  }, [localPalette, isOpen])
-
-  // Real-time font family preview
-  useEffect(() => {
-    if (isOpen) applyFontFamily(localFontFamily)
-  }, [localFontFamily, isOpen])
-
-  // Real-time font size preview
-  useEffect(() => {
-    if (isOpen) applyFontSize(localFontSize)
-  }, [localFontSize, isOpen])
-
-  // Sync local state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setLocalTheme(settings.theme)
-      setLocalPalette(settings.colorPalette)
-      setLocalFontFamily(settings.fontFamily)
-      setLocalFontSize(settings.fontSize)
       setRestoreError(null)
     }
-  }, [isOpen, settings.theme, settings.colorPalette, settings.fontFamily, settings.fontSize])
+  }, [isOpen])
 
   // Sync local AI keys when modal opens
   useEffect(() => {
@@ -560,23 +540,16 @@ export function SettingsModal() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localGeminiKey])
 
-  const handleSave = () => {
-    setTheme(localTheme)
-    setColorPalette(localPalette)
-    setFontFamily(localFontFamily)
-    setFontSize(localFontSize)
-    // Re-resolve orchestrator so environment theme overrides if active
+  // 테마/팔레트는 선택 즉시 커밋 (instant-apply) — 환경/이벤트 테마가 활성인 경우
+  // 오케스트레이터가 우선권을 되찾도록 즉시 재해석한다.
+  const handleThemeSelect = (theme: ThemeMode) => {
+    setTheme(theme)
     useThemeOrchestrator.getState().resolve()
-    closeModal()
   }
 
-  const handleClose = () => {
-    // Restore font to stored values
-    applyFontFamily(settings.fontFamily)
-    applyFontSize(settings.fontSize)
-    // Restore correct theme via orchestrator (handles both default and overridden cases)
+  const handlePaletteSelect = (palette: ColorPalette) => {
+    setColorPalette(palette)
     useThemeOrchestrator.getState().resolve()
-    closeModal()
   }
 
   const handleInstallPWA = async () => {
@@ -714,17 +687,17 @@ export function SettingsModal() {
             <button
               key={option.value}
               type="button"
-              onClick={() => setLocalTheme(option.value)}
+              onClick={() => handleThemeSelect(option.value)}
               className={clsx(
-                'flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200',
-                localTheme === option.value
+                'flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-colors duration-200',
+                settings.theme === option.value
                   ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                  : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900'
+                  : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900'
               )}
             >
               <div className={clsx(
                 'w-10 h-10 rounded-full flex items-center justify-center transition-colors',
-                localTheme === option.value ? 'bg-white dark:bg-zinc-800 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800'
+                settings.theme === option.value ? 'bg-white dark:bg-zinc-800 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800'
               )}>
                 {option.icon}
               </div>
@@ -734,7 +707,7 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Color Palette Selection */}
       <section>
@@ -746,7 +719,7 @@ export function SettingsModal() {
             <span className="text-xs text-primary-500 dark:text-primary-400">
               상단 알림 참조 (테마 제어 중)
             </span>
-          ) : localTheme === 'dark' ? (
+          ) : settings.theme === 'dark' ? (
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
               다크 모드에서는 색상이 자동 조정됩니다
             </span>
@@ -760,13 +733,13 @@ export function SettingsModal() {
             <button
               key={palette.id}
               type="button"
-              onClick={() => setLocalPalette(palette.id)}
+              onClick={() => handlePaletteSelect(palette.id)}
               disabled={isThemeOverridden}
               className={clsx(
-                'group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 hover:scale-105',
-                localPalette === palette.id
+                'group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-[transform,border-color,background-color] duration-200 hover:scale-105',
+                settings.colorPalette === palette.id
                   ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                  : 'border-[var(--color-border-default)] hover:border-zinc-300 dark:hover:border-zinc-600'
               )}
             >
               <div className="relative flex gap-1">
@@ -778,7 +751,7 @@ export function SettingsModal() {
                   className="w-6 h-6 rounded-full shadow-sm ring-1 ring-black/5 -ml-2"
                   style={{ backgroundColor: palette.colors.secondary }}
                 />
-                {localPalette === palette.id && (
+                {settings.colorPalette === palette.id && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-5 h-5 rounded-full bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center">
                       <Check className="w-3 h-3 text-primary-600 dark:text-primary-400" />
@@ -788,7 +761,7 @@ export function SettingsModal() {
               </div>
               <span className={clsx(
                 'text-xs font-medium transition-colors',
-                localPalette === palette.id ? 'text-primary-700 dark:text-primary-300' : 'text-zinc-600 dark:text-zinc-400'
+                settings.colorPalette === palette.id ? 'text-primary-700 dark:text-primary-300' : 'text-zinc-600 dark:text-zinc-400'
               )}>
                 {palette.nameKo}
               </span>
@@ -797,7 +770,7 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Font Settings */}
       <section>
@@ -810,12 +783,12 @@ export function SettingsModal() {
             {FONT_FAMILIES.map((font) => (
               <button
                 key={font.id}
-                onClick={() => setLocalFontFamily(font.id)}
+                onClick={() => setFontFamily(font.id)}
                 className={clsx(
-                  'px-3 py-3 rounded-xl border-2 text-sm transition-all text-center',
-                  localFontFamily === font.id
+                  'px-3 py-3 rounded-xl border-2 text-sm transition-colors text-center',
+                  settings.fontFamily === font.id
                     ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
+                    : 'border-[var(--color-border-default)] text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
                 )}
                 style={{ fontFamily: font.fontFamily }}
               >
@@ -825,17 +798,17 @@ export function SettingsModal() {
           </div>
 
           {/* Font Size */}
-          <div className="flex items-center gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50">
             <span className="text-xs text-zinc-500 dark:text-zinc-400 shrink-0 font-medium">크기</span>
             <div className="flex-1 flex gap-1.5">
               {FONT_SIZES.map((size) => (
                 <button
                   key={size.id}
-                  onClick={() => setLocalFontSize(size.id)}
+                  onClick={() => setFontSize(size.id)}
                   className={clsx(
-                    'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
-                    localFontSize === size.id
-                      ? 'bg-primary-500 text-white'
+                    'flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                    settings.fontSize === size.id
+                      ? 'bg-[var(--color-accent)] text-[var(--color-on-accent)]'
                       : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                   )}
                   title={size.label}
@@ -848,19 +821,19 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* App Info */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           앱 정보
         </h3>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-3">
+        <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-zinc-500 dark:text-zinc-400">버전</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">1.0.0</span>
           </div>
-          <div className="border-t border-zinc-100 dark:border-zinc-800 my-3" />
+          <div className="border-t border-[var(--color-border-subtle)] my-3" />
           <button
             onClick={() => { closeModal(); setTimeout(() => openTermsModal(), 200) }}
             className="text-sm text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
@@ -879,7 +852,7 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           프로필 설정
         </h3>
-        <div className="flex flex-col sm:flex-row items-center gap-6 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center gap-6 p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm">
           {user ? (
             <>
               <div className="relative">
@@ -930,7 +903,7 @@ export function SettingsModal() {
       {/* Cloud Sync */}
       <CloudSyncSection />
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Backup & Restore */}
       <section>
@@ -939,7 +912,7 @@ export function SettingsModal() {
         </h3>
         <div className="space-y-3">
           {/* Backup */}
-          <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900/80">
+          <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/80">
             <div className="space-y-1">
               <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 백업 다운로드
@@ -960,7 +933,7 @@ export function SettingsModal() {
           </div>
 
           {/* Restore */}
-          <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900/80">
+          <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/80">
             <div className="space-y-1">
               <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 데이터 복원
@@ -1014,17 +987,19 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           메모장 배경색
         </h3>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
+        <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50">
           <div className="flex items-center gap-3">
             {(Object.keys(MEMO_COLORS) as MemoColor[]).map((c) => (
               <button
                 key={c}
                 onClick={() => setDefaultColor(c)}
+                aria-label={`배경색 ${c}`}
+                aria-pressed={settings.memoSettings.defaultColor === c}
                 className={clsx(
-                  'w-8 h-8 rounded-full border-2 transition-all',
+                  'w-8 h-8 rounded-full border-2 transition-[transform,border-color]',
                   settings.memoSettings.defaultColor === c
                     ? 'border-primary-500 scale-110'
-                    : 'border-zinc-200 dark:border-zinc-600'
+                    : 'border-[var(--color-border-default)]'
                 )}
                 style={{ backgroundColor: MEMO_COLORS[c] }}
               />
@@ -1033,7 +1008,7 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Default Folder */}
       <section>
@@ -1043,7 +1018,7 @@ export function SettingsModal() {
         <div className="relative">
           <button
             onClick={() => setShowFolderDropdown(!showFolderDropdown)}
-            className="w-full flex items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
+            className="w-full flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
           >
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">새 메모 기본 폴더</span>
             <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
@@ -1060,7 +1035,7 @@ export function SettingsModal() {
           {showFolderDropdown && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowFolderDropdown(false)} />
-              <div className="absolute z-20 left-0 right-0 mt-1 py-1 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute z-[var(--z-dropdown)] left-0 right-0 mt-1 py-1 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-2)] max-h-48 overflow-y-auto">
                 <button
                   onClick={() => { setDefaultFolder(null); setShowFolderDropdown(false) }}
                   className={clsx(
@@ -1095,7 +1070,7 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Input Start Position */}
       <section>
@@ -1108,7 +1083,7 @@ export function SettingsModal() {
               settings.memoSettings.inputStartPosition === 'title' ? 'body' : 'title'
             )
           }}
-          className="w-full flex items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
         >
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">새 메모 커서 위치</span>
           <div className="flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -1118,7 +1093,7 @@ export function SettingsModal() {
         </button>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Toggle Settings */}
       <section>
@@ -1141,7 +1116,7 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Folder Management */}
       <section>
@@ -1169,7 +1144,7 @@ export function SettingsModal() {
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="폴더 이름"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border-default)] bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {
@@ -1185,8 +1160,10 @@ export function SettingsModal() {
                   <button
                     key={c}
                     onClick={() => setNewFolderColor(c)}
+                    aria-label={`폴더 색상 ${c}`}
+                    aria-pressed={newFolderColor === c}
                     className={clsx(
-                      'w-6 h-6 rounded-full transition-all',
+                      'w-6 h-6 rounded-full transition-[transform,box-shadow]',
                       newFolderColor === c ? 'ring-2 ring-offset-1 ring-primary-500 scale-110' : ''
                     )}
                     style={{ backgroundColor: c }}
@@ -1219,7 +1196,7 @@ export function SettingsModal() {
 
           {/* Folder list */}
           {folders.length === 0 && !isAddingFolder && (
-            <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-center">
+            <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 text-center">
               <FolderOpen className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
               <p className="text-sm text-zinc-500 dark:text-zinc-400">폴더가 없습니다</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">새 폴더를 추가하여 메모를 정리하세요</p>
@@ -1229,7 +1206,7 @@ export function SettingsModal() {
           {folders.map((folder) => (
             <div
               key={folder.id}
-              className="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50"
+              className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50"
             >
               {editingFolderId === folder.id ? (
                 <>
@@ -1238,7 +1215,7 @@ export function SettingsModal() {
                       type="text"
                       value={editFolderName}
                       onChange={(e) => setEditFolderName(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      className="w-full px-3 py-1.5 text-sm rounded-lg border border-[var(--color-border-default)] bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && editFolderName.trim()) {
@@ -1253,8 +1230,10 @@ export function SettingsModal() {
                         <button
                           key={c}
                           onClick={() => setEditFolderColor(c)}
+                          aria-label={`폴더 색상 ${c}`}
+                          aria-pressed={editFolderColor === c}
                           className={clsx(
-                            'w-5 h-5 rounded-full transition-all',
+                            'w-5 h-5 rounded-full transition-[transform,box-shadow]',
                             editFolderColor === c ? 'ring-2 ring-offset-1 ring-primary-500 scale-110' : ''
                           )}
                           style={{ backgroundColor: c }}
@@ -1300,13 +1279,14 @@ export function SettingsModal() {
                   </span>
                   {!folder.isSystem && (
                     <div className="flex items-center gap-1">
+                      {/* 40px 최소 터치 타깃 확보 (-m으로 레이아웃 밀도 유지) */}
                       <button
                         onClick={() => {
                           setEditingFolderId(folder.id!)
                           setEditFolderName(folder.name)
                           setEditFolderColor(folder.color)
                         }}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="flex items-center justify-center min-w-10 min-h-10 -my-2 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         aria-label={`${folder.name} 편집`}
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -1316,7 +1296,7 @@ export function SettingsModal() {
                           setPendingDeleteFolder({ id: folder.id!, name: folder.name })
                           setShowDeleteFolderConfirm(true)
                         }}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                        className="flex items-center justify-center min-w-10 min-h-10 -my-2 rounded-lg text-zinc-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                         aria-label={`${folder.name} 삭제`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1397,7 +1377,7 @@ export function SettingsModal() {
     return (
     <div className="space-y-8">
       {/* AI status banner */}
-      <div className="rounded-xl bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 p-4 space-y-2">
+      <div className="rounded-xl bg-primary-50 dark:bg-primary-900/15 border border-primary-100 dark:border-primary-900/30 p-4 space-y-2">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 기능 활성화됨</span>
@@ -1415,7 +1395,7 @@ export function SettingsModal() {
       {/* Provider Selection */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">기본 설정</h3>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-5">
+        <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 space-y-5">
           {/* AI Provider */}
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">AI 프로바이더</label>
@@ -1425,10 +1405,10 @@ export function SettingsModal() {
                   key={opt.value}
                   onClick={() => useSettingsStore.getState().setAIProvider(opt.value)}
                   className={clsx(
-                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-all text-center',
+                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-colors text-center',
                     settings.ai?.aiProvider === opt.value
                       ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
+                      : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
                   )}
                 >
                   {opt.label}
@@ -1446,10 +1426,10 @@ export function SettingsModal() {
                   key={opt.value}
                   onClick={() => useSettingsStore.getState().setOCRProvider(opt.value)}
                   className={clsx(
-                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-all text-center',
+                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-colors text-center',
                     settings.ai?.ocrProvider === opt.value
                       ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
+                      : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
                   )}
                 >
                   {opt.label}
@@ -1467,10 +1447,10 @@ export function SettingsModal() {
                   key={opt.value}
                   onClick={() => setSTTLanguage(opt.value)}
                   className={clsx(
-                    'px-3 py-2 rounded-xl border-2 text-xs font-medium transition-all',
+                    'px-3 py-2 rounded-xl border-2 text-xs font-medium transition-colors',
                     settings.ai?.language === opt.value
                       ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
+                      : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
                   )}
                 >
                   {opt.label}
@@ -1489,7 +1469,7 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Advanced: Custom API Keys */}
       <section>
@@ -1505,7 +1485,7 @@ export function SettingsModal() {
         </p>
 
         {showAdvancedKeys && (
-          <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-5">
+          <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 space-y-5">
             {/* OpenAI Key */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -1518,10 +1498,10 @@ export function SettingsModal() {
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <input type={showOpenAIKey ? 'text' : 'password'} value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} placeholder="sk-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-8" />
-                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">{showOpenAIKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                  <input type={showOpenAIKey ? 'text' : 'password'} value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} placeholder="sk-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
+                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showOpenAIKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0">{testingProvider === 'openai' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+                <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'openai' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
               </div>
               {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
             </div>
@@ -1538,10 +1518,10 @@ export function SettingsModal() {
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <input type={showAnthropicKey ? 'text' : 'password'} value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} placeholder="sk-ant-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-8" />
-                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">{showAnthropicKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                  <input type={showAnthropicKey ? 'text' : 'password'} value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} placeholder="sk-ant-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
+                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showAnthropicKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0">{testingProvider === 'anthropic' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+                <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'anthropic' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
               </div>
               {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
             </div>
@@ -1558,10 +1538,10 @@ export function SettingsModal() {
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <input type={showGeminiKey ? 'text' : 'password'} value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} placeholder="AIza..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-8" />
-                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">{showGeminiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                  <input type={showGeminiKey ? 'text' : 'password'} value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} placeholder="AIza..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
+                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} aria-label={showGeminiKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showGeminiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0">{testingProvider === 'gemini' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+                <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'gemini' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
               </div>
               {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
             </div>
@@ -1571,10 +1551,9 @@ export function SettingsModal() {
 
       {/* Info */}
       <section>
-        <div className="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg">
-          <Shield className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>API 키를 등록하지 않아도 하루 50회까지 무료로 AI 기능을 사용할 수 있습니다. 등록된 키는 이 기기에만 저장됩니다.</span>
-        </div>
+        <InfoBanner icon={<Shield className="w-4 h-4" />}>
+          API 키를 등록하지 않아도 하루 50회까지 무료로 AI 기능을 사용할 수 있습니다. 등록된 키는 이 기기에만 저장됩니다.
+        </InfoBanner>
       </section>
     </div>
   )}
@@ -1587,7 +1566,7 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           앱 설치
         </h3>
-        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
+        <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50">
           {isInstalled ? (
             <div className="flex items-center gap-3 p-3 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-400 rounded-lg">
               <div className="w-8 h-8 rounded-full bg-success-100 dark:bg-success-900/40 flex items-center justify-center">
@@ -1629,7 +1608,7 @@ export function SettingsModal() {
         </div>
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* High Contrast Mode */}
       <section>
@@ -1645,7 +1624,7 @@ export function SettingsModal() {
         />
       </section>
 
-      <div className="border-t border-zinc-100 dark:border-zinc-800" />
+      <div className="border-t border-[var(--color-border-subtle)]" />
 
       {/* Danger Zone */}
       <section>
@@ -1786,11 +1765,11 @@ export function SettingsModal() {
 
   return (
     <>
-      <Dialog open={isOpen} onClose={handleClose} size="4xl" noPadding>
+      <Dialog open={isOpen} onClose={closeModal} size="4xl" noPadding>
         <div className="flex flex-col h-[90dvh] fold:h-[75dvh] sm:h-auto sm:max-h-[800px]">
           {/* Header */}
           <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5 sm:pb-4">
-            <DialogHeader title="설정" onClose={handleClose} />
+            <DialogHeader title="설정" onClose={closeModal} />
           </div>
 
           {/* Body: Sidebar Tabs + Content */}
@@ -1800,7 +1779,7 @@ export function SettingsModal() {
               <aside
                 role="tablist"
                 aria-label="설정 탭"
-                className="w-full md:w-56 bg-zinc-50/80 dark:bg-zinc-900/50 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-800 p-2 md:p-4 gap-1 md:gap-1.5 overflow-x-auto md:overflow-y-auto flex-shrink-0 flex md:flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                className="w-full md:w-56 bg-zinc-50/80 dark:bg-zinc-950/40 border-b md:border-b-0 md:border-r border-[var(--color-border-subtle)] p-2 md:p-4 gap-1 md:gap-1.5 overflow-x-auto md:overflow-y-auto flex-shrink-0 flex md:flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               >
                 {tabs.map((tab, index) => (
                   <button
@@ -1812,7 +1791,7 @@ export function SettingsModal() {
                     onClick={() => setActiveTab(tab.id)}
                     onKeyDown={(e) => handleTabKeyDown(e, index)}
                     className={clsx(
-                      'flex-shrink-0 min-w-[68px] md:min-w-0 w-auto md:w-full flex flex-col md:flex-row items-center gap-1 md:gap-3 px-2.5 md:px-3.5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 relative',
+                      'flex-shrink-0 min-w-[68px] md:min-w-0 w-auto md:w-full flex flex-col md:flex-row items-center gap-1 md:gap-3 px-2.5 md:px-3.5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-[color,background-color,box-shadow,transform] duration-200 relative',
                       activeTab === tab.id
                         ? 'bg-white dark:bg-zinc-800 text-primary-600 dark:text-primary-400 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700 md:translate-x-0.5'
                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'
@@ -1829,11 +1808,11 @@ export function SettingsModal() {
                 ))}
               </aside>
               {/* Scroll hint gradient - mobile only */}
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-50/80 dark:from-zinc-900/50 pointer-events-none md:hidden" aria-hidden="true" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-50/80 dark:from-zinc-950/40 pointer-events-none md:hidden" aria-hidden="true" />
             </div>
 
-            {/* Content Area */}
-            <div ref={contentRef} className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-zinc-950">
+            {/* Content Area — 패널(--dialog-bg) 표면을 그대로 사용해 헤더와 이음새 없이 연결 */}
+            <div ref={contentRef} className="flex-1 min-w-0 overflow-y-auto">
               <div className="max-w-2xl mx-auto p-4 md:p-6 lg:p-8">
                 {activeTab === 'general' && renderGeneralSettings()}
                 {activeTab === 'account' && renderAccountSettings()}
@@ -1845,12 +1824,6 @@ export function SettingsModal() {
               </div>
             </div>
           </DialogBody>
-
-          {/* Footer */}
-          <div className="flex-shrink-0 flex items-center justify-end gap-2 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 px-4 py-3 sm:px-6 sm:py-4">
-            <Button variant="ghost" onClick={handleClose}>취소</Button>
-            <Button variant="primary" onClick={handleSave} disabled={!hasChanges}>저장</Button>
-          </div>
         </div>
       </Dialog>
 

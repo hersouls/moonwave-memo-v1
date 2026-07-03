@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lightbulb } from 'lucide-react'
+import { Lightbulb, ArrowRight } from 'lucide-react'
+import { WidgetCard } from './WidgetCard'
 
 const PROMPTS = [
   '오늘 가장 기억에 남는 순간은?',
@@ -74,24 +75,19 @@ export function WritingPromptWidget() {
   }, [])
 
   return (
-    <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 shadow-sm p-4 border border-amber-200/50 dark:border-amber-800/30">
-      <div className="flex items-center gap-2 mb-2">
-        <Lightbulb className="w-4 h-4 text-amber-500" />
-        <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-          오늘의 글감
-        </h3>
-      </div>
-
-      <p className="text-sm text-amber-700 dark:text-amber-200 mb-3 leading-relaxed">
+    <WidgetCard icon={Lightbulb} tint="amber" title="오늘의 글감">
+      <p className="mb-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
         {prompt}
       </p>
 
       <button
+        type="button"
         onClick={() => navigate('/memo/new')}
-        className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+        className="inline-flex min-h-11 items-center gap-1 -mx-2 -my-1 rounded-lg px-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-100/60 dark:text-amber-400 dark:hover:bg-amber-900/20"
       >
-        이 주제로 작성하기 &rarr;
+        이 주제로 작성하기
+        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
-    </div>
+    </WidgetCard>
   )
 }

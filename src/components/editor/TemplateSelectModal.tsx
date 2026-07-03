@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useNavigate } from 'react-router-dom'
 import {
   Users, BookOpen, CheckSquare, Lightbulb, Calendar,
@@ -89,10 +89,17 @@ export function TemplateSelectModal() {
 
   return (
     <>
-      <Dialog open={isOpen} onClose={handleClose} className="relative z-50">
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
+      <Dialog open={isOpen} onClose={handleClose} className="relative z-[var(--z-modal)]">
+        <DialogBackdrop
+          transition
+          className="fixed inset-0 transition data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
+          style={{ background: 'var(--overlay-bg)' }}
+        />
         <div className="fixed inset-0 flex items-end sm:items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-800 shadow-xl p-5 animate-in slide-in-from-bottom duration-200">
+          <DialogPanel
+            transition
+            className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-800 shadow-xl p-5 transition duration-300 data-[closed]:translate-y-8 data-[closed]:opacity-0 sm:data-[closed]:translate-y-0 sm:data-[closed]:scale-95 data-[enter]:ease-out data-[leave]:duration-200 data-[leave]:ease-in"
+          >
             <div className="flex items-center justify-between mb-4">
               <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
                 템플릿 선택
@@ -193,9 +200,13 @@ export function TemplateSelectModal() {
 
         {/* Delete confirmation */}
         {deleteConfirm && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div className="fixed inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} />
-            <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-w-xs w-full">
+          <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 animate-in fade-in duration-200 ease-enter"
+              style={{ background: 'var(--overlay-bg)' }}
+              onClick={() => setDeleteConfirm(null)}
+            />
+            <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-w-xs w-full animate-in fade-in zoom-in-95 duration-200 ease-enter">
               <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">템플릿 삭제</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5">
                 이 템플릿을 삭제하시겠습니까?

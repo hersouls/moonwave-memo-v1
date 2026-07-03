@@ -6,6 +6,11 @@ function useCountUp(target: number, duration = 800) {
   const [current, setCurrent] = useState(0)
   useEffect(() => {
     if (target === 0) { setCurrent(0); return }
+    // 전정계 안전: 움직임 최소화 설정 시 카운트업 없이 즉시 표시
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCurrent(target)
+      return
+    }
     const startTime = performance.now()
     let rafId: number
     const tick = (now: number) => {
@@ -35,13 +40,13 @@ export const StreakCounter = memo(function StreakCounter() {
       </div>
       <div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <span className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">
             {animatedStreak}
           </span>
           <span className="text-sm text-zinc-500 dark:text-zinc-400">일 연속</span>
         </div>
         {longestStreak > 0 && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
             최장 {animatedLongest}일
           </p>
         )}

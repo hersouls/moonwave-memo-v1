@@ -266,6 +266,25 @@
   margin-top: var(--empty-action-margin-top);
 }
 
+/* -----------------------------------------
+   12b. Empty State One-shot Entrance
+   (무한 float 대신 진입 시 1회 재생 — refined-minimal)
+   ----------------------------------------- */
+@keyframes empty-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-empty-in {
+  animation: empty-in 400ms var(--ease-enter) both;
+}
+
 /* ========================================
    Context Menu Utility Classes
    ======================================== */
@@ -605,96 +624,5 @@
   display: flex;
 }
 
-/* ========================================
-   Toggle Tooltip Utility Classes
-   (Tokens from foundation-input.css)
-   ======================================== */
-
-/* -----------------------------------------
-   23. Toggle Tooltip Base
-   ----------------------------------------- */
-.toggle-tooltip {
-  position: absolute;
-  background: var(--tooltip-bg);
-  color: var(--color-text-primary);
-  box-shadow: var(--tooltip-shadow);
-  border-radius: var(--tooltip-border-radius);
-  padding: var(--tooltip-padding);
-  font-size: var(--tooltip-font-size);
-  max-width: 280px;
-  z-index: 50;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 150ms ease;
-}
-
-.toggle-tooltip--visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* -----------------------------------------
-   24. Toggle Tooltip Elements & Positions
-   ----------------------------------------- */
-.toggle-tooltip__close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: var(--tooltip-close-size);
-  height: var(--tooltip-close-size);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-tertiary);
-  border-radius: 50%;
-  transition: background-color 150ms ease;
-}
-.toggle-tooltip__close:hover {
-  background: #f4f4f5;
-}
-.dark .toggle-tooltip__close:hover {
-  background: #3f3f46;
-}
-
-.toggle-tooltip__arrow {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: var(--tooltip-bg);
-  transform: rotate(45deg);
-}
-
-.toggle-tooltip--top .toggle-tooltip__arrow {
-  bottom: -4px;
-  left: 50%;
-  margin-left: -4px;
-}
-.toggle-tooltip--bottom .toggle-tooltip__arrow {
-  top: -4px;
-  left: 50%;
-  margin-left: -4px;
-}
-.toggle-tooltip--left .toggle-tooltip__arrow {
-  right: -4px;
-  top: 50%;
-  margin-top: -4px;
-}
-.toggle-tooltip--right .toggle-tooltip__arrow {
-  left: -4px;
-  top: 50%;
-  margin-top: -4px;
-}
-
-.toggle-tooltip-trigger {
-  width: var(--icon-touch-target);
-  height: var(--icon-touch-target);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-}
+/* Toggle Tooltip 유틸리티는 사용처가 없어 제거됨 —
+   툴팁은 ui/Tooltip 프리미티브(포털 + 지연 + Escape)가 담당 */

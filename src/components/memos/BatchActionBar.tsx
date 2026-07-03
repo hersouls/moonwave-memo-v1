@@ -92,12 +92,13 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
     clearSelection()
   }
 
-  const btnClass = "flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+  // ≈40px touch targets — selection mode is entered via touch long-press
+  const btnClass = "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-600 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
 
   return (
     <>
-      <div className="batch-action-bar fixed top-16 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1 sm:gap-2 rounded-2xl bg-zinc-900 px-3 sm:px-4 py-2.5 shadow-xl dark:bg-zinc-100">
-        <span className="mr-1 shrink-0 text-xs font-medium text-white dark:text-zinc-900">
+      <div className="batch-action-bar fixed top-16 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1 sm:gap-2 rounded-2xl bg-zinc-900 px-3 sm:px-4 py-2 shadow-xl dark:bg-zinc-100 animate-in fade-in slide-in-from-top-2 duration-200">
+        <span className="mr-1 min-w-[3ch] shrink-0 text-center text-xs font-medium tabular-nums text-white dark:text-zinc-900">
           {count}개
         </span>
 
@@ -112,7 +113,7 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
 
             <button
               onClick={() => setIsPermanentDeleteOpen(true)}
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-900/30 hover:text-red-300 dark:text-red-500 dark:hover:bg-red-100 dark:hover:text-red-700"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-900/30 hover:text-red-300 dark:text-red-500 dark:hover:bg-red-100 dark:hover:text-red-700"
               aria-label="영구 삭제"
             >
               <Trash2 className="h-4 w-4" />
@@ -154,7 +155,7 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
 
         <button
           onClick={handleCancel}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-500 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-500 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
           aria-label="취소"
         >
           <X className="h-4 w-4" />

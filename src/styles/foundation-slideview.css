@@ -2,15 +2,15 @@
    Foundation: Slide View
    ═══════════════════════════════════════════════════ */
 
-/* Slide transition animations */
+/* Slide transition animations — 짧은 이동거리(24px)로 크로스페이드-넛지 느낌 */
 @keyframes slide-enter-right {
-  from { transform: translateX(30%); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  from { transform: translateX(24px) scale(0.99); opacity: 0; }
+  to   { transform: translateX(0) scale(1); opacity: 1; }
 }
 
 @keyframes slide-enter-left {
-  from { transform: translateX(-30%); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  from { transform: translateX(-24px) scale(0.99); opacity: 0; }
+  to   { transform: translateX(0) scale(1); opacity: 1; }
 }
 
 @keyframes slide-fade-in {
@@ -23,25 +23,24 @@
   to   { opacity: 1; }
 }
 
-/* Controls show/hide */
-@keyframes controls-fade-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes slide-overlay-exit {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
-@keyframes controls-fade-out {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-8px); }
+@keyframes slide-content-exit {
+  from { transform: scale(1); }
+  to   { transform: scale(0.98); }
 }
 
 /* Animation classes */
 .slide-enter-right {
-  animation: slide-enter-right 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slide-enter-right 0.25s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   will-change: transform, opacity;
 }
 
 .slide-enter-left {
-  animation: slide-enter-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: slide-enter-left 0.25s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   will-change: transform, opacity;
 }
 
@@ -53,8 +52,14 @@
   animation: slide-overlay-enter 0.25s ease-out forwards;
 }
 
-.slide-controls-visible {
-  animation: controls-fade-in 0.2s ease-out forwards;
+/* 닫기: 오버레이 페이드아웃 + 콘텐츠 살짝 축소 (SlideView가 animationend에서 실제 unmount) */
+.slide-overlay-exit {
+  animation: slide-overlay-exit 0.18s ease-in forwards;
+  pointer-events: none;
+}
+
+.slide-overlay-exit .slide-view-content {
+  animation: slide-content-exit 0.18s ease-in forwards;
 }
 
 /* Slide view markdown overrides */
@@ -114,7 +119,24 @@
   overflow-y: auto;
   height: 100%;
   scroll-behavior: smooth;
+  overscroll-behavior: contain;
   padding: 56px 0 calc(52px + env(safe-area-inset-bottom, 0px));
+  /* 어두운 시네마 표면에 맞는 얇은 스크롤바 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.slide-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.slide-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.slide-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 .slide-scroll-item {
@@ -148,7 +170,8 @@
   .slide-enter-left,
   .slide-fade-in,
   .slide-overlay-enter,
-  .slide-controls-visible {
+  .slide-overlay-exit,
+  .slide-overlay-exit .slide-view-content {
     animation-duration: 0.01ms !important;
   }
 }

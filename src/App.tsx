@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { WifiOff } from 'lucide-react'
@@ -49,6 +49,10 @@ import { registerRefreshCallbacks } from './services/firestoreSync'
 import { getCachedPosition, requestAndCachePosition, getSolarMode } from './services/solarCalculator'
 import { fetchWeather } from './services/weatherService'
 import { MEDIA } from '@/utils/breakpoints'
+
+// View Transitions 지원 브라우저는 VT 크로스페이드가 페이지 전환을 소유하고,
+// 미지원 브라우저만 .page-enter 폴백 애니메이션을 사용한다 (이중 애니메이션 방지).
+const supportsViewTransitions = typeof document !== 'undefined' && 'startViewTransition' in document
 
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false)
@@ -185,8 +189,8 @@ export default function App() {
         e.preventDefault()
         useUndoStore.getState().undo()
       }
-      // Ctrl+N: New memo
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+      // Alt+N: New memo (Ctrl+N은 Chrome/Edge 예약 단축키라 가로챌 수 없음)
+      if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyN') {
         e.preventDefault()
         navigate('/memo/new')
       }
@@ -372,8 +376,17 @@ export default function App() {
     return <AppLoadingScreen />
   }
 
+  // 섹션 단위 페이지 키: /memo/1 → /memo/2 (분할 뷰 내부 이동)에서는 리마운트하지 않고,
+  // dashboard ↔ memos ↔ calendar 섹션 전환에서만 페이지 전환이 일어난다.
+  const section = location.pathname.split('/')[1] || 'dashboard'
+  const pageKey = section === 'memo' ? 'memos' : section
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex flex-col">
+    <div
+      className="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col"
+      // 오프라인 배너 높이 — Header가 배너 아래에 sticky로 붙도록 CSS 변수로 전달
+      style={!isOnline ? ({ '--offline-h': '36px' } as React.CSSProperties) : undefined}
+    >
       <AmbientBackground />
 
       {/* A11Y: sr-only theme change announcement */}
@@ -381,38 +394,41 @@ export default function App() {
         <div className="sr-only" role="status" aria-live="polite">{themeAnnouncement}</div>
       )}
 
-      {/* Offline banner */}
+      {/* Offline banner — 다크온라이트 경고색(AA 대비) + 슬라이드 다운 등장 */}
       {!isOnline && (
-        <div role="alert" className="sticky top-0 z-50 flex items-center justify-center gap-2 px-4 py-2 bg-warning-500 text-white text-sm font-medium">
-          <WifiOff className="w-4 h-4" />
+        <div
+          role="alert"
+          className="sticky top-0 z-[var(--z-sticky)] flex items-center justify-center gap-2 px-4 py-2 bg-warning-100 text-warning-900 dark:bg-warning-950 dark:text-warning-300 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300 ease-enter"
+        >
+          <WifiOff className="w-4 h-4 text-warning-600 dark:text-warning-400" />
           오프라인 상태입니다. 변경사항은 연결 복구 시 동기화됩니다.
         </div>
       )}
 
-      {!isFocusMode && <Sidebar />}
+      {/* 포커스 모드에서도 마운트 유지 — 크롬이 사라지는 대신 트랜지션으로 밀려난다 */}
+      <Sidebar />
 
       <div
         className={clsx(
-          // PERF-04: removed transition-all duration-300 (sidebar has its own transition)
           // Sidebar appears at md+ (tablet & desktop); mobile (<md) uses bottom nav, no margin.
-          'flex-1 flex flex-col',
+          // 사이드바 rail과 같은 300ms/spring 커브로 마진이 함께 움직인다 (접기 desync 방지)
+          'flex-1 flex flex-col transition-[margin-left] duration-300 ease-spring',
           !isFocusMode && (sidebarExpanded ? 'md:ml-64' : 'md:ml-16')
         )}
       >
-        {!isFocusMode && <Header />}
+        <Header />
         <main
           id="main-content"
-          aria-live="polite"
           className={clsx(
             'flex-1',
-            // pb-20 clears the mobile bottom nav; removed at md+ where the sidebar replaces it
-            isFocusMode ? '' : 'pb-20',
+            // 모바일 하단 내비(h-16 + safe-area)만큼 하단 여백 확보; md+에서는 사이드바가 대체
+            isFocusMode ? '' : 'pb-[calc(5rem+env(safe-area-inset-bottom,0px))]',
             !isFocusMode && (isMemoRoute ? 'md:pb-0 lg:overflow-hidden' : 'md:pb-6')
           )}
         >
           {/* TECH-02: ErrorBoundary wraps route content */}
           <ErrorBoundary>
-            <div key={location.pathname} className="page-enter">
+            <div key={pageKey} className={supportsViewTransitions ? undefined : 'page-enter'}>
               <Outlet />
             </div>
           </ErrorBoundary>
@@ -420,8 +436,14 @@ export default function App() {
         {!isMemoRoute && !isFocusMode && <Footer />}
       </div>
 
-      {!isFocusMode && <FAB />}
-      {!isFocusMode && <BottomNav />}
+      {/* 포커스 모드: FAB는 페이드로 사라진다 (즉시 언마운트 방지) */}
+      <div
+        className={clsx('transition-opacity duration-200', isFocusMode && 'opacity-0 pointer-events-none')}
+        inert={isFocusMode || undefined}
+      >
+        <FAB />
+      </div>
+      <BottomNav />
       {!isFocusMode && <MobileNav />}
 
       {/* Global Modals — lazy loaded, rendered only when open */}
@@ -451,6 +473,9 @@ export default function App() {
         <ContextSuggestionBanner memo={suggestedMemo} onDismiss={dismissContextSuggestion} />
       )}
       {!isMemoRoute && <Suspense fallback={null}><FloatingTimer /></Suspense>}
+
+      {/* 라우트별 스크롤 복원 — 뒤로가기 시 위치 복원, 새 이동 시 최상단 */}
+      <ScrollRestoration getKey={(loc) => loc.pathname} />
     </div>
   )
 }

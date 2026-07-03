@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MoreVertical, Trash2, RefreshCw } from 'lucide-react'
+import { MoreVertical, Trash2, RefreshCw, Pin } from 'lucide-react'
 import clsx from 'clsx'
+import type { Memo } from '@/lib/types'
 import { MemoCard } from './MemoCard'
 import { TimelineView } from './TimelineView'
 import { KanbanView } from './KanbanView'
@@ -47,14 +48,15 @@ function InfiniteScrollSentinel({ onIntersect }: { onIntersect: () => void }) {
   return <div ref={sentinelRef} className="h-1" />
 }
 
-// Skeleton loading card for infinite scroll
+// Skeleton loading card for infinite scroll — mirrors the real card anatomy
+// (hairline border, radius, px-4 py-3.5, gap-1.5, 20px title line) so content swap-in doesn't jolt
 function SkeletonMemoCard() {
   return (
-    <div className="rounded-2xl bg-white dark:bg-zinc-800 p-4 shadow-sm">
-      <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700 skeleton-shimmer mb-3" />
-      <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-700 skeleton-shimmer mb-2" />
-      <div className="h-3 w-2/3 rounded bg-zinc-100 dark:bg-zinc-700 skeleton-shimmer mb-3" />
-      <div className="h-2.5 w-1/4 rounded bg-zinc-100 dark:bg-zinc-700 skeleton-shimmer" />
+    <div className="flex flex-col gap-1.5 rounded-2xl fold:rounded-xl border border-[var(--card-hairline)] bg-white dark:bg-zinc-800 px-4 py-3.5 shadow-sm">
+      <div className="h-5 w-3/4 rounded bg-zinc-100 dark:bg-zinc-700/60 skeleton-shimmer" />
+      <div className="h-4 w-full rounded bg-zinc-100 dark:bg-zinc-700/60 skeleton-shimmer" />
+      <div className="h-4 w-2/3 rounded bg-zinc-100 dark:bg-zinc-700/60 skeleton-shimmer" />
+      <div className="h-[13px] w-1/4 rounded bg-zinc-100 dark:bg-zinc-700/60 skeleton-shimmer" />
     </div>
   )
 }
@@ -107,16 +109,19 @@ export function MemoList() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [focusedIndex, filteredMemos.length, visibleCount, navigate])
 
-  // Auto-scroll focused item into view
+  // Auto-scroll focused item into view + move real DOM focus so :focus-visible,
+  // screen-reader position, and Enter activation all follow the j/k cursor
   useEffect(() => {
     if (focusedIndex < 0 || !listRef.current) return
     if (focusedIndex >= visibleMemosRef.current.length) {
       setFocusedIndex(-1)
       return
     }
-    const items = listRef.current.children
-    if (items[focusedIndex]) {
-      (items[focusedIndex] as HTMLElement).scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    const items = listRef.current.querySelectorAll<HTMLElement>('[data-memo-item]')
+    const item = items[focusedIndex]
+    if (item) {
+      item.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      item.querySelector<HTMLElement>('.memo-card__link')?.focus({ preventScroll: true })
     }
   }, [focusedIndex])
 
@@ -136,6 +141,12 @@ export function MemoList() {
   const visibleMemos = filteredMemos.slice(0, visibleCount)
   visibleMemosRef.current = visibleMemos
   const hasMore = filteredMemos.length > visibleCount
+
+  // Pinned section partition — useMemoFilters already returns [...pinned, ...unpinned],
+  // so the split preserves visibleMemos indices for j/k focus and stagger delays
+  const pinnedMemos = visibleMemos.filter((m) => m.isPinned)
+  const unpinnedMemos = visibleMemos.filter((m) => !m.isPinned)
+  const showPinnedSections = pinnedMemos.length > 0 && unpinnedMemos.length > 0
 
   // Speculation Rules: prerender top visible memo pages
   const visibleMemoIds = visibleMemos.slice(0, 10).map((m) => m.id).filter((id): id is number => Boolean(id))
@@ -229,44 +240,65 @@ export function MemoList() {
         <div className="mt-3 px-4 fold:px-2.5 pb-4 lg:px-0">
           <TimelineView memos={visibleMemos} />
         </div>
-      ) : (
-        <div
-          ref={listRef}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          className={clsx(
-            'mt-3 pb-4 lg:px-0',
-            isNarrowFold ? 'px-2.5' : 'px-4',
-            '@container',
-            viewMode === 'grid'
-              ? isNarrowFold
-                ? 'grid grid-cols-1 gap-2'
-                : `grid ${gridColsClass} gap-3`
-              : clsx('flex flex-col', isNarrowFold ? 'gap-2' : 'gap-2.5 @lg:max-w-3xl @lg:mx-auto')
-          )}
-        >
-          {visibleMemos.map((memo, index) => (
-            <div
-              key={memo.id}
-              className={clsx(
-                'animate-in slide-in-from-bottom',
-                focusedIndex === index && 'ring-2 ring-primary-500 rounded-2xl',
-                showSwipeHint && index === 0 && 'animate-wiggle'
-              )}
-              style={{
-                animationDuration: '200ms',
-                animationDelay: index < 8 ? `${index * 30}ms` : '0ms',
-                animationFillMode: 'both',
-              }}
-            >
-              <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} isTrashView={isTrashView} />
-              {showSwipeHint && index === 0 && (
-                <FeatureHint id="swipe-onboarding" message="좌우로 밀어 중요 표시/삭제할 수 있습니다. 길게 눌러 선택 모드로 진입합니다." />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      ) : (() => {
+        // Keyboard focus follows real DOM focus (.memo-card__link), so the wrapper
+        // needs no cursor ring — see the focus effect above
+        const renderMemoItem = (memo: Memo, index: number) => (
+          <div
+            key={memo.id}
+            data-memo-item
+            className={clsx(
+              'animate-in slide-in-from-bottom',
+              showSwipeHint && index === 0 && 'animate-wiggle'
+            )}
+            style={{
+              animationDuration: '200ms',
+              animationDelay: index < 8 ? `${index * 30}ms` : '0ms',
+              animationFillMode: 'both',
+            }}
+          >
+            <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} isTrashView={isTrashView} />
+            {showSwipeHint && index === 0 && (
+              <FeatureHint id="swipe-onboarding" message="좌우로 밀어 중요 표시/삭제할 수 있습니다. 길게 눌러 선택 모드로 진입합니다." />
+            )}
+          </div>
+        )
+        const sectionHeaderClass = clsx(
+          'flex items-center gap-1.5 px-1 pb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400',
+          viewMode === 'grid' && 'col-span-full'
+        )
+        return (
+          <div
+            ref={listRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            className={clsx(
+              'mt-3 pb-4 lg:px-0',
+              isNarrowFold ? 'px-2.5' : 'px-4',
+              '@container',
+              viewMode === 'grid'
+                ? isNarrowFold
+                  ? 'grid grid-cols-1 gap-2'
+                  : `grid ${gridColsClass} gap-3`
+                : clsx('flex flex-col', isNarrowFold ? 'gap-2' : 'gap-2.5 @lg:max-w-3xl @lg:mx-auto')
+            )}
+          >
+            {showPinnedSections ? (
+              <>
+                <div className={sectionHeaderClass}>
+                  <Pin className="h-3 w-3 rotate-[-30deg]" />
+                  고정됨
+                </div>
+                {pinnedMemos.map((memo, index) => renderMemoItem(memo, index))}
+                <div className={clsx(sectionHeaderClass, 'mt-1.5')}>메모</div>
+                {unpinnedMemos.map((memo, index) => renderMemoItem(memo, pinnedMemos.length + index))}
+              </>
+            ) : (
+              visibleMemos.map((memo, index) => renderMemoItem(memo, index))
+            )}
+          </div>
+        )
+      })()}
 
       {/* Skeleton loading + Infinite scroll sentinel */}
       {hasMore && (

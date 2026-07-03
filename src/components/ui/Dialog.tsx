@@ -8,7 +8,7 @@ import {
 import { useDrag } from '@use-gesture/react'
 import { clsx } from 'clsx'
 import { X } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 interface DialogProps {
   open: boolean
@@ -33,6 +33,16 @@ const sizeStyles = {
 export function Dialog({ open, onClose, children, size = 'lg', noPadding = false }: DialogProps) {
   const [dragY, setDragY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  // 드래그 중단 후 스냅백 — 스프링 이징 250ms 동안만 인라인 transition 적용
+  const [isSnapping, setIsSnapping] = useState(false)
+  const snapTimer = useRef<number | null>(null)
+
+  useEffect(
+    () => () => {
+      if (snapTimer.current !== null) window.clearTimeout(snapTimer.current)
+    },
+    []
+  )
 
   const bind = useDrag(
     ({ active, movement: [, my], velocity: [, vy] }) => {
@@ -46,6 +56,10 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
       } else {
         if (my > 100 || vy > 0.5) {
           onClose()
+        } else {
+          setIsSnapping(true)
+          if (snapTimer.current !== null) window.clearTimeout(snapTimer.current)
+          snapTimer.current = window.setTimeout(() => setIsSnapping(false), 250)
         }
         setDragY(0)
       }
@@ -62,8 +76,8 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
     <HeadlessDialog
       open={open}
       onClose={onClose}
-      className="relative z-50"
-      onTransitionEnd={() => { if (!open) { setDragY(0); setIsDragging(false) } }}
+      className="relative z-[var(--z-modal)]"
+      onTransitionEnd={() => { if (!open) { setDragY(0); setIsDragging(false); setIsSnapping(false) } }}
     >
       <DialogBackdrop
         transition
@@ -72,7 +86,7 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
           'transition data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in'
         )}
         style={{
-          background: 'var(--dialog-overlay-bg)',
+          background: 'var(--overlay-bg)',
           opacity: dragY > 0 ? 1 - progress * 0.5 : undefined,
         }}
       />
@@ -96,7 +110,11 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
               boxShadow: 'var(--dialog-shadow)',
               overscrollBehavior: 'contain',
               transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
-              transition: isDragging ? 'none' : undefined,
+              transition: isDragging
+                ? 'none'
+                : isSnapping
+                  ? 'transform 250ms var(--ease-spring)'
+                  : undefined,
             }}
           >
             {/* Mobile drag handle */}

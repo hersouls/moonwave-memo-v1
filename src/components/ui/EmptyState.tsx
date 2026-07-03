@@ -24,19 +24,27 @@ export function EmptyState({ icon, title, description, action, illustration, siz
   return (
     <div className={clsx('empty-state', s.wrapper, className)}>
       {illustration ? (
-        <div className="mb-6 animate-float">
+        <div className="mb-6 animate-empty-in">
           {illustration}
         </div>
       ) : (
-        <div className={clsx('empty-state__icon animate-float', s.iconBox)}>
+        <div className={clsx('empty-state__icon animate-empty-in', s.iconBox)}>
           {icon}
         </div>
       )}
-      <p className={clsx('empty-state__title', s.title)}>{title}</p>
+      <p className={clsx('empty-state__title animate-empty-in', s.title)} style={{ animationDelay: '50ms' }}>
+        {title}
+      </p>
       {description && (
-        <p className={clsx('empty-state__desc', s.desc)}>{description}</p>
+        <p className={clsx('empty-state__desc animate-empty-in', s.desc)} style={{ animationDelay: '100ms' }}>
+          {description}
+        </p>
       )}
-      {action && <div className="empty-state__action">{action}</div>}
+      {action && (
+        <div className="empty-state__action animate-empty-in" style={{ animationDelay: '150ms' }}>
+          {action}
+        </div>
+      )}
     </div>
   )
 }

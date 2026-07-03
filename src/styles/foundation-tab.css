@@ -54,9 +54,9 @@
    5. Tab Animation Tokens
    ----------------------------------------- */
 :root {
-  --tab-transition-duration: 200ms;
-  --tab-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --tab-indicator-transition: 300ms;
+  --tab-transition-duration: var(--duration-base);
+  --tab-transition-easing: var(--ease-standard);
+  --tab-indicator-transition: var(--duration-slow);
 }
 
 /* -----------------------------------------

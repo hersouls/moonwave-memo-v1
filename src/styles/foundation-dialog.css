@@ -74,6 +74,7 @@
 
 /* -----------------------------------------
    4. Toast Tokens
+   — 단일 중립 엘리베이션 표면 + 타입별 아이콘 액센트
    ----------------------------------------- */
 :root {
   --toast-min-width: 288px;
@@ -81,34 +82,20 @@
   --toast-padding-x: 16px;
   --toast-padding-y: 14px;
   --toast-radius: var(--radius-12, 12px);
-  --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --toast-shadow: var(--shadow-2);
   --toast-gap: 12px;
   --toast-font-size: 14px;
   --toast-font-weight: 500;
   --toast-line-height: 1.4;
   --toast-icon-size: 20px;
   --toast-close-size: 16px;
-  --toast-close-touch-target: 32px;
+  --toast-close-touch-target: 44px;
   --toast-offset-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
 
-  /* Success */
-  --toast-success-bg: var(--color-success-50);
-  --toast-success-color: var(--color-success-800);
+  /* Type accents — icon color only */
   --toast-success-icon-color: var(--color-success-500);
-
-  /* Error */
-  --toast-error-bg: var(--color-danger-50);
-  --toast-error-color: var(--color-danger-800);
   --toast-error-icon-color: var(--color-danger-500);
-
-  /* Warning */
-  --toast-warning-bg: var(--color-warning-50);
-  --toast-warning-color: var(--color-warning-800);
   --toast-warning-icon-color: var(--color-warning-500);
-
-  /* Info */
-  --toast-info-bg: var(--color-primary-50);
-  --toast-info-color: var(--color-primary-800);
   --toast-info-icon-color: var(--color-primary-500);
 }
 
@@ -153,52 +140,18 @@
   --dialog-btn-tertiary-hover-bg: #27272a;
   --dialog-btn-tertiary-pressed-bg: #3f3f46;
 
-  /* Toast */
-  --toast-success-bg: var(--color-success-900);
-  --toast-success-color: var(--color-success-300);
-  --toast-error-bg: var(--color-danger-900);
-  --toast-error-color: var(--color-danger-300);
-  --toast-warning-bg: var(--color-warning-900);
-  --toast-warning-color: var(--color-warning-300);
-  --toast-info-bg: var(--color-primary-900);
-  --toast-info-color: var(--color-primary-300);
-  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  /* Toast — 어두운 표면 위에서 아이콘 액센트 대비 확보 */
+  --toast-success-icon-color: var(--color-success-400);
+  --toast-error-icon-color: var(--color-danger-400);
+  --toast-warning-icon-color: var(--color-warning-400);
+  --toast-info-icon-color: var(--color-primary-400);
 }
 
 /* -----------------------------------------
    7. Keyframe Animations
+   (컴포넌트 오버레이 전환은 Headless UI transition이 담당 —
+    여기에는 토스트 키프레임만 유지)
    ----------------------------------------- */
-@keyframes dialog-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes dialog-leave {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-@keyframes overlay-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 @keyframes toast-slide-in {
   from {
     opacity: 0;
@@ -210,37 +163,26 @@
   }
 }
 
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 /* -----------------------------------------
    7. Alert Dialog Utilities
    ----------------------------------------- */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--dialog-overlay-bg);
-  z-index: var(--z-modal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dialog-overlay.overlay--entering {
-  animation: overlay-fade-in 200ms ease-out;
-}
-
 .dialog {
   width: var(--dialog-width);
   background: var(--dialog-bg);
   border-radius: var(--dialog-radius);
   padding: var(--dialog-padding);
   box-shadow: var(--dialog-shadow);
-}
-
-.dialog--entering {
-  animation: dialog-enter 200ms ease-out;
-}
-
-.dialog--leaving {
-  animation: dialog-leave 150ms ease-in forwards;
 }
 
 .dialog__title {
@@ -385,11 +327,19 @@
   pointer-events: none;
 }
 
+/* 스택 정리 — 토스트가 사라질 때 남은 토스트가 부드럽게 자리를 잡는다 */
+.toast-container > * {
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
 .toast {
   min-width: var(--toast-min-width);
   max-width: var(--toast-max-width);
   padding: var(--toast-padding-y) var(--toast-padding-x);
   border-radius: var(--toast-radius);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-subtle);
   box-shadow: var(--toast-shadow);
   display: flex;
   align-items: center;
@@ -398,27 +348,11 @@
   font-weight: var(--toast-font-weight);
   line-height: var(--toast-line-height);
   pointer-events: auto;
-  animation: toast-slide-in 300ms ease-out;
+  animation: toast-slide-in var(--duration-base) var(--ease-enter);
 }
 
-.toast--success {
-  background: var(--toast-success-bg);
-  color: var(--toast-success-color);
-}
-
-.toast--error {
-  background: var(--toast-error-bg);
-  color: var(--toast-error-color);
-}
-
-.toast--warning {
-  background: var(--toast-warning-bg);
-  color: var(--toast-warning-color);
-}
-
-.toast--info {
-  background: var(--toast-info-bg);
-  color: var(--toast-info-color);
+.toast--leaving {
+  animation: toast-slide-out var(--duration-fast) var(--ease-exit) forwards;
 }
 
 .toast__icon {
@@ -450,6 +384,8 @@
 .toast__close {
   width: var(--toast-close-touch-target);
   height: var(--toast-close-touch-target);
+  /* 44px 히트 영역을 유지하면서 필 높이는 팽창시키지 않는다 */
+  margin: -12px -10px -12px -4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -459,7 +395,7 @@
   border: none;
   color: inherit;
   opacity: 0.6;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 .toast__close:hover {

@@ -28,11 +28,20 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
     }
 
     const rect = textarea.getBoundingClientRect()
-    // Approximate position: center of textarea horizontally, above it
-    const top = rect.top - 44 + window.scrollY
+    const style = getComputedStyle(textarea)
+    const lineHeight = parseFloat(style.lineHeight) || 24
+    const paddingTop = parseFloat(style.paddingTop) || 0
+
+    // Anchor to the first line of the selection (slash-menu와 동일한 라인 계산 기법):
+    // 논리 라인 수 × line-height − scrollTop → 선택 시작 지점의 y 좌표
+    const startLine = textarea.value.substring(0, Math.min(start, end)).split('\n').length - 1
+    const caretY = rect.top + paddingTop + startLine * lineHeight - textarea.scrollTop
+    // 선택 라인이 스크롤로 화면 밖이면 textarea 경계로 클램프
+    const anchorY = Math.min(Math.max(caretY, rect.top), rect.bottom)
+    const top = Math.max(8, anchorY - 48) + window.scrollY
     const left = Math.min(window.innerWidth - 100, Math.max(70, rect.left + rect.width / 2))
 
-    setPosition({ top: Math.max(8, top), left })
+    setPosition({ top, left })
     setVisible(true)
   }, [textareaRef])
 
@@ -108,7 +117,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
   return createPortal(
     <div
       ref={toolbarRef}
-      className="fixed z-50 flex items-center gap-0.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-1 py-1 shadow-xl ring-1 ring-white/10 dark:ring-black/10 animate-in fade-in slide-in-from-bottom duration-150"
+      className="fixed z-[var(--z-modal)] flex items-center gap-0.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-1 py-1 shadow-xl ring-1 ring-white/10 dark:ring-black/10 animate-in fade-in slide-in-from-bottom-1 duration-150 ease-enter"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
@@ -122,13 +131,17 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
             e.preventDefault()
             tool.action()
           }}
-          className="p-1.5 rounded-lg text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 dark:focus-visible:ring-black/30"
-          title={tool.label}
+          className="p-1.5 rounded-lg text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 dark:focus-visible:ring-primary-500"
           aria-label={tool.label}
         >
           {tool.icon}
         </button>
       ))}
+      {/* 선택 영역을 가리키는 앵커 노치 */}
+      <span
+        aria-hidden="true"
+        className="absolute left-1/2 top-full -ml-1 -mt-[3px] h-2 w-2 rotate-45 rounded-[1px] bg-zinc-900 dark:bg-zinc-100"
+      />
     </div>,
     document.body
   )

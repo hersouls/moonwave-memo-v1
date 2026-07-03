@@ -27,7 +27,7 @@ export function ProfileCard() {
         <button
           onClick={login}
           disabled={isSigningIn}
-          className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600 active:bg-primary-700 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-2 text-sm font-medium text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] disabled:opacity-50"
         >
           <LogIn className="h-4 w-4" />
           로그인

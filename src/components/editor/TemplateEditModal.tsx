@@ -2,7 +2,7 @@ import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@
 import { Fragment, useState, useEffect } from 'react'
 import {
   Users, BookOpen, CheckSquare, Lightbulb, Calendar,
-  FileText, Star, Heart, Zap, Target, Briefcase, Code,
+  FileText, Star, Heart, Zap, Target, Briefcase, Code, Check,
 } from 'lucide-react'
 import { useTemplateStore } from '@/stores/templateStore'
 import type { MemoColor } from '@/lib/types'
@@ -156,17 +156,24 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 색상
               </label>
-              <div className="flex gap-2 mb-4">
-                {TEMPLATE_COLORS.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setColor(c.id)}
-                    className={`w-8 h-8 rounded-full ${c.cls} transition-all ${
-                      color === c.id ? 'ring-2 ring-offset-2 ring-primary-500' : ''
-                    }`}
-                    title={c.label}
-                  />
-                ))}
+              <div role="group" aria-label="색상 선택" className="flex gap-2 mb-4">
+                {TEMPLATE_COLORS.map((c) => {
+                  const isSelected = color === c.id
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setColor(c.id)}
+                      aria-label={c.label}
+                      aria-pressed={isSelected}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${c.cls} transition-transform duration-150 ease-standard hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
+                        isSelected ? 'scale-110' : ''
+                      }`}
+                    >
+                      {isSelected && <Check className="w-4 h-4 text-white drop-shadow-sm" aria-hidden="true" />}
+                    </button>
+                  )
+                })}
               </div>
 
               {/* Title preset */}

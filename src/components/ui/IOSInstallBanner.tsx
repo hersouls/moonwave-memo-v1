@@ -42,8 +42,8 @@ export function IOSInstallBanner() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[60] pb-[env(safe-area-inset-bottom,0px)] animate-in slide-in-from-bottom duration-300">
-      <div className="mx-3 mb-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-2xl shadow-black/20 border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+    <div className="fixed inset-x-0 bottom-0 z-[var(--z-toast)] pb-[env(safe-area-inset-bottom,0px)] animate-in slide-in-from-bottom duration-300">
+      <div className="mx-3 mb-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-3 pb-1">
           <div className="flex items-center gap-2.5">

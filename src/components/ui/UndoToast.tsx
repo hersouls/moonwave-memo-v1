@@ -1,39 +1,74 @@
+import { useEffect, useState } from 'react'
 import { useUndoStore } from '@/stores/undoStore'
 import { useUIStore } from '@/stores/uiStore'
 import { X } from 'lucide-react'
+
+/** undoStore의 UNDO_TIMEOUT과 동기화 — 진행 바 카운트다운 길이 */
+const UNDO_TIMEOUT_MS = 5000
+/** foundation-toast.css --snackbar-leave-duration(var(--duration-fast))과 동기화 */
+const LEAVE_MS = 150
+
+interface DisplayedEntry {
+  count: number
+  /** 새 삭제가 발생하면 timestamp가 바뀌어 진행 바 애니메이션이 재시작된다 */
+  timestamp: number
+}
 
 export function UndoToast() {
   const { current, isVisible, undo, dismiss } = useUndoStore()
   const isKeyboardOpen = useUIStore((s) => s.isKeyboardOpen)
 
-  if (!isVisible || !current) return null
+  // 스토어 상태가 꺼진 뒤에도 퇴장 애니메이션 동안 마지막 엔트리를 유지
+  const [displayed, setDisplayed] = useState<DisplayedEntry | null>(null)
+  const [isLeaving, setIsLeaving] = useState(false)
 
-  const count = current.memos.length
+  useEffect(() => {
+    if (isVisible && current) {
+      setDisplayed({ count: current.memos.length, timestamp: current.timestamp })
+      setIsLeaving(false)
+      return
+    }
+    // 자동 만료/실행 취소/닫기 — 모두 같은 퇴장 애니메이션을 거친다
+    setIsLeaving(true)
+    const timer = setTimeout(() => {
+      setDisplayed(null)
+      setIsLeaving(false)
+    }, LEAVE_MS)
+    return () => clearTimeout(timer)
+  }, [isVisible, current])
+
+  if (!displayed) return null
+
   const message =
-    count === 1 ? '메모가 삭제되었습니다' : `메모 ${count}개가 삭제되었습니다`
+    displayed.count === 1 ? '메모가 삭제되었습니다' : `메모 ${displayed.count}개가 삭제되었습니다`
 
   return (
     <div
-      className="fixed left-1/2 z-50 -translate-x-1/2 md:!bottom-8"
-      style={{ bottom: isKeyboardOpen ? '1rem' : 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
+      className="snackbar-container md:!bottom-8"
+      style={isKeyboardOpen ? { bottom: '1rem' } : undefined}
     >
-      <div className="flex items-center gap-3 rounded-lg bg-zinc-900 px-4 py-3 shadow-lg dark:bg-zinc-100">
-        <span className="text-sm text-white dark:text-zinc-900">{message}</span>
+      <div
+        key={displayed.timestamp}
+        className={`snackbar snackbar--with-action ${isLeaving ? 'snackbar--leaving' : 'snackbar--entering'}`}
+        role="status"
+        style={{ '--snackbar-auto-dismiss': `${UNDO_TIMEOUT_MS}ms` } as React.CSSProperties}
+      >
+        <span className="snackbar__text">{message}</span>
 
-        <button
-          onClick={undo}
-          className="whitespace-nowrap text-sm font-semibold text-primary-400 hover:text-primary-300 dark:text-primary-600 dark:hover:text-primary-700"
-        >
+        <button onClick={undo} className="snackbar__action">
           실행 취소
         </button>
 
         <button
           onClick={dismiss}
-          className="ml-1 rounded-full p-0.5 text-zinc-400 hover:text-zinc-300 dark:text-zinc-500 dark:hover:text-zinc-600"
+          className="flex h-11 w-11 shrink-0 -my-3 items-center justify-center rounded-full opacity-60 transition-opacity hover:opacity-100"
           aria-label="닫기"
         >
           <X className="h-4 w-4" />
         </button>
+
+        {/* 실행 취소 가능 시간 카운트다운 */}
+        <div className="snackbar__progress" aria-hidden="true" />
       </div>
     </div>
   )

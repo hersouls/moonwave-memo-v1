@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Folder as FolderIcon, Inbox } from 'lucide-react'
+import { Folder as FolderIcon, Inbox, Star } from 'lucide-react'
 import clsx from 'clsx'
 import type { Memo } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
@@ -89,7 +89,7 @@ export function KanbanView({ memos }: KanbanViewProps) {
             <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
               {column.name}
             </span>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-auto shrink-0">
+            <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 ml-auto shrink-0">
               {column.memos.length}
             </span>
           </div>
@@ -129,12 +129,13 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
     <button
       onClick={onClick}
       className={clsx(
-        'w-full text-left p-3 rounded-xl bg-white dark:bg-zinc-800',
-        'shadow-sm hover:shadow-md transition-all duration-150',
-        'hover:-translate-y-0.5 active:scale-[0.98]'
+        // Same card species as MemoCard: hairline border + scoped transitions
+        'w-full text-left p-3 rounded-xl bg-white dark:bg-zinc-800 border border-[var(--card-hairline)]',
+        'shadow-sm hover:shadow-md transition-[transform,box-shadow,border-color,background-color] duration-150',
+        'hover:-translate-y-0.5 hover:border-zinc-950/[0.12] dark:hover:border-white/[0.16] active:scale-[0.98]'
       )}
     >
-      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate mb-1">
+      <p className="text-sm font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100 truncate mb-1">
         {memo.title || '\uC81C\uBAA9 \uC5C6\uC74C'}
       </p>
 
@@ -149,7 +150,7 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
           {memo.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
+              className="inline-flex px-1.5 py-0.5 text-[11px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
             >
               #{tag}
             </span>
@@ -157,9 +158,9 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+      <div className="flex items-center gap-1.5 text-[11px] tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400">
         {memo.isStarred && (
-          <span className="text-primary-500">{'\u2605'}</span>
+          <Star className="h-3 w-3 shrink-0 fill-primary-500 text-primary-500" />
         )}
         <span>{formatMemoDate(memo.updatedAt)}</span>
       </div>

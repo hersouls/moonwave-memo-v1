@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { DialogBackdrop, DialogPanel, DialogTitle, Dialog as HeadlessDialog } from '@headlessui/react'
 import { History, RotateCcw, X } from 'lucide-react'
-import { createPortal } from 'react-dom'
 import { diffWords } from 'diff'
 import type { MemoVersion } from '@/lib/types'
 import { getVersionsByMemoId } from '@/services/database'
@@ -52,6 +52,14 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
   const [versions, setVersions] = useState<MemoVersion[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  // 조건부 마운트(lazy) 환경에서 퇴장 애니메이션을 재생하기 위한 내부 open 상태:
+  // 닫힘 트랜지션(200ms)이 끝난 뒤 부모 onClose로 언마운트한다
+  const [open, setOpen] = useState(true)
+
+  const requestClose = useCallback(() => {
+    setOpen(false)
+    window.setTimeout(onClose, 200)
+  }, [onClose])
 
   useEffect(() => {
     setIsLoading(true)
@@ -63,20 +71,29 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
 
   const selected = selectedIdx !== null ? versions[selectedIdx] : null
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-labelledby="version-history-title">
+  return (
+    <HeadlessDialog open={open} onClose={requestClose} className="relative z-[var(--z-modal)]">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 transition data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
+        style={{ background: 'var(--overlay-bg)' }}
+      />
 
-      {/* Panel */}
-      <div className="relative ml-auto w-full max-w-2xl bg-white dark:bg-zinc-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+      {/* Panel — 우측 드로어, 양방향 슬라이드 */}
+      <div className="fixed inset-0 flex">
+        <DialogPanel
+          transition
+          className="relative ml-auto flex h-full w-full max-w-2xl flex-col bg-white dark:bg-zinc-900 shadow-2xl transition data-[closed]:translate-x-full data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
+        >
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
           <History className="h-5 w-5 text-primary-500" />
-          <h2 id="version-history-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex-1">버전 기록</h2>
+          <DialogTitle as="h2" className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex-1">버전 기록</DialogTitle>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            aria-label="닫기"
           >
             <X className="h-5 w-5 text-zinc-500" />
           </button>
@@ -86,9 +103,9 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
           {/* Timeline sidebar */}
           <div className="w-48 shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-y-auto">
             {isLoading ? (
-              <div className="p-4 text-sm text-zinc-400">로딩 중...</div>
+              <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">로딩 중...</div>
             ) : versions.length === 0 ? (
-              <div className="p-4 text-sm text-zinc-400">버전 기록이 없습니다.</div>
+              <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">버전 기록이 없습니다.</div>
             ) : (
               <div className="py-3 px-3">
                 {versions.map((v, idx) => (
@@ -121,7 +138,7 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
                       }`}>
                         {formatDateTime(v.createdAt)}
                       </div>
-                      <div className="text-xs text-zinc-400 truncate mt-0.5">
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                         {v.title || '제목 없음'}
                       </div>
                     </div>
@@ -142,7 +159,7 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
                   <button
                     onClick={() => {
                       onRestore(selected.title, selected.body)
-                      onClose()
+                      requestClose()
                     }}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
                   >
@@ -153,25 +170,25 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
 
                 {selected.title !== currentTitle && (
                   <div className="mb-4">
-                    <div className="text-xs font-medium text-zinc-400 mb-1">제목 변경</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">제목 변경</div>
                     <DiffView oldText={selected.title} newText={currentTitle} />
                   </div>
                 )}
 
                 <div>
-                  <div className="text-xs font-medium text-zinc-400 mb-1">본문 변경</div>
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">본문 변경</div>
                   <DiffView oldText={selected.body} newText={currentBody} />
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-full text-sm text-zinc-400">
+              <div className="flex items-center justify-center h-full text-sm text-zinc-500 dark:text-zinc-400">
                 왼쪽에서 버전을 선택하세요
               </div>
             )}
           </div>
         </div>
+        </DialogPanel>
       </div>
-    </div>,
-    document.body
+    </HeadlessDialog>
   )
 }

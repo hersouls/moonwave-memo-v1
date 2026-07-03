@@ -3,6 +3,7 @@ import { FileBarChart, Sparkles, TrendingUp, ArrowRight } from 'lucide-react'
 import { startOfWeek, isWithinInterval, parseISO } from 'date-fns'
 import { useMemoStore } from '@/stores/memoStore'
 import { useAIDigest } from '@/hooks/useAIDigest'
+import { WidgetCard } from './WidgetCard'
 
 export function WeeklyDigestWidget() {
   const memos = useMemoStore((s) => s.memos)
@@ -53,19 +54,12 @@ export function WeeklyDigestWidget() {
   if (localDigest.created === 0 && localDigest.edited === 0) return null
 
   return (
-    <div className="card">
-      <div className="flex items-center gap-2.5 px-5 py-3.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/20">
-          <FileBarChart className="h-4 w-4 text-violet-500" />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {'이번 주 요약'}
-          </span>
-          {aiDigest && <Sparkles className="h-3 w-3 text-violet-400" />}
-        </div>
-      </div>
-      <div className="border-t border-zinc-100 px-5 py-4 dark:border-zinc-700 space-y-3">
+    <WidgetCard
+      icon={FileBarChart}
+      title="이번 주 요약"
+      titleAdornment={aiDigest && <Sparkles className="h-3 w-3 shrink-0 text-amber-400" />}
+    >
+      <div className="space-y-3">
         {/* AI Summary */}
         {aiDigest?.summary && (
           <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
@@ -76,12 +70,12 @@ export function WeeklyDigestWidget() {
         {/* Stats */}
         <div className="flex gap-6">
           <div className="text-center">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{localDigest.created}</p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{'작성'}</p>
+            <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">{localDigest.created}</p>
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{'작성'}</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{localDigest.edited}</p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{'편집'}</p>
+            <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">{localDigest.edited}</p>
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{'편집'}</p>
           </div>
         </div>
 
@@ -94,7 +88,7 @@ export function WeeklyDigestWidget() {
             {(aiDigest?.themes?.length ? aiDigest.themes : localDigest.topTags).map((item) => (
               <span
                 key={item}
-                className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] text-violet-600 dark:bg-violet-900/20 dark:text-violet-400"
+                className="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
               >
                 {aiDigest?.themes?.length ? item : `#${item}`}
               </span>
@@ -105,7 +99,7 @@ export function WeeklyDigestWidget() {
         {/* AI Mood Trend */}
         {aiDigest?.moodTrend && (
           <div className="flex items-start gap-2">
-            <TrendingUp className="w-3.5 h-3.5 text-violet-400 shrink-0 mt-0.5" />
+            <TrendingUp className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
               {aiDigest.moodTrend}
             </p>
@@ -114,7 +108,7 @@ export function WeeklyDigestWidget() {
 
         {/* AI Growth */}
         {aiDigest?.growth && (
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 pl-5.5">
+          <p className="text-xs text-primary-600 dark:text-primary-400 pl-5.5">
             {aiDigest.growth}
           </p>
         )}
@@ -124,7 +118,7 @@ export function WeeklyDigestWidget() {
           <ul className="space-y-1 pl-5.5">
             {aiDigest.topInsights.map((insight, i) => (
               <li key={i} className="text-xs text-zinc-600 dark:text-zinc-400 flex items-start gap-1.5">
-                <span className="text-violet-400 shrink-0">{'·'}</span>
+                <span className="text-zinc-400 shrink-0">{'·'}</span>
                 {insight}
               </li>
             ))}
@@ -134,8 +128,8 @@ export function WeeklyDigestWidget() {
         {/* AI Next Week Suggestion */}
         {aiDigest?.nextWeekSuggestion && (
           <div className="flex items-start gap-2 pt-1">
-            <ArrowRight className="w-3.5 h-3.5 text-violet-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-violet-600 dark:text-violet-400 italic leading-relaxed">
+            <ArrowRight className="w-3.5 h-3.5 text-primary-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-xs text-primary-600 dark:text-primary-400 italic leading-relaxed">
               {aiDigest.nextWeekSuggestion}
             </p>
           </div>
@@ -144,11 +138,11 @@ export function WeeklyDigestWidget() {
         {/* Loading indicator */}
         {aiLoading && (
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
-            <span className="text-[10px] text-zinc-400">{'AI 분석 중...'}</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
           </div>
         )}
       </div>
-    </div>
+    </WidgetCard>
   )
 }

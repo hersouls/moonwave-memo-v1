@@ -3,6 +3,7 @@ import { Newspaper, FileText, CheckSquare, Target, Sparkles, Heart, Lightbulb } 
 import { useMemoStore } from '@/stores/memoStore'
 import { parseChecklist } from '@/utils/checklistParser'
 import { useAIBriefing } from '@/hooks/useAIBriefing'
+import { WidgetCard } from './WidgetCard'
 
 export function BriefingWidget() {
   const memos = useMemoStore((s) => s.memos)
@@ -10,13 +11,6 @@ export function BriefingWidget() {
 
   const localBriefing = useMemo(() => {
     const now = new Date()
-    const todayStr = now.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'long',
-    })
-
     const activeMemos = memos.filter((m) => !m.deletedAt)
 
     // Yesterday's memos
@@ -56,7 +50,6 @@ export function BriefingWidget() {
     }
 
     return {
-      todayStr,
       yesterdayCount: yesterdayMemos.length,
       pendingTodos,
       suggestedFocus,
@@ -64,27 +57,13 @@ export function BriefingWidget() {
   }, [memos])
 
   return (
-    <div className="card overflow-hidden">
-      <div className="flex items-center gap-2.5 px-5 py-3.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20">
-          <Newspaper className="h-4 w-4 text-amber-500" />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {'오늘의 브리핑'}
-            </span>
-            {aiBriefing && (
-              <Sparkles className="h-3 w-3 text-amber-400" />
-            )}
-          </div>
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-            {localBriefing.todayStr}
-          </p>
-        </div>
-      </div>
-
-      <div className="border-t border-zinc-100 dark:border-zinc-700 px-5 py-4 space-y-3">
+    <WidgetCard
+      icon={Newspaper}
+      tint="amber"
+      title="오늘의 브리핑"
+      titleAdornment={aiBriefing && <Sparkles className="h-3 w-3 shrink-0 text-amber-400" />}
+    >
+      <div className="space-y-3">
         {/* AI Greeting */}
         {aiBriefing?.greeting && (
           <div className="flex items-start gap-3">
@@ -98,7 +77,7 @@ export function BriefingWidget() {
         {/* AI Mood Summary */}
         {aiBriefing?.moodSummary && (
           <div className="flex items-start gap-3">
-            <Heart className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
+            <Heart className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
               {aiBriefing.moodSummary}
             </p>
@@ -146,7 +125,7 @@ export function BriefingWidget() {
         {/* AI Key Topics */}
         {aiBriefing?.keyTopics && aiBriefing.keyTopics.length > 0 && (
           <div className="flex items-start gap-3">
-            <Lightbulb className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+            <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="flex flex-wrap gap-1.5">
               {aiBriefing.keyTopics.map((topic) => (
                 <span
@@ -171,10 +150,10 @@ export function BriefingWidget() {
         {aiLoading && (
           <div className="flex items-center gap-2 pl-7">
             <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[10px] text-zinc-400">{'AI 분석 중...'}</span>
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
           </div>
         )}
       </div>
-    </div>
+    </WidgetCard>
   )
 }

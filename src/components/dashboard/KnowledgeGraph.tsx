@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Share2 } from 'lucide-react'
 import { useGraphData, type GraphNode } from '@/hooks/useGraphData'
+import { WidgetCard } from './WidgetCard'
 import {
   forceSimulation,
   forceLink,
@@ -106,6 +107,7 @@ export function KnowledgeGraph() {
       .attr('stroke', '#a1a1aa')
       .attr('stroke-opacity', 0.3)
       .attr('stroke-width', (d: SimLink) => Math.min(d.weight * 1.5, 4))
+      .style('transition', 'stroke-opacity 150ms var(--ease-standard, ease)')
 
     // Create node group
     const nodeGroup = svgSelection
@@ -122,13 +124,30 @@ export function KnowledgeGraph() {
         if (d.id) handleNodeClick(d.id)
       })
 
+    // 소프트 필(55%) + 동일 색 풀 스트로크 — 흰 링 없이 라이트/다크 모두 부드럽게 읽힘
     nodeElements
       .append('circle')
       .attr('r', 8)
       .attr('fill', (d: SimNode) => colorMap.get(d.group) || '#a1a1aa')
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.85)
+      .attr('fill-opacity', 0.55)
+      .attr('stroke', (d: SimNode) => colorMap.get(d.group) || '#a1a1aa')
+      .attr('stroke-width', 1.5)
+      .style('transition', 'r 150ms var(--ease-standard, ease)')
+
+    // 호버: 반경 확대 + 연결 링크 강조/나머지 감쇠 — 클릭 가능성 발견 유도
+    nodeElements
+      .on('mouseenter', function (_event: MouseEvent, d: SimNode) {
+        select(this).select('circle').attr('r', 11).attr('fill-opacity', 0.75)
+        linkElements.attr('stroke-opacity', (l: SimLink) => {
+          const sourceId = (l.source as SimNode).id
+          const targetId = (l.target as SimNode).id
+          return sourceId === d.id || targetId === d.id ? 0.6 : 0.12
+        })
+      })
+      .on('mouseleave', function () {
+        select(this).select('circle').attr('r', 8).attr('fill-opacity', 0.55)
+        linkElements.attr('stroke-opacity', 0.3)
+      })
 
     nodeElements
       .append('text')
@@ -169,23 +188,12 @@ export function KnowledgeGraph() {
   }, [nodes, links, dimensions, handleNodeClick])
 
   return (
-    <div className="card overflow-hidden">
-      <div className="flex items-center gap-2.5 px-5 py-3.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
-          <Share2 className="h-4 w-4 text-indigo-500" />
-        </div>
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {'지식 그래프'}
-        </span>
-      </div>
-
-      <div
-        ref={containerRef}
-        className="border-t border-zinc-100 dark:border-zinc-700 px-2 py-3"
-      >
+    <WidgetCard icon={Share2} title="지식 그래프" bodyClassName="px-2 py-3">
+      <div ref={containerRef}>
         {nodes.length < 3 ? (
-          <div className="flex items-center justify-center py-8 text-zinc-500 dark:text-zinc-400">
-            <p className="text-sm text-center">
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <Share2 className="h-5 w-5 text-zinc-400" aria-hidden="true" />
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {'태그가 있는 메모가 3개 이상 필요합니다'}
             </p>
           </div>
@@ -197,6 +205,6 @@ export function KnowledgeGraph() {
           />
         )}
       </div>
-    </div>
+    </WidgetCard>
   )
 }

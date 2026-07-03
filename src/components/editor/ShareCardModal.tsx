@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { Download, Share2, X } from 'lucide-react'
 import { toBlob } from 'html-to-image'
 import { useToastStore } from '@/stores/toastStore'
@@ -88,10 +88,17 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, color, date
   }
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
+    <Dialog open={isOpen} onClose={onClose} className="relative z-[var(--z-modal)]">
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 transition data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
+        style={{ background: 'var(--overlay-bg)' }}
+      />
       <div className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
-        <DialogPanel className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-800 shadow-xl p-5 animate-in slide-in-from-bottom duration-200">
+        <DialogPanel
+          transition
+          className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-800 shadow-xl p-5 transition duration-300 data-[closed]:translate-y-4 data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:duration-200 data-[leave]:ease-in"
+        >
           <div className="flex items-center justify-between mb-4">
             <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               공유 카드
@@ -147,7 +154,7 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, color, date
             <button
               onClick={handleShare}
               disabled={exporting}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-colors text-sm font-medium disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] transition-colors text-sm font-medium disabled:opacity-50"
             >
               <Share2 className="w-4 h-4" />
               공유

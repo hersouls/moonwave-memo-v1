@@ -52,6 +52,7 @@ export function SlideView() {
   const [fontSize, setFontSize] = useState(1.0)
   const [slideTheme, setSlideTheme] = useState<'light' | 'dark'>('light')
   const [controlsVisible, setControlsVisible] = useState(true)
+  const [isClosing, setIsClosing] = useState(false)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   const isSlideMode = viewMode === 'slide'
@@ -62,10 +63,20 @@ export function SlideView() {
     setTransitionClass('slide-fade-in')
     setIsAutoPlaying(false)
     setViewMode('scroll')
+    setIsClosing(false)
 
     const isDark = document.documentElement.classList.contains('dark')
     setSlideTheme(isDark ? 'dark' : 'light')
   }, [slideViewMemoId])
+
+  // Animated close: play exit animation, then actually unmount (reduced-motion skips straight to close)
+  const requestClose = useCallback(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      closeSlideView()
+      return
+    }
+    setIsClosing(true)
+  }, [closeSlideView])
 
   // iOS-safe body scroll lock
   useBodyScrollLock(slideViewMemoId != null)
@@ -96,7 +107,7 @@ export function SlideView() {
       if (e.key === 'Escape') {
         e.stopPropagation()
         e.preventDefault()
-        closeSlideView()
+        requestClose()
         return
       }
 
@@ -129,7 +140,7 @@ export function SlideView() {
 
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [slideViewMemoId, isSlideMode, goNext, goPrev, goTo, closeSlideView, totalSlides])
+  }, [slideViewMemoId, isSlideMode, goNext, goPrev, goTo, requestClose, totalSlides])
 
   // Touch swipe (slide mode only)
   const bind = useDrag(
@@ -221,14 +232,25 @@ export function SlideView() {
   const currentSlide = slides[currentIndex]
   if (!currentSlide) return null
 
-  const progressPercent = totalSlides > 1 ? ((currentIndex) / (totalSlides - 1)) * 100 : 100
+  const progressPercent = ((currentIndex + 1) / totalSlides) * 100
 
   return createPortal(
     <div
-      className={clsx('fixed inset-0 z-[100] slide-overlay-enter', isDark && 'dark')}
+      className={clsx(
+        'fixed inset-0 z-[var(--z-lock)]',
+        isClosing ? 'slide-overlay-exit' : 'slide-overlay-enter',
+        !controlsVisible && isSlideMode && 'cursor-none',
+        isDark && 'dark'
+      )}
       onMouseMove={handleInteraction}
       onTouchStart={handleInteraction}
       onClick={handleInteraction}
+      onAnimationEnd={(e) => {
+        if (isClosing && e.target === e.currentTarget) {
+          setIsClosing(false)
+          closeSlideView()
+        }
+      }}
       role="dialog"
       aria-modal="true"
       aria-label="슬라이드 보기"
@@ -240,7 +262,7 @@ export function SlideView() {
       {isSlideMode ? (
         /* === Slide mode: single slide with swipe === */
         <div
-          className="relative w-full h-full flex items-center justify-center"
+          className="slide-view-content relative w-full h-full flex items-center justify-center"
           {...bind()}
           style={{ touchAction: 'pan-y' }}
         >
@@ -260,7 +282,7 @@ export function SlideView() {
         </div>
       ) : (
         /* === Scroll mode: all slides vertically === */
-        <div className="slide-scroll-container relative">
+        <div className="slide-view-content slide-scroll-container relative">
           {slides.map((slide, i) => (
             <div key={i} className="slide-scroll-item">
               <SlideRenderer
@@ -279,9 +301,9 @@ export function SlideView() {
       {/* Top controls */}
       <div
         className={clsx(
-          'absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 transition-opacity duration-200',
+          'absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 transition-[opacity,transform] duration-200 ease-standard',
           'bg-gradient-to-b from-black/40 to-transparent',
-          controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -300,24 +322,27 @@ export function SlideView() {
           {/* View mode toggle */}
           <button
             onClick={toggleViewMode}
-            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
             title={isSlideMode ? '스크롤 보기' : '슬라이드 보기'}
+            aria-label={isSlideMode ? '스크롤 보기' : '슬라이드 보기'}
           >
             {isSlideMode ? <GalleryVertical className="w-4.5 h-4.5" /> : <GalleryHorizontal className="w-4.5 h-4.5" />}
           </button>
           {/* Theme toggle */}
           <button
             onClick={() => setSlideTheme(isDark ? 'light' : 'dark')}
-            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
             title={isDark ? '라이트 테마' : '다크 테마'}
+            aria-label={isDark ? '라이트 테마' : '다크 테마'}
           >
             {isDark ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
           </button>
           {/* Font size */}
           <button
             onClick={() => adjustFontSize(-0.1)}
-            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
             title="글자 크기 줄이기"
+            aria-label="글자 크기 줄이기"
             disabled={fontSize <= 0.8}
           >
             <Minus className="w-4 h-4" />
@@ -325,17 +350,19 @@ export function SlideView() {
           <span className="text-white/60 text-xs w-8 text-center tabular-nums">{Math.round(fontSize * 100)}%</span>
           <button
             onClick={() => adjustFontSize(0.1)}
-            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
             title="글자 크기 키우기"
+            aria-label="글자 크기 키우기"
             disabled={fontSize >= 1.5}
           >
             <Plus className="w-4 h-4" />
           </button>
           {/* Close */}
           <button
-            onClick={closeSlideView}
-            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors ml-1"
+            onClick={requestClose}
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors ml-1"
             title="닫기 (Esc)"
+            aria-label="닫기"
           >
             <X className="w-5 h-5" />
           </button>
@@ -345,9 +372,9 @@ export function SlideView() {
       {/* Bottom controls */}
       <div
         className={clsx(
-          'absolute bottom-0 left-0 right-0 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 transition-opacity duration-200',
+          'absolute bottom-0 left-0 right-0 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 transition-[opacity,transform] duration-200 ease-standard',
           'bg-gradient-to-t from-black/40 to-transparent',
-          controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
         )}
       >
         {isSlideMode ? (
@@ -366,15 +393,17 @@ export function SlideView() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={cycleAutoPlayInterval}
-                  className="px-2 py-1 rounded-md text-white/60 hover:text-white text-xs tabular-nums hover:bg-white/10 transition-colors"
+                  className="min-w-11 min-h-11 flex items-center justify-center px-2 rounded-lg text-white/60 hover:text-white text-xs tabular-nums hover:bg-white/10 transition-colors"
                   title="자동 재생 간격"
+                  aria-label={`자동 재생 간격 ${autoPlayInterval}초`}
                 >
                   {autoPlayInterval}초
                 </button>
                 <button
                   onClick={() => setIsAutoPlaying((prev) => !prev)}
-                  className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
                   title={isAutoPlaying ? '일시 정지' : '자동 재생'}
+                  aria-label={isAutoPlaying ? '일시 정지' : '자동 재생'}
                 >
                   {isAutoPlaying ? <Pause className="w-4.5 h-4.5" /> : <Play className="w-4.5 h-4.5" />}
                 </button>
@@ -399,6 +428,7 @@ export function SlideView() {
               onClick={goPrev}
               className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 text-white/70 hover:text-white hover:bg-black/50 transition-colors backdrop-blur-sm"
               title="이전 슬라이드"
+              aria-label="이전 슬라이드"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
@@ -408,6 +438,7 @@ export function SlideView() {
               onClick={goNext}
               className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 text-white/70 hover:text-white hover:bg-black/50 transition-colors backdrop-blur-sm"
               title="다음 슬라이드"
+              aria-label="다음 슬라이드"
             >
               <ChevronRight className="w-6 h-6" />
             </button>

@@ -1,5 +1,6 @@
-import { Lock, Fingerprint, Loader2 } from 'lucide-react'
+import { Lock, Fingerprint } from 'lucide-react'
 import { useAppLockStore } from '@/hooks/useAppLock'
+import { Spinner } from './Spinner'
 
 export function LockScreen() {
   const isLocked = useAppLockStore((s) => s.isLocked)
@@ -9,7 +10,7 @@ export function LockScreen() {
   if (!isLocked) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[var(--z-lock)] flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl">
       <Lock className="w-12 h-12 text-zinc-500 dark:text-zinc-400 mb-4" />
       <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
         앱이 잠겨 있습니다
@@ -20,10 +21,10 @@ export function LockScreen() {
       <button
         onClick={unlock}
         disabled={isAuthenticating}
-        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-500 text-white font-medium text-sm hover:bg-primary-600 disabled:opacity-50 transition-colors"
+        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-accent)] text-[var(--color-on-accent)] font-medium text-sm hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] disabled:opacity-50 transition-colors"
       >
         {isAuthenticating ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <Spinner size="md" label="인증 중" />
         ) : (
           <Fingerprint className="w-5 h-5" />
         )}

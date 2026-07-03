@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, X } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useToastStore } from '@/stores/toastStore'
+import { Kbd } from '@/components/ui/Kbd'
 
 interface QuickMemoInputProps {
   onClose: () => void
@@ -26,7 +27,7 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
   }
 
   return (
-    <div className="mx-4 mb-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700 p-3 animate-in slide-in-from-bottom duration-200">
+    <div className="mx-4 mb-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-md border border-[var(--card-hairline)] p-3 animate-in slide-in-from-bottom duration-200">
       <div className="flex items-start gap-2">
         <textarea
           ref={inputRef}
@@ -40,25 +41,34 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
           rows={2}
           className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none resize-none"
         />
-        <div className="flex flex-col gap-1.5 shrink-0">
+        {/* 44px touch targets — quick capture is a high-frequency mobile flow */}
+        <div className="flex flex-col gap-1 shrink-0">
           <button
             onClick={handleSubmit}
             disabled={!body.trim()}
-            className="p-1.5 rounded-lg bg-primary-500 text-white disabled:opacity-40 hover:bg-primary-600 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-accent)] text-[var(--color-on-accent)] disabled:opacity-40 hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] transition-colors"
             aria-label="저장"
           >
             <Send className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
             aria-label="닫기"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       </div>
-      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">Ctrl+Enter로 저장 · Esc로 닫기</p>
+      <p className="mt-1.5 flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <Kbd>Ctrl</Kbd>
+        <span aria-hidden="true">+</span>
+        <Kbd>Enter</Kbd>
+        <span>저장</span>
+        <span className="mx-0.5" aria-hidden="true">·</span>
+        <Kbd>Esc</Kbd>
+        <span>닫기</span>
+      </p>
     </div>
   )
 }

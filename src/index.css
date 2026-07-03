@@ -476,11 +476,6 @@ html.dark[data-palette="weather-overcast"] {
   to { transform: rotate(360deg); }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
 @keyframes fadeOut {
   to { opacity: 0; }
 }
@@ -520,10 +515,6 @@ html.dark[data-palette="weather-overcast"] {
   animation: starPulse 0.4s ease-in-out;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
 .animate-draw-check {
   animation: drawCheck 0.3s ease-out forwards;
 }
@@ -552,12 +543,8 @@ html.dark[data-palette="weather-overcast"] {
   animation: wiggle 0.6s ease-in-out 2;
 }
 
-/* Ripple touch feedback */
-@keyframes ripple {
-  to { transform: scale(4); opacity: 0; }
-}
-
-/* Page enter transition */
+/* Page enter transition — View Transitions 미지원 브라우저 전용 폴백.
+   지원 브라우저는 navigateWithTransition의 VT 크로스페이드가 페이지 전환을 소유한다 (App.tsx). */
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
@@ -575,12 +562,6 @@ html.dark[data-palette="weather-overcast"] {
 
 .animate-slide-in-right {
   animation: slideInFromRight 200ms ease-out both;
-}
-
-/* Tab indicator slide */
-@keyframes tabIndicatorSlide {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
 }
 
 /* ========================================
@@ -829,6 +810,12 @@ summary {
 
 ::view-transition-group(root) {
   animation-duration: 180ms;
+}
+
+/* 하단 탭 인디케이터 — VT 네비게이션 시 이전 탭 위치에서 새 탭 위치로 morph */
+::view-transition-group(bottom-nav-indicator) {
+  animation-duration: 250ms;
+  animation-timing-function: var(--ease-spring);
 }
 
 /* ─── Command Palette (cmdk) group headings ──────────── */

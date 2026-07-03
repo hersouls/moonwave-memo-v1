@@ -171,7 +171,7 @@ export function MemoSearchBar() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={clsx(
-              'rounded-full p-1 transition-colors',
+              '-my-2 flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full transition-colors',
               showFilters
                 ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
                 : 'text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -183,7 +183,7 @@ export function MemoSearchBar() {
           <button
             onClick={() => setAiMode(!aiMode)}
             className={clsx(
-              'rounded-full p-1 transition-colors',
+              '-my-2 flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full transition-colors',
               aiMode
                 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
                 : 'text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -196,33 +196,38 @@ export function MemoSearchBar() {
           {searchQuery && (
             <button
               onClick={handleClear}
-              className="rounded-full p-0.5 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              className="-my-2 flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              aria-label="검색어 지우기"
             >
               <X className="h-3.5 w-3.5 text-zinc-400" />
             </button>
           )}
         </div>
 
-        {/* Recent searches dropdown */}
+        {/* Recent searches dropdown — elevated surface tokens (dark parity with menus/popovers) */}
         {showRecent && !localQuery && recentSearches.length > 0 && (
-          <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="absolute left-0 right-0 top-full mt-1 z-[var(--z-dropdown)] rounded-xl border border-[var(--card-hairline)] bg-[var(--color-bg-elevated)] py-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
             <div className="px-3 py-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               최근 검색
             </div>
+            {/* Select + remove as sibling buttons — no interactive nesting */}
             {recentSearches.slice(0, isNarrowFold ? FOLD_MAX_RECENT_DISPLAY : MAX_RECENT).map((query) => (
               <div
                 key={query}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleSelectRecent(query)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectRecent(query) } }}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="flex w-full items-center hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
               >
-                <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                <span className="flex-1 truncate text-left">{query}</span>
                 <button
+                  type="button"
+                  onClick={() => handleSelectRecent(query)}
+                  className="flex min-w-0 flex-1 items-center gap-2.5 py-2 pl-3 pr-1 text-left text-sm text-zinc-700 dark:text-zinc-300"
+                >
+                  <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                  <span className="flex-1 truncate">{query}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={(e) => handleRemoveRecent(e, query)}
-                  className="shrink-0 rounded-full p-0.5 text-zinc-300 hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400"
+                  className="relative mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 after:absolute after:-inset-1 after:content-['']"
                   aria-label={`"${query}" 최근 검색 삭제`}
                 >
                   <X className="h-3 w-3" />

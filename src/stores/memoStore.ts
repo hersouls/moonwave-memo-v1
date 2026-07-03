@@ -107,8 +107,8 @@ export const useMemoStore = create<MemoState>()(
             )
             settings.updateGamification(updatedState)
 
-            // Trigger confetti for new badges
-            if (newBadges.length > 0) {
+            // Trigger confetti for new badges (JS 캔버스 애니메이션 — reduced-motion 존중)
+            if (newBadges.length > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
               import('canvas-confetti').then((mod) => {
                 mod.default({ particleCount: 80, spread: 70, origin: { y: 0.6 } })
               }).catch(() => {})

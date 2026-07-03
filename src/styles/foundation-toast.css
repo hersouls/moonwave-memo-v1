@@ -13,7 +13,7 @@
   --snackbar-radius: 999px;
   --snackbar-max-height: 66px;
   --snackbar-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-  --snackbar-z-index: 55;
+  --snackbar-z-index: var(--z-toast);
   --snackbar-margin-x: 20px;
   --snackbar-min-width-xs: 228px;
 }
@@ -30,7 +30,7 @@
   --snackbar-font-weight: 500;
   --snackbar-icon-size: 20px;
   --snackbar-icon-gap: 4px;
-  --snackbar-bottom-mobile: 80px;
+  --snackbar-bottom-mobile: calc(env(safe-area-inset-bottom, 0px) + 80px);
   --snackbar-bottom-desktop: 32px;
 }
 
@@ -49,12 +49,12 @@
   --snackbar-action-color: white;
   --snackbar-action-padding: 8px 16px;
 
-  /* Animation */
-  --snackbar-enter-duration: 200ms;
-  --snackbar-leave-duration: 150ms;
+  /* Animation — 전역 모션 토큰 스케일 참조 */
+  --snackbar-enter-duration: var(--duration-base);
+  --snackbar-leave-duration: var(--duration-fast);
   --snackbar-auto-dismiss: 3000ms;
-  --snackbar-enter-easing: cubic-bezier(0, 0, 0.2, 1);
-  --snackbar-leave-easing: cubic-bezier(0.4, 0, 1, 1);
+  --snackbar-enter-easing: var(--ease-enter);
+  --snackbar-leave-easing: var(--ease-exit);
 }
 
 /* -----------------------------------------
@@ -242,15 +242,29 @@
   bottom: 0;
   left: 0;
   height: 2px;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--snackbar-progress-color, rgba(255, 255, 255, 0.3));
   border-radius: 0 0 var(--snackbar-radius) var(--snackbar-radius);
   animation: snackbar-progress var(--snackbar-auto-dismiss) linear both;
+}
+
+.dark .snackbar__progress {
+  /* 다크 모드의 스낵바 표면은 밝은 색 — 진행 바는 어두운 색으로 반전 */
+  background: var(--snackbar-progress-color, rgba(0, 0, 0, 0.25));
 }
 
 /* Responsive: minimum width for very small screens */
 @media (max-width: 359px) {
   .snackbar {
     min-width: var(--snackbar-min-width-xs);
+  }
+}
+
+/* Desktop: 전체 폭 대신 콘텐츠 폭의 컴팩트한 필로 표시 */
+@media (min-width: 768px) {
+  .snackbar {
+    width: auto;
+    min-width: var(--snackbar-min-width-xs);
+    max-width: 480px;
   }
 }
 

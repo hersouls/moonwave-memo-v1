@@ -1,14 +1,13 @@
 import { useState, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import {
   Calendar,
   ChevronLeft,
   ChevronRight,
   Hash,
   HelpCircle,
+  MoreHorizontal,
   Pencil,
-  Palette,
   Settings,
   Star,
   StickyNote,
@@ -20,17 +19,37 @@ import { useFolderStore } from '@/stores/folderStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
 import { useToastStore } from '@/stores/toastStore'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { ContextMenu } from '@/components/ui/ContextMenu'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { FolderEditModal } from '@/components/folders/FolderEditModal'
 import { SidebarAmbientImage } from '@/components/ui/SidebarAmbientImage'
-import { FOLDER_COLORS } from '@/utils/constants'
+import type { Folder } from '@/lib/types'
+
+/** 메모 개수 배지 — 사이드바 확장 행/모바일 내비 공용 (tabular-nums, 2자리 최소 폭) */
+export function CountBadge({ count, className }: { count: number; className?: string }) {
+  return (
+    <span
+      className={clsx(
+        'inline-flex min-w-[1.625rem] items-center justify-center rounded-full px-1.5 py-0.5',
+        'bg-[var(--color-bg-tertiary)] text-[11px] leading-none tabular-nums text-zinc-500 dark:text-zinc-400',
+        className
+      )}
+    >
+      {count > 999 ? '999+' : count}
+    </span>
+  )
+}
 
 export function Sidebar() {
-  const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const isSidebarOpenStore = useUIStore((s) => s.isSidebarOpen)
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
   const isTablet = useUIStore((s) => s.isTablet)
   const tabletSidebarOpen = useUIStore((s) => s.tabletSidebarOpen)
   const toggleTabletSidebar = useUIStore((s) => s.toggleTabletSidebar)
+  const isFocusMode = useUIStore((s) => s.isFocusMode)
   // Tablet (768–1023) shows a collapsible rail with its own non-persisted state,
   // defaulting to collapsed; desktop keeps the persisted expand/collapse preference.
   const isSidebarOpen = isTablet ? tabletSidebarOpen : isSidebarOpenStore
@@ -47,7 +66,6 @@ export function Sidebar() {
   const openFAQModal = useUIStore((s) => s.openFAQModal)
 
   const folders = useFolderStore((s) => s.folders)
-  const updateFolder = useFolderStore((s) => s.updateFolder)
   const deleteFolder = useFolderStore((s) => s.deleteFolder)
 
   // P-09: Use shared useMemoStats hook instead of duplicate calculations
@@ -89,15 +107,21 @@ export function Sidebar() {
     }
   }, [moveToFolder])
 
-  // Context menu state
-  const [contextMenu, setContextMenu] = useState<{ folderId: number; folderName: string; folderColor: string; x: number; y: number } | null>(null)
-  const [editingName, setEditingName] = useState('')
-  const [isRenaming, setIsRenaming] = useState(false)
-  const [showColorPicker, setShowColorPicker] = useState(false)
+  // 폴더 관리: 케밥/우클릭 공용 ContextMenu + 편집 모달 + 삭제 확인 다이얼로그
+  const [folderMenu, setFolderMenu] = useState<{ folder: Folder; x: number; y: number } | null>(null)
+  const [editingFolder, setEditingFolder] = useState<Folder | null>(null)
+  const [deletingFolder, setDeletingFolder] = useState<Folder | null>(null)
 
   const handleViewChange = () => {
     setCurrentView('memos')
-    navigate('/memos')
+    navigateWithTransition('/memos')
+  }
+
+  // 로고 클릭도 View Transition을 타도록 (수정키/휠클릭은 브라우저 기본 동작 유지)
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    e.preventDefault()
+    navigateWithTransition('/')
   }
 
   const navButton = (
@@ -112,7 +136,9 @@ export function Sidebar() {
       <button
         onClick={onClick}
         className={clsx(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+          'w-full flex items-center gap-3 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+          // 접힌 rail에서는 아이콘을 중앙 정렬 (px-3 좌우 비대칭 방지)
+          isSidebarOpen ? 'px-3' : 'justify-center px-0',
           isActive
             ? (activeStyle || 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300')
             : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -132,7 +158,8 @@ export function Sidebar() {
           <>
             <span className={clsx('text-sm truncate flex-1 text-left', isActive ? 'font-semibold' : 'font-medium')}>{label}</span>
             {count !== undefined && (
-              <span className={clsx('text-xs tabular-nums', isActive ? 'text-primary-600/70 dark:text-primary-300/70' : 'text-zinc-500 dark:text-zinc-400')}>{count}</span>
+              // 폴더 행(group)에서는 호버/포커스 시 케밥 버튼에 자리를 내준다
+              <CountBadge count={count} className="transition-opacity group-hover:opacity-0 group-focus-within:opacity-0" />
             )}
           </>
         )}
@@ -144,57 +171,36 @@ export function Sidebar() {
     ) : button
   }
 
-  const handleContextMenu = (e: React.MouseEvent, folder: { id?: number; name: string; color: string }) => {
+  const handleContextMenu = (e: React.MouseEvent, folder: Folder) => {
     if (!folder.id) return
     e.preventDefault()
-    setContextMenu({ folderId: folder.id, folderName: folder.name, folderColor: folder.color, x: e.clientX, y: e.clientY })
-    setEditingName(folder.name)
-    setIsRenaming(false)
-    setShowColorPicker(false)
-  }
-
-  const handleRename = async () => {
-    if (!contextMenu || !editingName.trim()) return
-    await updateFolder(contextMenu.folderId, { name: editingName.trim() })
-    setContextMenu(null)
-    setIsRenaming(false)
-  }
-
-  const handleColorChange = async (color: string) => {
-    if (!contextMenu) return
-    await updateFolder(contextMenu.folderId, { color })
-    setShowColorPicker(false)
-    setContextMenu(null)
+    setFolderMenu({ folder, x: e.clientX, y: e.clientY })
   }
 
   const handleDeleteFolder = async () => {
-    if (!contextMenu) return
-    const folder = folders.find((f) => f.id === contextMenu.folderId)
-    const confirmed = window.confirm(
-      `"${folder?.name || '폴더'}"를 삭제하시겠습니까?\n이 폴더의 메모는 기본 폴더로 이동됩니다.`
-    )
-    if (!confirmed) {
-      setContextMenu(null)
-      return
-    }
-    await deleteFolder(contextMenu.folderId)
-    setContextMenu(null)
+    if (!deletingFolder?.id) return
+    await deleteFolder(deletingFolder.id)
+    setDeletingFolder(null)
   }
 
   return (
     <aside
+      inert={isFocusMode || undefined}
       className={clsx(
-        'hidden md:flex flex-col fixed h-screen bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 z-40',
-        isSidebarOpen ? 'w-64' : 'w-16'
+        'hidden md:flex flex-col fixed h-screen bg-[var(--color-bg-secondary)] border-r border-zinc-200 dark:border-zinc-800 z-40',
+        // 콘텐츠 마진(App)과 동일한 300ms/spring 커브 — 접기/포커스 모드 desync 방지
+        'transition-[width,transform,opacity] duration-300 ease-spring',
+        isSidebarOpen ? 'w-64' : 'w-16',
+        isFocusMode && '-translate-x-full opacity-0 pointer-events-none'
       )}
       role="complementary"
       aria-label="사이드 네비게이션"
-      aria-expanded={isSidebarOpen}
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-zinc-200 dark:border-zinc-800">
         <Link
           to="/"
+          onClick={handleLogoClick}
           className="flex items-center gap-3 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-lg"
           aria-label="홈으로 이동"
         >
@@ -242,7 +248,7 @@ export function Sidebar() {
               '캘린더',
               <Calendar className="w-5 h-5" aria-hidden="true" />,
               currentView === 'calendar',
-              () => { setCurrentView('calendar'); navigate('/calendar') }
+              () => { setCurrentView('calendar'); navigateWithTransition('/calendar') }
             )}
           </li>
         </ul>
@@ -265,6 +271,7 @@ export function Sidebar() {
                   <li
                     key={folder.id}
                     className={clsx(
+                      'group relative',
                       count === 0 && activeFolderId !== folder.id && 'opacity-50',
                       dragOverFolderId === folder.id && 'ring-2 ring-primary-500 rounded-lg bg-primary-50 dark:bg-primary-900/20'
                     )}
@@ -283,6 +290,22 @@ export function Sidebar() {
                       activeFolderId === folder.id,
                       () => { setActiveFolderId(folder.id!); handleViewChange() },
                       count
+                    )}
+                    {/* 폴더 관리 케밥 — 호버/키보드 포커스 시 노출 (우클릭은 단축 경로) */}
+                    {isSidebarOpen && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setFolderMenu({ folder, x: rect.left, y: rect.bottom + 4 })
+                        }}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 dark:text-zinc-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-zinc-200/70 dark:hover:bg-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                        aria-label={`${folder.name} 폴더 관리`}
+                        aria-haspopup="menu"
+                      >
+                        <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
+                      </button>
                     )}
                   </li>
                 )
@@ -368,8 +391,11 @@ export function Sidebar() {
                   const helpBtn = (
                     <button
                       onClick={openFAQModal}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                                  >
+                      className={clsx(
+                        'w-full flex items-center gap-3 py-2.5 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                        isSidebarOpen ? 'px-3' : 'justify-center px-0'
+                      )}
+                    >
                       <HelpCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                       {isSidebarOpen && (
                         <span className="text-sm font-medium truncate">도움말</span>
@@ -386,8 +412,11 @@ export function Sidebar() {
                   const settingsBtn = (
                     <button
                       onClick={openSettingsModal}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                                  >
+                      className={clsx(
+                        'w-full flex items-center gap-3 py-2.5 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                        isSidebarOpen ? 'px-3' : 'justify-center px-0'
+                      )}
+                    >
                       <Settings className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                       {isSidebarOpen && (
                         <span className="text-sm font-medium truncate">설정</span>
@@ -419,7 +448,7 @@ export function Sidebar() {
           </Tooltip>
         ) : (
           <button
-            onClick={toggleSidebar}
+            onClick={handleToggleSidebar}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             aria-label="사이드바 접기"
             aria-expanded={true}
@@ -430,74 +459,36 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Folder Context Menu (Portal) */}
-      {contextMenu && createPortal(
-        <>
-          <div className="fixed inset-0 z-[100]" onClick={() => setContextMenu(null)} />
-          <div
-            className="fixed z-[101] min-w-[160px] bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 animate-in fade-in duration-100"
-            style={{ top: contextMenu.y, left: contextMenu.x }}
-          >
-            {isRenaming ? (
-              <div className="px-3 py-2">
-                <input
-                  autoFocus
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); if (e.key === 'Escape') setContextMenu(null) }}
-                  className="w-full px-2 py-1 text-sm border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
-                <div className="flex gap-1 mt-2">
-                  <button onClick={handleRename} className="flex-1 px-2 py-1 text-xs bg-primary-500 text-white rounded-lg hover:bg-primary-600">확인</button>
-                  <button onClick={() => setContextMenu(null)} className="flex-1 px-2 py-1 text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600">취소</button>
-                </div>
-              </div>
-            ) : showColorPicker ? (
-              <div className="px-3 py-2">
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">색상 선택</p>
-                <div className="flex flex-wrap gap-2">
-                  {FOLDER_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => handleColorChange(color)}
-                      className={clsx(
-                        'w-6 h-6 rounded-full transition-all',
-                        contextMenu.folderColor === color ? 'ring-2 ring-primary-500 scale-110' : 'ring-1 ring-zinc-200 dark:ring-zinc-600 hover:scale-110'
-                      )}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <>
-                <button
-                  onClick={() => setIsRenaming(true)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  이름 변경
-                </button>
-                <button
-                  onClick={() => setShowColorPicker(true)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-                >
-                  <Palette className="w-3.5 h-3.5" />
-                  색상 변경
-                </button>
-                <button
-                  onClick={handleDeleteFolder}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-danger-500 hover:bg-danger-50 dark:hover:bg-zinc-700"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  삭제
-                </button>
-              </>
-            )}
-          </div>
-        </>,
-        document.body
+      {/* 폴더 관리 메뉴 — 키보드 접근 가능한 공용 ContextMenu 프리미티브 (뷰포트 클램핑 내장) */}
+      {folderMenu && (
+        <ContextMenu
+          position={{ x: folderMenu.x, y: folderMenu.y }}
+          items={[
+            { label: '폴더 편집', icon: Pencil, onSelect: () => setEditingFolder(folderMenu.folder) },
+            'divider',
+            { label: '삭제', icon: Trash2, danger: true, onSelect: () => setDeletingFolder(folderMenu.folder) },
+          ]}
+          onClose={() => setFolderMenu(null)}
+        />
       )}
+
+      {/* 이름·색상 편집 — 기존 폴더 편집 모달 재사용 */}
+      <FolderEditModal
+        isOpen={editingFolder != null}
+        onClose={() => setEditingFolder(null)}
+        folder={editingFolder}
+      />
+
+      {/* 삭제 확인 — window.confirm 대체 */}
+      <ConfirmDialog
+        open={deletingFolder != null}
+        onClose={() => setDeletingFolder(null)}
+        onConfirm={handleDeleteFolder}
+        title="폴더 삭제"
+        description={`"${deletingFolder?.name ?? ''}" 폴더를 삭제하시겠습니까?\n이 폴더의 메모는 기본 폴더로 이동됩니다.`}
+        variant="danger"
+        confirmText="삭제"
+      />
     </aside>
   )
 }

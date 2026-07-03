@@ -17,11 +17,12 @@ import {
   X,
 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useDrag } from '@use-gesture/react'
+import { useViewTransition } from '@/hooks/useViewTransition'
+import { CountBadge } from './Sidebar'
 
 export function MobileNav() {
-  const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
 
   const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen)
   const closeMobileMenu = useUIStore((state) => state.closeMobileMenu)
@@ -52,7 +53,7 @@ export function MobileNav() {
     closeMobileMenu()
     action()
     setCurrentView('memos')
-    navigate('/memos')
+    navigateWithTransition('/memos')
   }
 
   const handleOpenSettings = () => {
@@ -72,7 +73,7 @@ export function MobileNav() {
 
   const handleAddMemo = () => {
     closeMobileMenu()
-    navigate('/memo/new')
+    navigateWithTransition('/memo/new')
   }
 
   const handleStarredClick = () => {
@@ -121,7 +122,8 @@ export function MobileNav() {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-zinc-900/50 backdrop-blur-sm" aria-hidden="true" />
+          {/* 풀스크린 테이크오버 — 공용 스크림 토큰 + blur 유지 */}
+          <div className="fixed inset-0 backdrop-blur-sm" style={{ background: 'var(--overlay-bg)' }} aria-hidden="true" />
         </TransitionChild>
 
         {/* Drawer */}
@@ -136,7 +138,7 @@ export function MobileNav() {
         >
           <DialogPanel
             {...bindDrag()}
-            className="fixed inset-y-0 left-0 w-full max-w-xs pt-safe bg-white dark:bg-zinc-950 shadow-xl dark:shadow-zinc-900/50 flex flex-col"
+            className="fixed inset-y-0 left-0 w-full max-w-xs pt-safe bg-[var(--color-bg-elevated)] border-r border-zinc-200 dark:border-zinc-800 shadow-xl flex flex-col"
             aria-labelledby="mobile-nav-title"
             style={{
               transform: dragX < 0 ? `translateX(${dragX}px)` : undefined,
@@ -184,9 +186,9 @@ export function MobileNav() {
 
               {/* Menu Items */}
               <nav className="px-2" aria-label="모바일 메인 메뉴">
-                <ul className="space-y-1" role="menu">
+                <ul className="space-y-1">
                   {/* All Memos */}
-                  <li role="none">
+                  <li>
                     <button
                       onClick={() => handleNav(() => setActiveFilter('all'))}
                       className={clsx(
@@ -195,18 +197,15 @@ export function MobileNav() {
                           ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                           : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                       )}
-                      role="menuitem"
                     >
                       <StickyNote className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">모든 메모</span>
-                      <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                        {totalCount}
-                      </span>
+                      <CountBadge count={totalCount} className="ml-auto" />
                     </button>
                   </li>
 
                   {/* Starred Memos */}
-                  <li role="none">
+                  <li>
                     <button
                       onClick={handleStarredClick}
                       className={clsx(
@@ -215,25 +214,20 @@ export function MobileNav() {
                           ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                           : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                       )}
-                      role="menuitem"
                     >
                       <Star className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">중요 메모</span>
-                      {starredCount > 0 && (
-                        <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                          {starredCount}
-                        </span>
-                      )}
+                      {starredCount > 0 && <CountBadge count={starredCount} className="ml-auto" />}
                     </button>
                   </li>
 
                   {/* Calendar */}
-                  <li role="none">
+                  <li>
                     <button
                       onClick={() => {
                         closeMobileMenu()
                         setCurrentView('calendar')
-                        navigate('/calendar')
+                        navigateWithTransition('/calendar')
                       }}
                       className={clsx(
                         'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]',
@@ -241,7 +235,6 @@ export function MobileNav() {
                           ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                           : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                       )}
-                      role="menuitem"
                     >
                       <Calendar className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">캘린더</span>
@@ -249,11 +242,10 @@ export function MobileNav() {
                   </li>
 
                   {/* Folders - Expandable */}
-                  <li role="none">
+                  <li>
                     <button
                       onClick={() => setIsFolderExpanded(!isFolderExpanded)}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]"
-                      role="menuitem"
                       aria-expanded={isFolderExpanded}
                     >
                       <StickyNote className="w-5 h-5" aria-hidden="true" />
@@ -267,9 +259,9 @@ export function MobileNav() {
                       />
                     </button>
                     {isFolderExpanded && userFolders.length > 0 && (
-                      <ul className="mt-1 ml-6 space-y-0.5" role="menu">
+                      <ul className="mt-1 ml-6 space-y-0.5">
                         {userFolders.map((folder) => (
-                          <li key={folder.id} role="none">
+                          <li key={folder.id}>
                             <button
                               onClick={() => handleNav(() => setActiveFolderId(folder.id!))}
                               className={clsx(
@@ -278,7 +270,6 @@ export function MobileNav() {
                                   ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                                   : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
                               )}
-                              role="menuitem"
                             >
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
@@ -286,9 +277,7 @@ export function MobileNav() {
                                 aria-hidden="true"
                               />
                               <span className="text-sm truncate">{folder.name}</span>
-                              <span className="ml-auto text-xs text-zinc-400">
-                                {folderCounts.get(folder.id!) || 0}
-                              </span>
+                              <CountBadge count={folderCounts.get(folder.id!) || 0} className="ml-auto" />
                             </button>
                           </li>
                         ))}
@@ -298,7 +287,7 @@ export function MobileNav() {
 
                   {/* Trash */}
                   {trashFolder && (
-                    <li role="none">
+                    <li>
                       <button
                         onClick={() => handleNav(() => setActiveFolderId(trashFolder.id!))}
                         className={clsx(
@@ -307,24 +296,20 @@ export function MobileNav() {
                             ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200'
                             : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                         )}
-                        role="menuitem"
                       >
                         <Trash2 className="w-5 h-5" aria-hidden="true" />
                         <span className="font-medium">{trashFolder.name}</span>
-                        <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                          {trashedCount}
-                        </span>
+                        <CountBadge count={trashedCount} className="ml-auto" />
                       </button>
                     </li>
                   )}
 
                   {/* Tags - Expandable */}
                   {allTags.length > 0 && (
-                    <li role="none">
+                    <li>
                       <button
                         onClick={() => setIsTagExpanded(!isTagExpanded)}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]"
-                        role="menuitem"
                         aria-expanded={isTagExpanded}
                       >
                         <Hash className="w-5 h-5" aria-hidden="true" />
@@ -338,9 +323,9 @@ export function MobileNav() {
                         />
                       </button>
                       {isTagExpanded && (
-                        <ul className="mt-1 ml-6 space-y-0.5" role="menu">
+                        <ul className="mt-1 ml-6 space-y-0.5">
                           {allTags.map((tag) => (
-                            <li key={tag} role="none">
+                            <li key={tag}>
                               <button
                                 onClick={() => handleNav(() => setActiveTag(tag))}
                                 className={clsx(
@@ -349,7 +334,6 @@ export function MobileNav() {
                                     ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
                                 )}
-                                role="menuitem"
                               >
                                 <Hash className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />
                                 <span className="text-sm truncate">{tag}</span>
@@ -367,11 +351,10 @@ export function MobileNav() {
                   </li>
 
                   {/* Help */}
-                  <li role="none">
+                  <li>
                     <button
                       onClick={handleOpenFAQ}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]"
-                      role="menuitem"
                     >
                       <HelpCircle className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">도움말</span>
@@ -379,11 +362,10 @@ export function MobileNav() {
                   </li>
 
                   {/* Settings */}
-                  <li role="none">
+                  <li>
                     <button
                       onClick={handleOpenSettings}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]"
-                      role="menuitem"
                     >
                       <Settings className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">설정</span>
@@ -391,11 +373,10 @@ export function MobileNav() {
                   </li>
 
                   {/* Terms */}
-                  <li role="none">
+                  <li>
                     <button
                       onClick={handleOpenTerms}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 min-h-[44px]"
-                      role="menuitem"
                     >
                       <FileText className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">서비스 약관</span>

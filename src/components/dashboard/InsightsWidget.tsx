@@ -1,18 +1,30 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import { TrendingUp, Sparkles } from 'lucide-react'
+import {
+  TrendingUp,
+  Sparkles,
+  Repeat2,
+  Flame,
+  Tag,
+  Clock,
+  Sprout,
+  MessageCircle,
+  Lightbulb,
+  type LucideIcon,
+} from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { generateInsights, type Insight } from '@/services/insightEngine'
 import { isAIAvailable } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
+import { WidgetCard } from './WidgetCard'
 
-const INSIGHT_ICONS: Record<string, string> = {
-  pattern: '🔄',
-  streak: '🔥',
-  tag: '🏷️',
-  time: '⏰',
-  growth: '🌱',
-  mood: '💭',
+const INSIGHT_ICONS: Record<string, LucideIcon> = {
+  pattern: Repeat2,
+  streak: Flame,
+  tag: Tag,
+  time: Clock,
+  growth: Sprout,
+  mood: MessageCircle,
 }
 
 export function InsightsWidget() {
@@ -95,39 +107,30 @@ export function InsightsWidget() {
   if (allInsights.length === 0) return null
 
   return (
-    <div className="card overflow-hidden">
-      <div className="flex items-center gap-2.5 px-5 py-3.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
-          <TrendingUp className="h-4 w-4 text-emerald-500" />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {'인사이트'}
-          </span>
-          {aiInsights.length > 0 && <Sparkles className="h-3 w-3 text-emerald-400" />}
-        </div>
-      </div>
-
-      <div className="border-t border-zinc-100 dark:border-zinc-700 px-5 py-4">
-        <ul className="space-y-2.5">
-          {allInsights.map((insight, i) => (
+    <WidgetCard
+      icon={TrendingUp}
+      title="인사이트"
+      titleAdornment={aiInsights.length > 0 && <Sparkles className="h-3 w-3 shrink-0 text-amber-400" />}
+    >
+      <ul className="space-y-2.5">
+        {allInsights.map((insight, i) => {
+          const Icon = INSIGHT_ICONS[insight.type] || Lightbulb
+          return (
             <li key={i} className="flex items-start gap-2.5">
-              <span className="text-sm shrink-0 mt-0.5" aria-hidden="true">
-                {INSIGHT_ICONS[insight.type] || '•'}
-              </span>
+              <Icon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" aria-hidden="true" />
               <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
                 {insight.text}
               </p>
             </li>
-          ))}
-        </ul>
-        {aiLoading && (
-          <div className="flex items-center gap-2 mt-3">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-zinc-400">{'AI 분석 중...'}</span>
-          </div>
-        )}
-      </div>
-    </div>
+          )
+        })}
+      </ul>
+      {aiLoading && (
+        <div className="flex items-center gap-2 mt-3">
+          <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
+        </div>
+      )}
+    </WidgetCard>
   )
 }

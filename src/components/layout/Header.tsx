@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { Fragment, useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { Transition } from '@headlessui/react'
 import { Menu, StickyNote, Settings, LogOut, Cloud } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import { IconButton } from '@/components/ui/IconButton'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
@@ -11,8 +13,10 @@ import { WeatherWidget } from '@/components/ui/WeatherWidget'
 
 export function Header() {
   const location = useLocation()
+  const { navigateWithTransition } = useViewTransition()
   const openSettingsModal = useUIStore((state) => state.openSettingsModal)
   const openMobileMenu = useUIStore((state) => state.openMobileMenu)
+  const isFocusMode = useUIStore((state) => state.isFocusMode)
   const user = useAuthStore((state) => state.user)
   const syncStatus = useAuthStore((state) => state.syncStatus)
   const logout = useAuthStore((state) => state.logout)
@@ -42,9 +46,20 @@ export function Header() {
 
   const syncStatusLabel = syncStatus === 'syncing' ? '동기화 중...' : syncStatus === 'synced' ? '동기화 완료' : syncStatus === 'error' ? '동기화 오류' : '로컬 전용'
 
+  // 로고 클릭도 View Transition 크로스페이드를 타도록 (수정키/휠클릭은 브라우저 기본 동작 유지)
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    e.preventDefault()
+    navigateWithTransition('/')
+  }
+
   // UX-08: hide on desktop when in editor
+  // 포커스 모드: 언마운트 대신 translate+negative margin으로 밀어올려 부드럽게 사라진다
   return (
-    <header className={`sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm will-change-transform border-b border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ${isEditorRoute ? 'md:hidden' : ''} ${headerHidden ? '-translate-y-full' : ''}`}>
+    <header
+      inert={isFocusMode || undefined}
+      className={`sticky top-[var(--offline-h,0px)] z-[var(--z-sticky)] bg-[color-mix(in_srgb,var(--color-bg-elevated)_85%,transparent)] backdrop-blur-sm will-change-transform border-b border-zinc-200 dark:border-zinc-800 transition-[transform,margin] duration-200 ${isEditorRoute ? 'md:hidden' : ''} ${headerHidden || isFocusMode ? '-translate-y-full' : ''} ${isFocusMode ? '-mb-16 pointer-events-none' : ''}`}
+    >
       <nav className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left: Mobile menu + Logo */}
         <div className="flex items-center gap-3">
@@ -56,7 +71,7 @@ export function Header() {
             <Menu className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
           </button>
 
-          <Link to="/" className="md:hidden flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+          <Link to="/" onClick={handleLogoClick} className="md:hidden flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
             <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
               <StickyNote className="w-5 h-5 text-white" />
             </div>
@@ -105,9 +120,19 @@ export function Header() {
               </button>
 
               {showProfileMenu && (
-                <>
-                  <div className="fixed inset-0 z-50" onClick={() => setShowProfileMenu(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-50" role="menu">
+                <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowProfileMenu(false)} aria-hidden="true" />
+              )}
+              <Transition
+                show={showProfileMenu}
+                as={Fragment}
+                enter="transition ease-enter duration-200"
+                enterFrom="opacity-0 scale-95 -translate-y-1"
+                enterTo="opacity-100 scale-100 translate-y-0"
+                leave="transition ease-exit duration-150"
+                leaveFrom="opacity-100 scale-100 translate-y-0"
+                leaveTo="opacity-0 scale-95 -translate-y-1"
+              >
+                <div className="absolute right-0 top-full mt-2 w-56 origin-top-right bg-[var(--color-bg-elevated)] rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-[var(--z-dropdown)]" role="menu">
                     {/* User info */}
                     <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700">
                       <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user.displayName || '사용자'}</p>
@@ -136,9 +161,8 @@ export function Header() {
                       <LogOut className="w-4 h-4" />
                       로그아웃
                     </button>
-                  </div>
-                </>
-              )}
+                </div>
+              </Transition>
             </div>
           )}
 

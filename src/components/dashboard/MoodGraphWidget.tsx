@@ -1,26 +1,29 @@
 import { useMemo } from 'react'
 import { parseISO } from 'date-fns'
+import { HeartPulse, Smile, Meh, Frown, type LucideIcon } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { analyzeSentiment, type Mood } from '@/services/sentimentAnalysis'
+import { WidgetCard } from './WidgetCard'
 
-const MOOD_CONFIG: Record<Mood, { label: string; color: string; bgColor: string; emoji: string }> = {
+/* 감정 색은 데이터 의미 색상(emerald/rose) — 액센트 규율의 예외 허용 범위 */
+const MOOD_CONFIG: Record<Mood, { label: string; color: string; icon: LucideIcon; iconColor: string }> = {
   positive: {
     label: '긍정',
     color: 'bg-emerald-500',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
-    emoji: '\u{1F60A}',
+    icon: Smile,
+    iconColor: 'text-emerald-500',
   },
   neutral: {
     label: '중립',
-    color: 'bg-zinc-400',
-    bgColor: 'bg-zinc-100 dark:bg-zinc-700',
-    emoji: '\u{1F610}',
+    color: 'bg-zinc-300 dark:bg-zinc-600',
+    icon: Meh,
+    iconColor: 'text-zinc-400',
   },
   negative: {
     label: '부정',
     color: 'bg-rose-500',
-    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
-    emoji: '\u{1F614}',
+    icon: Frown,
+    iconColor: 'text-rose-500',
   },
 }
 
@@ -61,56 +64,37 @@ export function MoodGraphWidget() {
   if (!moodData) return null
 
   return (
-    <div className="card">
-      <div className="flex items-center gap-2.5 px-5 py-3.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20">
-          <span className="text-base">{'\u{1F3AF}'}</span>
-        </div>
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {'감정 트래커'}
-        </span>
-        <span className="ml-auto text-[10px] text-zinc-500 dark:text-zinc-400">
-          {'최근 30일'}
-        </span>
+    <WidgetCard icon={HeartPulse} title="감정 트래커" meta="최근 30일">
+      {/* Horizontal bar */}
+      <div className="mb-3 flex h-3 overflow-hidden rounded-full">
+        {(Object.keys(MOOD_CONFIG) as Mood[]).map((mood) =>
+          moodData.counts[mood] > 0 ? (
+            <div
+              key={mood}
+              className={`${MOOD_CONFIG[mood].color} transition-all duration-300`}
+              style={{ width: `${moodData.percentages[mood]}%` }}
+            />
+          ) : null
+        )}
       </div>
-      <div className="border-t border-zinc-100 px-5 py-4 dark:border-zinc-700">
-        {/* Horizontal bar */}
-        <div className="mb-3 flex h-3 overflow-hidden rounded-full">
-          {moodData.counts.positive > 0 && (
-            <div
-              className="bg-emerald-500 transition-all duration-300"
-              style={{ width: `${moodData.percentages.positive}%` }}
-            />
-          )}
-          {moodData.counts.neutral > 0 && (
-            <div
-              className="bg-zinc-300 transition-all duration-300 dark:bg-zinc-600"
-              style={{ width: `${moodData.percentages.neutral}%` }}
-            />
-          )}
-          {moodData.counts.negative > 0 && (
-            <div
-              className="bg-rose-500 transition-all duration-300"
-              style={{ width: `${moodData.percentages.negative}%` }}
-            />
-          )}
-        </div>
 
-        {/* Legend */}
-        <div className="flex gap-4">
-          {(Object.keys(MOOD_CONFIG) as Mood[]).map((mood) => (
+      {/* Legend */}
+      <div className="flex gap-4">
+        {(Object.keys(MOOD_CONFIG) as Mood[]).map((mood) => {
+          const { label, icon: Icon, iconColor } = MOOD_CONFIG[mood]
+          return (
             <div key={mood} className="flex items-center gap-1.5">
-              <span className="text-sm">{MOOD_CONFIG[mood].emoji}</span>
+              <Icon className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} aria-hidden="true" />
               <span className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                {MOOD_CONFIG[mood].label}
+                {label}
               </span>
-              <span className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-100">
+              <span className="text-[11px] font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                 {moodData.counts[mood]}
               </span>
             </div>
-          ))}
-        </div>
+          )
+        })}
       </div>
-    </div>
+    </WidgetCard>
   )
 }

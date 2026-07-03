@@ -17,6 +17,7 @@ const VersionHistory = lazy(() => import('./VersionHistory').then((m) => ({ defa
 const RelatedMemosPanel = lazy(() => import('./RelatedMemosPanel').then((m) => ({ default: m.RelatedMemosPanel })))
 import { TagInput } from './TagInput'
 import { FeatureHint } from '@/components/ui/FeatureHint'
+import { Spinner } from '@/components/ui/Spinner'
 import { extractTags } from '@/lib/tagParser'
 import { useAITagSuggestions } from '@/hooks/useAIFeatures'
 import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
@@ -575,10 +576,7 @@ export function MemoEditor() {
         dismissSuggestion()
         return
       }
-      if (showVersionHistory) {
-        setShowVersionHistory(false)
-        return
-      }
+      // 버전 기록/명령 팔레트는 Headless UI Dialog가 자체 Escape(+퇴장 애니메이션)를 처리
       // Check for any open overlay (headlessui dialogs, dropdown menus, etc.)
       if (document.querySelector('[data-headlessui-state="open"]') ||
           document.querySelector('.fixed.inset-0.z-20') ||
@@ -711,7 +709,7 @@ export function MemoEditor() {
         onChange={(e) => handleTitleChange(e.target.value)}
         placeholder="제목"
         maxLength={100}
-        className="w-full text-[1.75rem] lg:text-[2rem] fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 caret-primary-500 selection:bg-primary-100 dark:selection:bg-primary-900/40 bg-transparent border-none outline-none mb-3"
+        className="w-full text-[1.75rem] lg:text-[2rem] fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none mb-3"
         style={{ fontFamily: editorFontFamily }}
       />
 
@@ -727,7 +725,7 @@ export function MemoEditor() {
               onChange={handleBodyInput}
               onKeyDown={handleBodyKeyDown}
               placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
-              className="w-full flex-1 min-h-0 text-[1.0625rem] leading-[1.8] tracking-[-0.003em] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 caret-primary-500 selection:bg-primary-100 dark:selection:bg-primary-900/40 bg-transparent border-none outline-none resize-none"
+              className="w-full flex-1 min-h-0 pb-32 text-[1.0625rem] leading-[1.8] tracking-[-0.003em] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none resize-none"
               style={{ fontFamily: editorFontFamily }}
             />
             {/* AI Autocomplete ghost text */}
@@ -836,7 +834,7 @@ export function MemoEditor() {
     ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '아웃라인 토글', icon: <ListTree className="w-4 h-4" />, run: () => setShowOutline((p) => !p) }] : []),
     ...(alterEgoEnabled ? [{ id: 'alterego', group: '보기 · 도구', label: '데미안(AI 대화) 토글', icon: <Brain className="w-4 h-4" />, run: () => setShowAlterEgo((p) => !p) }] : []),
     { id: 'focus', group: '보기 · 도구', label: '집중 모드', icon: <Maximize2 className="w-4 h-4" />, run: () => useUIStore.getState().toggleFocusMode() },
-    ...(memoId ? [{ id: 'slide', group: '보기 · 도구', label: '슬라이드 보기', icon: <MonitorPlay className="w-4 h-4" />, run: () => useUIStore.getState().openSlideView(memoId) }] : []),
+    ...(memoId ? [{ id: 'slide', group: '보기 · 도구', label: '슬라이드 보기', icon: <MonitorPlay className="w-4 h-4" />, shortcut: 'F5', run: () => useUIStore.getState().openSlideView(memoId) }] : []),
     ...(memoId ? [{ id: 'versions', group: '보기 · 도구', label: '버전 기록', icon: <History className="w-4 h-4" />, run: () => setShowVersionHistory(true) }] : []),
     { id: 'ai-enhance', group: 'AI · 내보내기', label: 'AI 가독성 편집', icon: <Wand2 className="w-4 h-4" />, run: runAIEnhanceFromPalette },
     { id: 'export-md', group: 'AI · 내보내기', label: '마크다운 내보내기', icon: <Download className="w-4 h-4" />, run: exportMarkdownFromPalette },
@@ -1049,7 +1047,7 @@ export function MemoEditor() {
 
       {/* Editor stats footer */}
       {isFocusMode ? (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs tabular-nums text-zinc-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-900/80 backdrop-blur px-4 py-2 rounded-full">
           <FocusTimer />
           <span>·</span>
           <span>{charCount}자</span>
@@ -1064,14 +1062,14 @@ export function MemoEditor() {
           </button>
         </div>
       ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && (
-        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
           <span>{charCount.toLocaleString()}자</span>
           <span>·</span>
           <span>읽기 약 {readingTime}분</span>
           {checklistStats && (
             <>
               <span>·</span>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 tabular-nums">
                 <span className="inline-block w-16 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
                   <span
                     className="block h-full rounded-full bg-primary-500 transition-all duration-300"
@@ -1085,16 +1083,20 @@ export function MemoEditor() {
         </div>
       )}
 
-      {/* Save status indicator bar */}
-      {saveStatus !== 'idle' && (
-        <div className={clsx(
-          'h-0.5 w-full transition-all duration-300',
-          saveStatus === 'saving' && 'bg-primary-500 animate-pulse',
-          saveStatus === 'saved' && 'bg-success-500 animate-save-fadeout',
-          saveStatus === 'modified' && 'bg-zinc-300 dark:bg-zinc-600',
-          saveStatus === 'error' && 'bg-danger-500'
-        )} />
-      )}
+      {/* Save status indicator bar — 고정 높이 트랙에 페인트 속성만 전환해
+          autosave 사이클마다 레이아웃이 2px씩 출렁이지 않게 한다 */}
+      <div className="h-0.5 w-full shrink-0" aria-hidden="true">
+        <div
+          className={clsx(
+            'h-full w-full transition-[opacity,background-color] duration-300 ease-standard',
+            saveStatus === 'idle' && 'opacity-0',
+            saveStatus === 'saving' && 'bg-primary-500 animate-pulse',
+            saveStatus === 'saved' && 'bg-success-500',
+            saveStatus === 'modified' && 'bg-zinc-300 dark:bg-zinc-600',
+            saveStatus === 'error' && 'bg-danger-500'
+          )}
+        />
+      </div>
 
       {/* Floating toolbar for text selection (legacy mode only) */}
       {!isTiptap && (activeTab === 'edit' || isSplit) && (
@@ -1113,7 +1115,7 @@ export function MemoEditor() {
 
       {/* Version history panel */}
       {showVersionHistory && memoId && (
-        <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>}>
+        <Suspense fallback={<div className="flex items-center justify-center p-8"><Spinner size="md" className="text-primary-500" /></div>}>
           <VersionHistory
             memoId={memoId}
             currentTitle={title}

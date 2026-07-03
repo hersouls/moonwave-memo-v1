@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Loader2, Settings, ZoomIn, ZoomOut } from 'lucide-react'
 import clsx from 'clsx'
@@ -37,10 +37,17 @@ function SemanticCanvas() {
   const svgRef = useRef<SVGSVGElement>(null)
   const lastPinchDistRef = useRef<number | null>(null)
 
-  // Detect dark mode
-  const isDark = useMemo(() => {
+  // Detect dark mode — 테마 토글에 실시간 반응 (documentElement class 관찰)
+  const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
     return document.documentElement.classList.contains('dark')
+  })
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
   }, [])
 
   // Node radius based on body length
@@ -68,14 +75,24 @@ function SemanticCanvas() {
     setIsDragging(false)
   }, [])
 
-  // Wheel handler for zoom
+  // Wheel handler for zoom — 커서 위치 기준 줌 (포인터가 가리키는 지점 고정)
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
     const delta = e.deltaY > 0 ? 0.9 : 1.1
-    setTransform((prev) => ({
-      ...prev,
-      scale: Math.min(3, Math.max(0.3, prev.scale * delta)),
-    }))
+    const rect = svgRef.current?.getBoundingClientRect()
+    setTransform((prev) => {
+      const scale = Math.min(3, Math.max(0.3, prev.scale * delta))
+      if (!rect || scale === prev.scale) return { ...prev, scale }
+      const k = scale / prev.scale
+      // 캔버스 중심 기준 포인터 오프셋 (transform 원점이 중앙이므로)
+      const px = e.clientX - rect.left - rect.width / 2
+      const py = e.clientY - rect.top - rect.height / 2
+      return {
+        x: px - (px - prev.x) * k,
+        y: py - (py - prev.y) * k,
+        scale,
+      }
+    })
   }, [])
 
   // Touch: single-finger pan, two-finger pinch zoom (mobile/tablet)
@@ -140,7 +157,7 @@ function SemanticCanvas() {
         </div>
         <button
           onClick={() => useUIStore.getState().openSettingsModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+          className="flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)]"
         >
           <Settings className="w-4 h-4" />
           설정 열기
@@ -185,7 +202,7 @@ function SemanticCanvas() {
           >
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="text-xs text-zinc-400 w-10 text-center">
+          <span className="w-10 text-center text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
             {Math.round(transform.scale * 100)}%
           </span>
           <button

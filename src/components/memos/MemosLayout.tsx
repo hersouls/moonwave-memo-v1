@@ -160,7 +160,7 @@ export function MemosLayout() {
                 <StickyNote className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">메모를 선택하세요</p>
                 <p className="text-xs mt-1 text-zinc-300 dark:text-zinc-600">
-                  또는 Ctrl+N으로 새 메모 작성
+                  또는 Alt+N으로 새 메모 작성
                 </p>
                 <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-zinc-300 dark:text-zinc-600">
                   <Keyboard className="w-3.5 h-3.5" />

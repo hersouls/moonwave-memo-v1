@@ -81,11 +81,11 @@ export function MemoFilterTabs() {
         )
       })}
 
-      {/* Active tag indicator */}
+      {/* Active tag indicator — accent tokens keep white text AA in dark palettes */}
       {activeTag && (
         <button
           onClick={() => setActiveFilter('all')}
-          className="shrink-0 chip-text chip-text--sm bg-primary-500 text-white"
+          className="shrink-0 chip-text chip-text--sm bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-hover)]"
         >
           #{activeTag}
         </button>

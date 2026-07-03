@@ -108,15 +108,6 @@
   --toggle-bg-on: #18181b;
   --toggle-thumb-bg: white;
 
-  /* Tooltip */
-  --tooltip-bg: white;
-  --tooltip-shadow: var(--shadow-2);
-  --tooltip-border-radius: var(--radius-8, 8px);
-  --tooltip-padding: 12px 16px;
-  --tooltip-font-size: 14px;
-  --tooltip-close-size: 20px;
-  --tooltip-gap: 16px;
-
   /* ── App Bar ───────────────────────── */
   --appbar-height: 56px;
   --appbar-padding-x: 16px;
@@ -186,9 +177,6 @@
   /* Toggle */
   --toggle-bg-off: #71717a;
   --toggle-bg-on: #f4f4f5;
-
-  /* Tooltip */
-  --tooltip-bg: #27272a;
 
   /* App Bar */
   --appbar-bg: #18181b;

@@ -297,10 +297,42 @@
   border-color: color-mix(in oklch, var(--card-hairline), var(--color-primary-400) 30%);
 }
 
+/* 다크 엘리베이션: 표면 밝힘 = 높이 (Linear/Arc 패턴) —
+   검정 그림자만으로는 #09090b 배경에서 hover 상승이 보이지 않음 */
+.dark .card--interactive:hover {
+  background: color-mix(in oklch, var(--card-bg-default), white 4%);
+}
+
 .card--interactive:active {
   transform: scale(0.97);
   box-shadow: var(--card-shadow-sm);
   transition-duration: 0.1s;
+}
+
+/* 차트 바 draw-in — 대시보드 분석 위젯 펼침 시 scaleY 성장 */
+@keyframes card-chart-bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.chart-bar {
+  transform-origin: bottom;
+  animation: card-chart-bar-grow 0.35s var(--ease-enter, ease-out) backwards;
+}
+
+/* 전정계 안전: 카드 리프트/축소·차트 성장 애니메이션 비활성화 */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card--interactive:hover,
+  .card--interactive:active {
+    transition: none;
+    transform: none;
+  }
+
+  .chart-bar {
+    animation: none;
+  }
 }
 
 .card--selected {

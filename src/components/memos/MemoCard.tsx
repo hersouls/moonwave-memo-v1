@@ -1,8 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
-import { createPortal } from 'react-dom'
 import { Star, CheckCircle, Trash2, Pin, Flame, RotateCcw, MonitorPlay } from 'lucide-react'
 import clsx from 'clsx'
+import { ContextMenu } from '@/components/ui/ContextMenu'
 import type { Memo, MemoColor } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -62,7 +62,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         part.match ? (
-          <mark key={i} className="bg-yellow-300/80 dark:bg-yellow-500/40 text-inherit rounded-sm px-0.5 ring-1 ring-yellow-400/50 dark:ring-yellow-500/30">
+          <mark key={i} className="bg-primary-500/20 dark:bg-primary-400/25 text-inherit rounded-[3px] -mx-px px-px">
             {part.text}
           </mark>
         ) : (
@@ -121,9 +121,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
   // Swipe gesture state
   const [swipeX, setSwipeX] = useState(0)
   const [isSwiping, setIsSwiping] = useState(false)
+  // Commit-threshold crossing feedback (icon pop + haptic tick while finger is down)
+  const [swipeCommitted, setSwipeCommitted] = useState(false)
+  const swipeCommittedRef = useRef(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
-  const cardRef = useRef<HTMLButtonElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   // Long-press state
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -185,16 +188,6 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       if (hoverLeaveTimer.current) clearTimeout(hoverLeaveTimer.current)
     }
   }, [])
-
-  // Close context menu on Escape
-  useEffect(() => {
-    if (!ctxMenu) return
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setCtxMenu(null); e.stopPropagation() }
-    }
-    window.addEventListener('keydown', handleEsc, true)
-    return () => window.removeEventListener('keydown', handleEsc, true)
-  }, [ctxMenu])
 
   if (!memo.id) return null
 
@@ -270,8 +263,60 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     if (isSwiping || Math.abs(dx) > 10) {
       setSwipeX(dx)
       if (isSwiping) e.preventDefault()
+
+      // Haptic-style tick + icon pop the moment the swipe crosses the commit threshold
+      const passed = Math.abs(dx) >= getSwipeThreshold()
+      if (passed !== swipeCommittedRef.current) {
+        swipeCommittedRef.current = passed
+        setSwipeCommitted(passed)
+        if (passed) navigator.vibrate?.(10)
+      }
     }
   }, [isSelectionMode, isSwiping])
+
+  // Shared card actions — used by both swipe gestures and the hover/focus quick-action cluster
+  const runSoftDelete = useCallback(() => {
+    if (memo.id == null) return
+    setIsDeleting(true)
+    const memoId = memo.id
+    swipeActionTimerRef.current = setTimeout(async () => {
+      if (!mountedRef.current) return
+      try {
+        const deleted = await softDelete(memoId)
+        if (deleted) {
+          pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
+        }
+      } catch (err) {
+        console.error('Failed to delete memo:', err)
+        if (mountedRef.current) {
+          setIsDeleting(false)
+          useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
+        }
+      }
+    }, 300)
+  }, [memo.id, softDelete, pushUndo])
+
+  const runRestore = useCallback(() => {
+    if (memo.id == null) return
+    setIsDeleting(true)
+    const memoId = memo.id
+    swipeActionTimerRef.current = setTimeout(async () => {
+      if (!mountedRef.current) return
+      await restore(memoId)
+      useToastStore.getState().showToast('메모가 복원되었습니다', 'success')
+    }, 300)
+  }, [memo.id, restore])
+
+  const runPermanentDelete = useCallback(() => {
+    if (memo.id == null) return
+    setIsDeleting(true)
+    const memoId = memo.id
+    swipeActionTimerRef.current = setTimeout(async () => {
+      if (!mountedRef.current) return
+      await permanentDelete(memoId)
+      useToastStore.getState().showToast('메모가 영구 삭제되었습니다', 'info')
+    }, 300)
+  }, [memo.id, permanentDelete])
 
   const handleTouchEnd = useCallback(async () => {
     if (!isTouchDevice || isSelectionMode) return
@@ -292,13 +337,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       hapticFeedback(15)
       if (isTrashView) {
         // Right swipe in trash → restore
-        setIsDeleting(true)
-        const memoId = memo.id
-        swipeActionTimerRef.current = setTimeout(async () => {
-          if (!mountedRef.current) return
-          await restore(memoId)
-          useToastStore.getState().showToast('메모가 복원되었습니다', 'success')
-        }, 300)
+        runRestore()
       } else {
         // Right swipe → toggle star
         toggleStar(memo.id)
@@ -307,40 +346,20 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       hapticFeedback(25)
       if (isTrashView) {
         // Left swipe in trash → permanent delete
-        setIsDeleting(true)
-        const memoId = memo.id
-        swipeActionTimerRef.current = setTimeout(async () => {
-          if (!mountedRef.current) return
-          await permanentDelete(memoId)
-          useToastStore.getState().showToast('메모가 영구 삭제되었습니다', 'info')
-        }, 300)
+        runPermanentDelete()
       } else {
         // Left swipe → soft delete with shrink animation
-        setIsDeleting(true)
-        const memoId = memo.id
-        swipeActionTimerRef.current = setTimeout(async () => {
-          if (!mountedRef.current) return
-          try {
-            const deleted = await softDelete(memoId)
-            if (deleted) {
-              pushUndo({ type: 'delete-memo', memos: [deleted], timestamp: Date.now() })
-            }
-          } catch (err) {
-            console.error('Failed to delete memo:', err)
-            if (mountedRef.current) {
-              setIsDeleting(false)
-              useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
-            }
-          }
-        }, 300)
+        runSoftDelete()
       }
     }
 
     setSwipeX(0)
     setIsSwiping(false)
+    swipeCommittedRef.current = false
+    setSwipeCommitted(false)
     // Reset long-press flag after a tick to prevent click
     setTimeout(() => { isLongPressed.current = false }, 0)
-  }, [swipeX, memo.id, isSelectionMode, toggleStar, softDelete, pushUndo, isTrashView, restore, permanentDelete])
+  }, [swipeX, memo.id, isSelectionMode, toggleStar, isTrashView, runRestore, runPermanentDelete, runSoftDelete, hapticFeedback])
 
   const handleClick = () => {
     if (isSwiping || isLongPressed.current || !memo.id) return
@@ -377,12 +396,13 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       onMouseLeave={handleMouseLeave}
       draggable={isDesktop && !isSelectionMode && !isTrashView}
       onDragStart={handleDragStart}
-      className={clsx('relative overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}
+      className={clsx('group relative overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}
     >
       {/* Swipe action backgrounds with progressive visual feedback */}
       {isTouchDevice && !isSelectionMode && (() => {
         const swipeProgress = Math.min(Math.abs(swipeX) / getSwipeThreshold(), 1)
-        const iconScale = 0.8 + swipeProgress * 0.6
+        // Grows to 1.0 approaching the threshold, then pops to 1.3 at the commit point
+        const iconScale = swipeCommitted ? 1.3 : 0.7 + swipeProgress * 0.3
         return (
           <>
             {/* Right swipe: star (normal) / restore (trash) */}
@@ -399,12 +419,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             >
               {isTrashView ? (
                 <RotateCcw
-                  className="text-white transition-transform"
+                  className="text-white transition-transform duration-150 ease-spring"
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
               ) : (
                 <Star
-                  className="text-white fill-white transition-transform"
+                  className="text-white fill-white transition-transform duration-150 ease-spring"
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
               )}
@@ -422,7 +442,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
               }}
             >
               <Trash2
-                className="text-white transition-transform"
+                className="text-white transition-transform duration-150 ease-spring"
                 style={{ width: 20, height: 20, transform: `scale(${swipeX < 0 ? iconScale : 1})` }}
               />
             </div>
@@ -430,18 +450,20 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         )
       })()}
 
-      <button
+      <div
         ref={cardRef}
-        onClick={handleClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className={clsx(
-          'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left border border-zinc-950/[0.06] dark:border-white/[0.07] shadow-sm transition-all duration-200',
+          // Scoped transition list — never transition-all on list items (layout reflows must not animate)
+          'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left border border-[var(--card-hairline)] shadow-sm transition-[transform,box-shadow,border-color,background-color,filter] duration-200',
           MEMO_CARD_BG[memo.color] || MEMO_CARD_BG[defaultColor] || 'bg-white dark:bg-zinc-800',
-          isSelectionMode && 'hover:bg-zinc-50 dark:hover:bg-zinc-700',
-          !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 hover:border-primary-200/70 dark:hover:border-primary-800/40 active:scale-[0.98]',
-          isLongPressing && 'scale-[0.97] bg-zinc-100 dark:bg-zinc-700/50',
+          // Selection-mode hover darkens in place so the memo's color identity survives
+          isSelectionMode && 'hover:brightness-[0.97] dark:hover:brightness-110',
+          // Hover stays neutral (shadow + hairline darkening) — accent is reserved for selected/active/starred
+          !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 hover:border-zinc-950/[0.12] dark:hover:border-white/[0.16] active:scale-[0.98]',
+          isLongPressing && 'scale-[0.97] brightness-[0.95] dark:brightness-125',
           isSelected && 'ring-2 ring-primary-500',
           // UX-07: stronger active highlight
           isActive && 'lg:ring-1 lg:ring-primary-300 lg:dark:ring-primary-700 lg:bg-primary-50/50 lg:dark:bg-primary-900/10',
@@ -451,18 +473,26 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         onContextMenu={(e) => {
           e.preventDefault()
           if (isDesktop && !isSelectionMode && !isTrashView && memo.id != null) {
-            const x = Math.min(e.clientX, window.innerWidth - 200)
-            const y = Math.min(e.clientY, window.innerHeight - 60)
-            setCtxMenu({ x, y })
+            setCtxMenu({ x: e.clientX, y: e.clientY })
           }
         }}
         style={{
           touchAction: 'pan-y',
           ...decayStyle,
           transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined,
-          transition: isSwiping ? 'none' : 'transform 0.2s ease',
+          // Spring snap-back on release (touch only — desktop keeps the class-scoped transition)
+          ...(isTouchDevice
+            ? { transition: isSwiping ? 'none' : 'transform 250ms var(--ease-spring)' }
+            : {}),
         }}
       >
+        {/* Stretched primary action (sibling of tag/quick-action buttons — no nested interactives) */}
+        <button
+          type="button"
+          onClick={handleClick}
+          aria-label={memo.title || '제목 없음'}
+          className="memo-card__link absolute inset-0 z-[1] rounded-2xl fold:rounded-xl focus-visible:outline-offset-[-2px]"
+        />
         {/* UX-14: Color bar — folder color */}
         {folder && (
           <div
@@ -480,7 +510,14 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         )}>
           {/* Title row */}
           <div className="flex items-start gap-2">
-            {isSelectionMode && (
+            {/* Width-animated so entering selection mode slides cards open instead of jumping */}
+            <span
+              aria-hidden={!isSelectionMode}
+              className={clsx(
+                'flex shrink-0 overflow-hidden transition-[width,opacity,transform] duration-200 ease-out',
+                isSelectionMode ? 'w-7 opacity-100 scale-100' : 'w-0 opacity-0 scale-50'
+              )}
+            >
               <CheckCircle
                 className={clsx(
                   'mt-0.5 h-5 w-5 shrink-0 transition-colors',
@@ -489,11 +526,11 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                     : 'text-zinc-300 dark:text-zinc-600'
                 )}
               />
-            )}
+            </span>
             {/* A11Y-03: span instead of h3 inside button */}
             <span className={clsx(
-              'flex-1 font-bold text-zinc-900 dark:text-zinc-100',
-              isGrid ? 'text-xs line-clamp-2' : 'text-sm fold:text-xs truncate'
+              'flex-1 font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100',
+              isGrid ? 'text-[13px] line-clamp-2' : 'text-sm fold:text-xs truncate'
             )}>
               <HighlightText text={memo.title || '제목 없음'} query={searchQuery} />
             </span>
@@ -515,36 +552,25 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             </p>
           )}
 
-          {/* Tags */}
+          {/* Tags — true sibling buttons layered above the stretched card link */}
           {memo.tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-1">
               {memo.tags.slice(0, isGrid ? 2 : 3).map((tag) => (
-                <span
+                <button
                   key={tag}
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation()
+                  type="button"
+                  onClick={() => {
                     setActiveTag(tag)
                     useUIStore.getState().setSearchQuery('')
                     navigate('/memos')
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setActiveTag(tag)
-                      useUIStore.getState().setSearchQuery('')
-                      navigate('/memos')
-                    }
-                  }}
-                  className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800/50 transition-colors cursor-pointer"
+                  className="relative z-[2] inline-flex items-center px-2 py-1 text-[11px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800/50 transition-colors cursor-pointer after:absolute after:-inset-y-2 after:-inset-x-1.5 after:content-['']"
                 >
                   #{tag}
-                </span>
+                </button>
               ))}
               {memo.tags.length > (isGrid ? 2 : 3) && (
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
                   +{memo.tags.length - (isGrid ? 2 : 3)}
                 </span>
               )}
@@ -553,8 +579,8 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
 
           {/* Footer */}
           <div className={clsx(
-            'flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400',
-            isGrid ? 'text-[10px] mt-auto pt-1' : 'text-[11px]'
+            'flex items-center gap-1.5 text-[11px] tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400',
+            isGrid && 'mt-auto pt-1'
           )}>
             {folder && (
               <>
@@ -572,29 +598,76 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             </span>
           </div>
         </div>
-      </button>
+
+        {/* Quick actions — hover/focus-reachable equivalent of the swipe gestures (desktop) */}
+        {isDesktop && !isSelectionMode && (
+          <div
+            className={clsx(
+              'absolute right-2 top-2 z-[2] flex items-center gap-0.5 rounded-lg border border-[var(--card-hairline)] bg-[var(--color-bg-elevated)]/95 p-0.5 shadow-sm',
+              // pointer-events gated with visibility so the hidden cluster never blocks the card link
+              'pointer-events-none opacity-0 transition-opacity duration-150',
+              'group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100'
+            )}
+          >
+            {isTrashView ? (
+              <>
+                <button
+                  type="button"
+                  onClick={runRestore}
+                  aria-label="복원"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={runPermanentDelete}
+                  aria-label="영구 삭제"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:text-zinc-400 dark:hover:bg-danger-900/30 dark:hover:text-danger-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => toggleStar(memo.id!)}
+                  aria-label={memo.isStarred ? '중요 해제' : '중요 표시'}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                >
+                  <Star className={clsx('h-4 w-4', memo.isStarred && 'fill-primary-500 text-primary-500')} />
+                </button>
+                <button
+                  type="button"
+                  onClick={runSoftDelete}
+                  aria-label="삭제"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:text-zinc-400 dark:hover:bg-danger-900/30 dark:hover:text-danger-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
       {showHoverPreview && hoverAnchorRect && (
         <MemoHoverPreview memo={memo} anchorRect={hoverAnchorRect} />
       )}
 
-      {/* Right-click context menu */}
-      {ctxMenu && createPortal(
-        <>
-          <div className="fixed inset-0 z-[70]" onClick={() => setCtxMenu(null)} onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null) }} />
-          <div
-            className="fixed z-[71] min-w-[180px] bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-1.5 animate-in fade-in zoom-in-95 duration-150"
-            style={{ left: ctxMenu.x, top: ctxMenu.y }}
-          >
-            <button
-              onClick={() => { openSlideView(memo.id!); setCtxMenu(null) }}
-              className="ctx-menu__item w-full"
-            >
-              <MonitorPlay className="ctx-menu__item-icon" />
-              슬라이드로 보기
-            </button>
-          </div>
-        </>,
-        document.body
+      {/* Right-click context menu — shared primitive (Esc/화살표 키/뷰포트 클램핑 내장) */}
+      {ctxMenu && (
+        <ContextMenu
+          position={ctxMenu}
+          items={[
+            {
+              label: '슬라이드로 보기',
+              icon: MonitorPlay,
+              onSelect: () => openSlideView(memo.id!),
+            },
+          ]}
+          onClose={() => setCtxMenu(null)}
+        />
       )}
     </div>
   )

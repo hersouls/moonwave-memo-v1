@@ -78,13 +78,13 @@ export function MemoContextMenu() {
     </>
   )
 
-  // Desktop: dropdown popover
+  // Desktop: dropdown popover — same enter motion as the card context menu
   if (isDesktop) {
     if (!isContextMenuOpen) return null
     return (
       <>
         <div className="fixed inset-0 z-20" onClick={closeContextMenu} />
-        <div className="ctx-menu absolute right-2 top-12 z-30 min-w-[200px]">
+        <div className="ctx-menu absolute right-2 top-12 z-30 min-w-[200px] origin-top-right animate-in fade-in zoom-in-95 duration-150">
           <div className="flex flex-col">{menuItems}</div>
         </div>
       </>

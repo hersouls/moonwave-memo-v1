@@ -20,6 +20,18 @@ export const FOLDER_COLORS = [
   '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444',
 ] as const
 
+// Korean color names for accessible labels on color swatch pickers (aria-label)
+export const FOLDER_COLOR_NAMES: Record<string, string> = {
+  '#F59E0B': '주황',
+  '#84CC16': '연두',
+  '#22C55E': '초록',
+  '#06B6D4': '청록',
+  '#3B82F6': '파랑',
+  '#8B5CF6': '보라',
+  '#EC4899': '분홍',
+  '#EF4444': '빨강',
+}
+
 export const MEMO_COLORS: Record<MemoColor, string> = {
   white: '#FFFFFF',
   yellow: '#FEF3C7',

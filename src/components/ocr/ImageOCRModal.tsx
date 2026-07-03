@@ -95,7 +95,7 @@ function StepImageSelect({
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-700">
+      <div className="flex gap-1 border-b border-[var(--color-border-subtle)]">
         <button
           onClick={() => setActiveTab('upload')}
           className={clsx(
@@ -126,12 +126,21 @@ function StepImageSelect({
         <div className="space-y-3">
           {/* Drop zone */}
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="이미지 파일 선택"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                fileInputRef.current?.click()
+              }
+            }}
             className={clsx(
-              'flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-all',
+              'flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-[border-color,background-color]',
               dragOver
                 ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10'
                 : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'
@@ -200,7 +209,7 @@ function StepImageSelect({
       {/* Selected file preview */}
       {selectedFile && preview && !fileError && (
         <div className="space-y-3">
-          <div className="relative rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+          <div className="relative rounded-xl overflow-hidden border border-[var(--color-border-subtle)] bg-zinc-50 dark:bg-zinc-800/50">
             <img
               src={preview}
               alt="선택된 이미지"
@@ -208,16 +217,19 @@ function StepImageSelect({
             />
             <button
               onClick={(e) => { e.stopPropagation(); clearSelection() }}
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              aria-label="선택한 이미지 제거"
+              className="absolute top-2 right-2 flex items-center justify-center w-10 h-10 -m-1 rounded-full text-white transition-colors group/clear"
             >
-              <X className="w-4 h-4" />
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-black/50 group-hover/clear:bg-black/70 transition-colors">
+                <X className="w-4 h-4" />
+              </span>
             </button>
           </div>
           <div className="flex items-center gap-2 px-1">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate flex-1">
               {selectedFile.name}
             </p>
-            <p className="text-xs text-zinc-400 shrink-0">{formatFileSize(selectedFile.size)}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums shrink-0">{formatFileSize(selectedFile.size)}</p>
           </div>
           <Button
             variant="primary"
@@ -246,7 +258,7 @@ function StepProcessing({
   return (
     <div className="flex flex-col items-center gap-6 py-6">
       {imagePreview && (
-        <div className="w-24 h-24 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 opacity-60">
+        <div className="w-24 h-24 rounded-xl overflow-hidden border border-[var(--color-border-subtle)] opacity-60">
           <img src={imagePreview} alt="" className="w-full h-full object-cover" />
         </div>
       )}
@@ -266,11 +278,11 @@ function StepProcessing({
       <div className="w-full max-w-xs">
         <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary-500 rounded-full transition-all duration-500 ease-out"
+            className="h-full bg-primary-500 rounded-full transition-[width] duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-xs text-zinc-400 text-center mt-2">{progress}%</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums text-center mt-2">{progress}%</p>
       </div>
 
       <Button variant="ghost" onClick={onCancel}>
@@ -284,6 +296,8 @@ function StepProcessing({
 function StepResult({
   text,
   imagePreview,
+  isEmptyResult,
+  onRetry,
   onTextChange,
   onSaveNew,
   onAppend,
@@ -292,6 +306,8 @@ function StepResult({
 }: {
   text: string
   imagePreview: string | null
+  isEmptyResult: boolean
+  onRetry: () => void
   onTextChange: (t: string) => void
   onSaveNew: () => void
   onAppend: () => void
@@ -306,7 +322,7 @@ function StepResult({
           <img
             src={imagePreview}
             alt="OCR 원본"
-            className="w-12 h-12 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
+            className="w-12 h-12 rounded-lg object-cover border border-[var(--color-border-subtle)]"
           />
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             원본 이미지가 메모에 함께 저장됩니다
@@ -314,15 +330,30 @@ function StepResult({
         </div>
       )}
 
+      {/* Empty OCR result state */}
+      {isEmptyResult && (
+        <div className="flex flex-col items-center gap-3 py-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+            <ScanText className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
+          </div>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            이미지에서 텍스트를 찾지 못했습니다
+          </p>
+          <Button variant="ghost" size="sm" onClick={onRetry}>
+            다른 이미지 시도
+          </Button>
+        </div>
+      )}
+
       <textarea
         value={text}
         onChange={(e) => onTextChange(e.target.value)}
-        placeholder="텍스트를 추출할 수 없었습니다"
-        className="w-full min-h-[200px] max-h-60 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed resize-none outline-none focus:ring-2 focus:ring-primary-500 overflow-y-auto"
+        placeholder={isEmptyResult ? '직접 텍스트를 입력할 수도 있습니다' : undefined}
+        className="w-full min-h-[200px] max-h-60 p-3 rounded-xl border border-[var(--color-border-default)] bg-white dark:bg-zinc-900/50 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed resize-none outline-none focus:ring-2 focus:ring-primary-500 overflow-y-auto"
       />
 
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs text-zinc-400">{text.length}자</span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{text.length}자</span>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -330,7 +361,7 @@ function StepResult({
           variant="primary"
           className="flex-1"
           onClick={onSaveNew}
-          disabled={isSaving}
+          disabled={!text.trim() || isSaving}
         >
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
           새 메모로 저장
@@ -340,7 +371,7 @@ function StepResult({
             variant="secondary"
             className="flex-1"
             onClick={onAppend}
-            disabled={isSaving}
+            disabled={!text.trim() || isSaving}
           >
             기존 메모에 추가
           </Button>
@@ -399,6 +430,14 @@ export function ImageOCRModal() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // 빈 결과에서 "다른 이미지 시도" — 상태를 비우고 1단계로 복귀
+  const handleRetry = useCallback(() => {
+    ocr.reset()
+    setEditedText('')
+    setStep(1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSaveNew = async () => {
     setIsSaving(true)
     try {
@@ -440,7 +479,7 @@ export function ImageOCRModal() {
   }
 
   return (
-    <Dialog open={isOpen} onClose={step === 2 ? () => {} : closeModal} size="lg" noPadding>
+    <Dialog open={isOpen} onClose={step === 2 ? handleCancel : closeModal} size="lg" noPadding>
       <div className="flex flex-col max-h-[85dvh] fold:max-h-[70dvh]">
         <DialogHeader
           title={stepTitles[step]}
@@ -453,7 +492,7 @@ export function ImageOCRModal() {
             <div
               key={s}
               className={clsx(
-                'h-1.5 rounded-full transition-all duration-300',
+                'h-1.5 rounded-full transition-[width,background-color] duration-300',
                 s === step ? 'w-8 bg-primary-500' : 'w-4 bg-zinc-200 dark:bg-zinc-700'
               )}
             />
@@ -461,27 +500,36 @@ export function ImageOCRModal() {
         </div>
 
         <DialogBody className="overflow-y-auto px-4 pb-6 sm:px-6">
-          {step === 1 && (
-            <StepImageSelect onImageSelect={handleImageSelect} />
-          )}
-          {step === 2 && (
-            <StepProcessing
-              progress={ocr.progress}
-              imagePreview={ocr.imagePreview}
-              onCancel={handleCancel}
-            />
-          )}
-          {step === 3 && (
-            <StepResult
-              text={editedText}
-              imagePreview={ocr.imagePreview}
-              onTextChange={setEditedText}
-              onSaveNew={handleSaveNew}
-              onAppend={handleAppend}
-              canAppend={canAppend}
-              isSaving={isSaving}
-            />
-          )}
+          {/* 단계 전환 크로스 슬라이드 — key 교체로 enter 애니메이션 재생 */}
+          <div
+            key={step}
+            className="animate-in fade-in slide-in-from-bottom-2"
+            style={{ animationDuration: '250ms', animationTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
+          >
+            {step === 1 && (
+              <StepImageSelect onImageSelect={handleImageSelect} />
+            )}
+            {step === 2 && (
+              <StepProcessing
+                progress={ocr.progress}
+                imagePreview={ocr.imagePreview}
+                onCancel={handleCancel}
+              />
+            )}
+            {step === 3 && (
+              <StepResult
+                text={editedText}
+                imagePreview={ocr.imagePreview}
+                isEmptyResult={!(ocr.result?.text ?? '').trim()}
+                onRetry={handleRetry}
+                onTextChange={setEditedText}
+                onSaveNew={handleSaveNew}
+                onAppend={handleAppend}
+                canAppend={canAppend}
+                isSaving={isSaving}
+              />
+            )}
+          </div>
         </DialogBody>
       </div>
     </Dialog>

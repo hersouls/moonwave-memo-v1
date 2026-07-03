@@ -31,19 +31,19 @@ export function TimelineView({ memos }: TimelineViewProps) {
 
   return (
     <div className="relative">
-      {/* Vertical timeline line */}
-      <div className="absolute left-[7px] top-3 bottom-3 w-0.5 bg-zinc-200 dark:bg-zinc-700" />
+      {/* Vertical timeline line \u2014 structural token so dark parity is automatic */}
+      <div className="absolute left-[7px] top-3 bottom-3 w-0.5 bg-[var(--color-border-default)]" />
 
       <div className="flex flex-col gap-6">
         {grouped.map(([dateLabel, dateMemos]) => (
           <div key={dateLabel} className="relative">
-            {/* Date header with dot */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className="relative z-10 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-primary-500 bg-white dark:bg-zinc-900" />
+            {/* Date header with dot \u2014 sticky so temporal context survives long groups */}
+            <div className="sticky top-0 z-10 -mx-1 mb-2 flex items-center gap-3 px-1 py-1 backdrop-blur-sm bg-[color-mix(in_oklch,var(--color-bg-primary)_85%,transparent)]">
+              <div className="relative z-10 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-primary-500 bg-[var(--color-bg-primary)]" />
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 {dateLabel}
               </span>
-              <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+              <span className="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
                 {dateMemos.length}{'\uAC1C'}
               </span>
             </div>

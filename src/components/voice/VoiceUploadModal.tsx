@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo as reactMemo } from 'rea
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Mic,
+  MicOff,
   Upload,
   X,
   FileAudio,
@@ -62,7 +63,7 @@ const AudioLevelBars = reactMemo(function AudioLevelBars({ level }: { level: num
       {BAR_SIN_OFFSETS.map((offset, i) => (
         <div
           key={i}
-          className="w-1 rounded-full bg-danger-400 dark:bg-danger-500"
+          className="w-1 rounded-full bg-danger-400 dark:bg-danger-500 transition-[height] duration-100 ease-out will-change-[height]"
           style={{ height: `${Math.max(4, Math.max(0.05, level * offset) * 32)}px` }}
         />
       ))}
@@ -127,7 +128,7 @@ function StepFileSelect({
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-700">
+      <div className="flex gap-1 border-b border-[var(--color-border-subtle)]">
         <button
           onClick={() => setActiveTab('upload')}
           className={clsx(
@@ -158,12 +159,21 @@ function StepFileSelect({
         <div className="space-y-3">
           {/* Drop zone */}
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="음성 파일 선택"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                fileInputRef.current?.click()
+              }
+            }}
             className={clsx(
-              'flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-all',
+              'flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-[border-color,background-color]',
               dragOver
                 ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10'
                 : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'
@@ -200,17 +210,18 @@ function StepFileSelect({
 
           {/* Selected file */}
           {selectedFile && !fileError && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-[var(--color-border-subtle)]">
               <FileAudio className="w-5 h-5 text-primary-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                   {selectedFile.name}
                 </p>
-                <p className="text-xs text-zinc-400">{formatFileSize(selectedFile.size)}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{formatFileSize(selectedFile.size)}</p>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setSelectedFile(null) }}
-                className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                aria-label="선택한 파일 제거"
+                className="shrink-0 flex items-center justify-center min-w-11 min-h-11 -m-2 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -227,17 +238,27 @@ function StepFileSelect({
             </Button>
           )}
         </div>
+      ) : recorder.status === 'error' ? (
+        /* Record tab — 마이크 사용 불가 전용 상태 */
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-danger-50 dark:bg-danger-900/20 flex items-center justify-center">
+            <MicOff className="w-7 h-7 text-danger-500 dark:text-danger-400" aria-hidden="true" />
+          </div>
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            마이크를 사용할 수 없습니다
+          </p>
+          <p className="text-xs text-[var(--color-text-tertiary)] max-w-xs">
+            {recorder.error}
+          </p>
+          <Button variant="secondary" size="sm" onClick={recorder.start} className="mt-1">
+            다시 시도
+          </Button>
+        </div>
       ) : (
         /* Record tab */
         <div className="flex flex-col items-center gap-4 py-4">
-          {recorder.error && (
-            <div className="w-full p-3 rounded-lg bg-danger-50 dark:bg-danger-900/10 text-xs text-danger-600 dark:text-danger-400">
-              {recorder.error}
-            </div>
-          )}
-
           {/* Duration display */}
-          <div className="text-3xl font-mono font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
+          <div className="text-3xl font-semibold tracking-tight text-zinc-800 dark:text-zinc-200 tabular-nums">
             {recorder.status === 'recording' || recorder.status === 'paused' ? (
               <span className="flex items-center gap-2">
                 {recorder.status === 'recording' && (
@@ -260,20 +281,24 @@ function StepFileSelect({
             <div className="w-full max-w-[200px]">
               <div className="h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-danger-400 transition-all duration-1000"
+                  className="h-full bg-danger-400 transition-[width] duration-1000 ease-linear"
                   style={{ width: `${(recorder.duration / 600) * 100}%` }}
                 />
               </div>
-              <p className="text-[10px] text-zinc-400 text-center mt-1">최대 10분</p>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 text-center mt-1">최대 10분</p>
             </div>
           )}
 
           {/* Controls */}
           <div className="flex items-center gap-4">
-            {recorder.status === 'idle' || recorder.status === 'error' ? (
+            {recorder.status === 'idle' || recorder.status === 'requesting-permission' ? (
               <button
                 onClick={recorder.start}
-                className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+                disabled={recorder.status === 'requesting-permission'}
+                className={clsx(
+                  'w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-[var(--shadow-2)] transition-[transform,background-color] hover:scale-105 active:scale-95',
+                  recorder.status === 'requesting-permission' && 'animate-pulse opacity-70 hover:scale-100'
+                )}
                 aria-label="녹음 시작"
               >
                 <Mic className="w-7 h-7" />
@@ -283,7 +308,7 @@ function StepFileSelect({
                 {/* Pause/Resume */}
                 <button
                   onClick={recorder.status === 'paused' ? recorder.resume : recorder.pause}
-                  className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 flex items-center justify-center transition-all hover:scale-105"
+                  className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 flex items-center justify-center transition-transform hover:scale-105"
                   aria-label={recorder.status === 'paused' ? '재개' : '일시정지'}
                 >
                   {recorder.status === 'paused' ? (
@@ -296,7 +321,7 @@ function StepFileSelect({
                 {/* Stop */}
                 <button
                   onClick={handleRecordStop}
-                  className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+                  className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-[var(--shadow-2)] transition-[transform,background-color] hover:scale-105 active:scale-95"
                   aria-label="녹음 중지"
                 >
                   <Square className="w-6 h-6 fill-current" />
@@ -305,9 +330,14 @@ function StepFileSelect({
             )}
           </div>
 
-          {recorder.status === 'idle' && !recorder.error && (
+          {recorder.status === 'idle' && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               버튼을 눌러 녹음을 시작하세요
+            </p>
+          )}
+          {recorder.status === 'requesting-permission' && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400" role="status">
+              마이크 권한을 확인하는 중...
             </p>
           )}
         </div>
@@ -340,11 +370,11 @@ function StepTranscribing({
       <div className="w-full max-w-xs">
         <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary-500 rounded-full transition-all duration-500 ease-out"
+            className="h-full bg-primary-500 rounded-full transition-[width] duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-xs text-zinc-400 text-center mt-2">{progress}%</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums text-center mt-2">{progress}%</p>
       </div>
 
       <Button variant="ghost" onClick={onCancel}>
@@ -381,11 +411,11 @@ function StepResult({
       <textarea
         value={text}
         onChange={(e) => onTextChange(e.target.value)}
-        className="w-full min-h-[200px] max-h-60 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed font-mono resize-none outline-none focus:ring-2 focus:ring-primary-500 overflow-y-auto"
+        className="w-full min-h-[200px] max-h-60 p-3 rounded-xl border border-[var(--color-border-default)] bg-white dark:bg-zinc-900/50 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed font-mono resize-none outline-none focus:ring-2 focus:ring-primary-500 overflow-y-auto"
       />
 
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs text-zinc-400">{text.length}자</span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{text.length}자</span>
         {hasSegments && (
           <button
             onClick={onTimestampToggle}
@@ -527,7 +557,7 @@ export function VoiceUploadModal() {
   }
 
   return (
-    <Dialog open={isOpen} onClose={step === 2 ? () => {} : closeModal} size="lg" noPadding>
+    <Dialog open={isOpen} onClose={step === 2 ? handleCancel : closeModal} size="lg" noPadding>
       <div className="flex flex-col max-h-[85dvh] fold:max-h-[70dvh]">
         <DialogHeader
           title={stepTitles[step]}
@@ -540,7 +570,7 @@ export function VoiceUploadModal() {
             <div
               key={s}
               className={clsx(
-                'h-1.5 rounded-full transition-all duration-300',
+                'h-1.5 rounded-full transition-[width,background-color] duration-300',
                 s === step ? 'w-8 bg-primary-500' : 'w-4 bg-zinc-200 dark:bg-zinc-700'
               )}
             />
@@ -548,31 +578,38 @@ export function VoiceUploadModal() {
         </div>
 
         <DialogBody className="overflow-y-auto px-4 pb-6 sm:px-6">
-          {step === 1 && (
-            <StepFileSelect
-              onFileSelect={handleFileSelect}
-              onRecordingComplete={handleFileSelect}
-            />
-          )}
-          {step === 2 && (
-            <StepTranscribing
-              progress={transcription.progress}
-              onCancel={handleCancel}
-            />
-          )}
-          {step === 3 && (
-            <StepResult
-              text={editedText}
-              hasSegments={!!transcription.result?.segments?.length}
-              onTextChange={setEditedText}
-              onTimestampToggle={() => setIncludeTimestamps(!includeTimestamps)}
-              includeTimestamps={includeTimestamps}
-              onSaveNew={handleSaveNew}
-              onAppend={handleAppend}
-              canAppend={canAppend}
-              isSaving={isSaving}
-            />
-          )}
+          {/* 단계 전환 크로스 슬라이드 — key 교체로 enter 애니메이션 재생 */}
+          <div
+            key={step}
+            className="animate-in fade-in slide-in-from-bottom-2"
+            style={{ animationDuration: '250ms', animationTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
+          >
+            {step === 1 && (
+              <StepFileSelect
+                onFileSelect={handleFileSelect}
+                onRecordingComplete={handleFileSelect}
+              />
+            )}
+            {step === 2 && (
+              <StepTranscribing
+                progress={transcription.progress}
+                onCancel={handleCancel}
+              />
+            )}
+            {step === 3 && (
+              <StepResult
+                text={editedText}
+                hasSegments={!!transcription.result?.segments?.length}
+                onTextChange={setEditedText}
+                onTimestampToggle={() => setIncludeTimestamps(!includeTimestamps)}
+                includeTimestamps={includeTimestamps}
+                onSaveNew={handleSaveNew}
+                onAppend={handleAppend}
+                canAppend={canAppend}
+                isSaving={isSaving}
+              />
+            )}
+          </div>
         </DialogBody>
       </div>
     </Dialog>

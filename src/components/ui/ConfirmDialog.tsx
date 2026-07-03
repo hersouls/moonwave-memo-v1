@@ -54,8 +54,8 @@ export function ConfirmDialog({
         <Button variant="ghost" onClick={onClose} disabled={isLoading}>
           {cancelText}
         </Button>
-        <Button variant={buttonVariant} onClick={onConfirm} disabled={isLoading}>
-          {isLoading ? '처리 중...' : confirmText}
+        <Button variant={buttonVariant} onClick={onConfirm} loading={isLoading}>
+          {confirmText}
         </Button>
       </DialogFooter>
     </Dialog>

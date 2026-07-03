@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Sparkles } from 'lucide-react'
+import { History, Calendar, Sparkles } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { formatMemoDate } from '@/utils/format'
 import { stripMarkdown } from '@/utils/textUtils'
+import { WidgetCard } from './WidgetCard'
 
 export function MemoryLaneWidget() {
   const navigate = useNavigate()
@@ -37,24 +38,24 @@ export function MemoryLaneWidget() {
   if (anniversaryMemos.length === 0 && !randomRediscovery) return null
 
   return (
-    <div className="card p-4">
+    <WidgetCard icon={History} tint="amber" title="추억 돌아보기">
       {anniversaryMemos.length > 0 && (
-        <div className="mb-3">
-          <div className="flex items-center gap-2 mb-2.5">
-            <Calendar className="h-4 w-4 text-primary-500" />
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">이 날의 추억</span>
+        <div className={randomRediscovery ? 'mb-4' : undefined}>
+          <div className="mb-2 flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">이 날의 추억</span>
           </div>
           <div className="space-y-2">
             {anniversaryMemos.map((memo) => (
               <button
                 key={memo.id}
                 onClick={() => navigate(`/memo/${memo.id}`)}
-                className="w-full text-left px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-700/50 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                className="w-full text-left px-3 py-2 rounded-xl bg-zinc-50 dark:bg-white/[0.04] hover:bg-zinc-100 dark:hover:bg-white/[0.08] transition-colors"
               >
                 <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                   {memo.title || '제목 없음'}
                 </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 mt-0.5">
                   {new Date(memo.createdAt).getFullYear()}년 ·{' '}
                   {stripMarkdown(memo.body).slice(0, 40)}
                   {memo.body.length > 40 ? '...' : ''}
@@ -67,9 +68,9 @@ export function MemoryLaneWidget() {
 
       {randomRediscovery && (
         <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">다시 발견하기</span>
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">다시 발견하기</span>
           </div>
           <button
             onClick={() => navigate(`/memo/${randomRediscovery.id}`)}
@@ -78,7 +79,7 @@ export function MemoryLaneWidget() {
             <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
               {randomRediscovery.title || '제목 없음'}
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 mt-0.5">
               {formatMemoDate(randomRediscovery.createdAt)} ·{' '}
               {stripMarkdown(randomRediscovery.body).slice(0, 40)}
               {randomRediscovery.body.length > 40 ? '...' : ''}
@@ -86,6 +87,6 @@ export function MemoryLaneWidget() {
           </button>
         </div>
       )}
-    </div>
+    </WidgetCard>
   )
 }

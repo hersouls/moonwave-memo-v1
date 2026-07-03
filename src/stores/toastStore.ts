@@ -20,9 +20,9 @@ interface ToastState {
   removeToast: (id: string) => void
 }
 
-const timeoutMap = new Map<string, ReturnType<typeof setTimeout>>()
-
-export const useToastStore = create<ToastState>((set, get) => ({
+// 자동 dismiss 타이머는 각 토스트 아이템 컴포넌트가 소유한다
+// (퇴장 애니메이션 후 removeToast 호출 — 스토어는 상태만 관리)
+export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
 
   showToast: (message, type = 'info', options) => {
@@ -35,28 +35,13 @@ export const useToastStore = create<ToastState>((set, get) => ({
       const toasts = [...state.toasts, toast]
       // Keep max 5 toasts
       if (toasts.length > 5) {
-        const removed = toasts.shift()!
-        const oldTimeout = timeoutMap.get(removed.id)
-        if (oldTimeout) {
-          clearTimeout(oldTimeout)
-          timeoutMap.delete(removed.id)
-        }
+        toasts.shift()
       }
       return { toasts }
     })
-
-    const timeout = setTimeout(() => {
-      get().removeToast(id)
-    }, duration)
-    timeoutMap.set(id, timeout)
   },
 
   removeToast: (id) => {
-    const timeout = timeoutMap.get(id)
-    if (timeout) {
-      clearTimeout(timeout)
-      timeoutMap.delete(id)
-    }
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
   },
 }))

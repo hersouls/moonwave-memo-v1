@@ -42,8 +42,9 @@
   --sheet-handle-height: 5px;
   --sheet-handle-radius: 999px;
   --sheet-handle-color: #d4d4d8;
-  --sheet-handle-padding-top: 12px;
-  --sheet-handle-padding-bottom: 8px;
+  /* 핸들 단독 히트 영역 ~31px — 헤더 영역까지 드래그 가능해 44px 이상 확보 */
+  --sheet-handle-padding-top: 14px;
+  --sheet-handle-padding-bottom: 12px;
 }
 
 /* -----------------------------------------
@@ -100,14 +101,10 @@
 }
 
 /* -----------------------------------------
-   10. Animation Tokens
+   10. Animation
+   시트 전환은 Headless UI transition + 전역 모션 토큰
+   (--duration-slow 입장 / --duration-base 퇴장, --ease-enter/--ease-exit)이 담당.
    ----------------------------------------- */
-:root {
-  --sheet-enter-duration: 300ms;
-  --sheet-leave-duration: 200ms;
-  --sheet-enter-easing: cubic-bezier(0, 0, 0.2, 1);
-  --sheet-leave-easing: cubic-bezier(0.4, 0, 1, 1);
-}
 
 /* -----------------------------------------
    11. Drag Gesture Tokens
@@ -133,55 +130,13 @@
 }
 
 /* -----------------------------------------
-   13. Keyframe Animations
-   ----------------------------------------- */
-@keyframes sheet-slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-@keyframes sheet-slide-down {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
-}
-
-@keyframes sheet-overlay-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes sheet-overlay-leave {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes sheet-content-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* -----------------------------------------
    14. Overlay & Container Utilities
    ----------------------------------------- */
 .sheet-overlay {
   position: fixed;
   inset: 0;
   background: var(--sheet-overlay-bg);
-  z-index: 50;
-}
-
-.sheet-overlay--entering {
-  animation: sheet-overlay-enter var(--sheet-enter-duration) var(--sheet-enter-easing) both;
-}
-
-.sheet-overlay--leaving {
-  animation: sheet-overlay-leave var(--sheet-leave-duration) var(--sheet-leave-easing) both;
+  z-index: var(--z-modal);
 }
 
 .sheet-container {
@@ -210,14 +165,6 @@
 .sheet-panel--fullscreen {
   max-height: calc(100vh - var(--sheet-top-offset));
   max-height: calc(100dvh - var(--sheet-top-offset));
-}
-
-.sheet-panel--entering {
-  animation: sheet-slide-up var(--sheet-enter-duration) var(--sheet-enter-easing) both;
-}
-
-.sheet-panel--leaving {
-  animation: sheet-slide-down var(--sheet-leave-duration) var(--sheet-leave-easing) both;
 }
 
 .sheet-panel--dragging {
@@ -861,14 +808,3 @@
   margin-left: 2px;
 }
 
-/* -----------------------------------------
-   30. Content Stagger Animation
-   ----------------------------------------- */
-.sheet-content--animated > * {
-  animation: sheet-content-fade-in 200ms ease-out both;
-}
-.sheet-content--animated > *:nth-child(1) { animation-delay: 50ms; }
-.sheet-content--animated > *:nth-child(2) { animation-delay: 100ms; }
-.sheet-content--animated > *:nth-child(3) { animation-delay: 150ms; }
-.sheet-content--animated > *:nth-child(4) { animation-delay: 200ms; }
-.sheet-content--animated > *:nth-child(5) { animation-delay: 250ms; }

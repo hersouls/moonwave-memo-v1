@@ -4,10 +4,9 @@
    Supports light and dark mode (.dark class)
    ======================================== */
 
-/* ----------------------------------------
-   Highlight.js Base Theme (GitHub Light)
-   ---------------------------------------- */
-@import 'highlight.js/styles/github.css';
+/* Syntax highlighting is scoped under .memo-markdown-preview (see Code Blocks
+   section below) — one GitHub light/dark token set shared by the WYSIWYG
+   editor (lowlight) and the preview (rehype-highlight). */
 
 /* ----------------------------------------
    Headings
@@ -99,15 +98,20 @@
 /* ----------------------------------------
    Links
    ---------------------------------------- */
+/* Links carry a soft underline at rest (WCAG 1.4.1 — color alone is not a cue),
+   raised to full strength on hover */
 .memo-markdown-preview a {
   color: var(--color-primary-500, #6366f1);
-  text-decoration: none;
-  transition: color 0.15s ease;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
 .memo-markdown-preview a:hover {
   color: var(--color-primary-600, #4f46e5);
-  text-decoration: underline;
+  text-decoration-color: currentColor;
 }
 
 /* ----------------------------------------
@@ -157,16 +161,44 @@
 .memo-markdown-preview li.task-list-item input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 1rem;
-  height: 1rem;
-  min-width: 1rem;
-  border: 1.5px solid var(--color-zinc-400, #a1a1aa);
+  width: 1.125rem;
+  height: 1.125rem;
+  min-width: 1.125rem;
+  border: 1.5px solid var(--color-text-tertiary);
   border-radius: 0.25rem;
   margin-top: 0.3rem;
   cursor: pointer;
   position: relative;
   background-color: transparent;
-  transition: all 0.15s ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms var(--ease-spring);
+}
+
+/* Expanded hit area (~42px) without moving layout — checkboxes are tappable in preview */
+.memo-markdown-preview li.task-list-item input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+
+/* Checkmark is always present — pops in with a spring scale on check */
+.memo-markdown-preview li.task-list-item input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5.5px;
+  width: 4.5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.memo-markdown-preview li.task-list-item input[type="checkbox"]:active {
+  transform: scale(0.9);
 }
 
 .memo-markdown-preview li.task-list-item input[type="checkbox"]:checked {
@@ -175,15 +207,7 @@
 }
 
 .memo-markdown-preview li.task-list-item input[type="checkbox"]:checked::after {
-  content: '';
-  position: absolute;
-  top: 1px;
-  left: 4px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+  transform: rotate(45deg) scale(1);
 }
 
 /* ----------------------------------------
@@ -194,32 +218,104 @@
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-family: var(--font-mono);
   color: var(--color-danger-500, #ef4444);
   word-break: break-word;
 }
 
 /* ----------------------------------------
    Code Blocks (pre > code)
+   One shared surface for 편집(WYSIWYG lowlight) + 미리보기(rehype-highlight) —
+   semantic tokens flip in dark mode automatically.
    ---------------------------------------- */
 .memo-markdown-preview pre {
   margin-top: 0.5rem;
   margin-bottom: 0.75rem;
-  border-radius: 0.5rem;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-8, 0.5rem); /* fallback: 토큰이 프루닝돼도 8px 유지 */
   overflow: hidden;
 }
 
 .memo-markdown-preview pre code {
   display: block;
-  background-color: var(--color-zinc-50, #fafafa);
-  border: 1px solid var(--color-zinc-200, #e4e4e7);
-  border-radius: 0.5rem;
-  padding: 1rem;
+  background: none;
+  border: none;
+  padding: 0.75rem 1rem;
   overflow-x: auto;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   line-height: 1.625;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  tab-size: 2;
   color: var(--color-zinc-700, #3f3f46);
+}
+
+/* Syntax highlighting — GitHub Light, scoped (dark overrides below) */
+.memo-markdown-preview .hljs-comment,
+.memo-markdown-preview .hljs-quote {
+  color: #6e7781;
+  font-style: italic;
+}
+
+.memo-markdown-preview .hljs-keyword,
+.memo-markdown-preview .hljs-selector-tag,
+.memo-markdown-preview .hljs-type {
+  color: #cf222e;
+}
+
+.memo-markdown-preview .hljs-string,
+.memo-markdown-preview .hljs-regexp,
+.memo-markdown-preview .hljs-addition {
+  color: #0a3069;
+}
+
+.memo-markdown-preview .hljs-number,
+.memo-markdown-preview .hljs-literal,
+.memo-markdown-preview .hljs-attr,
+.memo-markdown-preview .hljs-attribute,
+.memo-markdown-preview .hljs-built_in,
+.memo-markdown-preview .hljs-builtin-name,
+.memo-markdown-preview .hljs-meta,
+.memo-markdown-preview .hljs-operator {
+  color: #0550ae;
+}
+
+.memo-markdown-preview .hljs-function,
+.memo-markdown-preview .hljs-title {
+  color: #8250df;
+}
+
+.memo-markdown-preview .hljs-variable,
+.memo-markdown-preview .hljs-template-variable,
+.memo-markdown-preview .hljs-symbol,
+.memo-markdown-preview .hljs-bullet {
+  color: #953800;
+}
+
+.memo-markdown-preview .hljs-name,
+.memo-markdown-preview .hljs-tag,
+.memo-markdown-preview .hljs-selector-class,
+.memo-markdown-preview .hljs-selector-id {
+  color: #116329;
+}
+
+.memo-markdown-preview .hljs-section {
+  color: #0550ae;
+  font-weight: 700;
+}
+
+.memo-markdown-preview .hljs-deletion {
+  color: #82071e;
+  background-color: rgba(255, 129, 130, 0.1);
+}
+
+.memo-markdown-preview .hljs-emphasis {
+  font-style: italic;
+}
+
+.memo-markdown-preview .hljs-strong {
+  font-weight: 700;
 }
 
 /* ----------------------------------------
@@ -273,6 +369,7 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--color-zinc-200, #e4e4e7);
   color: var(--color-zinc-700, #3f3f46);
+  font-variant-numeric: tabular-nums; /* 날짜/숫자 컬럼 정렬 안정화 */
 }
 
 .memo-markdown-preview tbody tr:nth-child(even) {
@@ -378,12 +475,7 @@
   color: var(--color-primary-300, #a5b4fc);
 }
 
-/* ----------------------------------------
-   Dark: Task List Checkboxes
-   ---------------------------------------- */
-.dark .memo-markdown-preview li.task-list-item input[type="checkbox"] {
-  border-color: var(--color-zinc-500, #71717a);
-}
+/* Dark: task checkboxes — border tracks --color-text-tertiary (flips automatically) */
 
 /* ----------------------------------------
    Dark: Inline Code
@@ -394,18 +486,11 @@
 }
 
 /* ----------------------------------------
-   Dark: Code Blocks
+   Dark: Code Blocks — surface colors flip via semantic tokens on pre;
+   only the base text color needs an override
    ---------------------------------------- */
 .dark .memo-markdown-preview pre code {
-  background-color: var(--color-zinc-900, #18181b);
-  border-color: var(--color-zinc-700, #3f3f46);
   color: var(--color-zinc-300, #d4d4d8);
-}
-
-/* Dark mode highlight.js overrides (GitHub Dark) */
-.dark .memo-markdown-preview pre code.hljs {
-  background-color: #18181b;
-  color: #d4d4d8;
 }
 
 .dark .memo-markdown-preview .hljs-comment,
