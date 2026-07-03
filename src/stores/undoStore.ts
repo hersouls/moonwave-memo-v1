@@ -18,7 +18,8 @@ interface UndoState {
   dismiss: () => void
 }
 
-const UNDO_TIMEOUT = 5000
+/** 실행 취소 토스트 자동 소멸 시간(ms). UndoToast 진행바가 이 값에 동기화된다. */
+export const UNDO_TIMEOUT = 5000
 
 export const useUndoStore = create<UndoState>()((set, get) => ({
   current: null,

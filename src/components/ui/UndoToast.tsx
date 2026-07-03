@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useUndoStore } from '@/stores/undoStore'
+import { useUndoStore, UNDO_TIMEOUT } from '@/stores/undoStore'
 import { useUIStore } from '@/stores/uiStore'
 import { X } from 'lucide-react'
 
-/** undoStore의 UNDO_TIMEOUT과 동기화 — 진행 바 카운트다운 길이 */
-const UNDO_TIMEOUT_MS = 5000
+/** 진행 바 카운트다운 길이 — 스토어의 자동 소멸 타이머와 단일 소스로 동기화 */
+const UNDO_TIMEOUT_MS = UNDO_TIMEOUT
 /** foundation-toast.css --snackbar-leave-duration(var(--duration-fast))과 동기화 */
 const LEAVE_MS = 150
 
