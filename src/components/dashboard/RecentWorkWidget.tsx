@@ -3,10 +3,12 @@ import { Clock, ChevronRight } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { formatMemoDate } from '@/utils/format'
 import { stripMarkdown } from '@/utils/textUtils'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
 
 export function RecentWorkWidget() {
   const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const memos = useMemoStore((s) => s.memos)
 
   const recentMemos = memos
@@ -24,7 +26,7 @@ export function RecentWorkWidget() {
       action={
         <button
           type="button"
-          onClick={() => navigate('/memos')}
+          onClick={() => navigateWithTransition('/memos')}
           className="flex items-center gap-0.5 rounded-md px-2 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
         >
           전체보기

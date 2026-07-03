@@ -1,13 +1,13 @@
 import { memo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { FolderOpen } from 'lucide-react'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
 
 export const FolderList = memo(function FolderList() {
-  const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const folders = useFolderStore((s) => s.folders)
   const setActiveFolderId = useUIStore((s) => s.setActiveFolderId)
   const { folderCounts } = useMemoStats()
@@ -18,11 +18,11 @@ export const FolderList = memo(function FolderList() {
 
   const handleFolderClick = (folderId: number) => {
     setActiveFolderId(folderId)
-    navigate('/memos')
+    navigateWithTransition('/memos')
   }
 
   const handleEditClick = () => {
-    navigate('/settings')
+    navigateWithTransition('/settings')
   }
 
   return (

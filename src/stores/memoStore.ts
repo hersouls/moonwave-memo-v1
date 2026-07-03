@@ -460,7 +460,7 @@ export const useMemoStore = create<MemoState>()(
 
 | 단축키 | 기능 |
 |--------|------|
-| \`Ctrl+N\` | 새 메모 |
+| \`Alt+N\` | 새 메모 |
 | \`Ctrl+K\` | 명령 팔레트 |
 | \`Ctrl+B\` | 굵게 |
 | \`Ctrl+I\` | 기울임 |

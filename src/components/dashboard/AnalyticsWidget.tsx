@@ -51,7 +51,7 @@ export function AnalyticsWidget() {
             {analytics.hourDistribution.map((count, hour) => (
               <div
                 key={hour}
-                className="flex-1 group relative"
+                className="flex-1 group relative flex flex-col justify-end self-stretch"
                 title={`${hour}시: ${count}개`}
               >
                 <div

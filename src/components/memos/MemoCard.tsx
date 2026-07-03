@@ -514,8 +514,9 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             <span
               aria-hidden={!isSelectionMode}
               className={clsx(
-                'flex shrink-0 overflow-hidden transition-[width,opacity,transform] duration-200 ease-out',
-                isSelectionMode ? 'w-7 opacity-100 scale-100' : 'w-0 opacity-0 scale-50'
+                'flex shrink-0 overflow-hidden transition-[width,opacity,transform,margin] duration-200 ease-out',
+                // -mr-2 cancels the row's gap-2 while collapsed so the title stays flush with the body
+                isSelectionMode ? 'w-7 opacity-100 scale-100 mr-0' : 'w-0 opacity-0 scale-50 -mr-2'
               )}
             >
               <CheckCircle

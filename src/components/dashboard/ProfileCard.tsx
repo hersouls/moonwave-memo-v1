@@ -1,14 +1,14 @@
-import { useNavigate } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useViewTransition } from '@/hooks/useViewTransition'
 
 export function ProfileCard() {
   const user = useAuthStore((s) => s.user)
   const login = useAuthStore((s) => s.login)
   const isSigningIn = useAuthStore((s) => s.isSigningIn)
   const userProfile = useSettingsStore((s) => s.settings.userProfile)
-  const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
 
   if (!user) {
     return (
@@ -42,7 +42,7 @@ export function ProfileCard() {
 
   return (
     <button
-      onClick={() => navigate('/settings')}
+      onClick={() => navigateWithTransition('/settings')}
       className="card card--interactive flex w-full items-center gap-4 px-5 py-4 text-left"
     >
       {photoURL ? (

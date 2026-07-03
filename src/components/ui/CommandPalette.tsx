@@ -9,6 +9,7 @@ import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { applyTheme } from '@/stores/settingsStore'
 import { analyzeMemo, classifyMemo } from '@/services/aiFeatures'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import { Kbd } from './Kbd'
 import { Spinner } from './Spinner'
 
@@ -19,6 +20,7 @@ export function CommandPalette() {
   const isOpen = useUIStore((s) => s.isCommandPaletteOpen)
   const close = useUIStore((s) => s.closeCommandPalette)
   const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const memos = useMemoStore((s) => s.memos)
   const addMemo = useMemoStore((s) => s.addMemo)
   const folders = useFolderStore((s) => s.folders)
@@ -115,10 +117,10 @@ export function CommandPalette() {
         break
       }
       case 'dashboard':
-        navigate('/')
+        navigateWithTransition('/')
         break
       case 'all-memos':
-        navigate('/memos')
+        navigateWithTransition('/memos')
         break
       default:
         if (action.startsWith('memo:')) {

@@ -1,22 +1,22 @@
 import { memo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { FileText, Star } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
+import { useViewTransition } from '@/hooks/useViewTransition'
 
 export const StatsRow = memo(function StatsRow() {
-  const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const setActiveFilter = useUIStore((s) => s.setActiveFilter)
   const { totalCount, starredCount } = useMemoStats()
 
   const handleAllClick = () => {
     setActiveFilter('all')
-    navigate('/memos')
+    navigateWithTransition('/memos')
   }
 
   const handleStarredClick = () => {
     setActiveFilter('starred')
-    navigate('/memos')
+    navigateWithTransition('/memos')
   }
 
   return (

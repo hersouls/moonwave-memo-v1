@@ -2,10 +2,12 @@ import { useNavigate } from 'react-router-dom'
 import { Hash } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
 
 export function TagCloud() {
   const navigate = useNavigate()
+  const { navigateWithTransition } = useViewTransition()
   const setActiveTag = useUIStore((s) => s.setActiveTag)
   const setActiveFilter = useUIStore((s) => s.setActiveFilter)
   const { allTags } = useMemoStats()
@@ -16,7 +18,7 @@ export function TagCloud() {
     } else {
       setActiveTag(tag)
     }
-    navigate('/memos')
+    navigateWithTransition('/memos')
   }
 
   return (
