@@ -138,7 +138,9 @@ export function MemosLayout() {
   // Wide desktop (xl: 1280px+): Master-detail split view with resizable panels
   if (isWideDesktop) {
     return (
-      <div className={clsx('h-[calc(100dvh-4rem)] flex flex-row transition-colors duration-300', MEMO_PAGE_BG[defaultColor])}>
+      // 뷰포트 기반 높이(h-full은 flex 파생 부모에서 콘텐츠 높이로 붕괴). 에디터 화면에서는
+      // 글로벌 헤더가 숨겨지므로 4rem을 빼지 않고 전체 높이를 쓴다 — 헤더 몫만큼의 하단 여백 제거.
+      <div className={clsx(isOnMemoRoute ? 'h-[100dvh]' : 'h-[calc(100dvh-4rem)]', 'flex flex-row transition-colors duration-300', MEMO_PAGE_BG[defaultColor])}>
         {/* Left: MemoList panel (resizable, independent scroll) */}
         <div
           className="shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-y-auto overscroll-contain"
@@ -150,8 +152,10 @@ export function MemosLayout() {
         {/* Resize handle */}
         <ResizeHandle onResize={handleResize} />
 
-        {/* Right: Editor panel or empty state (independent scroll) */}
-        <div className="flex-1 min-w-0 overflow-y-auto overscroll-contain">
+        {/* Right: Editor panel or empty state. flex flex-col이어야 에디터 라우트 래퍼의
+            flex-1이 패널 높이를 채운다 — 블록 컨텍스트에서는 flex-1이 무효화돼 에디터가
+            콘텐츠 높이로 붕괴하고 하단에 대량의 빈 공간이 생겼다. */}
+        <div className="flex-1 min-w-0 flex flex-col overflow-y-auto overscroll-contain">
           {isOnMemoRoute ? (
             <Outlet />
           ) : (

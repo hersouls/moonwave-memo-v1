@@ -843,11 +843,13 @@ export function MemoEditor() {
   return (
     <div
       className={clsx(
+        // 에디터 화면에서는 글로벌 헤더가 숨겨지므로(Header.tsx) 헤더 몫 4rem을 빼지 않는다.
+        // 하단 내비(5rem)만 확보 — 이전엔 사라진 헤더 자리만큼 하단에 빈 공간이 생겼다.
         'flex flex-col lg:h-full min-h-0',
-        !isKeyboardOpen && 'h-[calc(var(--stable-vh,100svh)-4rem-5rem)]',
+        !isKeyboardOpen && 'h-[calc(var(--stable-vh,100svh)-5rem)]',
         isFocusMode && '!h-[var(--stable-vh,100svh)]'
       )}
-      style={isKeyboardOpen && !isFocusMode ? { height: `calc(var(--stable-vh, 100svh) - 4rem - ${Math.max(0, keyboardHeight || 0)}px)` } : undefined}
+      style={isKeyboardOpen && !isFocusMode ? { height: `calc(var(--stable-vh, 100svh) - ${Math.max(0, keyboardHeight || 0)}px)` } : undefined}
     >
       {!isFocusMode && !isKeyboardOpen && (
         <EditorHeader
