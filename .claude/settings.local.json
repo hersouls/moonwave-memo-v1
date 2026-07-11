@@ -86,7 +86,11 @@
       "Bash(npx vercel:*)",
       "Bash(sort:*)",
       "Bash(find /d/Moonwave_Web/Memo_v1.0 -type f \\\\\\( -name \"*memo*\" -o -name \"*edit*\" \\\\\\) -iname \"*.tsx\" -o -iname \"*.ts\" 2>/dev/null | head -20)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'docs: 전체 개발 방향 로드맵 문서 추가 *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'chore: Claude 로컬 권한 설정 갱신 *)"
     ]
   }
 }
