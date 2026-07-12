@@ -1,12 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createEmbeddingModel } from '../lib/models.js'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
-import { applyCors } from '../lib/cors.js'
 
 // ─── LangChain Embedding Endpoint ───────────────────
 
 export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
-  if (applyCors(req, res)) return
 
   const { text, userApiKey } = req.body || {}
 

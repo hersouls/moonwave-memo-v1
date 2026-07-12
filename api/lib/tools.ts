@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { Provider } from './models.js'
 import { ensureTracing } from './tracing.js'
+import { applyCors } from './cors.js'
 
 // ─── API Key Resolution ─────────────────────────────
 
@@ -26,6 +27,10 @@ type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<void | Ver
 
 export function createHandler(fn: HandlerFn) {
   return async (req: VercelRequest, res: VercelResponse) => {
+    // CORS + preflight must run before the method gate — an OPTIONS preflight is
+    // not POST, so checking method first would 405 the preflight (blocking the APK).
+    if (applyCors(req, res)) return
+
     if (req.method !== 'POST') {
       return errorResponse(res, 405, 'Method not allowed')
     }
