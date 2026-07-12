@@ -9,7 +9,7 @@ import { KnowledgeGraphModal } from './KnowledgeGraphModal'
 const NONE_COLOR = '#a1a1aa'
 
 export function KnowledgeGraph() {
-  const { nodes, links, groups, total, truncated, orphanCount } = useGraphData()
+  const { nodes, links, groups, total, truncated } = useGraphData()
   const folders = useFolderStore((s) => s.folders)
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
@@ -117,7 +117,6 @@ export function KnowledgeGraph() {
           groupNames={groupNames}
           total={total}
           truncated={truncated}
-          orphanCount={orphanCount}
         />
       )}
     </>

@@ -9,6 +9,7 @@ import {
   Frame,
   Search,
   Share2,
+  Sparkles,
   Tag,
   X,
   ZoomIn,
@@ -19,6 +20,7 @@ import { DialogTitle } from '@headlessui/react'
 import { Dialog } from '@/components/ui/Dialog'
 import { useToastStore } from '@/stores/toastStore'
 import type { GraphLink, GraphNode } from '@/hooks/useGraphData'
+import { useSemanticLinks } from '@/hooks/useSemanticLinks'
 import { ForceGraph, type ForceGraphHandle, type LabelMode } from './ForceGraph'
 
 interface KnowledgeGraphModalProps {
@@ -34,7 +36,6 @@ interface KnowledgeGraphModalProps {
   /** 전체 메모 수 (성능 상한 초과 시 total > nodes.length) */
   total?: number
   truncated?: boolean
-  orphanCount?: number
 }
 
 const LABEL_ORDER: LabelMode[] = ['auto', 'all', 'none']
@@ -54,7 +55,6 @@ export function KnowledgeGraphModal({
   groupNames,
   total,
   truncated,
-  orphanCount = 0,
 }: KnowledgeGraphModalProps) {
   const navigate = useNavigate()
   const toast = useToastStore((s) => s.showToast)
@@ -68,19 +68,52 @@ export function KnowledgeGraphModal({
   const [highlightGroup, setHighlightGroup] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hideOrphans, setHideOrphans] = useState(false)
+  const [aiOn, setAiOn] = useState(true)
 
-  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes])
-  const selected = selectedId ? nodeById.get(selectedId) ?? null : null
+  // AI 의미 연결 — 모달이 열려 있고 토글이 켜진 동안 계산 (Dexie 캐시 우선, 변경분만 API)
+  const nodeIds = useMemo(() => nodes.map((n) => n.id), [nodes])
+  const sem = useSemanticLinks(nodeIds, open && aiOn)
+
+  // 무료 신호(wiki·언급·태그) + AI 연결 병합 — 동일 쌍은 무료 신호가 우선
+  const mergedLinks = useMemo(() => {
+    if (sem.links.length === 0) return links
+    const seen = new Set(links.map((l) => `${l.source}~${l.target}`))
+    return [...links, ...sem.links.filter((l) => !seen.has(`${l.source}~${l.target}`))]
+  }, [links, sem.links])
+
+  // 병합 연결 기준으로 연결 수 재계산 — 노드 크기·허브·고아 판정에 일관 반영
+  const effNodes = useMemo(() => {
+    const deg = new Map<string, number>()
+    for (const l of mergedLinks) {
+      deg.set(l.source, (deg.get(l.source) || 0) + 1)
+      deg.set(l.target, (deg.get(l.target) || 0) + 1)
+    }
+    return nodes.map((n) => ({ ...n, degree: deg.get(n.id) || 0 }))
+  }, [nodes, mergedLinks])
+
+  const orphanCount = useMemo(
+    () => effNodes.reduce((a, n) => a + (n.degree === 0 ? 1 : 0), 0),
+    [effNodes]
+  )
+  const autoCount = useMemo(
+    () => mergedLinks.reduce((a, l) => a + (l.kind !== 'wiki' ? 1 : 0), 0),
+    [mergedLinks]
+  )
+
+  const selected = useMemo(
+    () => (selectedId ? effNodes.find((n) => n.id === selectedId) ?? null : null),
+    [effNodes, selectedId]
+  )
 
   // 고아(연결 0) 숨기기 — 데이터 레벨에서 필터해 ForceGraph가 연결된 노드에 맞춰 재배치
   const display = useMemo(() => {
-    if (!hideOrphans) return { nodes, links }
-    const keep = new Set(nodes.filter((n) => n.degree > 0).map((n) => n.id))
+    if (!hideOrphans) return { nodes: effNodes, links: mergedLinks }
+    const keep = new Set(effNodes.filter((n) => n.degree > 0).map((n) => n.id))
     return {
-      nodes: nodes.filter((n) => keep.has(n.id)),
-      links: links.filter((l) => keep.has(l.source) && keep.has(l.target)),
+      nodes: effNodes.filter((n) => keep.has(n.id)),
+      links: mergedLinks.filter((l) => keep.has(l.source) && keep.has(l.target)),
     }
-  }, [hideOrphans, nodes, links])
+  }, [hideOrphans, effNodes, mergedLinks])
 
   // 모달이 열릴 때마다 상호작용 상태 초기화
   useEffect(() => {
@@ -90,6 +123,7 @@ export function KnowledgeGraphModal({
       setSelectedId(null)
       setLabelMode('auto')
       setHideOrphans(false)
+      setAiOn(true)
     }
   }, [open])
 
@@ -215,7 +249,8 @@ export function KnowledgeGraphModal({
               지식 그래프
             </DialogTitle>
             <p className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
-              메모 {nodes.length} · 연결 {links.length}
+              메모 {nodes.length} · 연결 {mergedLinks.length}
+              {autoCount > 0 && <span className="text-zinc-400 dark:text-zinc-500"> · 자동 {autoCount}</span>}
               {orphanCount > 0 && <span className="text-zinc-400 dark:text-zinc-500"> · 고아 {orphanCount}</span>}
               {truncated && total != null && (
                 <span className="text-zinc-400 dark:text-zinc-500"> · 최근 {nodes.length}개(전체 {total})</span>
@@ -240,6 +275,27 @@ export function KnowledgeGraphModal({
                 </span>
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setAiOn((v) => !v)}
+              title={
+                sem.capable || sem.links.length > 0
+                  ? `AI 의미 연결 ${aiOn ? '끄기' : '켜기'}${sem.skipped > 0 ? ` — ${sem.skipped}개 미계산(키 필요)` : ''}`
+                  : 'AI 의미 연결 — OpenAI 키 또는 로그인 필요 (기존 캐시는 오프라인 동작)'
+              }
+              className={clsx(
+                'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
+                aiOn
+                  ? 'border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300'
+                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
+              )}
+            >
+              <Sparkles className={clsx('h-3.5 w-3.5', sem.computing && 'animate-pulse')} />
+              <span className="hidden md:inline">
+                {sem.computing ? `AI 연결 ${sem.progress}%` : 'AI 연결'}
+              </span>
+            </button>
 
             {orphanCount > 0 && (
               <button
@@ -326,10 +382,12 @@ export function KnowledgeGraphModal({
           </div>
 
           {/* 링크가 하나도 없을 때 안내 */}
-          {links.length === 0 && (
+          {mergedLinks.length === 0 && !sem.computing && (
             <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center px-6">
               <p className="max-w-sm rounded-xl bg-white/80 px-4 py-3 text-center text-sm text-zinc-500 shadow-sm backdrop-blur dark:bg-zinc-900/70 dark:text-zinc-400">
-                아직 메모 간 연결이 없습니다. 메모 본문에 <span className="font-mono text-zinc-700 dark:text-zinc-200">[[다른 메모 제목]]</span> 을 적으면 여기에 관계가 그려집니다.
+                아직 메모 간 연결이 없습니다. 본문에{' '}
+                <span className="font-mono text-zinc-700 dark:text-zinc-200">[[메모 제목]]</span> 을 적거나,
+                태그를 달거나, AI 연결을 켜면 관계가 자동으로 그려집니다.
               </p>
             </div>
           )}
@@ -431,7 +489,7 @@ export function KnowledgeGraphModal({
 
           {/* 조작 힌트 */}
           <p className="pointer-events-none absolute left-1/2 top-3 z-0 hidden -translate-x-1/2 text-[11px] text-zinc-400 sm:block dark:text-zinc-500">
-            드래그 이동 · 휠/핀치 줌 · 노드 탭 선택 · 더블클릭/0 전체 보기 · +/− 줌
+            드래그 이동 · 휠/핀치 줌 · 더블클릭/0 전체 보기 · 실선 [[링크]] · 점선 자동 연결
           </p>
         </div>
       </div>

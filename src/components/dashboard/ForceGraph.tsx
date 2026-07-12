@@ -22,7 +22,7 @@ import {
   type SimulationNodeDatum,
 } from 'd3-force'
 import { toPng } from 'html-to-image'
-import type { GraphLink, GraphNode } from '@/hooks/useGraphData'
+import type { GraphLink, GraphNode, LinkKind } from '@/hooks/useGraphData'
 
 /* ────────────────────────────────────────────────────────────────
    지식 그래프 렌더 엔진 (ForceGraph)
@@ -84,7 +84,11 @@ interface SimNode extends SimulationNodeDatum, GraphNode {
 }
 interface SimLink extends SimulationLinkDatum<SimNode> {
   weight: number
+  kind: LinkKind
 }
+
+// 연결 종류별 기본 불투명도 — 명시적([[링크]])은 진하게, 자동(언급·태그·AI)은 옅게
+const linkBaseOpacity = (kind: LinkKind) => (kind === 'wiki' ? 0.25 : 0.15)
 
 interface GraphInternal {
   simulation: ReturnType<typeof forceSimulation<SimNode>>
@@ -148,7 +152,8 @@ const GraphContent = memo(function GraphContent({
             }}
             stroke="currentColor"
             strokeLinecap="round"
-            style={{ strokeOpacity: 0.22, strokeWidth: Math.min(1 + l.weight * 0.5, 3) }}
+            strokeDasharray={l.kind !== 'wiki' ? '5 4' : undefined}
+            style={{ strokeOpacity: linkBaseOpacity(l.kind), strokeWidth: Math.min(1 + l.weight * 0.5, 3) }}
           />
         ))}
       </g>
@@ -492,7 +497,14 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       const t = l.target as SimNode
       const eitherDim = !passes(s) || !passes(t)
       const connectsActive = active != null && (s.id === active || t.id === active)
-      let op = active != null ? (connectsActive ? 0.55 : 0.05) : 0.22
+      let op =
+        active != null
+          ? connectsActive
+            ? l.kind === 'wiki'
+              ? 0.6
+              : 0.45
+            : 0.05
+          : linkBaseOpacity(l.kind)
       if (eitherDim) op = Math.min(op, 0.04)
       line.style.strokeOpacity = String(op)
       line.style.strokeWidth = String(
@@ -531,6 +543,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       source: l.source,
       target: l.target,
       weight: l.weight,
+      kind: l.kind,
     }))
 
     const adjacency = new Map<string, Set<string>>()
@@ -565,8 +578,13 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         'link',
         forceLink<SimNode, SimLink>(simLinks)
           .id((d) => d.id)
-          .distance(interactive ? 70 : 52)
-          .strength((l) => clamp(l.weight * 0.25, 0.05, 0.8))
+          // 자동 연결(언급·태그·AI)은 느슨하게 — 명시적 링크가 구조를 주도
+          .distance((l) => (l.kind === 'wiki' ? (interactive ? 70 : 52) : interactive ? 95 : 70))
+          .strength(
+            (l) =>
+              clamp(l.weight * 0.25, 0.05, 0.8) *
+              (l.kind === 'wiki' ? 1 : l.kind === 'semantic' ? 0.5 : 0.35)
+          )
       )
       .force('charge', forceManyBody().strength(interactive ? -170 : -90).distanceMax(interactive ? 600 : 360))
       .force('x', forceX(w / 2).strength(0.07))

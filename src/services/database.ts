@@ -14,6 +14,14 @@ export interface FileSyncRecord {
   lastWrittenAt: string
 }
 
+// 지식 그래프 AI 연결용 메모 임베딩 캐시. 디바이스 로컬 — Firestore 동기화 제외.
+// updatedAt이 메모와 일치할 때만 유효(내용 변경 시 재계산).
+export interface MemoEmbedding {
+  memoId: number
+  updatedAt: string
+  vector: number[]
+}
+
 // A mirror (NAS) write/delete that failed and must be retried (§4.6 pendingFileOps).
 // Device-local. `payload` holds the text (writeText) or data URL (writeBinary).
 export type PendingFileOpType = 'writeText' | 'writeBinary' | 'delete'
@@ -42,6 +50,8 @@ class MemoDatabase extends Dexie {
   syncFolderKV!: Table<{ key: string; value: unknown }>
   // Sync-folder (Phase 2 M3): durable retry queue for failed NAS-mirror writes.
   pendingFileOps!: Table<PendingFileOp>
+  // 지식 그래프 AI 연결: 메모 임베딩 캐시 (device-local).
+  embeddings!: Table<MemoEmbedding>
 
   constructor() {
     super('MemoApp')
@@ -118,6 +128,21 @@ class MemoDatabase extends Dexie {
       fileSyncMap: '&memoSyncId, filePath',
       syncFolderKV: '&key',
       pendingFileOps: '++id, targetKey, nextRetryAt, [targetKey+filePath]',
+    })
+
+    // v9: 지식 그래프 AI 연결 — 메모 임베딩 캐시 추가. 이전 스토어 전부 유지.
+    this.version(9).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
+      ambientImages: '++id, type, generatedAt, expiresAt',
+      demianChats: '++id, &memoId, updatedAt',
+      pendingSyncs: '++id, type, syncId, createdAt',
+      fileSyncMap: '&memoSyncId, filePath',
+      syncFolderKV: '&key',
+      pendingFileOps: '++id, targetKey, nextRetryAt, [targetKey+filePath]',
+      embeddings: '&memoId',
     })
 
     this.on('populate', () => {
