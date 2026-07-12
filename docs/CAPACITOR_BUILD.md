@@ -74,9 +74,11 @@ npx firebase apps:android:sha:create 1:799940285288:android:02c44fd722aaa887e63c
 
 APK의 origin(`https://localhost`)에는 Vercel `/api`가 없으므로, 서버 프록시 호출 13곳(fetch 12 + `streamFetch` 내부)이 `src/lib/apiBase.ts`의 `apiUrl()`을 거친다 — 웹/Electron(호스팅 사이트 로드)은 기존처럼 상대경로(`API_ORIGIN=''`), Capacitor 네이티브는 배포 origin **`https://memo.moonwave.kr`**(빌드 시 `VITE_API_ORIGIN`으로 재정의 가능)을 붙인다.
 
-서버 측은 `api/lib/cors.ts`의 `applyCors(req, res)`를 **16개 핸들러 전부의 첫 문장**에서 호출해 WebView origin(`https://localhost`, `capacitor://localhost`)의 교차 출처 요청과 OPTIONS preflight를 허용한다. 새 핸들러를 추가할 때도 같은 가드를 넣어야 APK에서 동작한다.
+서버 측은 `api/lib/cors.ts`의 `applyCors(req, res)`로 WebView origin(`https://localhost`, `capacitor://localhost`)의 교차 출처 요청과 OPTIONS preflight를 허용한다. langchain 핸들러 12종은 공용 `createHandler`(`api/lib/tools.ts`)가 **메서드 검사보다 먼저** applyCors를 실행하고(그래서 개별 핸들러엔 가드 불필요), standalone 4종(`ai`·`ocr`·`stt`·`stream`)은 각자 첫 문장에서 호출한다. 새 핸들러도 이 규칙을 따를 것.
 
-⚠️ **api/ 변경이 memo.moonwave.kr에 배포된 뒤에만** APK에서 동작한다 (CORS는 서버 응답 헤더).
+⚠️ **ESM 전제조건**: `package.json`이 `"type":"module"`이라 Vercel은 `api/`를 번들 없이 ESM으로 실행한다 — 상대 임포트는 반드시 `.js` 확장자(`'../lib/models.js'`). 누락 시 **빌드는 Ready·런타임에 `FUNCTION_INVOCATION_FAILED`로 전 함수 크래시**하며, 로컬 `tsc -b`(src만 대상)로도 못 잡는다. `npx vercel logs <배포URL>`로만 확인 가능. (2026-07-13 이 버그로 서버 프록시 AI 전체가 죽어 있던 것을 발견·수정.)
+
+⚠️ **api/ 변경이 memo.moonwave.kr에 배포된 뒤에만** APK에서 동작한다 (CORS·ESM 수정 모두 서버측). 검증: `curl -X OPTIONS .../api/langchain/tags -H "Origin: https://localhost"` → 204 + `Access-Control-Allow-Origin`.
 
 ## 8. APK 알려진 한계 (2026-07-12 코드 감사 — 미해결 항목)
 
