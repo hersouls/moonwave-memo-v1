@@ -3,6 +3,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
@@ -36,19 +37,15 @@ import type { GraphLink, GraphNode } from '@/hooks/useGraphData'
    - 팬/줌은 뷰포트 <g>의 transform만 setAttribute → React 리렌더 없이 부드럽게
    ──────────────────────────────────────────────────────────────── */
 
+// 폴더 고유색이 없을 때의 팔레트 폴백 (KnowledgeGraph 위젯에서 사용)
 export const GROUP_COLORS = [
   '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
   '#14b8a6', '#a855f7', '#eab308', '#f43f5e', '#0ea5e9',
 ]
 
-export function buildColorMap(groups: string[]): Map<string, string> {
-  const map = new Map<string, string>()
-  groups.forEach((g, i) => map.set(g, GROUP_COLORS[i % GROUP_COLORS.length]))
-  return map
-}
-
-export type LabelMode = 'none' | 'hubs' | 'all'
+// auto: 줌 레벨에 따라 허브→말단 순으로 라벨이 서서히 나타남 (옵시디언식)
+export type LabelMode = 'none' | 'auto' | 'all'
 
 export interface ForceGraphHandle {
   zoomIn(): void
@@ -95,7 +92,7 @@ interface GraphInternal {
   simLinks: SimLink[]
   simNodeById: Map<string, SimNode>
   adjacency: Map<string, Set<string>>
-  hubSet: Set<string>
+  maxDegree: number
 }
 
 const MIN_K = 0.2
@@ -192,6 +189,8 @@ const GraphContent = memo(function GraphContent({
                 y={4}
                 fontSize={11}
                 className="fill-zinc-700 dark:fill-zinc-200"
+                // opacity transition 없음 — 자동 라벨의 k-램프 자체가 페이드 역할
+                // (transition을 두면 매 프레임 재시작되어 램프보다 180ms 뒤처짐)
                 style={{ opacity: 0, pointerEvents: 'none', paintOrder: 'stroke' }}
                 stroke="var(--dialog-bg, transparent)"
                 strokeWidth={3}
@@ -240,6 +239,17 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   const hoveredRef = useRef<string | null>(null)
   // 재구성 사이에 노드 위치를 이어받기 위한 저장소 — 데이터 변경 시 레이아웃 유지
   const positionsRef = useRef(new Map<string, { x: number; y: number }>())
+  // 줌 변화에 따른 라벨 재페인트를 rAF 한 번으로 합치는 스로틀 (paint는 뒤에 정의되므로 ref 경유)
+  const paintRef = useRef<() => void>(() => {})
+  const paintRafRef = useRef<number | null>(null)
+  // 도트 그리드 패턴 — 뷰 transform과 동기화해 무한 캔버스 이동감 제공
+  const patternRef = useRef<SVGPatternElement>(null)
+  const dotsId = `kg-dots-${useId().replace(/:/g, '')}`
+  // 마지막으로 라벨에 쓴 폰트 크기 — 재구성 시 0으로 리셋해 첫 페인트에서 반드시 기록
+  const lastFontRef = useRef(0)
+  // 직전 제스처가 실제 드래그(팬/노드 이동)였는지 — 드래그 직후 OS가 합성하는
+  // dblclick이 fit을 오발동시키는 것을 막는다 (OS는 이동량과 무관하게 클릭 수를 셈)
+  const draggedRef = useRef(false)
   const sizeRef = useRef({ width, height })
   sizeRef.current = { width, height }
 
@@ -267,10 +277,26 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     if (!g) return
     const { x, y, k } = viewTransform.current
     g.setAttribute('transform', `translate(${x},${y}) scale(${k})`)
+    // 배경 도트 그리드도 같은 변환으로 — 빈 영역에서도 팬/줌이 느껴지도록
+    patternRef.current?.setAttribute('patternTransform', `translate(${x} ${y}) scale(${k})`)
   }, [])
 
+  // 줌 중 라벨(자동 표시·크기 역보정) 갱신 — 프레임당 1회로 스로틀
+  const schedulePaint = useCallback(() => {
+    if (paintRafRef.current !== null) return
+    paintRafRef.current = requestAnimationFrame(() => {
+      paintRafRef.current = null
+      paintRef.current()
+    })
+  }, [])
+
+  // 정수 %가 실제로 바뀔 때만 부모에 통지 — 휠/핀치 이벤트 속도의 setState 리렌더 방지
+  const lastPctRef = useRef(-1)
   const notifyZoom = useCallback(() => {
-    onZoomChange?.(Math.round(viewTransform.current.k * 100))
+    const pct = Math.round(viewTransform.current.k * 100)
+    if (pct === lastPctRef.current) return
+    lastPctRef.current = pct
+    onZoomChange?.(pct)
   }, [onZoomChange])
 
   // 진행 중인 fit/focus 애니메이션 취소 — 제스처가 애니메이션에 덮어써지지 않도록
@@ -311,6 +337,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         viewTransform.current = { ...target }
         applyTransform()
         notifyZoom()
+        schedulePaint()
         return
       }
       const start = { ...viewTransform.current }
@@ -325,15 +352,14 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
           k: start.k + (target.k - start.k) * e,
         }
         applyTransform()
+        notifyZoom() // % 표시가 애니메이션을 실시간 추적
+        schedulePaint() // k 변화에 따른 자동 라벨 갱신
         if (p < 1) rafRef.current = requestAnimationFrame(step)
-        else {
-          rafRef.current = null
-          notifyZoom()
-        }
+        else rafRef.current = null
       }
       rafRef.current = requestAnimationFrame(step)
     },
-    [applyTransform, notifyZoom]
+    [applyTransform, notifyZoom, schedulePaint]
   )
 
   const fit = useCallback(
@@ -372,8 +398,9 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       t.k = k
       applyTransform()
       notifyZoom()
+      schedulePaint()
     },
-    [applyTransform, notifyZoom, cancelAnim]
+    [applyTransform, notifyZoom, cancelAnim, schedulePaint]
   )
 
   // 키보드 포커스 시 노드가 화면 밖이면 뷰 안으로 이동
@@ -397,7 +424,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
   const paint = useCallback(() => {
     const g = graphRef.current
     if (!g) return
-    const { simNodes, simLinks, adjacency, hubSet } = g
+    const { simNodes, simLinks, adjacency, maxDegree } = g
     const { labelMode: lm, query: q, highlightGroup: hg, selectedId: sel, interactive: itv } =
       propsRef.current
     // 존재하지 않는 id(삭제·동기화로 사라진 선택/호버)를 active로 두면 전체가 흐려지므로 방어
@@ -408,10 +435,16 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
     const passes = (n: SimNode) => {
       if (hg && n.group !== hg) return false
-      if (ql && !(n.label.toLowerCase().includes(ql) || n.tags.some((t) => t.toLowerCase().includes(ql))))
-        return false
+      if (ql && !n.label.toLowerCase().includes(ql)) return false
       return true
     }
+
+    // 자동 라벨: 줌 k가 노드별 임계값을 넘으면 서서히 표시 — 허브(연결多)일수록 먼저.
+    // 작은 그래프는 fit 배율에서도 대부분 보이도록 임계 범위를 좁힌다.
+    const k = viewTransform.current.k
+    const span = simNodes.length <= 40 ? 0.5 : 0.9
+    const labelFontSize = clamp(11 / Math.pow(k, 0.35), 7.5, 14) // 줌 역보정 — 화면상 크기 일정하게
+    const fontChanged = labelFontSize !== lastFontRef.current // k 불변(호버 등) 페인트에서 250개 setAttribute 생략
 
     for (const n of simNodes) {
       const grp = nodeRefs.current.get(n.id)
@@ -428,19 +461,29 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
         circle.setAttribute('r', String(nodeRadius(n.degree, itv) * (isActive ? 1.45 : 1)))
         circle.setAttribute('fill-opacity', isActive ? '0.92' : dim ? '0.4' : '0.6')
         circle.setAttribute('stroke-width', isSel ? '2.5' : isActive ? '2' : '1.5')
+        // 활성 노드 글로우 — 초점을 즉각 인지시키는 하이라이트
+        circle.style.filter = isActive
+          ? `drop-shadow(0 0 6px ${circle.getAttribute('fill') ?? 'transparent'})`
+          : ''
       }
 
       const label = labelRefs.current.get(n.id)
       if (label) {
-        let show = false
+        let op = 0
         if (!dim) {
-          if (lm === 'all') show = true
-          else if (lm === 'hubs') show = hubSet.has(n.id)
-          if (active != null && (n.id === active || activeNeighbors?.has(n.id))) show = true
+          if (lm === 'all') op = 1
+          else if (lm === 'auto') {
+            const ratio = maxDegree > 0 ? n.degree / maxDegree : 0
+            const threshold = 0.5 + (1 - ratio) * span
+            op = clamp((k - threshold) / 0.3, 0, 1)
+          }
+          if (active != null && (n.id === active || activeNeighbors?.has(n.id))) op = 1
         }
-        label.style.opacity = show ? '1' : '0'
+        label.style.opacity = String(op)
+        if (fontChanged) label.setAttribute('font-size', String(labelFontSize))
       }
     }
+    lastFontRef.current = labelFontSize
 
     simLinks.forEach((l, i) => {
       const line = linkRefs.current[i]
@@ -457,6 +500,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       )
     })
   }, [])
+  paintRef.current = paint // schedulePaint(정의가 앞선)에서 최신 paint를 호출하도록 연결
 
   /* ── 시뮬레이션 구성 — 구조(structureKey) 또는 최초 사이즈 확보 시에만 재구성 ── */
   useLayoutEffect(() => {
@@ -495,7 +539,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       adjacency.get(l.source)?.add(l.target)
       adjacency.get(l.target)?.add(l.source)
     }
-    const hubSet = new Set(simNodes.filter((n) => n.degree >= 2).map((n) => n.id))
+    const maxDegree = simNodes.reduce((m, n) => Math.max(m, n.degree), 0)
 
     const renderPositions = () => {
       for (const n of simNodes) {
@@ -531,16 +575,31 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
     simulation.on('tick', renderPositions)
 
-    // 애니메이션 없이 즉시 정착. 이전 위치를 이어받은 재구성은 반복 수를 줄여 흔들림 최소화.
-    const iterations = hadPrevLayout ? 120 : 300
+    // 애니메이션 없이 즉시 정착. 이전 위치 이어받기·노드 수에 따라 반복 수 조절(대규모 프리즈 방지).
+    const baseIter = hadPrevLayout ? 120 : 300
+    const iterations =
+      simNodes.length > 160 ? Math.round(baseIter * 0.5) : simNodes.length > 90 ? Math.round(baseIter * 0.7) : baseIter
     for (let i = 0; i < iterations; i++) simulation.tick()
     renderPositions()
 
-    graphRef.current = { simulation, simNodes, simLinks, simNodeById, adjacency, hubSet }
+    graphRef.current = { simulation, simNodes, simLinks, simNodeById, adjacency, maxDegree }
 
     // 최초 구성에서만 뷰를 맞춤 — 이후 데이터 변경 시 사용자의 팬/줌 보존
     if (!hadPrevLayout) fit(false)
+    lastFontRef.current = 0 // 새 <text> 요소들이 반드시 현재 폰트 크기를 받도록
     paint()
+
+    // 최초 등장 페이드인 — 정착 완료된 레이아웃이 부드럽게 나타나도록 (reduced-motion 제외)
+    if (!hadPrevLayout && svgRef.current && !prefersReducedMotion()) {
+      const el = svgRef.current
+      el.style.opacity = '0'
+      el.style.transition = 'opacity 280ms var(--ease-enter, ease-out)'
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.style.opacity = '1'
+        })
+      })
+    }
 
     return () => {
       simulation.on('tick', null)
@@ -664,6 +723,21 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     return () => layer.removeEventListener('keydown', onKeyDown)
   }, [interactive, handleTap])
 
+  // 빈 캔버스 더블클릭/더블탭 → 전체 보기 (노드 위 더블클릭은 선택→열기 흐름이 우선)
+  useEffect(() => {
+    if (!interactive) return
+    const svg = svgRef.current
+    if (!svg) return
+    const onDblClick = (e: MouseEvent) => {
+      // 직전 제스처가 드래그였다면 무시 — OS는 드래그 이동량과 무관하게 더블클릭을 합성함
+      if (draggedRef.current) return
+      const onNode = (e.target as Element | null)?.closest?.('[data-node-id]')
+      if (!onNode) fit(true)
+    }
+    svg.addEventListener('dblclick', onDblClick)
+    return () => svg.removeEventListener('dblclick', onDblClick)
+  }, [interactive, fit])
+
   interface DragMemo {
     mode: 'node' | 'pan'
     nodeId: string | null
@@ -690,6 +764,8 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
             null
           memo = { mode: nodeId ? 'node' : 'pan', nodeId, reheated: false }
         }
+        // 제스처 종료 시 드래그 여부 기록 — 직후 도착하는 합성 dblclick의 fit 오발동 가드
+        if (last) draggedRef.current = !tap
         if (last && tap) {
           if (memo.mode === 'node' && memo.reheated) endNodeDrag(memo.nodeId!)
           handleTap(memo.nodeId)
@@ -739,7 +815,16 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
 
   useEffect(
     () => () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+      // 취소 후 반드시 null로 리셋 — StrictMode 재마운트에서 ref가 살아남아
+      // 스로틀 가드(!== null)가 영구히 잠기는 것을 방지
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      if (paintRafRef.current !== null) {
+        cancelAnimationFrame(paintRafRef.current)
+        paintRafRef.current = null
+      }
     },
     []
   )
@@ -797,6 +882,17 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
           pointerEvents: interactive ? 'auto' : 'none',
         }}
       >
+        {/* 도트 그리드 — patternTransform이 뷰와 동기화되어 빈 영역에서도 이동감 제공 */}
+        {interactive && (
+          <>
+            <defs>
+              <pattern ref={patternRef} id={dotsId} width={22} height={22} patternUnits="userSpaceOnUse">
+                <circle cx={1.2} cy={1.2} r={1.2} className="fill-zinc-900/[0.05] dark:fill-white/[0.07]" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#${dotsId})`} />
+          </>
+        )}
         <g ref={viewRef}>
           <GraphContent
             nodes={nodes}

@@ -1,20 +1,41 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Maximize2, Share2 } from 'lucide-react'
 import { useGraphData } from '@/hooks/useGraphData'
+import { useFolderStore } from '@/stores/folderStore'
 import { WidgetCard } from './WidgetCard'
-import { ForceGraph, buildColorMap } from './ForceGraph'
+import { ForceGraph, GROUP_COLORS } from './ForceGraph'
 import { KnowledgeGraphModal } from './KnowledgeGraphModal'
 
+const NONE_COLOR = '#a1a1aa'
+
 export function KnowledgeGraph() {
-  const { nodes, links, groups, total, truncated } = useGraphData()
-  const colorMap = useMemo(() => buildColorMap(groups), [groups])
+  const { nodes, links, groups, total, truncated, orphanCount } = useGraphData()
+  const folders = useFolderStore((s) => s.folders)
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [modalOpen, setModalOpen] = useState(false)
 
   const hasGraph = nodes.length >= 3
 
-  // 그래프가 사라지면(태그 메모 3개 미만) 모달 상태를 닫아 재등장 시 스스로 열리는 것 방지
+  // 폴더(group) → 색상·이름 맵. 폴더 고유색을 쓰되 없으면 팔레트로 폴백.
+  const { colorMap, groupNames } = useMemo(() => {
+    const folderById = new Map(folders.map((f) => [String(f.id), f]))
+    const colorMap = new Map<string, string>()
+    const groupNames = new Map<string, string>()
+    groups.forEach((g, i) => {
+      if (g === 'none') {
+        colorMap.set(g, NONE_COLOR)
+        groupNames.set(g, '폴더 없음')
+        return
+      }
+      const f = folderById.get(g)
+      colorMap.set(g, f?.color || GROUP_COLORS[i % GROUP_COLORS.length])
+      groupNames.set(g, f?.name || '폴더')
+    })
+    return { colorMap, groupNames }
+  }, [groups, folders])
+
+  // 그래프가 사라지면(메모 3개 미만) 모달 상태를 닫아 재등장 시 스스로 열리는 것 방지
   useEffect(() => {
     if (!hasGraph) setModalOpen(false)
   }, [hasGraph])
@@ -54,9 +75,7 @@ export function KnowledgeGraph() {
         {!hasGraph ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <Share2 className="h-5 w-5 text-zinc-400" aria-hidden="true" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              태그가 있는 메모가 3개 이상 필요합니다
-            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">메모가 3개 이상 필요합니다</p>
           </div>
         ) : (
           <button
@@ -95,8 +114,10 @@ export function KnowledgeGraph() {
           links={links}
           groups={groups}
           colorMap={colorMap}
+          groupNames={groupNames}
           total={total}
           truncated={truncated}
+          orphanCount={orphanCount}
         />
       )}
     </>
