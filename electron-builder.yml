@@ -26,13 +26,25 @@ mac:
   target:
     - dmg
   category: public.app-category.productivity
+  # Notarization runs automatically when APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD /
+  # APPLE_TEAM_ID are present in the environment (§10). Hardened runtime is required.
+  hardenedRuntime: true
+  notarize: true
 
 linux:
   target:
     - AppImage
   category: Utility
 
-# Code signing / notarization are required for distribution but intentionally left
-# unconfigured here (§10 운영 계획) — set CSC_LINK / APPLE_ID etc. in the environment
-# when producing signed release builds.
-publish: null
+# Auto-update feed (electron-updater). Publishing a signed release to GitHub Releases
+# lets installed apps update themselves; `npm run dist:win -- --publish always` (with a
+# GH_TOKEN) uploads the artifacts + latest.yml. See docs/ELECTRON_BUILD.md.
+publish:
+  provider: github
+  owner: hersouls
+  repo: moonwave-memo-v1
+
+# Code signing is env-driven (electron-builder reads these automatically):
+#   Windows: CSC_LINK (base64 .pfx or path) + CSC_KEY_PASSWORD
+#   macOS:   CSC_LINK + CSC_KEY_PASSWORD (Developer ID) + APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID
+# Without them the build is unsigned (dev/testing only). Details in docs/ELECTRON_BUILD.md.

@@ -36,9 +36,9 @@
   <title>Memo | Moonwave</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+  <!-- Pretendard (default font) is self-hosted/bundled via src/lib/loadFonts.ts (§4.8);
+       the remaining Korean display fonts stay CDN-loaded (non-blocking, graceful fallback). -->
   <!-- P-03: Non-blocking font loading -->
-  <link rel="preload" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" media="print" onload="this.media='all'" />
@@ -46,7 +46,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumBarunpen/NanumBarunpen.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/MaruBuri/MaruBuri.css" media="print" onload="this.media='all'" />
   <noscript>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" />

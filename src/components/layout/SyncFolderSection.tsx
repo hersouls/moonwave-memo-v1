@@ -7,6 +7,9 @@ import {
   RefreshCw,
   Download,
   AlertTriangle,
+  Plus,
+  X,
+  Server,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useToastStore } from '@/stores/toastStore'
@@ -18,6 +21,8 @@ import {
   reconnectSyncFolder,
   disableSyncFolder,
   exportAllMemosToFolder,
+  addMirrorFolder,
+  removeMirrorFolder,
 } from '@/services/syncFolder'
 
 /**
@@ -35,6 +40,8 @@ export function SyncFolderSection() {
   const lastWrittenAt = useSyncFolderStore((s) => s.lastWrittenAt)
   const fileCount = useSyncFolderStore((s) => s.fileCount)
   const errorMsg = useSyncFolderStore((s) => s.error)
+  const mirrors = useSyncFolderStore((s) => s.mirrors)
+  const pendingOps = useSyncFolderStore((s) => s.pendingOps)
   const showToast = useToastStore((s) => s.showToast)
 
   const [busy, setBusy] = useState(false)
@@ -122,6 +129,28 @@ export function SyncFolderSection() {
     }
   }
 
+  const handleAddMirror = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const ok = await addMirrorFolder()
+      if (ok) showToast('미러 폴더가 추가되었습니다. 기존 파일을 복사합니다.', 'success')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleRemoveMirror = async (path: string) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await removeMirrorFolder(path)
+      showToast('미러 폴더를 제거했습니다. 폴더의 파일은 유지됩니다.', 'info')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const formatTime = (iso: string | null) => {
     if (!iso) return null
     try {
@@ -187,6 +216,54 @@ export function SyncFolderSection() {
             {folderName ? '폴더 변경' : '폴더 선택'}
           </Button>
         </div>
+
+        {/* ③ 미러 폴더 (Electron 전용, NAS 등 복사 대상) */}
+        {isElectron() && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                미러 폴더 <span className="text-xs font-normal text-zinc-400">(NAS·백업, 복사 전용)</span>
+              </div>
+              <Button variant="secondary" size="sm" onClick={handleAddMirror} disabled={busy}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                폴더 추가
+              </Button>
+            </div>
+            {mirrors.length > 0 ? (
+              <ul className="space-y-1">
+                {mirrors.map((m) => (
+                  <li
+                    key={m.path}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-[var(--color-border-subtle)]"
+                  >
+                    <span className="min-w-0 inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+                      <Server className="w-3 h-3 shrink-0" aria-hidden="true" />
+                      <span className="truncate" title={m.path}>{m.path}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMirror(m.path)}
+                      disabled={busy}
+                      aria-label={`미러 폴더 제거: ${m.name}`}
+                      className="shrink-0 p-1 rounded text-zinc-400 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 disabled:opacity-50"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                로컬 저장 결과를 복사할 NAS·백업 폴더를 추가할 수 있습니다.
+              </p>
+            )}
+            {pendingOps > 0 && (
+              <p className="text-xs text-warning-600 dark:text-warning-400">
+                미러 대기 중 {pendingOps}건 — 연결되면 자동 재시도합니다.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ④ 저장 형식 (Phase 1은 .md만) */}
         <div className="flex items-center justify-between gap-3">

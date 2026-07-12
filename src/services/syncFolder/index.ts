@@ -14,6 +14,9 @@ export {
   notifyMemoSaved,
   notifyMemoDeleted,
   exportAllMemosToFolder,
+  addMirrorFolder,
+  removeMirrorFolder,
+  flushPendingFileOps,
   type ExportProgress,
 } from './syncFolderService'
 

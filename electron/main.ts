@@ -15,6 +15,7 @@ import { promises as fs } from 'node:fs'
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import chokidar, { type FSWatcher } from 'chokidar'
+import { autoUpdater } from 'electron-updater'
 
 const isDev = !app.isPackaged
 const DEV_URL = 'http://localhost:3000'
@@ -218,6 +219,12 @@ app.whenReady().then(() => {
   registerFsHandlers()
   registerWatchHandlers()
   createWindow()
+
+  // Auto-update from GitHub Releases (§10). Only in a packaged build; downloads +
+  // notifies, then installs on quit. Requires signed releases to apply on macOS.
+  if (!isDev) {
+    autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error('Update check failed:', err))
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

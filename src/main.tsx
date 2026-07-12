@@ -4,10 +4,15 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { usePwaUpdateStore } from './stores/pwaUpdateStore'
 import { initSentry } from './lib/sentry'
+import { loadBundledFonts } from './lib/loadFonts'
 import './index.css'
 
 // Initialize Sentry error monitoring (no-op if DSN not configured)
 initSentry()
+
+// Register the self-hosted default font so the app (esp. packaged Electron) works
+// offline without the Pretendard CDN (§4.8).
+loadBundledFonts()
 
 // Service Worker for PWA — skipped in the Electron desktop app (§4.8): a packaged
 // app served over a custom protocol has no use for the offline SW, and registering

@@ -14,6 +14,20 @@ export interface FileSyncRecord {
   lastWrittenAt: string
 }
 
+// A mirror (NAS) write/delete that failed and must be retried (§4.6 pendingFileOps).
+// Device-local. `payload` holds the text (writeText) or data URL (writeBinary).
+export type PendingFileOpType = 'writeText' | 'writeBinary' | 'delete'
+export interface PendingFileOp {
+  id?: number
+  op: PendingFileOpType
+  targetKey: string
+  filePath: string
+  payload?: string
+  attempts: number
+  nextRetryAt: string
+  createdAt: string
+}
+
 class MemoDatabase extends Dexie {
   memos!: Table<Memo>
   folders!: Table<Folder>
@@ -26,6 +40,8 @@ class MemoDatabase extends Dexie {
   // Both are device-local and intentionally excluded from Firestore sync (§4.8).
   fileSyncMap!: Table<FileSyncRecord>
   syncFolderKV!: Table<{ key: string; value: unknown }>
+  // Sync-folder (Phase 2 M3): durable retry queue for failed NAS-mirror writes.
+  pendingFileOps!: Table<PendingFileOp>
 
   constructor() {
     super('MemoApp')
@@ -88,6 +104,20 @@ class MemoDatabase extends Dexie {
       pendingSyncs: '++id, type, syncId, createdAt',
       fileSyncMap: '&memoSyncId, filePath',
       syncFolderKV: '&key',
+    })
+
+    // v8: Phase 2 M3 mirror retry queue. All prior stores carried forward.
+    this.version(8).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
+      ambientImages: '++id, type, generatedAt, expiresAt',
+      demianChats: '++id, &memoId, updatedAt',
+      pendingSyncs: '++id, type, syncId, createdAt',
+      fileSyncMap: '&memoSyncId, filePath',
+      syncFolderKV: '&key',
+      pendingFileOps: '++id, targetKey, nextRetryAt, [targetKey+filePath]',
     })
 
     this.on('populate', () => {
@@ -376,4 +406,39 @@ export async function setSyncFolderValue(key: string, value: unknown): Promise<v
 
 export async function deleteSyncFolderValue(key: string): Promise<void> {
   await db.syncFolderKV.delete(key)
+}
+
+// ─── Sync-folder mirror retry queue (device-local, §4.6) ──
+
+// Enqueue a failed mirror op. A newer op for the same (target, path) supersedes the
+// older one — we only need the latest intended state for that file on that mirror.
+export async function enqueuePendingFileOp(op: Omit<PendingFileOp, 'id'>): Promise<void> {
+  await db.transaction('rw', db.pendingFileOps, async () => {
+    await db.pendingFileOps.where('[targetKey+filePath]').equals([op.targetKey, op.filePath]).delete()
+    await db.pendingFileOps.add(op as PendingFileOp)
+  })
+}
+
+export async function getDuePendingFileOps(nowIso: string, limit = 100): Promise<PendingFileOp[]> {
+  return db.pendingFileOps.where('nextRetryAt').belowOrEqual(nowIso).limit(limit).toArray()
+}
+
+export async function updatePendingFileOp(id: number, changes: Partial<PendingFileOp>): Promise<void> {
+  await db.pendingFileOps.update(id, changes)
+}
+
+export async function deletePendingFileOp(id: number): Promise<void> {
+  await db.pendingFileOps.delete(id)
+}
+
+export async function deletePendingFileOpsByTarget(targetKey: string): Promise<void> {
+  await db.pendingFileOps.where('targetKey').equals(targetKey).delete()
+}
+
+export async function countPendingFileOps(): Promise<number> {
+  return db.pendingFileOps.count()
+}
+
+export async function clearPendingFileOps(): Promise<void> {
+  await db.pendingFileOps.clear()
 }

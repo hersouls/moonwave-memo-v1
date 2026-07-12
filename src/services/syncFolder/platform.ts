@@ -104,6 +104,19 @@ export function watchRootFromRef(ref: unknown): string | null {
   return n && n.kind === 'ipc' ? n.path : null
 }
 
+/** Pick a mirror folder — Electron only (mirrors are copy-only NAS/local targets, §4.6). */
+export async function pickMirror(): Promise<{ path: string; name: string } | null> {
+  const b = bridge()
+  if (!b) return null
+  return b.pickDirectory()
+}
+
+/** Build a write target for a mirror folder path (Electron only). */
+export function buildIpcTarget(path: string): FileSyncTarget | null {
+  const b = bridge()
+  return b ? new IpcFileSyncTarget(path, b) : null
+}
+
 /**
  * Normalize a persisted value into a PersistedRef.
  * Handles the Phase 1 legacy shape (a raw FileSystemDirectoryHandle stored directly,
