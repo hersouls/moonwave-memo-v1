@@ -9,8 +9,10 @@ import './index.css'
 // Initialize Sentry error monitoring (no-op if DSN not configured)
 initSentry()
 
-// Service Worker for PWA
-if ('serviceWorker' in navigator) {
+// Service Worker for PWA — skipped in the Electron desktop app (§4.8): a packaged
+// app served over a custom protocol has no use for the offline SW, and registering
+// it there would fail or interfere with the native file backend.
+if ('serviceWorker' in navigator && !window.electronBridge) {
   if (import.meta.env.PROD) {
     let refreshing = false
     navigator.serviceWorker.addEventListener('controllerchange', () => {

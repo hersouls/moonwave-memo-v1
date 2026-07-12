@@ -13,6 +13,7 @@ import { useToastStore } from '@/stores/toastStore'
 import { useSyncFolderStore } from '@/stores/syncFolderStore'
 import {
   isSyncFolderSupported,
+  isElectron,
   pickSyncFolder,
   reconnectSyncFolder,
   disableSyncFolder,
@@ -163,7 +164,7 @@ export function SyncFolderSection() {
       <div className="p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm space-y-4">
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           메모를 지정한 폴더에 <code className="text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">.md</code> 파일로 자동 저장합니다.
-          브라우저 탭이 열려 있을 때만 동작합니다.
+          {isElectron() ? ' 데스크톱 앱은 상시 접근하며 NAS 네트워크 폴더도 지정할 수 있습니다.' : ' 브라우저 탭이 열려 있을 때만 동작합니다.'}
         </p>
 
         {/* ② 주 저장 폴더 */}

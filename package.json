@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
+  "main": "electron/out/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -11,7 +12,14 @@
     "knip": "knip --no-exit-code",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "typecheck:electron": "tsc --noEmit -p tsconfig.electron.json",
+    "electron:build": "node scripts/build-electron.mjs",
+    "electron:dev": "npm run electron:build && electron .",
+    "electron:preview": "npm run build && npm run electron:build && electron .",
+    "dist:win": "npm run build && npm run electron:build && electron-builder --win --publish never",
+    "dist:mac": "npm run build && npm run electron:build && electron-builder --mac --publish never",
+    "dist:linux": "npm run build && npm run electron:build && electron-builder --linux --publish never"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -77,6 +85,10 @@
     "@vercel/node": "^5.6.15",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.21",
+    "chokidar": "^5.0.0",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.1",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^28.0.0",
     "knip": "^5.87.0",

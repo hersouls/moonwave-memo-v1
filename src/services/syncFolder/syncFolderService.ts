@@ -15,12 +15,20 @@
  */
 import type { Memo } from '@/lib/types'
 import { nowISO } from '@/lib/dateUtils'
+import { generateSyncId } from '@/utils/id'
+import { extractTags } from '@/lib/tagParser'
 import {
   getMemo,
   getActiveMemos,
   getFolder,
+  getAllFolders,
   getMemoImage,
+  getMemoBySyncId,
+  addMemo,
+  updateMemo as dbUpdateMemo,
+  softDeleteMemo,
   getFileSyncRecord,
+  getFileSyncRecordByPath,
   putFileSyncRecord,
   deleteFileSyncRecord,
   countFileSyncRecords,
@@ -29,14 +37,23 @@ import {
   setSyncFolderValue,
   deleteSyncFolderValue,
 } from '@/services/database'
+import { pushMemo } from '@/services/firestoreSync'
 import { useSyncFolderStore } from '@/stores/syncFolderStore'
-import { serializeMemo, type ImageResolver } from './serializer'
+import { serializeMemo, deserializeMemo, type ImageResolver } from './serializer'
 import { contentHash } from './hash'
 import { sanitizeSegment } from './filename'
+import { decideImport, type FileEvent } from './importer'
 import { dataUrlToBlob, type FileSyncTarget } from './FileSyncTarget'
-import { FsaFileSyncTarget } from './fsaTarget'
+import {
+  isSyncFolderSupported,
+  pickFolder,
+  restoreTarget,
+  requestPermissionFor,
+  watchRootFromRef,
+} from './platform'
 
-const HANDLE_KEY = 'dirHandle'
+// KV key kept as 'dirHandle' for backward-compat with Phase 1's stored handle.
+const REF_KEY = 'dirHandle'
 const FILE_WRITE_DEBOUNCE_MS = 2000
 
 // Module-level runtime state (single instance per tab).
@@ -45,9 +62,8 @@ const writeTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
 // ─── Capability ──────────────────────────────────────
 
-export function isSyncFolderSupported(): boolean {
-  return typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function'
-}
+// Re-exported from the platform layer (Electron native fs OR web File System Access).
+export { isSyncFolderSupported }
 
 // ─── Web Locks single-writer (§4.7) ──────────────────
 
@@ -74,33 +90,32 @@ async function resolveFolderName(memo: Memo): Promise<string | undefined> {
 
 // ─── Permission / handle lifecycle ───────────────────
 
-async function buildTargetFromHandle(handle: FileSystemDirectoryHandle): Promise<void> {
-  target = new FsaFileSyncTarget(handle)
+function setActiveTarget(t: FileSyncTarget, displayName: string, watchRoot?: string | null): void {
+  target = t
   const store = useSyncFolderStore.getState()
-  store.setFolderName(handle.name)
+  store.setFolderName(displayName)
   store.setStatus('idle')
-  store.setFileCount(await countFileSyncRecords())
+  void countFileSyncRecords().then((n) => store.setFileCount(n))
+  // Phase 2 M2: watch the folder for external edits (Electron only) → §4.4 양방향.
+  resetCircuitBreaker()
+  if (watchRoot) startWatching(watchRoot)
 }
 
 /**
- * Restore the persisted handle and (silently) verify permission. Called on app start.
- * With Chrome 122+ persistent permissions this succeeds without a prompt for an
- * installed PWA; otherwise status becomes 'needs-permission' and the UI shows a
- * reconnect button (which can call requestPermission from a user gesture).
+ * Restore the persisted folder ref and (silently) verify access. Called on app start.
+ * Electron rebuilds a target from the stored path; web FSA verifies the persisted
+ * handle's permission (Chrome 122+ persists it). Otherwise → 'needs-permission'.
  */
 export async function initSyncFolder(): Promise<void> {
   const store = useSyncFolderStore.getState()
   if (!store.enabled || !isSyncFolderSupported()) return
   try {
-    const handle = await getSyncFolderValue<FileSystemDirectoryHandle>(HANDLE_KEY)
-    if (!handle) {
-      store.setStatus('needs-permission')
-      return
-    }
-    const perm = (await handle.queryPermission?.({ mode: 'readwrite' })) ?? 'prompt'
-    if (perm === 'granted') {
-      await buildTargetFromHandle(handle)
+    const ref = await getSyncFolderValue<unknown>(REF_KEY)
+    const result = await restoreTarget(ref)
+    if (result.status === 'ok') {
+      setActiveTarget(result.target, result.displayName, watchRootFromRef(ref))
     } else {
+      if (result.status === 'needs-permission') store.setFolderName(result.displayName)
       store.setStatus('needs-permission')
     }
   } catch (err) {
@@ -109,20 +124,20 @@ export async function initSyncFolder(): Promise<void> {
   }
 }
 
-/** Prompt the user to pick a folder (user gesture). Persists the handle and enables. */
+/** Prompt the user to pick a folder (user gesture). Persists the ref and enables. */
 export async function pickSyncFolder(): Promise<boolean> {
   if (!isSyncFolderSupported()) return false
   const store = useSyncFolderStore.getState()
   try {
-    const handle = await window.showDirectoryPicker!({ id: 'moonwave-memo-sync', mode: 'readwrite' })
-    const perm = (await handle.requestPermission?.({ mode: 'readwrite' })) ?? 'granted'
-    if (perm !== 'granted') {
-      store.setStatus('needs-permission')
+    const picked = await pickFolder()
+    if (!picked) {
+      // null = cancelled or permission denied; only flag the latter if already on.
+      if (store.enabled) store.setStatus('needs-permission')
       return false
     }
-    await setSyncFolderValue(HANDLE_KEY, handle)
+    await setSyncFolderValue(REF_KEY, picked.ref)
     store.setEnabled(true)
-    await buildTargetFromHandle(handle)
+    setActiveTarget(picked.target, picked.displayName, watchRootFromRef(picked.ref))
     return true
   } catch (err) {
     // AbortError = user cancelled the picker; not an error worth surfacing.
@@ -133,22 +148,18 @@ export async function pickSyncFolder(): Promise<boolean> {
   }
 }
 
-/** Re-request permission for the stored handle from a user gesture (reconnect button). */
+/** Re-grant access for the stored folder from a user gesture (reconnect button). */
 export async function reconnectSyncFolder(): Promise<boolean> {
   if (!isSyncFolderSupported()) return false
   const store = useSyncFolderStore.getState()
   try {
-    const handle = await getSyncFolderValue<FileSystemDirectoryHandle>(HANDLE_KEY)
-    if (!handle) {
+    const ref = await getSyncFolderValue<unknown>(REF_KEY)
+    const result = await requestPermissionFor(ref)
+    if (!result.ok || !result.target) {
       store.setStatus('needs-permission')
       return false
     }
-    const perm = (await handle.requestPermission?.({ mode: 'readwrite' })) ?? 'granted'
-    if (perm !== 'granted') {
-      store.setStatus('needs-permission')
-      return false
-    }
-    await buildTargetFromHandle(handle)
+    setActiveTarget(result.target, result.displayName ?? store.folderName ?? '')
     return true
   } catch (err) {
     console.error('Sync folder reconnect failed:', err)
@@ -159,10 +170,11 @@ export async function reconnectSyncFolder(): Promise<boolean> {
 
 /** Turn the feature off. Files on disk are the user's — they are NOT deleted (§10 rollback). */
 export async function disableSyncFolder(): Promise<void> {
+  stopWatching()
   for (const timer of writeTimers.values()) clearTimeout(timer)
   writeTimers.clear()
   target = null
-  await deleteSyncFolderValue(HANDLE_KEY)
+  await deleteSyncFolderValue(REF_KEY)
   await clearFileSyncMap()
   useSyncFolderStore.getState().reset()
 }
@@ -316,4 +328,197 @@ export async function exportAllMemosToFolder(
   })
 
   return { written, skipped }
+}
+
+// ─── Reverse sync: file watching → import (Phase 2 M2, §4.4) ──────
+
+let unsubFileEvent: (() => void) | null = null
+let watching = false
+
+function startWatching(root: string): void {
+  const bridge = typeof window !== 'undefined' ? window.electronBridge : undefined
+  if (!bridge?.startWatching || watching) return
+  bridge.startWatching(root)
+  unsubFileEvent = bridge.onFileEvent((payload) => { void handleFileEvent(payload) })
+  watching = true
+}
+
+function stopWatching(): void {
+  const bridge = typeof window !== 'undefined' ? window.electronBridge : undefined
+  if (unsubFileEvent) { unsubFileEvent(); unsubFileEvent = null }
+  bridge?.stopWatching?.()
+  watching = false
+}
+
+// ─── Circuit breaker (§4.5): pause auto-import on a flood of events ──
+// (e.g. a NAS restore/re-mount that rewrites every file at once).
+const CB_WINDOW_MS = 3000
+const CB_THRESHOLD = 50
+let cbEvents: number[] = []
+let cbTripped = false
+
+function resetCircuitBreaker(): void {
+  cbEvents = []
+  cbTripped = false
+}
+
+function circuitBreakerTripped(): boolean {
+  if (cbTripped) return true
+  const now = Date.now()
+  cbEvents.push(now)
+  cbEvents = cbEvents.filter((t) => now - t < CB_WINDOW_MS)
+  if (cbEvents.length > CB_THRESHOLD) {
+    cbTripped = true
+    useSyncFolderStore.getState().setStatus(
+      'error',
+      '외부 변경이 한꺼번에 많이 감지되어 자동 가져오기를 멈췄습니다. 폴더를 다시 연결하면 재개됩니다.',
+    )
+    stopWatching()
+    return true
+  }
+  return false
+}
+
+async function refreshMemoStore(): Promise<void> {
+  try {
+    // Dynamic import breaks the memoStore → syncFolder → memoStore cycle.
+    const { useMemoStore } = await import('@/stores/memoStore')
+    await useMemoStore.getState().refreshFromDb()
+  } catch {
+    /* store not ready */
+  }
+}
+
+/** Map a file's directory segment back to a folderId (best-effort by name). */
+async function resolveFolderIdFromPath(relPath: string): Promise<number | null> {
+  const segs = relPath.split('/')
+  if (segs.length < 2) return null // root
+  const dir = segs[0]
+  const folders = await getAllFolders()
+  const match = folders.find((f) => !f.isSystem && sanitizeSegment(f.name) === dir)
+  return match?.id ?? null
+}
+
+async function handleFileEvent(event: FileEvent): Promise<void> {
+  if (!target) return
+  if (circuitBreakerTripped()) return
+  try {
+    const ctx = await gatherContext(event)
+    const decision = decideImport(event, ctx)
+    if (decision.action === 'skip') return
+    await withLock(target.key, () => applyDecision(decision, event))
+  } catch (err) {
+    console.error('Sync folder import failed:', err)
+  }
+}
+
+async function gatherContext(event: FileEvent) {
+  const record = await getFileSyncRecordByPath(event.relPath)
+  const recordRef = record ? { memoSyncId: record.memoSyncId, contentHash: record.contentHash } : null
+  if (event.type === 'unlink') return { record: recordRef }
+
+  const content = event.content ?? ''
+  const baseName = event.relPath.split('/').pop()!.replace(/\.md$/i, '')
+  const parsed = deserializeMemo(content, baseName)
+  const recordMemo = record ? await getMemoBySyncId(record.memoSyncId) : null
+  const frontmatterMemoExists = parsed.syncId ? !!(await getMemoBySyncId(parsed.syncId)) : false
+  return {
+    fileHash: contentHash(content),
+    record: recordRef,
+    recordMemo: recordMemo ? { updatedAt: recordMemo.updatedAt } : null,
+    frontmatterMemoExists,
+    parsed,
+  }
+}
+
+async function applyDecision(
+  decision: ReturnType<typeof decideImport>,
+  event: FileEvent,
+): Promise<void> {
+  const store = useSyncFolderStore.getState()
+
+  if (decision.action === 'delete') {
+    const memo = await getMemoBySyncId(decision.memoSyncId)
+    if (memo?.id != null && !memo.deletedAt) {
+      await softDeleteMemo(memo.id)
+      const updated = await getMemo(memo.id)
+      if (updated) pushMemo(updated).catch(console.error)
+    }
+    await deleteFileSyncRecord(decision.memoSyncId)
+    store.setFileCount(await countFileSyncRecords())
+    await refreshMemoStore()
+    return
+  }
+
+  if (decision.action === 'skip') return
+
+  const parsed = decision.parsed
+  const folderId = await resolveFolderIdFromPath(event.relPath)
+
+  if (decision.action === 'update') {
+    const memo = await getMemoBySyncId(decision.memoSyncId)
+    if (memo?.id == null) {
+      await createFromParsed(parsed, folderId, event, !parsed.hasFrontmatter)
+      return
+    }
+    await dbUpdateMemo(memo.id, {
+      title: parsed.title ?? memo.title,
+      body: parsed.body,
+      tags: parsed.tags.length ? parsed.tags : extractTags(parsed.body),
+      color: parsed.color ?? memo.color,
+      isPinned: parsed.isPinned,
+      isStarred: parsed.isStarred,
+      folderId,
+      deletedAt: undefined, // an external re-add revives a trashed memo
+    })
+    const updated = await getMemo(memo.id)
+    if (updated) pushMemo(updated).catch(console.error)
+    // Record the imported bytes so the echoing write-event is suppressed (§4.6).
+    await putFileSyncRecord({
+      memoSyncId: decision.memoSyncId,
+      filePath: event.relPath,
+      contentHash: contentHash(event.content ?? ''),
+      lastWrittenAt: nowISO(),
+    })
+    await refreshMemoStore()
+    return
+  }
+
+  await createFromParsed(parsed, folderId, event, decision.writeBack)
+}
+
+async function createFromParsed(
+  parsed: ReturnType<typeof deserializeMemo>,
+  folderId: number | null,
+  event: FileEvent,
+  writeBack: boolean,
+): Promise<void> {
+  const syncId = parsed.syncId || generateSyncId()
+  const now = nowISO()
+  const id = await addMemo({
+    title: parsed.title ?? '',
+    body: parsed.body,
+    folderId,
+    tags: parsed.tags.length ? parsed.tags : extractTags(parsed.body),
+    isStarred: parsed.isStarred,
+    color: parsed.color ?? 'white',
+    isPinned: parsed.isPinned,
+    syncId,
+    createdAt: parsed.createdAt || now,
+    updatedAt: parsed.updatedAt || now,
+  })
+  const created = await getMemo(id)
+  if (created) pushMemo(created).catch(console.error)
+
+  let fileHash = contentHash(event.content ?? '')
+  if (writeBack && created && target) {
+    // Write our front-matter back INTO the user's file (same filename) so it's tracked.
+    const folderName = await resolveFolderName(created)
+    const { content } = await serializeMemo(created, folderName, resolveImage)
+    await target.writeText(event.relPath, content)
+    fileHash = contentHash(content)
+  }
+  await putFileSyncRecord({ memoSyncId: syncId, filePath: event.relPath, contentHash: fileHash, lastWrittenAt: nowISO() })
+  useSyncFolderStore.getState().setFileCount(await countFileSyncRecords())
+  await refreshMemoStore()
 }

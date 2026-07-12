@@ -343,6 +343,10 @@ export async function getFileSyncRecord(memoSyncId: string): Promise<FileSyncRec
   return db.fileSyncMap.get(memoSyncId)
 }
 
+export async function getFileSyncRecordByPath(filePath: string): Promise<FileSyncRecord | undefined> {
+  return db.fileSyncMap.where('filePath').equals(filePath).first()
+}
+
 export async function putFileSyncRecord(record: FileSyncRecord): Promise<void> {
   await db.fileSyncMap.put(record)
 }

@@ -1,0 +1,38 @@
+appId: kr.moonwave.memo
+productName: Moonwave Memo
+copyright: © Moonwave
+
+directories:
+  output: release
+  buildResources: build
+
+# Renderer (Vite dist) + compiled main/preload + manifest. package.json `main`
+# points at electron/out/main.cjs. devDependencies are auto-excluded by electron-builder.
+files:
+  - dist/**/*
+  - electron/out/**/*
+  - package.json
+
+win:
+  target:
+    - nsis
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+
+mac:
+  target:
+    - dmg
+  category: public.app-category.productivity
+
+linux:
+  target:
+    - AppImage
+  category: Utility
+
+# Code signing / notarization are required for distribution but intentionally left
+# unconfigured here (§10 운영 계획) — set CSC_LINK / APPLE_ID etc. in the environment
+# when producing signed release builds.
+publish: null
