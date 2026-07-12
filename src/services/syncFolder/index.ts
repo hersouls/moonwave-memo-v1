@@ -14,6 +14,8 @@ export {
   notifyMemoSaved,
   notifyMemoDeleted,
   exportAllMemosToFolder,
+  setSyncFolderFormat,
+  importHtmlFiles,
   addMirrorFolder,
   removeMirrorFolder,
   flushPendingFileOps,

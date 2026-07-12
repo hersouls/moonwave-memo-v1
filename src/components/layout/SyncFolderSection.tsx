@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import {
   FolderOpen,
   HardDrive,
@@ -6,6 +6,7 @@ import {
   Check,
   RefreshCw,
   Download,
+  Upload,
   AlertTriangle,
   Plus,
   X,
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useToastStore } from '@/stores/toastStore'
-import { useSyncFolderStore } from '@/stores/syncFolderStore'
+import { useSyncFolderStore, type SyncFolderFormat } from '@/stores/syncFolderStore'
 import {
   isSyncFolderSupported,
   isElectron,
@@ -22,6 +23,8 @@ import {
   reconnectSyncFolder,
   disableSyncFolder,
   exportAllMemosToFolder,
+  setSyncFolderFormat,
+  importHtmlFiles,
   addMirrorFolder,
   removeMirrorFolder,
 } from '@/services/syncFolder'
@@ -43,10 +46,12 @@ export function SyncFolderSection() {
   const errorMsg = useSyncFolderStore((s) => s.error)
   const mirrors = useSyncFolderStore((s) => s.mirrors)
   const pendingOps = useSyncFolderStore((s) => s.pendingOps)
+  const format = useSyncFolderStore((s) => s.format)
   const showToast = useToastStore((s) => s.showToast)
 
   const [busy, setBusy] = useState(false)
   const [exportProgress, setExportProgress] = useState<{ done: number; total: number } | null>(null)
+  const htmlInputRef = useRef<HTMLInputElement>(null)
 
   // ─── Platform gating (§6) ───
   if (!supported) {
@@ -147,6 +152,33 @@ export function SyncFolderSection() {
     try {
       await removeMirrorFolder(path)
       showToast('미러 폴더를 제거했습니다. 폴더의 파일은 유지됩니다.', 'info')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleFormatChange = async (fmt: SyncFolderFormat) => {
+    if (busy || fmt === format) return
+    setBusy(true)
+    try {
+      await setSyncFolderFormat(fmt)
+      if (enabled) showToast('저장 형식을 변경하고 파일을 다시 내보냈습니다.', 'success')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleImportHtml = async (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    if (!files.length || busy) return
+    setBusy(true)
+    try {
+      const { imported, failed } = await importHtmlFiles(files)
+      showToast(
+        failed ? `${imported}건 가져옴, ${failed}건 실패` : `HTML ${imported}건을 메모로 가져왔습니다.`,
+        failed ? 'warning' : 'success',
+      )
     } finally {
       setBusy(false)
     }
@@ -272,17 +304,49 @@ export function SyncFolderSection() {
           </div>
         )}
 
-        {/* ④ 저장 형식 (Phase 1은 .md만) */}
+        {/* ④ 저장 형식 (Phase 4: md / html / both) */}
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">저장 형식</div>
-          <div className="flex items-center gap-3 text-xs">
-            <span className="inline-flex items-center gap-1 text-zinc-900 dark:text-zinc-100">
-              <span className="w-3 h-3 rounded-full border-4 border-primary-500" /> .md
-            </span>
-            <span className="text-zinc-400 dark:text-zinc-500">
-              .html · 둘 다 <span className="opacity-70">(Phase 4)</span>
-            </span>
+          <div className="flex items-center gap-1 text-xs" role="radiogroup" aria-label="저장 형식">
+            {([['md', '.md'], ['html', '.html'], ['both', '둘 다']] as [SyncFolderFormat, string][]).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={format === value}
+                disabled={busy}
+                onClick={() => handleFormatChange(value)}
+                className={[
+                  'px-2.5 py-1 rounded-md border transition-colors disabled:opacity-50',
+                  format === value
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                    : 'border-[var(--color-border-default)] text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800',
+                ].join(' ')}
+              >
+                {label}
+              </button>
+            ))}
           </div>
+        </div>
+
+        {/* HTML 가져오기 (외부 .html → 메모) */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">HTML 가져오기</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">외부 .html 파일을 정화 후 새 메모로 가져옵니다.</div>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => htmlInputRef.current?.click()} disabled={busy}>
+            <Upload className="w-4 h-4 mr-1.5" />
+            파일 선택
+          </Button>
+          <input
+            ref={htmlInputRef}
+            type="file"
+            accept=".html,.htm,text/html"
+            multiple
+            onChange={handleImportHtml}
+            className="hidden"
+          />
         </div>
 
         {/* ⑤ 상태 배지 */}

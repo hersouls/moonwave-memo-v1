@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { Memo } from '@/lib/types'
 import { sanitizeSegment, shortId, memoFileName, imageExtension } from '../filename'
 import { serializeFrontmatter, parseFile, FILE_SCHEMA_VERSION } from '../frontmatter'
-import { serializeMemo, deserializeMemo, type ImageResolver } from '../serializer'
+import { serializeMemo, serializeMemoHtml, deserializeMemo, type ImageResolver } from '../serializer'
 import { contentHash } from '../hash'
 
 function makeMemo(overrides: Partial<Memo> = {}): Memo {
@@ -203,5 +203,29 @@ describe('contentHash', () => {
   })
   it('returns an 8-char hex string', () => {
     expect(contentHash('anything')).toMatch(/^[0-9a-f]{8}$/)
+  })
+})
+
+describe('serializeMemoHtml (Phase 4 M2)', () => {
+  const noImages: ImageResolver = async () => undefined
+
+  it('produces an .html file with a document, title heading, and metadata comment', async () => {
+    const memo = makeMemo({ body: '## 섹션\n\n**굵게**' })
+    const result = await serializeMemoHtml(memo, undefined, noImages)
+    expect(result.filePath).toMatch(/\.html$/)
+    expect(result.content).toContain('<!DOCTYPE html>')
+    expect(result.content).toContain('<h2>섹션</h2>')
+    expect(result.content).toContain('<strong>굵게</strong>')
+    expect(result.content).toContain('moonwave-memo')
+    expect(result.content).toContain(memo.syncId!)
+  })
+
+  it('maps images to assets and rewrites them in the HTML body', async () => {
+    const memo = makeMemo({ body: '![그림](memo-image:5)' })
+    const resolve: ImageResolver = async () => ({ syncId: 'imgX', data: 'data:image/png;base64,AAA' })
+    const result = await serializeMemoHtml(memo, '아이디어', resolve)
+    expect(result.filePath).toBe('아이디어/여행 계획-abc123.html')
+    expect(result.content).toContain('src="../assets/imgX.png"')
+    expect(result.assets).toEqual([{ path: 'assets/imgX.png', dataUrl: 'data:image/png;base64,AAA' }])
   })
 })

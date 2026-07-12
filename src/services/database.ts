@@ -11,6 +11,8 @@ export interface FileSyncRecord {
   memoSyncId: string
   filePath: string
   contentHash: string
+  /** All files written for this memo (md and/or html). Undefined = legacy single [filePath]. */
+  files?: string[]
   lastWrittenAt: string
 }
 

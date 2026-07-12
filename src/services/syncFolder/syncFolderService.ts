@@ -46,8 +46,10 @@ import {
   type PendingFileOp,
 } from '@/services/database'
 import { pushMemo } from '@/services/firestoreSync'
-import { useSyncFolderStore } from '@/stores/syncFolderStore'
-import { serializeMemo, deserializeMemo, type ImageResolver, type AssetRef } from './serializer'
+import DOMPurify from 'dompurify'
+import { useSyncFolderStore, type SyncFolderFormat } from '@/stores/syncFolderStore'
+import { htmlToMarkdown } from '@/lib/markdownHtml'
+import { serializeMemo, serializeMemoHtml, deserializeMemo, type ImageResolver, type AssetRef, type SerializedMemo } from './serializer'
 import { contentHash } from './hash'
 import { sanitizeSegment } from './filename'
 import { decideImport, type FileEvent } from './importer'
@@ -209,11 +211,17 @@ async function ensureReady(): Promise<boolean> {
 
 // ─── Write / delete ──────────────────────────────────
 
+function sameSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const s = new Set(a)
+  return b.every((x) => s.has(x))
+}
+
 async function writeMemoNow(memo: Memo): Promise<void> {
   if (!target || !memo.syncId) return
   const store = useSyncFolderStore.getState()
 
-  // Deleted → remove the file instead of writing (§4.3).
+  // Deleted → remove the file(s) instead of writing (§4.3).
   if (memo.deletedAt) {
     await deleteMemoFileNow(memo)
     return
@@ -223,38 +231,50 @@ async function writeMemoNow(memo: Memo): Promise<void> {
 
   try {
     const folderName = await resolveFolderName(memo)
-    const { filePath, content, assets } = await serializeMemo(memo, folderName, resolveImage)
-    const hash = contentHash(content)
+    const format = store.format
+    // Build outputs for the chosen format (Phase 4 M2: md / html / both).
+    const md = format === 'md' || format === 'both' ? await serializeMemo(memo, folderName, resolveImage) : null
+    const html = format === 'html' || format === 'both' ? await serializeMemoHtml(memo, folderName, resolveImage) : null
+    const outputs = [md, html].filter((o): o is SerializedMemo => o != null)
+    if (!outputs.length) return
+
+    const files = outputs.map((o) => o.filePath)
+    const primary = md ?? html! // markdown is canonical when present (import identity)
+    const hash = contentHash(primary.content)
 
     const existing = await getFileSyncRecord(memo.syncId)
-    // No-op skip: identical content at the same path → don't rewrite (prevents loops, §4.5).
-    if (existing && existing.contentHash === hash && existing.filePath === filePath) return
+    const oldFiles = existing?.files ?? (existing ? [existing.filePath] : [])
+    // No-op skip: same content AND same file set → don't rewrite (prevents loops, §4.5).
+    if (existing && existing.contentHash === hash && sameSet(oldFiles, files)) return
 
     store.setStatus('writing')
-    // Rename: title/folder changed → path changed → delete the stale file first (§4.1).
-    if (existing && existing.filePath !== filePath) {
-      await target.deleteFile(existing.filePath)
+
+    // Remove stale files: a rename (title/folder changed) or a format change (e.g.
+    // both→md drops the .html) leaves files no longer in the current output set.
+    for (const f of oldFiles.filter((p) => !files.includes(p))) {
+      await target.deleteFile(f)
+      await mirrorDelete(f)
     }
 
-    await target.writeText(filePath, content)
-    for (const asset of assets) {
-      // Skip assets already on disk (images are immutable once written).
-      if (!(await target.exists(asset.path))) {
-        await target.writeBinary(asset.path, dataUrlToBlob(asset.dataUrl))
+    for (const out of outputs) {
+      await target.writeText(out.filePath, out.content)
+      for (const asset of out.assets) {
+        // Assets are immutable once written; skip if already present.
+        if (!(await target.exists(asset.path))) {
+          await target.writeBinary(asset.path, dataUrlToBlob(asset.dataUrl))
+        }
       }
+      // Mirror the write to NAS/copy folders (§4.6); failures queue for retry.
+      await mirrorWrite(out.filePath, out.content, out.assets, null)
     }
-
-    // Mirror the write to any NAS/copy folders (§4.6); failures queue for retry.
-    await mirrorWrite(filePath, content, assets, existing && existing.filePath !== filePath ? existing.filePath : null)
 
     const at = nowISO()
-    await putFileSyncRecord({ memoSyncId: memo.syncId, filePath, contentHash: hash, lastWrittenAt: at })
+    await putFileSyncRecord({ memoSyncId: memo.syncId, filePath: primary.filePath, contentHash: hash, files, lastWrittenAt: at })
     store.setLastWritten(at)
     store.setFileCount(await countFileSyncRecords())
     store.setStatus('idle')
   } catch (err) {
     console.error('Sync folder write failed:', err)
-    // Phase 1 has no durable retry queue (that is Phase 2 pendingFileOps, §4.6).
     store.setStatus('error', '폴더에 저장하지 못했습니다.')
   }
 }
@@ -265,8 +285,10 @@ async function deleteMemoFileNow(memo: Memo): Promise<void> {
   try {
     const rec = await getFileSyncRecord(memo.syncId)
     if (!rec) return
-    await target.deleteFile(rec.filePath)
-    await mirrorDelete(rec.filePath)
+    for (const f of rec.files ?? [rec.filePath]) {
+      await target.deleteFile(f)
+      await mirrorDelete(f)
+    }
     await deleteFileSyncRecord(memo.syncId)
     store.setFileCount(await countFileSyncRecords())
     store.setStatus('idle')
@@ -543,6 +565,62 @@ async function createFromParsed(
   await putFileSyncRecord({ memoSyncId: syncId, filePath: event.relPath, contentHash: fileHash, lastWrittenAt: nowISO() })
   useSyncFolderStore.getState().setFileCount(await countFileSyncRecords())
   await refreshMemoStore()
+}
+
+// ─── HTML format + import (Phase 4 M2) ───────────────
+
+/** Change the save format (md/html/both) and re-export all memos so files migrate. */
+export async function setSyncFolderFormat(format: SyncFolderFormat): Promise<void> {
+  const store = useSyncFolderStore.getState()
+  if (store.format === format) return
+  store.setFormat(format)
+  if (store.enabled) await exportAllMemosToFolder()
+}
+
+function deriveTitleFromHtml(html: string): string | undefined {
+  const raw = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1]
+  return raw ? raw.replace(/<[^>]+>/g, '').trim() || undefined : undefined
+}
+
+/**
+ * Import external `.html` files as new memos (§Phase 4 M2 · HTML 가져오기).
+ * Untrusted HTML is sanitized with DOMPurify then converted to markdown through the
+ * shared sanitized pipeline (double defense, §8). Title from <title>/<h1> or filename.
+ */
+export async function importHtmlFiles(files: File[]): Promise<{ imported: number; failed: number }> {
+  let imported = 0
+  let failed = 0
+  for (const file of files) {
+    try {
+      const raw = await file.text()
+      const markdown = htmlToMarkdown(DOMPurify.sanitize(raw))
+      const now = nowISO()
+      const title = deriveTitleFromHtml(raw) || file.name.replace(/\.html?$/i, '')
+      const id = await addMemo({
+        title,
+        body: markdown,
+        folderId: null,
+        tags: extractTags(markdown),
+        isStarred: false,
+        color: 'white',
+        isPinned: false,
+        syncId: generateSyncId(),
+        createdAt: now,
+        updatedAt: now,
+      })
+      const created = await getMemo(id)
+      if (created) {
+        pushMemo(created).catch(console.error)
+        notifyMemoSaved(created) // write to the sync folder too, if enabled
+      }
+      imported++
+    } catch (err) {
+      console.error('HTML import failed:', err)
+      failed++
+    }
+  }
+  if (imported) await refreshMemoStore()
+  return { imported, failed }
 }
 
 // ─── NAS mirroring + retry queue (Phase 2 M3, §4.6) ──────

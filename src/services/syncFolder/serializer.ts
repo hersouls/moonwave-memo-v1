@@ -10,6 +10,7 @@
  * Deserialize: parse a file back into memo fields for the Phase 2 import path (§4.4).
  */
 import type { Memo, MemoColor } from '@/lib/types'
+import { markdownToSafeHtml, wrapHtmlDocument } from '@/lib/markdownHtml'
 import { imageExtension, memoFileName, sanitizeSegment } from './filename'
 import {
   FILE_SCHEMA_VERSION,
@@ -114,6 +115,38 @@ export async function serializeMemo(
   const { body, assets } = await rewriteImages(memo.body ?? '', dirSegments.length, resolveImage)
   const frontmatter = serializeFrontmatter(toFrontmatter(memo, folderName))
   const content = `${frontmatter}\n\n${body.trimEnd()}\n`
+
+  return { fileName, dirSegments, filePath, content, assets }
+}
+
+/**
+ * Serialize a memo to a standalone `.html` file (Phase 4 M2 · HTML 저장).
+ * Same folder/asset mapping as the `.md` variant; the body is converted through the
+ * sanitized markdown→HTML pipeline (§8) and wrapped in a styled document. A metadata
+ * comment carries the syncId + fields for portability. `.html` files are write-only
+ * output — the Phase 2 watcher ignores them, so there is no reverse-import from HTML.
+ */
+export async function serializeMemoHtml(
+  memo: Memo,
+  folderName: string | undefined,
+  resolveImage: ImageResolver,
+): Promise<SerializedMemo> {
+  const dirSegments = folderName ? [sanitizeSegment(folderName)] : []
+  const fileName = `${memoFileName(memo).replace(/\.md$/i, '')}.html`
+  const filePath = [...dirSegments, fileName].join('/')
+
+  const { body, assets } = await rewriteImages(memo.body ?? '', dirSegments.length, resolveImage)
+  const bodyHtml = markdownToSafeHtml(body)
+  const meta = `<!-- moonwave-memo ${JSON.stringify({
+    syncId: memo.syncId,
+    tags: memo.tags,
+    color: memo.color,
+    isPinned: memo.isPinned,
+    isStarred: memo.isStarred,
+    createdAt: memo.createdAt,
+    updatedAt: memo.updatedAt,
+  })} -->`
+  const content = wrapHtmlDocument(memo.title, bodyHtml, meta)
 
   return { fileName, dirSegments, filePath, content, assets }
 }

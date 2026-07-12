@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { markdownToSafeHtml } from '../markdownHtml'
+import { markdownToSafeHtml, htmlToMarkdown, wrapHtmlDocument } from '../markdownHtml'
 
 describe('markdownToSafeHtml — formatting', () => {
   it('renders headings, emphasis, and inline code', () => {
@@ -75,5 +75,50 @@ describe('markdownToSafeHtml — XSS payloads must be neutralized (§8 완료 �
   it('strips inline event handlers on arbitrary elements', () => {
     const html = markdownToSafeHtml('<div onclick="alert(1)">x</div>')
     expect(html).not.toContain('onclick')
+  })
+})
+
+describe('htmlToMarkdown — import (Phase 4 M2)', () => {
+  it('converts headings, emphasis, and links to markdown', () => {
+    const md = htmlToMarkdown('<h1>Title</h1><p><strong>bold</strong> <a href="https://x.com">link</a></p>')
+    expect(md).toContain('# Title')
+    expect(md).toContain('**bold**')
+    expect(md).toContain('[link](https://x.com)')
+  })
+
+  it('converts lists', () => {
+    const md = htmlToMarkdown('<ul><li>one</li><li>two</li></ul>')
+    expect(md).toContain('- one')
+    expect(md).toContain('- two')
+  })
+
+  it('sanitizes untrusted HTML before conversion (no script survives)', () => {
+    const md = htmlToMarkdown('<p>hi</p><script>alert(1)</script><img src=x onerror="alert(1)">')
+    expect(md).not.toContain('alert(1)')
+    expect(md).not.toContain('onerror')
+  })
+
+  it('round-trips basic markdown through html and back', () => {
+    const original = '# Heading\n\n**bold** and a [link](https://example.com)'
+    const back = htmlToMarkdown(markdownToSafeHtml(original))
+    expect(back).toContain('# Heading')
+    expect(back).toContain('**bold**')
+    expect(back).toContain('[link](https://example.com)')
+  })
+})
+
+describe('wrapHtmlDocument', () => {
+  it('produces a standalone document with title and body', () => {
+    const doc = wrapHtmlDocument('My Note', '<p>hello</p>', '<!-- meta -->')
+    expect(doc).toContain('<!DOCTYPE html>')
+    expect(doc).toContain('<title>My Note</title>')
+    expect(doc).toContain('<p>hello</p>')
+    expect(doc).toContain('<!-- meta -->')
+  })
+
+  it('escapes the title', () => {
+    const doc = wrapHtmlDocument('<script>', '<p>x</p>')
+    expect(doc).not.toContain('<title><script></title>')
+    expect(doc).toContain('&lt;script&gt;')
   })
 })
