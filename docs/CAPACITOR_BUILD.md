@@ -54,22 +54,35 @@ DS File/Synology Drive가 노출하는 **NAS 폴더를 앱에서 직접 지정(S
 - `@capawesome/capacitor-file-picker`의 `pickDirectory`로 트리 URI를 얻고, `takePersistableUriPermission` + DocumentFile 쓰기를 **커뮤니티 플러그인 또는 커스텀 네이티브 코드**로 구현해야 한다.
 - **실기기 검증 선행 필수** — 제공자 앱(DS File 등)별 쓰기 지원 편차, 네트워크 끊김 시 실패 처리(큐잉)를 확인한 뒤 `CapacitorSafFileSyncTarget`를 추가하고 `platform.ts` 팩토리에 분기한다.
 
-## 6. APK 알려진 한계 (2026-07-12 코드 감사 — 미해결 항목)
+## 6. Google 로그인 (구현됨 — 네이티브 브리지)
 
-APK는 빌드·설치되고 로컬 메모 + 폴더 저장은 동작하지만, 아래는 코드 수준 감사에서 확인된 미해결 한계다:
+WebView에서는 Google이 `signInWithPopup/Redirect`를 차단(disallowed_useragent)하므로, APK는 `@capacitor-firebase/authentication`으로 **네이티브 Google Sign-In → ID 토큰 → 웹 SDK `signInWithCredential` 브리지** 방식을 쓴다 (`authStore.login()`의 `Capacitor.isNativePlatform()` 분기; 로그아웃도 네이티브 세션 함께 종료).
+
+**Firebase 프로비저닝 (완료됨, 2026-07-12)**:
+- Firebase 안드로이드 앱 등록: `kr.moonwave.memo` (App ID `1:799940285288:android:02c44fd722aaa887e63cdd`)
+- 이 PC의 디버그 keystore SHA-1/SHA-256 등록 → `android/app/google-services.json` 커밋됨 (공개 클라이언트 설정 파일 — 비밀 아님)
+- Gradle은 `google-services.json` 존재 시 자동으로 `com.google.gms.google-services` 플러그인을 적용한다 (기본 생성 코드)
+
+⚠️ **다른 서명 키로 빌드하면 SHA 지문을 추가 등록해야 한다** — 다른 PC의 디버그 keystore, 릴리스 keystore 각각:
+```bash
+keytool -list -v -keystore <keystore> -alias <alias> | grep SHA1
+npx firebase apps:android:sha:create 1:799940285288:android:02c44fd722aaa887e63cdd <SHA1(콜론 제거)> --project moonwave-memo-v1
+# 이후 google-services.json 재다운로드는 불필요 (SHA는 서버측 검증)
+```
+
+## 7. APK 알려진 한계 (2026-07-12 코드 감사 — 미해결 항목)
 
 | 한계 | 원인 | 해결 방향 |
 |------|------|-----------|
-| **Google 로그인 불가 → 클라우드 동기화 불가** | 유일한 로그인 수단이 `signInWithPopup`/`signInWithRedirect`(authStore) — WebView에서 Google이 차단(disallowed_useragent)하고 `https://localhost`는 승인 도메인이 아님 | `@capacitor-firebase/authentication` 네이티브 플러그인으로 ID 토큰 취득 후 `signInWithCredential` 브리지 |
 | **서버 프록시 AI 기능 전부 불가** | 클라이언트 13곳이 상대경로 `/api/...`(Vercel 서버리스)를 호출 — APK의 origin `https://localhost`에는 존재하지 않음 | `VITE_API_BASE` 도입(웹은 '' 유지, APK는 배포 origin) + api 핸들러 CORS 허용 |
 | **파일 내보내기(백업 JSON·.md·.html·PNG) 무동작** | blob URL `<a download>` 클릭 방식 7곳 — WebView에는 다운로드 매니저 없음 | `Capacitor.isNativePlatform()` 분기로 `@capacitor/filesystem` 저장 또는 `navigator.share` |
 | 하드웨어 뒤로가기 기본 동작 | `@capacitor/app` 미설치 — 모달 열림 상태에서 뒤로가기가 히스토리 pop/앱 종료 | `@capacitor/app` 추가 + backButton 리스너 |
 | 재설치 후 기존 파일 접근 불가 | Android 11+ scoped storage — 공용 Documents의 파일 소유권이 재설치 시 소실(MediaStore) | 재설치 후 새 하위 폴더 지정 안내, 장기적으로 SAF 스파이크(§5) |
 | 외부 링크(`target="_blank"`) 무동작 | WebView는 멀티 윈도우 미지원 | `@capacitor/browser` 경유 |
 
-## 7. 아직 남은 것
+## 8. 아직 남은 것
 
-- §6 한계 해소 (우선순위: 네이티브 Google 로그인 → API base → 내보내기).
+- §7 한계 해소 (우선순위: API base → 내보내기 → 뒤로가기).
 - 앱 아이콘·스플래시(`@capacitor/assets`로 생성).
-- 릴리스 서명 keystore + Play Store 또는 사이드로드 배포 결정.
+- 릴리스 서명 keystore(+ SHA 등록, §6) + Play Store 또는 사이드로드 배포 결정.
 - SAF 직접 선택(§5) 실기기 스파이크.

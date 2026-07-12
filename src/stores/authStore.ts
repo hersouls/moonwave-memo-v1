@@ -3,11 +3,13 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   signInWithRedirect,
+  signInWithCredential,
   getRedirectResult,
   signOut,
   GoogleAuthProvider,
   type User,
 } from 'firebase/auth'
+import { Capacitor } from '@capacitor/core'
 import { auth } from '@/lib/firebase'
 import type { AuthUser, SyncStatus } from '@/lib/types'
 import { initSync, stopSync } from '@/services/firestoreSync'
@@ -87,6 +89,25 @@ export const useAuthStore = create<AuthState>()((set) => ({
   login: async () => {
     const provider = new GoogleAuthProvider()
     set({ error: null, isSigningIn: true })
+
+    // APK(Capacitor): WebView에서는 Google이 popup/redirect를 차단하므로
+    // 네이티브 Google Sign-In으로 ID 토큰을 받아 웹 SDK 세션에 브리지한다.
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
+        const result = await FirebaseAuthentication.signInWithGoogle()
+        const idToken = result.credential?.idToken
+        if (!idToken) throw new Error('Google 로그인이 취소되었습니다.')
+        await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '로그인에 실패했습니다.'
+        // 사용자가 로그인 시트를 닫은 경우는 오류로 표시하지 않는다.
+        const canceled = /cancel/i.test(message)
+        set({ error: canceled ? null : message, isSigningIn: false })
+      }
+      return
+    }
+
     try {
       await signInWithPopup(auth, provider)
     } catch (err: unknown) {
@@ -113,6 +134,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   logout: async () => {
     try {
+      if (Capacitor.isNativePlatform()) {
+        // 네이티브 레이어 세션도 함께 종료 (signInWithGoogle의 짝)
+        const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
+        await FirebaseAuthentication.signOut().catch(() => {})
+      }
       await signOut(auth)
       set({ user: null, syncStatus: 'idle', lastSyncTime: null, error: null })
     } catch (err) {

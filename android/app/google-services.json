@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "799940285288",
+    "project_id": "moonwave-memo-v1",
+    "storage_bucket": "moonwave-memo-v1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799940285288:android:02c44fd722aaa887e63cdd",
+        "android_client_info": {
+          "package_name": "kr.moonwave.memo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799940285288-6gq5a61558a1cmbqv5suk498rsals05r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kr.moonwave.memo",
+            "certificate_hash": "e737e39e487b3261b08a0f03b1d3ae19b15e68e8"
+          }
+        },
+        {
+          "client_id": "799940285288-hmqillu441mcms6f6d8vvu5fb31dpjtt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqM4gkGx28HKUcmF8h0QffZj1nF4nV4lo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799940285288-hmqillu441mcms6f6d8vvu5fb31dpjtt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
