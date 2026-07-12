@@ -18,6 +18,44 @@ export function formatTitleDate(dateISO: string): string {
   }
 }
 
+// 본문에서 날짜를 찾아 YYMMDD로. 지원 형식(가장 앞에 나오는 것 우선):
+//  · YYYY년 M월 D일 / M월 D일(연도는 fallback) · YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD · YY-MM-DD 등
+// 버전번호('2.10.5')·긴 숫자ID 등은 월/일 범위·실제 달력 검증으로 걸러낸다.
+export function extractDateStampFromBody(body: string, fallbackISO: string): string | null {
+  if (!body || !body.trim()) return null
+  let fallbackYear: number
+  try { fallbackYear = parseISO(fallbackISO).getFullYear() } catch { fallbackYear = new Date().getFullYear() }
+
+  const patterns: Array<{ re: RegExp; parts: (m: RegExpMatchArray) => [number, number, number] }> = [
+    // YYYY년 M월 D일
+    { re: /(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/, parts: (m) => [+m[1], +m[2], +m[3]] },
+    // YYYY-MM-DD / YYYY.MM.DD / YYYY/MM/DD
+    { re: /\b(\d{4})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})(?!\d)/, parts: (m) => [+m[1], +m[2], +m[3]] },
+    // M월 D일 (연도 없음 → fallback 연도)
+    { re: /(\d{1,2})\s*월\s*(\d{1,2})\s*일/, parts: (m) => [fallbackYear, +m[1], +m[2]] },
+    // YY-MM-DD / YY.MM.DD / YY/MM/DD (2자리 연도)
+    { re: /\b(\d{2})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})(?!\d)/, parts: (m) => [2000 + +m[1], +m[2], +m[3]] },
+  ]
+
+  let best: { idx: number; date: Date } | null = null
+  for (const { re, parts } of patterns) {
+    const m = body.match(re)
+    if (!m || m.index === undefined) continue
+    const [y, mo, d] = parts(m)
+    if (y < 1900 || y > 2999 || mo < 1 || mo > 12 || d < 1 || d > 31) continue
+    const dt = new Date(y, mo - 1, d)
+    // 실제 존재하는 날짜인지(2월 30일 등 배제)
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) continue
+    if (best === null || m.index < best.idx) best = { idx: m.index, date: dt }
+  }
+  return best ? format(best.date, 'yyMMdd') : null
+}
+
+/** 제목용 날짜: 본문에 있는 날짜 우선, 없으면 생성일(YYMMDD) */
+export function resolveTitleDate(body: string, createdAtISO: string): string {
+  return extractDateStampFromBody(body, createdAtISO) ?? formatTitleDate(createdAtISO)
+}
+
 /** folderId → 카테고리 라벨(폴더명 또는 '미분류') */
 export function getCategoryLabel(folderId: number | null, folders: Folder[]): string {
   if (folderId == null) return UNFILED_LABEL
@@ -63,5 +101,5 @@ export function buildRuleTitle(
 ): string {
   const label = getCategoryLabel(params.folderId, folders)
   const summary = summarizeBodyForTitle(params.body)
-  return composeTitle(label, summary, formatTitleDate(params.createdAt))
+  return composeTitle(label, summary, resolveTitleDate(params.body, params.createdAt))
 }

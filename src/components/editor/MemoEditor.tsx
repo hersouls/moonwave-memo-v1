@@ -44,7 +44,7 @@ import { setLastViewedMemo } from '@/components/ui/ContinueBanner'
 import { useToastStore } from '@/stores/toastStore'
 import { toggleChecklistItem, getChecklistStats } from '@/utils/checklistParser'
 import { getAllTemplates } from '@/utils/memoTemplates'
-import { buildRuleTitle, composeTitle, getCategoryLabel, formatTitleDate } from '@/utils/memoTitle'
+import { buildRuleTitle, composeTitle, getCategoryLabel, resolveTitleDate } from '@/utils/memoTitle'
 import { isAIAvailable, summarizeTitleKeyword } from '@/services/aiFeatures'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
@@ -368,7 +368,7 @@ export function MemoEditor() {
       // 언마운트됐거나 그 사이 사용자가 제목을 직접 편집했으면 중단(stale write·타이머 누수 방지)
       if (!isMountedRef.current || error || !keyword || !isAutoTitle.current) return
       const label = getCategoryLabel(latestDataRef.current.folderId, useFolderStore.getState().folders)
-      setTitle(composeTitle(label, keyword, formatTitleDate(creationDateRef.current)))
+      setTitle(composeTitle(label, keyword, resolveTitleDate(b, creationDateRef.current)))
       setSaveStatus('modified')
       scheduleAutoSave()
     }, 4000)
@@ -729,7 +729,7 @@ export function MemoEditor() {
         const { keyword } = await summarizeTitleKeyword(b)
         if (!isMountedRef.current) return
         if (keyword) {
-          newTitle = composeTitle(getCategoryLabel(fid, foldersNow), keyword, formatTitleDate(creationDateRef.current))
+          newTitle = composeTitle(getCategoryLabel(fid, foldersNow), keyword, resolveTitleDate(b, creationDateRef.current))
           setTitle(newTitle)
           lastAITitleBodyRef.current = b // 자동 재요약 디바운스 중복 방지
         }

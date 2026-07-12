@@ -445,7 +445,7 @@ export const useMemoStore = create<MemoState>()(
       // 실패는 삼키지 않고 호출측으로 전파(성공분은 반영 후 남은 실패 개수만큼 throw).
       batchRegenerateTitles: async (ids) => {
         const { useFolderStore } = await import('./folderStore')
-        const { buildRuleTitle, composeTitle, getCategoryLabel, formatTitleDate } = await import('@/utils/memoTitle')
+        const { buildRuleTitle, composeTitle, getCategoryLabel, resolveTitleDate } = await import('@/utils/memoTitle')
         const { isAIAvailable, summarizeTitleKeyword } = await import('@/services/aiFeatures')
 
         const folders = useFolderStore.getState().folders
@@ -471,7 +471,7 @@ export const useMemoStore = create<MemoState>()(
                 if (error === 'daily_limit_exceeded') {
                   useAI = false // 이후 메모는 규칙 기반으로만 — 한도 초과 토스트 반복 방지
                 } else if (keyword) {
-                  title = composeTitle(getCategoryLabel(memo.folderId, folders), keyword, formatTitleDate(memo.createdAt))
+                  title = composeTitle(getCategoryLabel(memo.folderId, folders), keyword, resolveTitleDate(memo.body, memo.createdAt))
                 }
               } catch { /* AI 실패 시 규칙 기반 제목 유지 */ }
             }
