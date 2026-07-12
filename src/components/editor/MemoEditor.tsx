@@ -21,7 +21,6 @@ import { Spinner } from '@/components/ui/Spinner'
 import { extractTags } from '@/lib/tagParser'
 import { useAITagSuggestions } from '@/hooks/useAIFeatures'
 import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
-import { useVisualViewport } from '@/hooks/useVisualViewport'
 import { useTypingSounds } from '@/hooks/useTypingSounds'
 import { useBreathingTypography } from '@/hooks/useBreathingTypography'
 import { useTimeMachine } from '@/hooks/useTimeMachine'
@@ -72,7 +71,9 @@ export function MemoEditor() {
   const organicAuraEnabled = useSettingsStore((s) => s.settings.livingWorkspace.organicAuraEnabled)
   const ambientSoundscapeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.ambientSoundscapeEnabled)
   const alterEgoEnabled = useSettingsStore((s) => s.settings.livingWorkspace.alterEgoEnabled)
-  const { keyboardHeight, isKeyboardOpen } = useVisualViewport()
+  // 키보드 상태는 App.tsx의 앱-생애주기 트래커(uiStore)를 단일 소스로 사용한다.
+  // (에디터가 키보드 열린 채 마운트/리마운트돼도 감지가 어긋나지 않도록)
+  const isKeyboardOpen = useUIStore((s) => s.isKeyboardOpen)
   const { playKeySound } = useTypingSounds(isFocusMode)
   const { isBreathing, recordKeystroke } = useBreathingTypography(breathingTypographyEnabled)
   const saveEphemeral = useMemoStore((s) => s.saveEphemeral)
@@ -247,10 +248,22 @@ export function MemoEditor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memoId])
 
-  // Capture stable viewport height to prevent iOS Safari dvh jumps
+  // Capture stable viewport height to prevent iOS Safari dvh jumps.
+  // 회전(폭 변경) 시에만 갱신 — URL바 표시/숨김(높이만 변함)엔 반응하지 않아 안정적이고,
+  // 회전 후 stale 높이로 컨테이너가 화면을 넘치지 않게 한다.
   useEffect(() => {
-    document.documentElement.style.setProperty('--stable-vh', `${window.innerHeight}px`)
-    return () => { document.documentElement.style.removeProperty('--stable-vh') }
+    const root = document.documentElement
+    const setStable = () => root.style.setProperty('--stable-vh', `${window.innerHeight}px`)
+    setStable()
+    let lastW = window.innerWidth
+    const onResize = () => {
+      if (window.innerWidth !== lastW) { lastW = window.innerWidth; setStable() }
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      root.style.removeProperty('--stable-vh')
+    }
   }, [])
 
   // Focus on mount + track last viewed memo (uses tiptapEditorRef to avoid ordering issues)
@@ -966,9 +979,14 @@ export function MemoEditor() {
         // 하단 내비(5rem)만 확보 — 이전엔 사라진 헤더 자리만큼 하단에 빈 공간이 생겼다.
         'flex flex-col lg:h-full min-h-0',
         !isKeyboardOpen && 'h-[calc(var(--stable-vh,100svh)-5rem)]',
-        isFocusMode && '!h-[var(--stable-vh,100svh)]'
+        isFocusMode && '!h-[var(--stable-vh,100svh)]',
+        // 키보드가 뜨면 실제 가시영역(--vvh, visualViewport 높이)에 컨테이너를 고정한다.
+        // 앱 셸이 모바일에서 스크롤 가능(min-h-screen)해, 예전엔 컨테이너가 키보드로 줄어든
+        // 화면보다 커져 페이지가 스크롤되며 헤더·툴바가 본문 중간으로 밀렸다.
+        // left는 --content-left(사이드바 폭)만큼 띄워 태블릿/데스크톱 사이드바를 덮지 않게 한다.
+        isKeyboardOpen && !isFocusMode && 'fixed right-0 z-40 bg-[var(--color-bg-secondary)]'
       )}
-      style={isKeyboardOpen && !isFocusMode ? { height: `calc(var(--stable-vh, 100svh) - ${Math.max(0, keyboardHeight || 0)}px)` } : undefined}
+      style={isKeyboardOpen && !isFocusMode ? { height: 'var(--vvh, 100svh)', top: 'var(--vv-top, 0px)', left: 'var(--content-left, 0px)' } : undefined}
     >
       {!isFocusMode && !isKeyboardOpen && (
         <EditorHeader
@@ -1021,7 +1039,9 @@ export function MemoEditor() {
           'flex-1 flex flex-col min-h-0 overflow-y-auto',
           isFocusMode
             ? 'max-w-2xl mx-auto w-full px-6 pt-12'
-            : 'px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full'
+            : 'px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full',
+          // 키보드가 뜨면 헤더가 숨으므로 제목이 상단에 바짝 붙지 않게 여백을 준다
+          isKeyboardOpen && !isFocusMode && 'pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]'
         )}>
           {/* tiptap/split 모드: 폴더 선택기 단독 행. 탭 모드에서는 아래 탭과 한 행으로 병합한다. */}
           {!isFocusMode && !isKeyboardOpen && (isTiptap || isSplit) && (
@@ -1146,10 +1166,11 @@ export function MemoEditor() {
         </>
       )}
 
-      {/* Mobile/tablet keyboard accessory bar — keeps formatting reachable while typing.
-          Pinned just above the soft keyboard; desktop is unaffected (keeps its own toolbar). */}
+      {/* Mobile/tablet keyboard accessory bar — 컨테이너(가시영역에 고정)의 맨 아래
+          in-flow 자식이라 항상 키보드 바로 위에 붙는다. 예전 fixed+bottom:keyboardHeight
+          방식은 layout viewport가 줄어드는 기기에서 본문 중간에 떠버렸다. */}
       {!isLg && isKeyboardOpen && !isFocusMode && (isTiptap || activeTab === 'edit') && (
-        <div className="fixed inset-x-0 z-40" style={{ bottom: `${Math.max(0, keyboardHeight || 0)}px` }}>
+        <div className="shrink-0">
           <EditorToolbar
             variant="keyboard"
             textareaRef={bodyRef}
@@ -1214,8 +1235,9 @@ export function MemoEditor() {
       )}
 
       {/* Save status indicator bar — 고정 높이 트랙에 페인트 속성만 전환해
-          autosave 사이클마다 레이아웃이 2px씩 출렁이지 않게 한다 */}
-      <div className="h-0.5 w-full shrink-0" aria-hidden="true">
+          autosave 사이클마다 레이아웃이 2px씩 출렁이지 않게 한다.
+          키보드 열림 시엔 숨긴다 — 액세서리 툴바가 키보드에 딱 붙고 2px 색 줄이 깜빡이지 않도록 */}
+      <div className={clsx('h-0.5 w-full shrink-0', isKeyboardOpen && 'hidden')} aria-hidden="true">
         <div
           className={clsx(
             'h-full w-full transition-[opacity,background-color] duration-300 ease-standard',

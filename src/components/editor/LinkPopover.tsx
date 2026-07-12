@@ -39,10 +39,14 @@ export function LinkPopover({ position, initialUrl = '', onUnlink, onSubmit, onC
     onSubmit(href)
   }
 
-  // 뷰포트 클램핑 — 패널이 화면 밖으로 나가지 않게
+  // 뷰포트 클램핑 — 패널이 화면 밖(특히 키보드 뒤)으로 나가지 않게.
+  // 세로는 visualViewport 가시영역 기준 — iOS는 키보드가 innerHeight를 안 줄이므로 필수.
+  const vv = window.visualViewport
+  const vvTop = vv?.offsetTop ?? 0
+  const vvHeight = vv?.height ?? window.innerHeight
   const half = PANEL_WIDTH / 2
   const left = Math.min(Math.max(position.left, half + 8), window.innerWidth - half - 8)
-  const top = Math.min(Math.max(position.top, 8), window.innerHeight - 104)
+  const top = Math.min(Math.max(position.top, vvTop + 8), vvTop + vvHeight - 104)
 
   return createPortal(
     <>

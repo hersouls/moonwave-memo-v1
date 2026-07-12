@@ -63,6 +63,7 @@ export default function App() {
   const initSettings = useSettingsStore((state) => state.initialize)
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen)
   const isTablet = useUIStore((state) => state.isTablet)
+  const isMobile = useUIStore((state) => state.isMobile)
   const tabletSidebarOpen = useUIStore((state) => state.tabletSidebarOpen)
   const isFocusMode = useUIStore((state) => state.isFocusMode)
   // Tablet rail keeps its own collapse state; mirror it for the content offset.
@@ -303,17 +304,42 @@ export default function App() {
     return () => mql.removeEventListener('change', handleChange)
   }, [])
 
-  // Global keyboard state sync via VisualViewport API
+  // Global keyboard/viewport tracker — 앱 생애주기 단일 소스(리마운트 없음).
+  // 키보드 감지: baseline(지금까지 본 최대 vv.height, = 키보드 없는 높이) 대비 축소량.
+  // visual만 주는 기기와 layout까지 함께 주는 기기 모두에서 신뢰 가능한 유일 신호가 vv.height라
+  // innerHeight는 쓰지 않는다(회전 시 stale 값으로 오탐 방지). 핀치/접근성 확대(scale>1)는 제외.
+  // --vvh/--vv-top으로 실제 가시영역도 노출. (알려진 한계: 키보드가 열린 채 회전하면 기준선이
+  // 축소 높이로 재설정돼 다음 키보드 토글 전까지 일시적으로 감지가 풀릴 수 있다.)
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
+    const root = document.documentElement
+    let baseline = vv.height
+    let lastWidth = vv.width
+    let lastOpen = false
+    let lastKb = 0
     const update = () => {
-      const isOpen = vv.height < window.innerHeight * 0.75
-      useUIStore.getState().setKeyboardState(isOpen, isOpen ? window.innerHeight - vv.height : 0)
+      const h = vv.height
+      if (vv.width !== lastWidth) { lastWidth = vv.width; baseline = h } // 회전: 기준선 재설정
+      if (h > baseline) baseline = h
+      const kbH = vv.scale > 1.01 ? 0 : Math.max(0, Math.round(baseline - h))
+      const isOpen = kbH > 120
+      root.style.setProperty('--vvh', `${Math.round(h)}px`)
+      root.style.setProperty('--vv-top', `${Math.round(vv.offsetTop)}px`)
+      // 값이 실제로 바뀔 때만 store 갱신 — URL바/핀치 스크롤마다 persist(localStorage) 쓰기 방지
+      if (isOpen !== lastOpen || kbH !== lastKb) {
+        lastOpen = isOpen
+        lastKb = kbH
+        useUIStore.getState().setKeyboardState(isOpen, isOpen ? kbH : 0)
+      }
     }
     update()
     vv.addEventListener('resize', update)
-    return () => vv.removeEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
   }, [])
 
   // Living Workspace: Cognitive load detector
@@ -388,8 +414,13 @@ export default function App() {
   return (
     <div
       className="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col"
-      // 오프라인 배너 높이 — Header가 배너 아래에 sticky로 붙도록 CSS 변수로 전달
-      style={!isOnline ? ({ '--offline-h': '36px' } as React.CSSProperties) : undefined}
+      style={{
+        // 오프라인 배너 높이 — Header가 배너 아래에 sticky로 붙도록 CSS 변수로 전달
+        ...(!isOnline ? { '--offline-h': '36px' } : {}),
+        // 콘텐츠 좌측 인셋(사이드바 폭) — 키보드 열림 시 fixed 에디터가 사이드바를 덮지 않도록.
+        // 모바일(<md)·포커스 모드엔 사이드바가 없으므로 0.
+        '--content-left': isFocusMode || isMobile ? '0px' : sidebarExpanded ? '16rem' : '4rem',
+      } as React.CSSProperties}
     >
       <AmbientBackground />
 
