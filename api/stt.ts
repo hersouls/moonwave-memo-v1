@@ -1,8 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { applyCors } from './lib/cors'
 
 export const config = { api: { bodyParser: { sizeLimit: '25mb' } } }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { audioBase64, fileName = 'audio.webm', language = 'ko', userApiKey } = req.body || {}

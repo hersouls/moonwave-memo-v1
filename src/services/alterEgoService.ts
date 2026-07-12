@@ -1,6 +1,7 @@
 import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { auth, callable } from '@/lib/firebase'
+import { apiUrl } from '@/lib/apiBase'
 
 // ─── Alter Ego (데미안) Co-Author Service ───────────
 
@@ -199,7 +200,7 @@ async function callLangGraphDemian(
     }))
 
   try {
-    const res = await fetch('/api/langchain/demian', {
+    const res = await fetch(apiUrl('/api/langchain/demian'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

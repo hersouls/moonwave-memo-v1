@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { applyCors } from './lib/cors'
 
 type Provider = 'openai' | 'anthropic' | 'gemini'
 
@@ -99,6 +100,7 @@ function getServerKey(provider: Provider): string | undefined {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { imageDataUrl, provider = 'openai', language = 'ko', userApiKey } = req.body || {}

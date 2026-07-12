@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { createChatModel, createEmbeddingModel, type Provider } from '../lib/models'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools'
+import { applyCors } from '../lib/cors'
 
 // ─── Cosine Similarity ──────────────────────────────
 
@@ -28,6 +29,7 @@ interface MemoSummary {
 }
 
 export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
+  if (applyCors(req, res)) return
   const { query, memoSummaries = [], provider = 'openai', userApiKey, topK = 10 } = req.body || {}
 
   if (!query || typeof query !== 'string') {

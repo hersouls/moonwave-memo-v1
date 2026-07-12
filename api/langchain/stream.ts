@@ -3,6 +3,7 @@ import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { createChatModel, type Provider } from '../lib/models'
 import { resolveApiKey } from '../lib/tools'
 import { ensureTracing } from '../lib/tracing'
+import { applyCors } from '../lib/cors'
 
 const PROMPTS: Record<string, string> = {
   readability: `You are a readability enhancement assistant for a memo app. Reformat the given memo content to improve readability using Markdown formatting. Rules:
@@ -17,6 +18,7 @@ const PROMPTS: Record<string, string> = {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   ensureTracing()

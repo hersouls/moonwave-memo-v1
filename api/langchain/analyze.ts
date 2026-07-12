@@ -3,6 +3,7 @@ import { Annotation, StateGraph } from '@langchain/langgraph'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { createChatModel, type Provider } from '../lib/models'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools'
+import { applyCors } from '../lib/cors'
 
 // ─── State Definition ───────────────────────────────
 
@@ -184,6 +185,7 @@ function buildGraph(provider: Provider, apiKey: string) {
 // ─── API Handler ────────────────────────────────────
 
 export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
+  if (applyCors(req, res)) return
   const { content, folderNames = [], provider = 'openai', userApiKey } = req.body || {}
 
   if (!content || typeof content !== 'string') {

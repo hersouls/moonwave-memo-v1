@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { applyCors } from './lib/cors'
 
 const MODELS = {
   openai: 'gpt-4.1-nano',
@@ -85,6 +86,7 @@ function getServerKey(provider: Provider): string | undefined {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { prompt, systemPrompt, provider = 'openai', maxTokens = 500, userApiKey } = req.body || {}

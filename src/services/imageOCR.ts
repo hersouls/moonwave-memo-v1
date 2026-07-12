@@ -1,5 +1,6 @@
 import type { OCRProvider } from '@/lib/types'
 import { auth, callable } from '@/lib/firebase'
+import { apiUrl } from '@/lib/apiBase'
 
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
@@ -230,7 +231,7 @@ export async function extractTextFromImage(
   // Try Vercel API proxy (server keys)
   if (!apiKey) {
     try {
-      const res = await fetch('/api/ocr', {
+      const res = await fetch(apiUrl('/api/ocr'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageDataUrl, provider, language }),

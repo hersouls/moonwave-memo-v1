@@ -70,19 +70,26 @@ npx firebase apps:android:sha:create 1:799940285288:android:02c44fd722aaa887e63c
 # 이후 google-services.json 재다운로드는 불필요 (SHA는 서버측 검증)
 ```
 
-## 7. APK 알려진 한계 (2026-07-12 코드 감사 — 미해결 항목)
+## 7. 서버 프록시 AI (구현됨 — API base + CORS)
+
+APK의 origin(`https://localhost`)에는 Vercel `/api`가 없으므로, 서버 프록시 호출 13곳(fetch 12 + `streamFetch` 내부)이 `src/lib/apiBase.ts`의 `apiUrl()`을 거친다 — 웹/Electron(호스팅 사이트 로드)은 기존처럼 상대경로(`API_ORIGIN=''`), Capacitor 네이티브는 배포 origin **`https://memo.moonwave.kr`**(빌드 시 `VITE_API_ORIGIN`으로 재정의 가능)을 붙인다.
+
+서버 측은 `api/lib/cors.ts`의 `applyCors(req, res)`를 **16개 핸들러 전부의 첫 문장**에서 호출해 WebView origin(`https://localhost`, `capacitor://localhost`)의 교차 출처 요청과 OPTIONS preflight를 허용한다. 새 핸들러를 추가할 때도 같은 가드를 넣어야 APK에서 동작한다.
+
+⚠️ **api/ 변경이 memo.moonwave.kr에 배포된 뒤에만** APK에서 동작한다 (CORS는 서버 응답 헤더).
+
+## 8. APK 알려진 한계 (2026-07-12 코드 감사 — 미해결 항목)
 
 | 한계 | 원인 | 해결 방향 |
 |------|------|-----------|
-| **서버 프록시 AI 기능 전부 불가** | 클라이언트 13곳이 상대경로 `/api/...`(Vercel 서버리스)를 호출 — APK의 origin `https://localhost`에는 존재하지 않음 | `VITE_API_BASE` 도입(웹은 '' 유지, APK는 배포 origin) + api 핸들러 CORS 허용 |
 | **파일 내보내기(백업 JSON·.md·.html·PNG) 무동작** | blob URL `<a download>` 클릭 방식 7곳 — WebView에는 다운로드 매니저 없음 | `Capacitor.isNativePlatform()` 분기로 `@capacitor/filesystem` 저장 또는 `navigator.share` |
 | 하드웨어 뒤로가기 기본 동작 | `@capacitor/app` 미설치 — 모달 열림 상태에서 뒤로가기가 히스토리 pop/앱 종료 | `@capacitor/app` 추가 + backButton 리스너 |
 | 재설치 후 기존 파일 접근 불가 | Android 11+ scoped storage — 공용 Documents의 파일 소유권이 재설치 시 소실(MediaStore) | 재설치 후 새 하위 폴더 지정 안내, 장기적으로 SAF 스파이크(§5) |
 | 외부 링크(`target="_blank"`) 무동작 | WebView는 멀티 윈도우 미지원 | `@capacitor/browser` 경유 |
 
-## 8. 아직 남은 것
+## 9. 아직 남은 것
 
-- §7 한계 해소 (우선순위: API base → 내보내기 → 뒤로가기).
+- §8 한계 해소 (우선순위: 내보내기 → 뒤로가기).
 - 앱 아이콘·스플래시(`@capacitor/assets`로 생성).
 - 릴리스 서명 keystore(+ SHA 등록, §6) + Play Store 또는 사이드로드 배포 결정.
 - SAF 직접 선택(§5) 실기기 스파이크.

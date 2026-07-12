@@ -4,6 +4,7 @@ import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { isAIAvailable } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
+import { apiUrl } from '@/lib/apiBase'
 
 export interface AIDigest {
   summary: string
@@ -55,7 +56,7 @@ export function useAIDigest() {
 
       setIsLoading(true)
       try {
-        const res = await fetch('/api/langchain/digest', {
+        const res = await fetch(apiUrl('/api/langchain/digest'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ weeklyMemos, provider, userApiKey }),

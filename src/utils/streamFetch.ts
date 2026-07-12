@@ -1,9 +1,11 @@
+import { apiUrl } from '../lib/apiBase'
+
 export async function streamFetch(
   url: string,
   body: Record<string, unknown>,
   onChunk: (text: string) => void,
 ): Promise<{ usingServerKey: boolean }> {
-  const res = await fetch(url, {
+  const res = await fetch(apiUrl(url), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

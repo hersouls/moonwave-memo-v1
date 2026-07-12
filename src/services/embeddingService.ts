@@ -1,5 +1,6 @@
 import { useSettingsStore } from '@/stores/settingsStore'
 import { auth, callable } from '@/lib/firebase'
+import { apiUrl } from '@/lib/apiBase'
 
 // ─── Embedding Service ──────────────────────────────
 // Computes and caches text embeddings via OpenAI text-embedding-3-small
@@ -53,7 +54,7 @@ async function callLangChainEmbedding(text: string): Promise<number[] | null> {
   const openaiKey = useSettingsStore.getState().settings.ai.openaiApiKey
 
   try {
-    const res = await fetch('/api/langchain/embedding', {
+    const res = await fetch(apiUrl('/api/langchain/embedding'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -119,7 +120,7 @@ export async function semanticSearchWithRAG(
   const userApiKey = ai.openaiApiKey || ai.anthropicApiKey || ai.geminiApiKey || undefined
 
   try {
-    const res = await fetch('/api/langchain/search', {
+    const res = await fetch(apiUrl('/api/langchain/search'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, memoSummaries, provider, userApiKey, topK }),

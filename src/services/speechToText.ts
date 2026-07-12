@@ -1,4 +1,5 @@
 import { auth, callable } from '@/lib/firebase'
+import { apiUrl } from '@/lib/apiBase'
 
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg']
@@ -118,7 +119,7 @@ export async function transcribeAudio(
         reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다'))
         reader.readAsDataURL(file)
       })
-      const res = await fetch('/api/stt', {
+      const res = await fetch(apiUrl('/api/stt'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audioBase64: base64, fileName: file.name, language }),

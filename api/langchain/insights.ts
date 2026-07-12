@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { createChatModel, type Provider } from '../lib/models'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools'
+import { applyCors } from '../lib/cors'
 
 // ─── AI Insights Endpoint ───────────────────────────
 
@@ -13,6 +14,7 @@ interface MemoInput {
 }
 
 export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
+  if (applyCors(req, res)) return
   const {
     memos = [],
     provider = 'openai',

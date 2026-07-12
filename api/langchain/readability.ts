@@ -2,8 +2,10 @@ import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { createChatModel, type Provider } from '../lib/models'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools'
+import { applyCors } from '../lib/cors'
 
 export default createHandler(async (req, res) => {
+  if (applyCors(req, res)) return
   const { content, provider = 'openai', userApiKey } = req.body || {}
   if (!content || content.length < 20) return res.json({ enhanced: '', usingServerKey: false })
 

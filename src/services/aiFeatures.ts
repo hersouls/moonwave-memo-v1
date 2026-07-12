@@ -4,6 +4,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { incrementAIUsage, isAILimitReached } from './aiUsage'
 import { generateCacheKey, getCached, setCache } from '@/utils/promptCache'
 import { streamFetch } from '@/utils/streamFetch'
+import { apiUrl } from '@/lib/apiBase'
 import type { AIProvider } from '@/lib/types'
 
 interface AIResponse {
@@ -131,7 +132,7 @@ async function callViaServerProxy(prompt: string, systemPrompt: string, provider
   }
 
   try {
-    const res = await fetch('/api/ai', {
+    const res = await fetch(apiUrl('/api/ai'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, systemPrompt, provider, maxTokens }),
@@ -193,7 +194,7 @@ async function callLangChain<T>(
   }
 
   try {
-    const res = await fetch(`/api/langchain/${endpoint}`, {
+    const res = await fetch(apiUrl(`/api/langchain/${endpoint}`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...body, provider, userApiKey }),
@@ -226,7 +227,7 @@ export async function analyzeMemo(
   const userApiKey = getUserApiKey(provider)
 
   try {
-    const res = await fetch('/api/langchain/analyze', {
+    const res = await fetch(apiUrl('/api/langchain/analyze'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -4,6 +4,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { parseChecklist } from '@/utils/checklistParser'
 import { isAIAvailable } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
+import { apiUrl } from '@/lib/apiBase'
 
 export interface AIBriefing {
   greeting: string
@@ -80,7 +81,7 @@ export function useAIBriefing() {
 
       setIsLoading(true)
       try {
-        const res = await fetch('/api/langchain/briefing', {
+        const res = await fetch(apiUrl('/api/langchain/briefing'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
