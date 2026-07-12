@@ -20,5 +20,5 @@ export {
   type ExportProgress,
 } from './syncFolderService'
 
-export { isElectron } from './platform'
+export { isElectron, isCapacitor } from './platform'
 export type { FileSyncTarget } from './FileSyncTarget'

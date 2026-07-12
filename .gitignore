@@ -46,3 +46,6 @@ Screenshot_*
 # Electron build outputs
 electron/out/
 release/
+
+# Capacitor native project (generated via `npx cap add android`; see docs/CAPACITOR_BUILD.md)
+/android/

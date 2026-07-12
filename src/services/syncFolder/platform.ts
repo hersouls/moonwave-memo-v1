@@ -7,14 +7,17 @@
  * reuse everything the Phase 1 web build already has. The service layer above talks
  * only to these functions and never branches on platform itself.
  */
+import { Capacitor } from '@capacitor/core'
 import type { FileSyncTarget } from './FileSyncTarget'
 import { FsaFileSyncTarget } from './fsaTarget'
 import { IpcFileSyncTarget } from './ipcTarget'
+import { CapacitorFileSyncTarget, DEFAULT_CAPACITOR_SUBDIR } from './capacitorTarget'
 
 /** Serializable reference to a chosen folder, persisted in IndexedDB (device-local). */
 export type PersistedRef =
   | { kind: 'fsa'; handle: FileSystemDirectoryHandle }
   | { kind: 'ipc'; path: string; name: string }
+  | { kind: 'capacitor'; subdir: string }
 
 function bridge(): NonNullable<Window['electronBridge']> | undefined {
   return typeof window !== 'undefined' ? window.electronBridge : undefined
@@ -24,9 +27,15 @@ export function isElectron(): boolean {
   return !!bridge()
 }
 
-/** True when this device can write to a local folder (Electron always; web = Chromium FSA). */
+/** True on a Capacitor native shell (Android/iOS APK). */
+export function isCapacitor(): boolean {
+  return Capacitor.isNativePlatform()
+}
+
+/** True when this device can write to a local folder (Electron / Capacitor / Chromium FSA). */
 export function isSyncFolderSupported(): boolean {
   if (bridge()) return true
+  if (Capacitor.isNativePlatform()) return true
   return typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function'
 }
 
@@ -46,6 +55,15 @@ export async function pickFolder(): Promise<PickResult | null> {
       target: new IpcFileSyncTarget(picked.path, b),
       ref: { kind: 'ipc', path: picked.path, name: picked.name },
       displayName: picked.name,
+    }
+  }
+  if (Capacitor.isNativePlatform()) {
+    // Mobile: a fixed public Documents subfolder (no SAF dialog in M1) that a background
+    // sync agent mirrors to NAS. §Phase 3 권장 경로. Arbitrary SAF pick is a later spike.
+    return {
+      target: new CapacitorFileSyncTarget(DEFAULT_CAPACITOR_SUBDIR),
+      ref: { kind: 'capacitor', subdir: DEFAULT_CAPACITOR_SUBDIR },
+      displayName: `Documents/${DEFAULT_CAPACITOR_SUBDIR}`,
     }
   }
   if (typeof window === 'undefined' || typeof window.showDirectoryPicker !== 'function') return null
@@ -74,6 +92,15 @@ export async function restoreTarget(ref: unknown): Promise<RestoreResult> {
       : { status: 'missing' }
   }
 
+  if (normalized.kind === 'capacitor') {
+    if (!Capacitor.isNativePlatform()) return { status: 'missing' } // configured on mobile, now web
+    return {
+      status: 'ok',
+      target: new CapacitorFileSyncTarget(normalized.subdir),
+      displayName: `Documents/${normalized.subdir}`,
+    }
+  }
+
   const handle = normalized.handle
   const perm = (await handle.queryPermission?.({ mode: 'readwrite' })) ?? 'prompt'
   return perm === 'granted'
@@ -90,6 +117,11 @@ export async function requestPermissionFor(ref: unknown): Promise<{ ok: boolean;
     const b = bridge()
     if (!b) return { ok: false }
     return { ok: true, target: new IpcFileSyncTarget(normalized.path, b), displayName: normalized.name }
+  }
+
+  if (normalized.kind === 'capacitor') {
+    if (!Capacitor.isNativePlatform()) return { ok: false }
+    return { ok: true, target: new CapacitorFileSyncTarget(normalized.subdir), displayName: `Documents/${normalized.subdir}` }
   }
 
   const handle = normalized.handle
@@ -127,6 +159,9 @@ function normalizeRef(ref: unknown): PersistedRef | null {
   const r = ref as Record<string, unknown>
   if (r.kind === 'ipc' && typeof r.path === 'string') {
     return { kind: 'ipc', path: r.path, name: String(r.name ?? r.path) }
+  }
+  if (r.kind === 'capacitor' && typeof r.subdir === 'string') {
+    return { kind: 'capacitor', subdir: r.subdir }
   }
   if (r.kind === 'fsa' && r.handle) {
     return { kind: 'fsa', handle: r.handle as FileSystemDirectoryHandle }

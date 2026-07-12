@@ -17,6 +17,7 @@ import { useSyncFolderStore } from '@/stores/syncFolderStore'
 import {
   isSyncFolderSupported,
   isElectron,
+  isCapacitor,
   pickSyncFolder,
   reconnectSyncFolder,
   disableSyncFolder,
@@ -193,7 +194,11 @@ export function SyncFolderSection() {
       <div className="p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm space-y-4">
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           메모를 지정한 폴더에 <code className="text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">.md</code> 파일로 자동 저장합니다.
-          {isElectron() ? ' 데스크톱 앱은 상시 접근하며 NAS 네트워크 폴더도 지정할 수 있습니다.' : ' 브라우저 탭이 열려 있을 때만 동작합니다.'}
+          {isElectron()
+            ? ' 데스크톱 앱은 상시 접근하며 NAS 네트워크 폴더도 지정할 수 있습니다.'
+            : isCapacitor()
+              ? ' 폰의 문서 폴더에 저장되며, Synology Drive 등 동기화 앱으로 NAS와 연결할 수 있습니다.'
+              : ' 브라우저 탭이 열려 있을 때만 동작합니다.'}
         </p>
 
         {/* ② 주 저장 폴더 */}
@@ -211,10 +216,12 @@ export function SyncFolderSection() {
               )}
             </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={handlePickFolder} disabled={busy}>
-            <FolderOpen className="w-4 h-4 mr-1.5" />
-            {folderName ? '폴더 변경' : '폴더 선택'}
-          </Button>
+          {!isCapacitor() && (
+            <Button variant="secondary" size="sm" onClick={handlePickFolder} disabled={busy}>
+              <FolderOpen className="w-4 h-4 mr-1.5" />
+              {folderName ? '폴더 변경' : '폴더 선택'}
+            </Button>
+          )}
         </div>
 
         {/* ③ 미러 폴더 (Electron 전용, NAS 등 복사 대상) */}
