@@ -32,7 +32,7 @@ import { useTiptapEditor } from '@/hooks/useTiptapEditor'
 import { AlterEgoPanel } from './AlterEgoPanel'
 import { EditorOutline } from './EditorOutline'
 import { analyzeSentiment } from '@/services/sentimentAnalysis'
-import { X, Heading2, List, CheckSquare, Code2, Quote, Minus, ListTree, Brain, Maximize2, MonitorPlay, History, Wand2, Download } from 'lucide-react'
+import { X, Heading2, List, CheckSquare, Code2, Quote, Minus, ListTree, Brain, Maximize2, MonitorPlay, History, Wand2, Download, Sparkles, Loader2 } from 'lucide-react'
 import { TimeMachineBanner } from './TimeMachineBanner'
 import { EphemeralBanner } from './EphemeralBanner'
 import { useMemoStore } from '@/stores/memoStore'
@@ -711,6 +711,44 @@ export function MemoEditor() {
     scheduleAutoSave()
   }
 
+  // 개별 편집기: 현재 메모 제목을 [폴더]_본문요약_YYMMDD 로 재생성(규칙 즉시 → AI 다듬기)
+  const [isRegeneratingTitle, setIsRegeneratingTitle] = useState(false)
+  const handleRegenerateTitle = useCallback(async () => {
+    const b = latestDataRef.current.body
+    if (!b.trim()) {
+      useToastStore.getState().showToast('본문을 입력하면 제목을 생성할 수 있습니다', 'info')
+      return
+    }
+    setIsRegeneratingTitle(true)
+    try {
+      const foldersNow = useFolderStore.getState().folders
+      const fid = latestDataRef.current.folderId
+      let newTitle = buildRuleTitle({ folderId: fid, createdAt: creationDateRef.current, body: b }, foldersNow)
+      setTitle(newTitle)
+      if (isAIAvailable()) {
+        const { keyword } = await summarizeTitleKeyword(b)
+        if (!isMountedRef.current) return
+        if (keyword) {
+          newTitle = composeTitle(getCategoryLabel(fid, foldersNow), keyword, formatTitleDate(creationDateRef.current))
+          setTitle(newTitle)
+          lastAITitleBodyRef.current = b // 자동 재요약 디바운스 중복 방지
+        }
+      }
+      const mid = latestDataRef.current.memoId
+      if (mid) {
+        await updateMemo(mid, { title: newTitle })
+        if (isMountedRef.current) setSaveStatus('saved')
+      } else {
+        setSaveStatus('modified')
+        scheduleAutoSave()
+      }
+    } catch {
+      if (isMountedRef.current) useToastStore.getState().showToast('제목 재생성에 실패했습니다', 'error')
+    } finally {
+      if (isMountedRef.current) setIsRegeneratingTitle(false)
+    }
+  }, [scheduleAutoSave, updateMemo])
+
   const currentFolder = folders.find((f) => f.id === folderId)
 
   // Stats: char count, reading time, checklist progress
@@ -766,17 +804,33 @@ export function MemoEditor() {
         </div>
       )}
 
-      {/* UX-18: maxLength={100} on title */}
-      <input
-        ref={titleRef}
-        type="text"
-        value={title}
-        onChange={(e) => handleTitleChange(e.target.value)}
-        placeholder="제목"
-        maxLength={100}
-        className="w-full text-[1.75rem] lg:text-[2rem] fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none mb-3"
-        style={{ fontFamily: editorFontFamily }}
-      />
+      {/* UX-18: maxLength={100} on title + 제목 재생성 버튼([폴더]_요약_YYMMDD) */}
+      <div className="flex items-start gap-2 mb-3">
+        <input
+          ref={titleRef}
+          type="text"
+          value={title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          placeholder="제목"
+          maxLength={100}
+          className="w-full text-[1.75rem] lg:text-[2rem] fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none"
+          style={{ fontFamily: editorFontFamily }}
+        />
+        <button
+          type="button"
+          onClick={handleRegenerateTitle}
+          disabled={isRegeneratingTitle || !body.trim()}
+          className="mt-1.5 shrink-0 flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-[var(--color-accent)] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-zinc-400 dark:text-zinc-500 dark:hover:bg-zinc-800"
+          aria-label="제목 재생성"
+          title="제목 재생성 (본문 요약 + 날짜)"
+        >
+          {isRegeneratingTitle ? (
+            <Loader2 className="h-[18px] w-[18px] animate-spin" />
+          ) : (
+            <Sparkles className="h-[18px] w-[18px]" />
+          )}
+        </button>
+      </div>
 
       {isTiptap ? (
         tiptapBodyContent
