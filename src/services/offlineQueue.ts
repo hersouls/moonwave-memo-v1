@@ -19,9 +19,12 @@ export async function enqueueSync(
     await db.pendingSyncs.add({ type, action, syncId, createdAt: nowISO() })
   }
 
-  // Request background sync if available
+  // Request background sync if available. Packaged shells (Electron/Capacitor)
+  // never register a SW, and `ready` never resolves without one (§4.8) — so only
+  // proceed when a registration actually exists.
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
     try {
+      if (!(await navigator.serviceWorker.getRegistration())) return
       const reg = await navigator.serviceWorker.ready
       await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-memos')
     } catch { /* not supported */ }

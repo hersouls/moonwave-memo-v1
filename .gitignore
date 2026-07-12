@@ -47,5 +47,5 @@ Screenshot_*
 electron/out/
 release/
 
-# Capacitor native project (generated via `npx cap add android`; see docs/CAPACITOR_BUILD.md)
-/android/
+# Capacitor native project: committed (manifest customized — docs/CAPACITOR_BUILD.md).
+# Build outputs/local config are excluded by android/.gitignore (build/, local.properties 등).

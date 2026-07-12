@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import { router } from './router'
 import { usePwaUpdateStore } from './stores/pwaUpdateStore'
 import { initSentry } from './lib/sentry'
@@ -14,10 +15,10 @@ initSentry()
 // offline without the Pretendard CDN (§4.8).
 loadBundledFonts()
 
-// Service Worker for PWA — skipped in the Electron desktop app (§4.8): a packaged
-// app served over a custom protocol has no use for the offline SW, and registering
-// it there would fail or interfere with the native file backend.
-if ('serviceWorker' in navigator && !window.electronBridge) {
+// Service Worker for PWA — skipped in the packaged shells (§4.8): Electron and
+// Capacitor serve the bundle locally, so the offline SW adds nothing there and
+// registering it would interfere (duplicate cache, first-launch claim() reload).
+if ('serviceWorker' in navigator && !window.electronBridge && !Capacitor.isNativePlatform()) {
   if (import.meta.env.PROD) {
     let refreshing = false
     navigator.serviceWorker.addEventListener('controllerchange', () => {

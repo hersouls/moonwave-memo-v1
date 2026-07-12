@@ -21,7 +21,7 @@
     "dist:mac": "npm run build && npm run electron:build && electron-builder --mac --publish never",
     "dist:linux": "npm run build && npm run electron:build && electron-builder --linux --publish never",
     "cap:add": "npx cap add android",
-    "cap:sync": "npm run build && npx cap sync android",
+    "cap:sync": "npm run build && node scripts/strip-dist-extras.mjs && npx cap sync android",
     "cap:open": "npx cap open android"
   },
   "dependencies": {
