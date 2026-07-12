@@ -5,6 +5,7 @@
 /* Foundation CSS — @layer for priority control */
 @layer foundation {
   @import "./styles/foundation-tokens.css";
+  @import "./styles/foundation-card.css";
   @import "./styles/foundation-dialog.css";
   @import "./styles/foundation-bottomsheet.css";
   @import "./styles/foundation-toast.css";

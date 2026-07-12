@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { format, parseISO, isToday } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +15,12 @@ interface CalendarMemoListProps {
 export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps) {
   const navigate = useNavigate()
 
+  // 데스크톱에서 카드가 내부 스크롤 컨테이너 — 날짜 전환 시 스크롤 위치 초기화
+  const cardRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    cardRef.current?.scrollTo({ top: 0 })
+  }, [selectedDate])
+
   if (!selectedDate) {
     return (
       <div className="card p-4">
@@ -27,23 +34,45 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
     )
   }
 
-  const dateLabel = format(parseISO(selectedDate), 'M월 d일 (EEEE)', { locale: ko })
-  const isSelectedToday = isToday(parseISO(selectedDate))
+  const selected = parseISO(selectedDate)
+  const isSelectedToday = isToday(selected)
 
   return (
-    <div className="card p-4">
+    // .card는 overflow:hidden — 스크롤은 내부 요소로 분리해야 동작한다
+    <div className="card lg:flex lg:max-h-[calc(100vh-6.5rem)] lg:flex-col">
+      <div
+        ref={cardRef}
+        className="p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain"
+      >
       {/* 날짜 변경 시 콘텐츠 전체가 부드럽게 등장 */}
       <div
         key={selectedDate}
-        className="animate-in fade-in slide-in-from-bottom-1 duration-200 ease-enter"
+        className="animate-in fade-in duration-200 ease-enter motion-safe:slide-in-from-bottom-1"
       >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {dateLabel}
-          </h3>
-          <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
-            {memos.length}개 메모
-          </span>
+        {/* 헤더: 날짜 위계 + 오늘 배지 + 카운트 필, 데스크톱 내부 스크롤에서 sticky */}
+        <div className="-mx-4 mb-3 border-b border-[var(--card-hairline)] px-4 pb-3 lg:sticky lg:top-0 lg:z-10 lg:-mt-4 lg:bg-[var(--card-bg-default)] lg:pt-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-baseline gap-1.5">
+              <h3 className="shrink-0 text-[15px] font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100">
+                {format(selected, 'M월 d일', { locale: ko })}
+              </h3>
+              <span className="truncate text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                <span className="fold:hidden">{format(selected, 'EEEE', { locale: ko })}</span>
+                <span className="hidden fold:inline">{format(selected, 'EEE', { locale: ko })}</span>
+              </span>
+              {isSelectedToday && (
+                <span className="shrink-0 rounded-md bg-primary-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary-600 dark:bg-primary-400/15 dark:text-primary-400">
+                  오늘
+                </span>
+              )}
+            </div>
+            <span
+              aria-live="polite"
+              className="shrink-0 rounded-full bg-[var(--color-bg-tertiary)] px-2 py-0.5 text-[11px] font-medium tabular-nums text-[var(--color-text-secondary)]"
+            >
+              {memos.length}개<span className="fold:hidden"> 메모</span>
+            </span>
+          </div>
         </div>
 
         {memos.length === 0 ? (
@@ -60,7 +89,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
               isSelectedToday ? (
                 <button
                   onClick={() => navigate('/memo/new')}
-                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                 >
                   <Pencil className="h-4 w-4" />
                   메모 작성
@@ -73,7 +102,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
             {memos.map((memo, i) => (
               <div
                 key={memo.id}
-                className="animate-in fade-in slide-in-from-bottom-1 fill-mode-backwards duration-200 ease-enter"
+                className="animate-in fade-in fill-mode-backwards duration-200 ease-enter motion-safe:slide-in-from-bottom-1"
                 style={{ animationDelay: `${Math.min(i, 6) * 25}ms` }}
               >
                 <MemoCard memo={memo} viewMode="list" />
@@ -81,6 +110,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   )

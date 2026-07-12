@@ -15,18 +15,20 @@ export function CalendarPage() {
   const selectedMemos = selectedDate ? getMemosForDate(selectedDate) : []
 
   return (
-    <div className="mx-auto w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl px-4 py-4 lg:px-8 lg:py-6">
-      <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-        <div className="lg:w-[360px] lg:shrink-0 lg:sticky lg:top-0 xl:w-[420px]">
+    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-3xl lg:max-w-7xl lg:px-6 lg:py-6 xl:px-8 fold:px-3">
+      {/* 데스크톱 면적 역전: 캘린더 = flex-1 주인공, 선택 날짜 패널 = 우측 고정폭 인스펙터 */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+        <div className="w-full lg:min-w-0 lg:flex-1">
           <CalendarGrid
             currentMonth={currentMonth}
             onMonthChange={setCurrentMonth}
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
             memoCounts={memoCounts}
+            getMemosForDate={getMemosForDate}
           />
         </div>
-        <div className="lg:flex-1 lg:min-w-0">
+        <div className="w-full lg:sticky lg:top-20 lg:w-[320px] lg:shrink-0 xl:w-[360px]">
           <CalendarMemoList
             memos={selectedMemos}
             selectedDate={selectedDate}

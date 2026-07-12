@@ -45,9 +45,18 @@ export function useCalendarMemos(currentMonth: Date): CalendarMemoData {
     return counts
   }, [memosByDate])
 
+  const monthPrefix = format(monthStart, 'yyyy-MM')
+
   const getMemosForDate = useCallback(
-    (dateStr: string): Memo[] => memosByDate.get(dateStr) || [],
-    [memosByDate]
+    (dateStr: string): Memo[] => {
+      const inMonth = memosByDate.get(dateStr)
+      if (dateStr.startsWith(monthPrefix)) return inMonth || []
+      // 표시 월 밖 날짜(월 이동 후에도 유지되는 선택)도 정직한 데이터를 반환
+      return activeMemos.filter(
+        (m) => format(new Date(m.createdAt), 'yyyy-MM-dd') === dateStr
+      )
+    },
+    [memosByDate, monthPrefix, activeMemos]
   )
 
   return { memoCounts, getMemosForDate }
