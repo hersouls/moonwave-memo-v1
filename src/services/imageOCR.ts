@@ -5,7 +5,10 @@ import { apiUrl } from '@/lib/apiBase'
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
 const ALLOWED_MIME_PREFIXES = ['image/']
-const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB (direct/personal-key path)
+// Keyless Vercel proxy path is bounded by Vercel's ~4.5MB request-body limit. The data
+// URL is base64 text, so ~4.4M chars ≈ 4.4MB of body; cap conservatively at ~3.3M chars.
+const VERCEL_PROXY_MAX_CHARS = 3.3 * 1024 * 1024
 
 const OPENAI_CHAT_API_URL = 'https://api.openai.com/v1/chat/completions'
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
@@ -230,18 +233,28 @@ export async function extractTextFromImage(
 
   // Try Vercel API proxy (server keys)
   if (!apiKey) {
+    // Vercel rejects request bodies over ~4.5MB with 413 before the handler runs. The
+    // data URL is already base64 (+33%), so guard on its length to fail with a clear,
+    // actionable message instead of the generic "unavailable" error below.
+    if (imageDataUrl.length > VERCEL_PROXY_MAX_CHARS) {
+      throw new Error('이미지가 서버 업로드 한도(약 3MB)를 초과합니다. 설정에서 API 키를 등록하면 더 큰 이미지도 인식할 수 있습니다.')
+    }
+    let proxyRes: Response | null = null
     try {
-      const res = await fetch(apiUrl('/api/ocr'), {
+      proxyRes = await fetch(apiUrl('/api/ocr'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageDataUrl, provider, language }),
         signal,
       })
-      if (res.ok) {
-        const data = await res.json()
-        return { text: data.text || '', provider }
-      }
-    } catch { /* fall through */ }
+    } catch { /* network error → fall through to direct path */ }
+    if (proxyRes?.ok) {
+      const data = await proxyRes.json()
+      return { text: data.text || '', provider }
+    }
+    if (proxyRes?.status === 413) {
+      throw new Error('이미지가 서버 업로드 한도를 초과합니다. 설정에서 API 키를 등록하면 더 큰 이미지도 인식할 수 있습니다.')
+    }
   }
 
   // Fallback to direct API calls with user-provided key

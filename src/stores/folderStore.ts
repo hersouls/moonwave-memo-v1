@@ -4,7 +4,18 @@ import type { Folder } from '@/lib/types'
 import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 import * as database from '@/services/database'
-import { pushFolder, deleteFolderFromCloud } from '@/services/firestoreSync'
+import { pushFolder, pushMemo, deleteFolderFromCloud } from '@/services/firestoreSync'
+import { useUIStore } from './uiStore'
+
+// Heal a persisted activeFolderId that points at a folder deleted while this device
+// was away (locally or via remote sync): once the real folder list loads, a filter
+// referencing a nonexistent id would strand the memo list on a permanently empty view.
+function reconcileActiveFolder(folders: Folder[]): void {
+  const active = useUIStore.getState().activeFolderId
+  if (active != null && !folders.some((f) => f.id === active)) {
+    useUIStore.getState().setActiveFolderId(null)
+  }
+}
 
 interface FolderState {
   folders: Folder[]
@@ -31,6 +42,7 @@ export const useFolderStore = create<FolderState>()(
         try {
           const folders = await database.getAllFolders()
           set({ folders, isLoading: false })
+          reconcileActiveFolder(folders)
         } catch (err) {
           console.error('Failed to initialize folders:', err)
           set({ isLoading: false })
@@ -41,6 +53,7 @@ export const useFolderStore = create<FolderState>()(
         try {
           const folders = await database.getAllFolders()
           set({ folders })
+          reconcileActiveFolder(folders)
         } catch (err) {
           console.error('Failed to refresh folders:', err)
         }
@@ -90,10 +103,32 @@ export const useFolderStore = create<FolderState>()(
         const syncId = folder?.syncId
 
         try {
-          await database.deleteFolder(id)
+          // Capture the folder's memos before deletion so we can push their relocation
+          // to the cloud — otherwise their cloud docs keep the dead folderSyncId and a
+          // fresh device would show them folderless.
+          const affected = await database.getMemosByFolderId(id)
+          await database.deleteFolder(id, { bumpMemos: true })
           set((state) => ({
             folders: state.folders.filter((f) => f.id !== id),
           }))
+
+          // Re-read relocated memos into the memo store (they now point at the default
+          // folder) and push each so the cloud folderSyncId is rewritten.
+          const { useMemoStore } = await import('./memoStore')
+          await useMemoStore.getState().refreshFromDb()
+          await Promise.all(
+            affected.map(async (m) => {
+              if (m.id == null) return
+              const fresh = await database.getMemo(m.id)
+              if (fresh) pushMemo(fresh).catch(console.error)
+            })
+          )
+
+          // Clear a now-dead active filter so the memo list isn't stuck on an empty view.
+          if (useUIStore.getState().activeFolderId === id) {
+            useUIStore.getState().setActiveFolderId(null)
+          }
+
           if (syncId) deleteFolderFromCloud(syncId).catch(console.error)
         } catch (err) {
           console.error('Failed to delete folder:', err)

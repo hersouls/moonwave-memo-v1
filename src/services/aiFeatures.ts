@@ -22,7 +22,10 @@ function getAISettings() {
   }
 }
 
-function getUserApiKey(provider: AIProvider): string | undefined {
+// Exported so other client callers (Demian, briefing, digest, insights) select the key
+// that MATCHES the requested provider instead of a provider-blind first-non-empty key —
+// sending e.g. an Anthropic key to an OpenAI endpoint 401s and silently kills the feature.
+export function getUserApiKey(provider: AIProvider): string | undefined {
   const { openaiKey, anthropicKey, geminiKey } = getAISettings()
   switch (provider) {
     case 'openai': return openaiKey || undefined
@@ -274,12 +277,16 @@ export async function suggestTags(content: string): Promise<{ tags: string[]; er
   if (cached) return cached
 
   // Try LangChain endpoint first
-  const { data } = await callLangChain<{ tags: string[] }>('tags', { content: content.slice(0, 1000) })
+  const { data, usingServerKey } = await callLangChain<{ tags: string[] }>('tags', { content: content.slice(0, 1000) })
   if (data?.tags && data.tags.length > 0) {
     const result = { tags: data.tags }
     setCache(cacheKey, result)
     return result
   }
+  // The server already answered with its own key (and was counted). A well-formed empty
+  // result means "no tags for this content" — don't fall through to a SECOND server call
+  // that would double-count the quota and issue a duplicate LLM request.
+  if (usingServerKey) return { tags: [] }
 
   // Fallback to direct call
   const systemPrompt = `You are a tag suggestion assistant for a Korean memo app. Given the memo content, suggest 3-5 relevant tags in Korean. Return ONLY a JSON array of strings, no other text. Example: ["프로젝트","아이디어","개발"]`
@@ -310,12 +317,13 @@ export async function summarizeMemo(content: string): Promise<{ summary: string;
   if (cached) return cached
 
   // Try LangChain endpoint first
-  const { data } = await callLangChain<{ summary: string }>('summarize', { content: content.slice(0, 3000) })
+  const { data, usingServerKey } = await callLangChain<{ summary: string }>('summarize', { content: content.slice(0, 3000) })
   if (data?.summary) {
     const result = { summary: data.summary }
     setCache(cacheKey, result)
     return result
   }
+  if (usingServerKey) return { summary: '' } // already counted — no double charge/call
 
   // Fallback to direct call
   const systemPrompt = `You are a summarization assistant for a Korean memo app. Summarize the given memo content in 2-3 concise sentences in Korean. Focus on the key points and main ideas. Return only the summary text.`
@@ -369,6 +377,8 @@ export async function autocomplete(_content: string, cursorContext: string): Pro
   return { suggestion: result.text }
 }
 
+const READABILITY_LIMIT = 5000
+
 export async function enhanceReadability(content: string): Promise<{ enhanced: string; error?: string }> {
   if (!content.trim() || content.length < 20) return { enhanced: '' }
 
@@ -376,13 +386,23 @@ export async function enhanceReadability(content: string): Promise<{ enhanced: s
   const cached = getCached<{ enhanced: string }>(cacheKey)
   if (cached) return cached
 
+  // Only the first 5000 chars are sent to the model (cost cap). The caller REPLACES the
+  // whole body with our result, so we must re-append the untouched tail here — otherwise
+  // everything past char 5000 is silently deleted on a long memo (permanent data loss).
+  const tail = content.length > READABILITY_LIMIT ? '\n\n' + content.slice(READABILITY_LIMIT) : ''
+  const warnTruncated = () => {
+    if (tail) useToastStore.getState().showToast('긴 메모라 앞부분 5000자만 AI 편집했습니다. 나머지는 그대로 유지됩니다.', 'info')
+  }
+
   // Try LangChain endpoint first
-  const { data } = await callLangChain<{ enhanced: string }>('readability', { content: content.slice(0, 5000) })
+  const { data, usingServerKey } = await callLangChain<{ enhanced: string }>('readability', { content: content.slice(0, READABILITY_LIMIT) })
   if (data?.enhanced) {
-    const result = { enhanced: data.enhanced }
+    const result = { enhanced: data.enhanced + tail }
     setCache(cacheKey, result)
+    warnTruncated()
     return result
   }
+  if (usingServerKey) return { enhanced: '' } // already counted — no double charge/call
 
   // Fallback to direct call
   const systemPrompt = `You are a readability enhancement assistant for a memo app. Reformat the given memo content to improve readability using Markdown formatting. Rules:
@@ -394,10 +414,11 @@ export async function enhanceReadability(content: string): Promise<{ enhanced: s
 - Write in the same language as the input
 - Return ONLY the reformatted content, no explanations`
 
-  const result = await callAI(content.slice(0, 5000), systemPrompt, 2000)
+  const result = await callAI(content.slice(0, READABILITY_LIMIT), systemPrompt, 2000)
   if (result.error) return { enhanced: '', error: result.error }
-  const enhancedResult = { enhanced: result.text }
+  const enhancedResult = { enhanced: result.text + tail }
   setCache(cacheKey, enhancedResult)
+  warnTruncated()
   return enhancedResult
 }
 
@@ -438,7 +459,7 @@ export async function classifyMemo(
   if (cached) return cached
 
   // Try LangChain endpoint first
-  const { data } = await callLangChain<{ folder: string | null; tags: string[]; title: string }>(
+  const { data, usingServerKey } = await callLangChain<{ folder: string | null; tags: string[]; title: string }>(
     'classify',
     { content: text.slice(0, 1000), folderNames },
   )
@@ -446,6 +467,7 @@ export async function classifyMemo(
     setCache(cacheKey, data)
     return data
   }
+  if (usingServerKey) return { folder: null, tags: [], title: '' } // already counted
 
   // Fallback to direct call
   const systemPrompt = `You are a memo classification assistant for a Korean memo app. Given the user's raw text and the available folder list, classify it automatically.
@@ -465,7 +487,12 @@ Rules:
   if (aiResult.error) return { folder: null, tags: [], title: '', error: aiResult.error }
 
   try {
-    const parsed = JSON.parse(aiResult.text)
+    // Extract the JSON object first — Anthropic/Gemini often wrap it in ```json fences
+    // or a leading sentence, which would make a raw JSON.parse throw and silently drop
+    // the classification (as every other parse site in this codebase already handles).
+    const match = aiResult.text.match(/\{[\s\S]*\}/)
+    if (!match) return { folder: null, tags: [], title: '' }
+    const parsed = JSON.parse(match[0])
     const result = {
       folder: typeof parsed.folder === 'string' ? parsed.folder : null,
       tags: Array.isArray(parsed.tags) ? parsed.tags.filter((t: unknown): t is string => typeof t === 'string').slice(0, 5) : [],

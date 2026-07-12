@@ -195,10 +195,20 @@ export async function addMemo(memo: Omit<Memo, 'id'>): Promise<number> {
 }
 
 export async function updateMemo(id: number, updates: Partial<Memo>): Promise<void> {
+  // updatedAt is the last-write-wins sync key. Local edits leave it unset so we
+  // stamp `now`, but remote-apply paths pass the writer's updatedAt explicitly so
+  // the local replica adopts the sender's clock instead of the receiver's.
   await db.memos.update(id, {
     ...updates,
-    updatedAt: nowISO(),
+    updatedAt: updates.updatedAt ?? nowISO(),
   })
+}
+
+// Write device-local memo metadata (accessLog, syncId backfill) WITHOUT advancing
+// updatedAt. Such fields are never uploaded (pushMemo excludes them), so touching
+// the LWW timestamp would falsely mark the memo newer and reject real remote edits.
+export async function updateMemoLocalMeta(id: number, changes: Partial<Memo>): Promise<void> {
+  await db.memos.update(id, changes)
 }
 
 export async function softDeleteMemo(id: number): Promise<void> {
@@ -216,19 +226,28 @@ export async function restoreMemo(id: number): Promise<void> {
 }
 
 export async function permanentDeleteMemo(id: number): Promise<void> {
-  await db.memoImages.where('memoId').equals(id).delete()
-  await db.memoVersions.where('memoId').equals(id).delete()
-  await db.memos.delete(id)
+  // Atomic: a crash mid-delete must not strip images/versions off a memo that
+  // survives, nor leave orphaned child rows behind. Also drop the cached embedding so
+  // it doesn't accumulate for deleted memos.
+  await db.transaction('rw', db.memos, db.memoImages, db.memoVersions, db.embeddings, async () => {
+    await db.memoImages.where('memoId').equals(id).delete()
+    await db.memoVersions.where('memoId').equals(id).delete()
+    await db.embeddings.delete(id)
+    await db.memos.delete(id)
+  })
 }
 
 export async function emptyTrash(): Promise<void> {
-  const deleted = await db.memos.filter((m) => !!m.deletedAt).toArray()
-  const ids = deleted.map((m) => m.id!).filter(Boolean)
-  for (const id of ids) {
-    await db.memoImages.where('memoId').equals(id).delete()
-    await db.memoVersions.where('memoId').equals(id).delete()
-  }
-  await db.memos.bulkDelete(ids)
+  await db.transaction('rw', db.memos, db.memoImages, db.memoVersions, db.embeddings, async () => {
+    const deleted = await db.memos.filter((m) => !!m.deletedAt).toArray()
+    const ids = deleted.map((m) => m.id!).filter(Boolean)
+    for (const id of ids) {
+      await db.memoImages.where('memoId').equals(id).delete()
+      await db.memoVersions.where('memoId').equals(id).delete()
+      await db.embeddings.delete(id)
+    }
+    await db.memos.bulkDelete(ids)
+  })
 }
 
 export async function getMemosByFolder(folderId: number): Promise<Memo[]> {
@@ -288,19 +307,21 @@ export async function addFolder(folder: Omit<Folder, 'id'>): Promise<number> {
 export async function updateFolder(id: number, updates: Partial<Folder>): Promise<void> {
   await db.folders.update(id, {
     ...updates,
-    updatedAt: nowISO(),
+    updatedAt: updates.updatedAt ?? nowISO(),
   })
 }
 
-export async function deleteFolder(id: number): Promise<void> {
-  // Move all memos from this folder to the default folder
+export async function deleteFolder(id: number, opts?: { bumpMemos?: boolean }): Promise<void> {
+  // Move all memos from this folder to the default folder. When the deletion is
+  // user-initiated (bumpMemos) we advance updatedAt so the relocation wins LWW and
+  // can be pushed; when it's a remote-applied delete we leave updatedAt untouched to
+  // avoid a re-push storm (the originating device already pushed the relocation).
+  const relocate = opts?.bumpMemos
+    ? { folderId: 0 as number | null, updatedAt: nowISO() }
+    : { folderId: 0 as number | null }
   const defaultFolder = await db.folders.filter((f) => f.isDefault).first()
-  if (defaultFolder?.id) {
-    await db.memos.where('folderId').equals(id).modify({ folderId: defaultFolder.id })
-  } else {
-    // Fallback: set folderId to null so memos are not orphaned
-    await db.memos.where('folderId').equals(id).modify({ folderId: null })
-  }
+  relocate.folderId = defaultFolder?.id ?? null
+  await db.memos.where('folderId').equals(id).modify(relocate)
   await db.folders.delete(id)
 }
 

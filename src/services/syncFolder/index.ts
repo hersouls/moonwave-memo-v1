@@ -20,6 +20,8 @@ export {
   removeMirrorFolder,
   flushPendingFileOps,
   type ExportProgress,
+  type PickFolderResult,
+  type AddMirrorResult,
 } from './syncFolderService'
 
 export { isElectron, isCapacitor } from './platform'

@@ -113,7 +113,14 @@ export const useMemoStore = create<MemoState>()(
           const id = await database.addMemo(memo)
           const newMemo = await database.getMemo(id)
           if (newMemo) {
-            set((state) => ({ memos: [...state.memos, newMemo], error: null }))
+            // Upsert by id: a sync-triggered refreshFromDb can replace the array with
+            // DB contents that already include this row between the add and this set().
+            set((state) => ({
+              memos: state.memos.some((m) => m.id === newMemo.id)
+                ? state.memos.map((m) => (m.id === newMemo.id ? newMemo : m))
+                : [...state.memos, newMemo],
+              error: null,
+            }))
             pushMemo(newMemo).catch(console.error)
             notifyMemoSaved(newMemo)
           }
@@ -312,10 +319,14 @@ export const useMemoStore = create<MemoState>()(
           if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
         } catch (err) {
           console.error('Failed to toggle star:', err)
-          // Rollback: use inverse of newStarred to avoid stale closure
+          // Rollback the full optimistic change — including the ephemeralExpiresAt we
+          // optimistically cleared — else the memo silently keeps its expiry and the GC
+          // trashes it later even though the UI shows it as saved.
           set((state) => ({
             memos: state.memos.map((m) =>
-              m.id === id ? { ...m, isStarred: !newStarred } : m
+              m.id === id
+                ? { ...m, isStarred: !newStarred, ...(clearEphemeral ? { ephemeralExpiresAt: memo.ephemeralExpiresAt } : {}) }
+                : m
             ),
           }))
         }
@@ -381,7 +392,10 @@ export const useMemoStore = create<MemoState>()(
           // Cap at 20 entries (remove oldest)
           while (updatedLog.length > 20) updatedLog.shift()
 
-          await database.updateMemo(memoId, { accessLog: updatedLog })
+          // accessLog is device-local view telemetry (never uploaded). Writing it via
+          // updateMemoLocalMeta keeps updatedAt untouched, so merely opening a memo does
+          // NOT poison last-write-wins and reject genuinely newer remote edits.
+          await database.updateMemoLocalMeta(memoId, { accessLog: updatedLog })
           set((state) => ({
             memos: state.memos.map((m) =>
               m.id === memoId ? { ...m, accessLog: updatedLog } : m

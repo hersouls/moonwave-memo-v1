@@ -8,7 +8,10 @@ interface DailyUsage {
 }
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+  // Local calendar date, not UTC. toISOString() is UTC, so for KST (UTC+9) users the
+  // "day" would roll at 09:00 local — a user who hits the limit at night stays blocked
+  // through the next morning. 'en-CA' yields YYYY-MM-DD in the local timezone.
+  return new Date().toLocaleDateString('en-CA')
 }
 
 export function getAIDailyUsage(): DailyUsage {

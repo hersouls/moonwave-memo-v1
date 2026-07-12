@@ -21,15 +21,20 @@ const MAX_SEGMENT_LEN = 80
 // separately below. Raw control chars can't occur in a single-line title input.
 const INVALID_CHARS = /[\\/:*?"<>|]/g
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
+// 'assets' is the reserved image directory; a folder/file literally named 'assets'
+// would collide with it AND be dropped by the Electron watcher's exclusion rule
+// (electron/main.ts), so external edits/deletes of those memos would never import.
+const RESERVED_NAMES = /^assets$/i
 
 /** Sanitize a single path segment (a file base name or a directory name). */
 export function sanitizeSegment(name: string, fallback = '무제'): string {
   let s = (name ?? '').normalize('NFC').replace(INVALID_CHARS, ' ')
   s = s.replace(/\s+/g, ' ').trim()
-  // Windows forbids trailing dots and spaces
-  s = s.replace(/[. ]+$/g, '').trim()
+  // Windows forbids trailing dots and spaces; leading dots make the file hidden on
+  // *nix/macOS and match the watcher's dotfile exclusion, so strip those too.
+  s = s.replace(/^[. ]+/, '').replace(/[. ]+$/g, '').trim()
   if (!s) return fallback
-  if (RESERVED.test(s)) s = `_${s}`
+  if (RESERVED.test(s) || RESERVED_NAMES.test(s)) s = `_${s}`
   if (s.length > MAX_SEGMENT_LEN) s = s.slice(0, MAX_SEGMENT_LEN).trim()
   return s || fallback
 }

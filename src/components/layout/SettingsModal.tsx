@@ -4,6 +4,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Clock,
   Cloud,
   CloudOff,
@@ -382,6 +383,7 @@ export function SettingsModal() {
   const addFolder = useFolderStore((s) => s.addFolder)
   const updateFolder = useFolderStore((s) => s.updateFolder)
   const deleteFolder = useFolderStore((s) => s.deleteFolder)
+  const reorderFolders = useFolderStore((s) => s.reorderFolders)
   const memos = useMemoStore((s) => s.memos)
 
   // Active (non-deleted) memo count per folder, shown in the folder management list.
@@ -651,6 +653,17 @@ export function SettingsModal() {
     showToast(`'${pendingDeleteFolder.name}' 폴더가 삭제되었습니다`, 'info')
     setShowDeleteFolderConfirm(false)
     setPendingDeleteFolder(null)
+  }
+
+  // Folder reorder — swap with the adjacent folder and persist the new order.
+  // `folders` is already in sortOrder order (system folder excluded); reorderFolders
+  // reassigns sortOrder = index to the passed ids and syncs to the cloud.
+  const moveFolder = (index: number, direction: -1 | 1) => {
+    const target = index + direction
+    if (target < 0 || target >= folders.length) return
+    const ids = folders.map((f) => f.id!)
+    ;[ids[index], ids[target]] = [ids[target], ids[index]]
+    reorderFolders(ids)
   }
 
   const formatDate = (dateStr?: string) => {
@@ -1209,7 +1222,7 @@ export function SettingsModal() {
             </div>
           )}
 
-          {folders.map((folder) => (
+          {folders.map((folder, index) => (
             <div
               key={folder.id}
               className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50"
@@ -1285,6 +1298,25 @@ export function SettingsModal() {
                   </span>
                   {!folder.isSystem && (
                     <div className="flex items-center gap-1">
+                      {/* 순서 변경 ▲▼ — 인접 폴더와 스왑 (경계에서 비활성) */}
+                      <div className="flex flex-col -my-2">
+                        <button
+                          onClick={() => moveFolder(index, -1)}
+                          disabled={index === 0}
+                          className="flex items-center justify-center w-7 h-5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                          aria-label={`${folder.name} 위로 이동`}
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => moveFolder(index, 1)}
+                          disabled={index === folders.length - 1}
+                          className="flex items-center justify-center w-7 h-5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                          aria-label={`${folder.name} 아래로 이동`}
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       {/* 40px 최소 터치 타깃 확보 (-m으로 레이아웃 밀도 유지) */}
                       <button
                         onClick={() => {

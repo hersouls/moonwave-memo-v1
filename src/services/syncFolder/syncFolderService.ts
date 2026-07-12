@@ -53,6 +53,8 @@ import { serializeMemo, serializeMemoHtml, deserializeMemo, type ImageResolver, 
 import { contentHash } from './hash'
 import { sanitizeSegment } from './filename'
 import { decideImport, type FileEvent } from './importer'
+import { pathsOverlap } from './pathOverlap'
+import { planWatch } from './watchPlan'
 import { planRetry } from './mirrorQueue'
 import { dataUrlToBlob, type FileSyncTarget } from './FileSyncTarget'
 import {
@@ -73,6 +75,30 @@ const FILE_WRITE_DEBOUNCE_MS = 2000
 // Module-level runtime state (single instance per tab).
 let target: FileSyncTarget | null = null
 const writeTimers = new Map<number, ReturnType<typeof setTimeout>>()
+
+// Paths this tab just deleted itself (during a rename/format change). The watcher emits
+// an 'unlink' echo for each; without this guard that echo can be misread as a user
+// deleting the file and soft-delete the just-renamed memo (§4.5 rename race).
+const recentSelfDeletes = new Map<string, number>()
+const SELF_DELETE_TTL_MS = 10_000
+
+function markSelfDelete(path: string): void {
+  const now = Date.now()
+  recentSelfDeletes.set(path, now)
+  for (const [p, t] of recentSelfDeletes) {
+    if (now - t > SELF_DELETE_TTL_MS) recentSelfDeletes.delete(p)
+  }
+}
+
+function isRecentSelfDelete(path: string): boolean {
+  const t = recentSelfDeletes.get(path)
+  if (t == null) return false
+  if (Date.now() - t > SELF_DELETE_TTL_MS) {
+    recentSelfDeletes.delete(path)
+    return false
+  }
+  return true
+}
 
 // ─── Capability ──────────────────────────────────────
 
@@ -141,27 +167,42 @@ export async function initSyncFolder(): Promise<void> {
   }
 }
 
+/** Outcome of pickSyncFolder — the settings UI maps these to toasts ('error' surfaces via status). */
+export type PickFolderResult = 'picked' | 'cancelled' | 'overlaps-mirror' | 'error'
+
 /** Prompt the user to pick a folder (user gesture). Persists the ref and enables. */
-export async function pickSyncFolder(): Promise<boolean> {
-  if (!isSyncFolderSupported()) return false
+export async function pickSyncFolder(): Promise<PickFolderResult> {
+  if (!isSyncFolderSupported()) return 'cancelled'
   const store = useSyncFolderStore.getState()
   try {
     const picked = await pickFolder()
     if (!picked) {
       // null = cancelled or permission denied; only flag the latter if already on.
       if (store.enabled) store.setStatus('needs-permission')
-      return false
+      return 'cancelled'
     }
+    // 겹침 가드(§4.6): 미러와 같거나 상·하위인 주 폴더는 이중 쓰기·감시 루프를 만들므로 거부.
+    // 기존 폴더/상태는 그대로 유지된다.
+    const newRoot = watchRootFromRef(picked.ref)
+    if (newRoot && store.mirrors.some((m) => pathsOverlap(m.path, newRoot))) {
+      return 'overlaps-mirror'
+    }
+    // The fileSyncMap maps memos to files in the PREVIOUS folder. If we keep it, the
+    // no-op content-hash skip in writeMemoNow suppresses every write into the new
+    // (empty) folder — a full export would silently write nothing. Clear it so the new
+    // folder actually gets populated. Export rewrites are idempotent, so this is safe
+    // even when re-picking the same folder.
+    await clearFileSyncMap()
     await setSyncFolderValue(REF_KEY, picked.ref)
     store.setEnabled(true)
     setActiveTarget(picked.target, picked.displayName, watchRootFromRef(picked.ref))
-    return true
+    return 'picked'
   } catch (err) {
     // AbortError = user cancelled the picker; not an error worth surfacing.
-    if ((err as DOMException)?.name === 'AbortError') return false
+    if ((err as DOMException)?.name === 'AbortError') return 'cancelled'
     console.error('Sync folder pick failed:', err)
     store.setStatus('error', '폴더를 선택하지 못했습니다.')
-    return false
+    return 'error'
   }
 }
 
@@ -217,17 +258,19 @@ function sameSet(a: string[], b: string[]): boolean {
   return b.every((x) => s.has(x))
 }
 
-async function writeMemoNow(memo: Memo): Promise<void> {
-  if (!target || !memo.syncId) return
+type WriteOutcome = 'written' | 'skipped' | 'error'
+
+async function writeMemoNow(memo: Memo): Promise<WriteOutcome> {
+  if (!target || !memo.syncId) return 'skipped'
   const store = useSyncFolderStore.getState()
 
   // Deleted → remove the file(s) instead of writing (§4.3).
   if (memo.deletedAt) {
     await deleteMemoFileNow(memo)
-    return
+    return 'written'
   }
   // Ephemeral (1h brain-dump) memos are excluded from folder writes (§4.3).
-  if (memo.ephemeralExpiresAt) return
+  if (memo.ephemeralExpiresAt) return 'skipped'
 
   try {
     const folderName = await resolveFolderName(memo)
@@ -236,7 +279,7 @@ async function writeMemoNow(memo: Memo): Promise<void> {
     const md = format === 'md' || format === 'both' ? await serializeMemo(memo, folderName, resolveImage) : null
     const html = format === 'html' || format === 'both' ? await serializeMemoHtml(memo, folderName, resolveImage) : null
     const outputs = [md, html].filter((o): o is SerializedMemo => o != null)
-    if (!outputs.length) return
+    if (!outputs.length) return 'skipped'
 
     const files = outputs.map((o) => o.filePath)
     const primary = md ?? html! // markdown is canonical when present (import identity)
@@ -245,17 +288,15 @@ async function writeMemoNow(memo: Memo): Promise<void> {
     const existing = await getFileSyncRecord(memo.syncId)
     const oldFiles = existing?.files ?? (existing ? [existing.filePath] : [])
     // No-op skip: same content AND same file set → don't rewrite (prevents loops, §4.5).
-    if (existing && existing.contentHash === hash && sameSet(oldFiles, files)) return
+    if (existing && existing.contentHash === hash && sameSet(oldFiles, files)) return 'skipped'
 
     store.setStatus('writing')
 
-    // Remove stale files: a rename (title/folder changed) or a format change (e.g.
-    // both→md drops the .html) leaves files no longer in the current output set.
-    for (const f of oldFiles.filter((p) => !files.includes(p))) {
-      await target.deleteFile(f)
-      await mirrorDelete(f)
-    }
-
+    // Write the new files FIRST, then repoint the fileSyncMap record, and only THEN
+    // remove the stale old files. This ordering guarantees the record never points at a
+    // path we've already deleted: if the new write throws, the old file+record are still
+    // intact; once the record points at the new path, the old file's unlink echo can no
+    // longer be resolved back to this memo (§4.5 rename race).
     for (const out of outputs) {
       await target.writeText(out.filePath, out.content)
       for (const asset of out.assets) {
@@ -270,12 +311,23 @@ async function writeMemoNow(memo: Memo): Promise<void> {
 
     const at = nowISO()
     await putFileSyncRecord({ memoSyncId: memo.syncId, filePath: primary.filePath, contentHash: hash, files, lastWrittenAt: at })
+
+    // Remove stale files: a rename (title/folder changed) or a format change (e.g.
+    // both→md drops the .html) leaves files no longer in the current output set.
+    for (const f of oldFiles.filter((p) => !files.includes(p))) {
+      markSelfDelete(f)
+      await target.deleteFile(f)
+      await mirrorDelete(f)
+    }
+
     store.setLastWritten(at)
     store.setFileCount(await countFileSyncRecords())
     store.setStatus('idle')
+    return 'written'
   } catch (err) {
     console.error('Sync folder write failed:', err)
     store.setStatus('error', '폴더에 저장하지 못했습니다.')
+    return 'error'
   }
 }
 
@@ -286,6 +338,7 @@ async function deleteMemoFileNow(memo: Memo): Promise<void> {
     const rec = await getFileSyncRecord(memo.syncId)
     if (!rec) return
     for (const f of rec.files ?? [rec.filePath]) {
+      markSelfDelete(f)
       await target.deleteFile(f)
       await mirrorDelete(f)
     }
@@ -349,42 +402,54 @@ export interface ExportProgress {
  */
 export async function exportAllMemosToFolder(
   onProgress?: (p: ExportProgress) => void,
-): Promise<{ written: number; skipped: number }> {
-  if (!(await ensureReady()) || !target) return { written: 0, skipped: 0 }
+): Promise<{ written: number; skipped: number; failed: number }> {
+  if (!(await ensureReady()) || !target) return { written: 0, skipped: 0, failed: 0 }
   const store = useSyncFolderStore.getState()
   const memos = (await getActiveMemos()).filter((m) => !m.ephemeralExpiresAt && m.syncId)
   let written = 0
   let skipped = 0
+  let failed = 0
 
   await withLock(target.key, async () => {
     store.setStatus('writing')
     for (let i = 0; i < memos.length; i++) {
-      try {
-        await writeMemoNow(memos[i])
-        written++
-      } catch {
-        skipped++
-      }
+      // writeMemoNow swallows its own errors and reports the real outcome, so we count
+      // actual writes instead of blindly reporting every memo as "written".
+      const outcome = await writeMemoNow(memos[i])
+      if (outcome === 'written') written++
+      else if (outcome === 'skipped') skipped++
+      else failed++
       onProgress?.({ total: memos.length, done: i + 1 })
     }
-    store.setStatus('idle')
+    // Leave the error status visible if any write failed (e.g. folder unplugged).
+    store.setStatus(failed > 0 ? 'error' : 'idle', failed > 0 ? `${failed}건 저장 실패` : undefined)
     store.setFileCount(await countFileSyncRecords())
   })
 
-  return { written, skipped }
+  return { written, skipped, failed }
 }
 
 // ─── Reverse sync: file watching → import (Phase 2 M2, §4.4) ──────
 
 let unsubFileEvent: (() => void) | null = null
 let watching = false
+let watchedRoot: string | null = null
 
 function startWatching(root: string): void {
   const bridge = typeof window !== 'undefined' ? window.electronBridge : undefined
-  if (!bridge?.startWatching || watching) return
+  if (!bridge?.startWatching) return
+  const action = planWatch(watching, watchedRoot, root)
+  if (action === 'noop') return
+  // 'restart' = folder changed ('폴더 변경'): tear down the stale watch so both the
+  // renderer listener and the main-process chokidar watcher follow the new primary.
+  // Otherwise the old folder stays watched while writes/REF_KEY move on, which makes
+  // the mirror overlap guard (§4.6) reason about the wrong root and can trip the §4.5
+  // circuit breaker when a former primary is later added as a mirror.
+  if (action === 'restart') stopWatching()
   bridge.startWatching(root)
   unsubFileEvent = bridge.onFileEvent((payload) => { void handleFileEvent(payload) })
   watching = true
+  watchedRoot = root
 }
 
 function stopWatching(): void {
@@ -392,6 +457,7 @@ function stopWatching(): void {
   if (unsubFileEvent) { unsubFileEvent(); unsubFileEvent = null }
   bridge?.stopWatching?.()
   watching = false
+  watchedRoot = null
 }
 
 // ─── Circuit breaker (§4.5): pause auto-import on a flood of events ──
@@ -433,24 +499,41 @@ async function refreshMemoStore(): Promise<void> {
   }
 }
 
-/** Map a file's directory segment back to a folderId (best-effort by name). */
-async function resolveFolderIdFromPath(relPath: string): Promise<number | null> {
+/**
+ * Map a file's directory segment back to a folderId (best-effort by name). When two
+ * folders sanitize to the same directory name (e.g. '일정: 회사' and '일정 회사'),
+ * prefer the memo's current folder so an external body edit doesn't silently move it
+ * into the wrong same-named folder (§4.4 folder collision).
+ */
+async function resolveFolderIdFromPath(relPath: string, preferId?: number | null): Promise<number | null> {
   const segs = relPath.split('/')
   if (segs.length < 2) return null // root
   const dir = segs[0]
   const folders = await getAllFolders()
-  const match = folders.find((f) => !f.isSystem && sanitizeSegment(f.name) === dir)
-  return match?.id ?? null
+  const matches = folders.filter((f) => !f.isSystem && sanitizeSegment(f.name) === dir)
+  if (matches.length === 0) return null
+  if (matches.length > 1 && preferId != null) {
+    const preferred = matches.find((f) => f.id === preferId)
+    if (preferred) return preferred.id ?? null
+  }
+  return matches[0].id ?? null
 }
 
 async function handleFileEvent(event: FileEvent): Promise<void> {
   if (!target) return
+  // Drop the watcher's echo of a file this tab just deleted itself (rename/format
+  // change) — otherwise it would be misread as a user deletion and trash the memo.
+  if (event.type === 'unlink' && isRecentSelfDelete(event.relPath)) return
   if (circuitBreakerTripped()) return
   try {
-    const ctx = await gatherContext(event)
-    const decision = decideImport(event, ctx)
-    if (decision.action === 'skip') return
-    await withLock(target.key, () => applyDecision(decision, event))
+    // Gather context + decide + apply all under the same lock, so a rename's write and
+    // the racing unlink event can't interleave and act on a stale fileSyncMap snapshot.
+    await withLock(target.key, async () => {
+      const ctx = await gatherContext(event)
+      const decision = decideImport(event, ctx)
+      if (decision.action === 'skip') return
+      await applyDecision(decision, event)
+    })
   } catch (err) {
     console.error('Sync folder import failed:', err)
   }
@@ -465,12 +548,13 @@ async function gatherContext(event: FileEvent) {
   const baseName = event.relPath.split('/').pop()!.replace(/\.md$/i, '')
   const parsed = deserializeMemo(content, baseName)
   const recordMemo = record ? await getMemoBySyncId(record.memoSyncId) : null
-  const frontmatterMemoExists = parsed.syncId ? !!(await getMemoBySyncId(parsed.syncId)) : false
+  const frontmatterMemo = parsed.syncId ? await getMemoBySyncId(parsed.syncId) : null
   return {
     fileHash: contentHash(content),
     record: recordRef,
     recordMemo: recordMemo ? { updatedAt: recordMemo.updatedAt } : null,
-    frontmatterMemoExists,
+    frontmatterMemoExists: !!frontmatterMemo,
+    frontmatterMemo: frontmatterMemo ? { updatedAt: frontmatterMemo.updatedAt } : null,
     parsed,
   }
 }
@@ -497,16 +581,24 @@ async function applyDecision(
   if (decision.action === 'skip') return
 
   const parsed = decision.parsed
-  const folderId = await resolveFolderIdFromPath(event.relPath)
 
   if (decision.action === 'update') {
     const memo = await getMemoBySyncId(decision.memoSyncId)
+    const folderId = await resolveFolderIdFromPath(event.relPath, memo?.folderId ?? null)
     if (memo?.id == null) {
       await createFromParsed(parsed, folderId, event, !parsed.hasFrontmatter)
       return
     }
+    // Keep the app title unless the file was genuinely RENAMED. The title isn't stored
+    // in the file, so parsed.title is the lossy filename (colons/slashes/? stripped,
+    // truncated). For a body-only external edit the filename still equals the app title's
+    // sanitized form — adopting parsed.title there would corrupt the real title.
+    const canonicalBase = sanitizeSegment(memo.title, '제목-없음')
+    const renamed = !!parsed.title && parsed.title !== canonicalBase
+    const nextTitle = renamed ? parsed.title! : memo.title
+
     await dbUpdateMemo(memo.id, {
-      title: parsed.title ?? memo.title,
+      title: nextTitle,
       body: parsed.body,
       tags: parsed.tags.length ? parsed.tags : extractTags(parsed.body),
       color: parsed.color ?? memo.color,
@@ -518,16 +610,24 @@ async function applyDecision(
     const updated = await getMemo(memo.id)
     if (updated) pushMemo(updated).catch(console.error)
     // Record the imported bytes so the echoing write-event is suppressed (§4.6).
+    // Preserve any sibling files (e.g. the .html twin) so a later delete removes both
+    // instead of orphaning the twin on disk.
+    const existingRec = await getFileSyncRecord(decision.memoSyncId)
+    const files = existingRec?.files
+      ? existingRec.files.map((p) => (p === existingRec.filePath ? event.relPath : p))
+      : undefined
     await putFileSyncRecord({
       memoSyncId: decision.memoSyncId,
       filePath: event.relPath,
       contentHash: contentHash(event.content ?? ''),
+      files,
       lastWrittenAt: nowISO(),
     })
     await refreshMemoStore()
     return
   }
 
+  const folderId = await resolveFolderIdFromPath(event.relPath)
   await createFromParsed(parsed, folderId, event, decision.writeBack)
 }
 
@@ -751,17 +851,24 @@ async function fillMirror(mirror: FileSyncTarget): Promise<void> {
   await refreshPendingCount()
 }
 
+/** Outcome of addMirrorFolder — the settings UI maps these to toasts. */
+export type AddMirrorResult = 'added' | 'cancelled' | 'duplicate' | 'overlaps-primary'
+
 /** Add a mirror folder (Electron only, user gesture) and fill it with current memos. */
-export async function addMirrorFolder(): Promise<boolean> {
+export async function addMirrorFolder(): Promise<AddMirrorResult> {
   const picked = await pickMirror()
-  if (!picked) return false
+  if (!picked) return 'cancelled'
   const store = useSyncFolderStore.getState()
-  if (store.mirrors.some((m) => m.path === picked.path)) return false
+  if (store.mirrors.some((m) => pathsOverlap(m.path, picked.path))) return 'duplicate'
+  // 겹침 가드(§4.6): 주 폴더와 같으면 이중 쓰기 + 감시 이벤트 2배(§4.5 서킷 브레이커 오발동),
+  // 주 폴더 안쪽이면 미러 사본이 감시 범위에 들어와 새 메모로 재가져오기됨 → 거부.
+  const primaryRoot = watchRootFromRef(await getSyncFolderValue<unknown>(REF_KEY))
+  if (primaryRoot && pathsOverlap(primaryRoot, picked.path)) return 'overlaps-primary'
   store.setMirrors([...store.mirrors, picked])
   rebuildMirrors()
   const t = buildIpcTarget(picked.path)
   if (t) await withLock(t.key, () => fillMirror(t))
-  return true
+  return 'added'
 }
 
 /** Remove a mirror folder and drop its queued ops. Existing files on the mirror are kept. */

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { parseChecklist } from '@/utils/checklistParser'
-import { isAIAvailable } from '@/services/aiFeatures'
+import { isAIAvailable, getUserApiKey } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
 import { apiUrl } from '@/lib/apiBase'
 
@@ -77,7 +77,9 @@ export function useAIBriefing() {
 
       const ai = useSettingsStore.getState().settings.ai
       const provider = ai.aiProvider || 'openai'
-      const userApiKey = ai.openaiApiKey || ai.anthropicApiKey || ai.geminiApiKey || undefined
+      // Provider-matched key (undefined → server uses its own env key). A mismatched key
+      // would 401 and silently blank the briefing widget.
+      const userApiKey = getUserApiKey(provider)
 
       setIsLoading(true)
       try {

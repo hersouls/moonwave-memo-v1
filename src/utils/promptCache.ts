@@ -17,7 +17,11 @@ function simpleHash(str: string): string {
 }
 
 export function generateCacheKey(fn: string, content: string): string {
-  return `${fn}:${simpleHash(content.slice(0, 500))}`
+  // Hash the FULL content (plus its length) — a 500-char prefix hash collides for any
+  // two inputs sharing their first 500 chars, so an edit past char 500 would return a
+  // stale cached AI result within the TTL. Content sent to the model is <=5000 chars,
+  // so hashing all of it is negligible.
+  return `${fn}:${simpleHash(content)}:${content.length}`
 }
 
 export function getCached<T>(key: string): T | null {

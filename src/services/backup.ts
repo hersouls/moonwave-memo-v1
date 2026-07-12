@@ -1,7 +1,8 @@
 import { db, getAllMemos, getAllFolders } from './database'
-import type { Memo, Folder, BackupFile } from '@/lib/types'
+import type { Memo, Folder, MemoImage, MemoVersion, AmbientImage, BackupFile } from '@/lib/types'
 import { BACKUP_CONFIG, DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
 import { nowISO } from '@/lib/dateUtils'
+import { generateSyncId } from '@/utils/id'
 
 export interface BackupValidationResult {
   valid: boolean
@@ -15,11 +16,23 @@ export interface BackupValidationResult {
 }
 
 export async function createBackup(): Promise<BackupFile> {
-  const memos = await getAllMemos()
-  const folders = await getAllFolders()
-  const memoImages = await db.memoImages.toArray()
-  const memoVersions = await db.memoVersions.toArray()
-  const ambientImages = await db.ambientImages.toArray()
+  // Read all tables inside one read transaction so a concurrent autosave can't produce
+  // an internally inconsistent snapshot (e.g. a version row referencing a memo not in
+  // the memos array).
+  let memos: Memo[] = []
+  let folders: Folder[] = []
+  let memoImages: MemoImage[] = []
+  let memoVersions: MemoVersion[] = []
+  let ambientImages: AmbientImage[] = []
+  let demianChats: Array<{ memoId: number; messages: Array<{ role: string; content: string }>; updatedAt: string }> = []
+  await db.transaction('r', [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages, db.demianChats], async () => {
+    memos = await getAllMemos()
+    folders = await getAllFolders()
+    memoImages = await db.memoImages.toArray()
+    memoVersions = await db.memoVersions.toArray()
+    ambientImages = await db.ambientImages.toArray()
+    demianChats = await db.demianChats.toArray()
+  })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let settings: any = {}
   try {
@@ -37,6 +50,7 @@ export async function createBackup(): Promise<BackupFile> {
       memoImages,
       memoVersions,
       ambientImages,
+      demianChats: demianChats.map((c) => ({ memoId: c.memoId, messages: c.messages, updatedAt: c.updatedAt })),
       settings: {
         theme: settings.theme || 'light',
         colorPalette: settings.colorPalette || 'default',
@@ -130,24 +144,42 @@ export async function restoreFromBackup(
   backup: BackupFile
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Stamp restored data as authoritative: a fresh updatedAt (now) makes the restore
+    // win last-write-wins over any newer cloud copy, so on reload initSync re-uploads
+    // the restored content instead of the cloud silently reverting it. Backfill missing
+    // syncIds so every restored memo/folder participates in sync.
+    const restoreStamp = new Date().toISOString()
     const memos = (backup.data.memos || []).map((m: Memo) => ({
       ...m,
-      createdAt: m.createdAt || new Date().toISOString(),
-      updatedAt: m.updatedAt || new Date().toISOString(),
+      syncId: m.syncId || generateSyncId(),
+      createdAt: m.createdAt || restoreStamp,
+      updatedAt: restoreStamp,
     }))
 
     const folders = (backup.data.folders || []).map((f: Folder) => ({
       ...f,
-      createdAt: f.createdAt || new Date().toISOString(),
-      updatedAt: f.updatedAt || f.createdAt || new Date().toISOString(),
+      syncId: f.syncId || generateSyncId(),
+      createdAt: f.createdAt || restoreStamp,
+      updatedAt: restoreStamp,
     }))
 
-    await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages], async () => {
+    // Drop child rows referencing a memo id absent from the restored set so a
+    // pre-existing inconsistent backup can't seed phantom version/image history.
+    const memoIds = new Set(memos.map((m) => m.id).filter((id): id is number => id != null))
+    const backupImages = (backup.data.memoImages || []).filter((img) => memoIds.has(img.memoId))
+    const backupVersions = (backup.data.memoVersions || []).filter((v) => memoIds.has(v.memoId))
+    const backupAmbient = backup.data.ambientImages || []
+    const backupChats = (backup.data.demianChats || []).filter((c) => memoIds.has(c.memoId))
+
+    await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages, db.demianChats], async () => {
       await db.memos.clear()
       await db.folders.clear()
       await db.memoImages.clear()
       await db.memoVersions.clear()
       await db.ambientImages.clear()
+      // Clear stale chats so a cross-device restore can't leave one device's private
+      // Demian thread misattached to an unrelated memo that inherited the same numeric id.
+      await db.demianChats.clear()
 
       if (folders.length > 0) {
         await db.folders.bulkAdd(folders)
@@ -157,17 +189,17 @@ export async function restoreFromBackup(
       }
 
       // B-11: Restore memoImages and memoVersions
-      const backupImages = backup.data.memoImages || []
       if (backupImages.length > 0) {
         await db.memoImages.bulkAdd(backupImages)
       }
-      const backupVersions = backup.data.memoVersions || []
       if (backupVersions.length > 0) {
         await db.memoVersions.bulkAdd(backupVersions)
       }
-      const backupAmbient = backup.data.ambientImages || []
       if (backupAmbient.length > 0) {
         await db.ambientImages.bulkAdd(backupAmbient)
+      }
+      if (backupChats.length > 0) {
+        await db.demianChats.bulkAdd(backupChats)
       }
     })
 
@@ -194,11 +226,26 @@ export async function restoreFromBackup(
 }
 
 export async function clearAllData(): Promise<void> {
-  await db.memos.clear()
-  await db.folders.clear()
-  await db.memoImages.clear()
-  await db.memoVersions.clear()
-  await db.ambientImages.clear()
+  // Wipe EVERY table, not just the visible ones. Leaving demianChats (AI transcripts),
+  // embeddings, or the pendingFileOps/syncFolder queues behind means "delete all data"
+  // leaks private content — and a surviving queued mirror op could even rewrite a
+  // "deleted" memo's file back into the connected folder after reload.
+  await db.transaction('rw',
+    [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages,
+     db.demianChats, db.pendingSyncs, db.pendingFileOps, db.embeddings, db.fileSyncMap, db.syncFolderKV],
+    async () => {
+      await db.memos.clear()
+      await db.folders.clear()
+      await db.memoImages.clear()
+      await db.memoVersions.clear()
+      await db.ambientImages.clear()
+      await db.demianChats.clear()
+      await db.pendingSyncs.clear()
+      await db.pendingFileOps.clear()
+      await db.embeddings.clear()
+      await db.fileSyncMap.clear()
+      await db.syncFolderKV.clear()
+    })
 
   // Recreate default folders
   const now = nowISO()

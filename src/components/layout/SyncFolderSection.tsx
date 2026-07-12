@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import {
   FolderOpen,
   HardDrive,
@@ -11,8 +11,10 @@ import {
   Plus,
   X,
   Server,
+  Info,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useToastStore } from '@/stores/toastStore'
 import { useSyncFolderStore, type SyncFolderFormat } from '@/stores/syncFolderStore'
 import {
@@ -89,8 +91,10 @@ export function SyncFolderSection() {
       // Enabling requires picking a folder (user gesture).
       setBusy(true)
       try {
-        const ok = await pickSyncFolder()
-        if (ok) showToast('동기화 폴더가 연결되었습니다.', 'success')
+        const result = await pickSyncFolder()
+        if (result === 'picked') showToast('동기화 폴더가 연결되었습니다.', 'success')
+        else if (result === 'overlaps-mirror')
+          showToast('미러 폴더와 같거나 겹치는 폴더는 주 저장 폴더로 지정할 수 없습니다.', 'warning')
       } finally {
         setBusy(false)
       }
@@ -101,8 +105,10 @@ export function SyncFolderSection() {
     if (busy) return
     setBusy(true)
     try {
-      const ok = await pickSyncFolder()
-      if (ok) showToast('폴더가 변경되었습니다. 전체 내보내기로 파일을 채우세요.', 'success')
+      const result = await pickSyncFolder()
+      if (result === 'picked') showToast('폴더가 변경되었습니다. 전체 내보내기로 파일을 채우세요.', 'success')
+      else if (result === 'overlaps-mirror')
+        showToast('미러 폴더와 같거나 겹치는 폴더는 주 저장 폴더로 지정할 수 없습니다.', 'warning')
     } finally {
       setBusy(false)
     }
@@ -126,7 +132,11 @@ export function SyncFolderSection() {
     setExportProgress({ done: 0, total: 0 })
     try {
       const result = await exportAllMemosToFolder((p) => setExportProgress(p))
-      showToast(`전체 내보내기 완료 — ${result.written}건 기록`, 'success')
+      if (result.failed > 0) {
+        showToast(`전체 내보내기 중 ${result.failed}건 저장 실패 — ${result.written}건만 기록됨. 폴더 연결을 확인하세요.`, 'error')
+      } else {
+        showToast(`전체 내보내기 완료 — ${result.written}건 기록`, 'success')
+      }
     } catch {
       showToast('전체 내보내기에 실패했습니다.', 'error')
     } finally {
@@ -139,8 +149,12 @@ export function SyncFolderSection() {
     if (busy) return
     setBusy(true)
     try {
-      const ok = await addMirrorFolder()
-      if (ok) showToast('미러 폴더가 추가되었습니다. 기존 파일을 복사합니다.', 'success')
+      const result = await addMirrorFolder()
+      if (result === 'added') showToast('미러 폴더가 추가되었습니다. 기존 파일을 복사합니다.', 'success')
+      else if (result === 'duplicate')
+        showToast('이미 등록된 미러 폴더와 같거나 겹치는 폴더는 추가할 수 없습니다.', 'warning')
+      else if (result === 'overlaps-primary')
+        showToast('주 저장 폴더와 같거나 겹치는 폴더는 미러로 지정할 수 없습니다. 별도의 폴더를 선택하세요.', 'warning')
     } finally {
       setBusy(false)
     }
@@ -236,7 +250,18 @@ export function SyncFolderSection() {
         {/* ② 주 저장 폴더 */}
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">주 저장 폴더</div>
+            <div className="flex items-center gap-1">
+              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">주 저장 폴더</div>
+              <InfoTip
+                label="주 저장 폴더 설명"
+                content={
+                  <div className="space-y-1 font-normal text-left leading-relaxed">
+                    <p className="font-semibold">메모가 실제 파일로 저장되는 원본 폴더 (기기당 1개)</p>
+                    <p>데스크톱 앱은 이 폴더를 감시해, 밖에서 파일을 고치면 앱에도 자동 반영됩니다 (양방향).</p>
+                  </div>
+                }
+              />
+            </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
               {folderName ? (
                 <span className="inline-flex items-center gap-1">
@@ -260,8 +285,18 @@ export function SyncFolderSection() {
         {isElectron() && (
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <div className="flex items-center gap-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 미러 폴더 <span className="text-xs font-normal text-zinc-400">(NAS·백업, 복사 전용)</span>
+                <InfoTip
+                  label="미러 폴더 설명"
+                  content={
+                    <div className="space-y-1 font-normal text-left leading-relaxed">
+                      <p className="font-semibold">주 저장 폴더의 결과를 그대로 복사하는 백업 폴더 (NAS·외장, 여러 개 가능)</p>
+                      <p>복사 전용(단방향): 앱이 읽지 않으므로 여기 파일을 고쳐도 반영되지 않습니다. 실패 시 자동 재시도.</p>
+                      <p>주 저장 폴더와 같거나 겹치는 폴더는 지정할 수 없습니다.</p>
+                    </div>
+                  }
+                />
               </div>
               <Button variant="secondary" size="sm" onClick={handleAddMirror} disabled={busy}>
                 <Plus className="w-4 h-4 mr-1.5" />
@@ -293,7 +328,7 @@ export function SyncFolderSection() {
               </ul>
             ) : (
               <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                로컬 저장 결과를 복사할 NAS·백업 폴더를 추가할 수 있습니다.
+                로컬 저장 결과를 복사할 NAS·백업 폴더를 추가할 수 있습니다. 주 저장 폴더와 겹치지 않는 별도 위치여야 합니다.
               </p>
             )}
             {pendingOps > 0 && (
@@ -407,6 +442,21 @@ export function SyncFolderSection() {
         </div>
       </div>
     </section>
+  )
+}
+
+/** 라벨 옆 ⓘ 트리거 — 호버/포커스 시 상세 설명 툴팁 (버튼이라 키보드로도 열 수 있음). */
+function InfoTip({ label, content }: { label: string; content: ReactNode }) {
+  return (
+    <Tooltip content={content} placement="bottom">
+      <button
+        type="button"
+        aria-label={label}
+        className="-my-1 inline-flex items-center justify-center w-6 h-6 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 cursor-help"
+      >
+        <Info className="w-3.5 h-3.5" aria-hidden="true" />
+      </button>
+    </Tooltip>
   )
 }
 

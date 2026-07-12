@@ -35,8 +35,11 @@ export function parseNaturalQuery(query: string): ParsedQuery {
     result.dateRange = { start: monthStart.toISOString().split('T')[0], end: now.toISOString().split('T')[0] }
   }
 
-  // Starred
-  if (q.includes('\uC911\uC694') || q.includes('\uBCC4\uD45C') || q.includes('\uC2A4\uD0C0')) {
+  // Starred \u2014 match WHOLE tokens only. A substring test flagged '\uC2A4\uD0C0\uBC85\uC2A4'/'\uC2A4\uD0C0\uD2B8\uC5C5'
+  // as starred and mangled the keyword ('\uC2A4\uD0C0\uBC85\uC2A4' \u2192 '\uBC85\uC2A4'), hiding the real memo.
+  const STAR_TOKENS = new Set(['\uC911\uC694', '\uC911\uC694\uD55C', '\uBCC4\uD45C', '\uBCC4\uD45C\uB9CC', '\uC2A4\uD0C0', '\uC990\uACA8\uCC3E\uAE30'])
+  const tokens = q.split(/\s+/).filter(Boolean)
+  if (tokens.some((t) => STAR_TOKENS.has(t))) {
     result.starredOnly = true
   }
 
@@ -46,13 +49,14 @@ export function parseNaturalQuery(query: string): ParsedQuery {
     result.tags = tagMatches.map((t) => t.slice(1))
   }
 
-  // Keywords: remaining words after removing date/star/tag patterns
+  // Keywords: drop date phrases (multi-word, substring) and hashtags, then filter out
+  // star tokens by EXACT token match so only-partial words survive as search terms.
   const cleaned = q
-    .replace(/(\uC624\uB298|\uC5B4\uC81C|\uC774\uBC88\s?\uC8FC|\uC9C0\uB09C\s?\uC8FC|\uC774\uBC88\s?\uB2EC|\uC911\uC694|\uBCC4\uD45C|\uC2A4\uD0C0)/g, '')
-    .replace(/#\S+/g, '')
+    .replace(/(\uC624\uB298|\uC5B4\uC81C|\uC774\uBC88\s?\uC8FC|\uC9C0\uB09C\s?\uC8FC|\uC774\uBC88\s?\uB2EC)/g, ' ')
+    .replace(/#\S+/g, ' ')
     .trim()
   if (cleaned) {
-    result.keywords = cleaned.split(/\s+/).filter((w) => w.length > 1)
+    result.keywords = cleaned.split(/\s+/).filter((w) => w.length > 1 && !STAR_TOKENS.has(w))
   }
 
   return result

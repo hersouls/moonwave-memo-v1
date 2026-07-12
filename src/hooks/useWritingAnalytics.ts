@@ -15,8 +15,8 @@ export function useWritingAnalytics(): AnalyticsData {
 
   return useMemo(() => {
     const active = memos.filter((m) => !m.deletedAt)
-    const hourDist = new Array(24).fill(0)
-    const dayDist = new Array(7).fill(0)
+    const hourDist = Array.from({ length: 24 }, () => 0)
+    const dayDist = Array.from({ length: 7 }, () => 0)
     const tagCount = new Map<string, number>()
     const monthMap = new Map<string, number>()
     let totalChars = 0

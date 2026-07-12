@@ -91,11 +91,17 @@ export function Tooltip({ content, children, placement = 'top', className }: Too
     [clearOpenTimer, clearExitTimer]
   )
 
-  // WCAG 1.4.13 — Escape로 호버 콘텐츠 해제
+  // WCAG 1.4.13 — Escape로 호버 콘텐츠 해제.
+  // preventDefault로 이 Escape를 소비해, 상위 Headless UI Dialog 등이 같은 키로
+  // 함께 닫히는 것을 막는다(Dialog는 defaultPrevented면 무시). 툴팁이 열려 있을
+  // 때만 등록되므로 다른 Escape 동작에는 영향을 주지 않는다.
   useEffect(() => {
     if (phase !== 'open') return
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') hide()
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        hide()
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)

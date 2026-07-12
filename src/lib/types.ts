@@ -232,6 +232,12 @@ export interface PaletteDefinition {
 }
 
 // ─── Backup Types ──────────────────────────────────
+export interface BackupDemianChat {
+  memoId: number
+  messages: Array<{ role: string; content: string }>
+  updatedAt: string
+}
+
 export interface BackupFile {
   version: string
   appName: string
@@ -242,6 +248,7 @@ export interface BackupFile {
     memoImages?: MemoImage[]
     memoVersions?: MemoVersion[]
     ambientImages?: AmbientImage[]
+    demianChats?: BackupDemianChat[]
     settings: Partial<Settings>
   }
 }

@@ -14,7 +14,7 @@ import {
 import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { generateInsights, type Insight } from '@/services/insightEngine'
-import { isAIAvailable } from '@/services/aiFeatures'
+import { isAIAvailable, getUserApiKey } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
 import { apiUrl } from '@/lib/apiBase'
 import { WidgetCard } from './WidgetCard'
@@ -52,7 +52,8 @@ export function InsightsWidget() {
 
       const ai = useSettingsStore.getState().settings.ai
       const provider = ai.aiProvider || 'openai'
-      const userApiKey = ai.openaiApiKey || ai.anthropicApiKey || ai.geminiApiKey || undefined
+      // Provider-matched key so a mismatched key doesn't 401 and blank the insights.
+      const userApiKey = getUserApiKey(provider)
 
       const memoData = activeMemos
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

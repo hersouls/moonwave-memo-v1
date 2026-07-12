@@ -1,17 +1,30 @@
 import { useSettingsStore } from '@/stores/settingsStore'
 import { auth, callable } from '@/lib/firebase'
 import { apiUrl } from '@/lib/apiBase'
+import { db } from './database'
 
 // ─── Embedding Service ──────────────────────────────
 // Computes and caches text embeddings via OpenAI text-embedding-3-small
 
-interface EmbeddingCache {
-  vector: number[]
-  computedAt: string
-}
-
 interface EmbeddingResponse {
   embedding: number[]
+}
+
+// One-time cleanup of the legacy localStorage embedding cache (~25KB/memo, never
+// evicted) — it could exhaust the ~5MB origin quota and silently break other writers
+// (the AI usage counter). Vectors now live in the far larger IndexedDB embeddings table.
+let sweptLegacyCache = false
+function sweepLegacyEmbeddingCache(): void {
+  if (sweptLegacyCache) return
+  sweptLegacyCache = true
+  try {
+    const keys: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (k?.startsWith('memo-embedding-')) keys.push(k)
+    }
+    keys.forEach((k) => localStorage.removeItem(k))
+  } catch { /* best-effort */ }
 }
 
 // Cloud Functions callable for embedding
@@ -141,35 +154,29 @@ export async function getOrComputeEmbedding(
   text: string,
   updatedAt: string
 ): Promise<number[] | null> {
-  const cacheKey = `memo-embedding-${memoId}`
+  sweepLegacyEmbeddingCache()
 
-  // Check localStorage cache
+  // Validate the cache by EXACT updatedAt equality (captured by the caller before the
+  // fetch), not a wall-clock '>=' — the old comparison kept a stale vector forever if the
+  // memo was edited while the embedding was in flight, or under cross-device clock skew.
   try {
-    const cached = localStorage.getItem(cacheKey)
-    if (cached) {
-      const parsed: EmbeddingCache = JSON.parse(cached)
-      // If memo hasn't been updated since embedding was computed, use cache
-      if (parsed.computedAt >= updatedAt && parsed.vector.length > 0) {
-        return parsed.vector
-      }
+    const cached = await db.embeddings.get(memoId)
+    if (cached && cached.updatedAt === updatedAt && cached.vector.length > 0) {
+      return cached.vector
     }
   } catch {
-    // Invalid cache, recompute
+    // Cache read failed, recompute
   }
 
   // Compute fresh embedding
   const vector = await computeEmbedding(text)
   if (!vector) return null
 
-  // Cache it
+  // Store in IndexedDB (large quota, replaces in place, cleaned up on memo delete).
   try {
-    const cache: EmbeddingCache = {
-      vector,
-      computedAt: new Date().toISOString(),
-    }
-    localStorage.setItem(cacheKey, JSON.stringify(cache))
+    await db.embeddings.put({ memoId, updatedAt, vector })
   } catch {
-    // localStorage full or unavailable — ignore
+    // storage unavailable — ignore
   }
 
   return vector

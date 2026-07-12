@@ -89,8 +89,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { prompt, systemPrompt, provider = 'openai', maxTokens = 500, userApiKey } = req.body || {}
+  const { prompt, systemPrompt, provider = 'openai', userApiKey } = req.body || {}
   if (!prompt || !systemPrompt) return res.status(400).json({ error: 'Missing prompt or systemPrompt' })
+
+  // Clamp maxTokens server-side — never trust the client value. Unbounded max_tokens on
+  // the operator's server key is a direct cost-amplification vector; the app's features
+  // never need more than ~2000 completion tokens.
+  const rawMax = Number(req.body?.maxTokens)
+  const maxTokens = Number.isFinite(rawMax) ? Math.min(Math.max(Math.trunc(rawMax), 1), 2000) : 500
 
   const apiKey = userApiKey || getServerKey(provider as Provider)
   if (!apiKey) return res.status(500).json({ error: `${provider} API key not configured` })
@@ -113,6 +119,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ text, usingServerKey })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return res.status(502).json({ error: message })
+    console.error('[AI API Error]', message)
+    // Relay the upstream error only for a caller's OWN key; when the server key was used,
+    // return a generic message so key fragments / billing state don't leak to anonymous
+    // callers.
+    return res.status(502).json({ error: usingServerKey ? 'AI 서비스 요청에 실패했습니다.' : message })
   }
 }

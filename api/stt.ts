@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyCors } from './lib/cors.js'
 
-export const config = { api: { bodyParser: { sizeLimit: '25mb' } } }
+// NOTE: `api.bodyParser.sizeLimit` is a Next.js pages/api convention and is IGNORED by
+// @vercel/node functions — Vercel enforces a hard ~4.5MB request-body limit regardless.
+// The client (speechToText.ts) guards against oversized uploads before POSTing here.
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return

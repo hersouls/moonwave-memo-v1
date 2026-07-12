@@ -4,7 +4,10 @@ import { apiUrl } from '@/lib/apiBase'
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg']
 const ALLOWED_MIME_PREFIXES = ['audio/', 'video/mp4']
-const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB
+const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB (direct/personal-key path)
+// The keyless Vercel proxy path is bounded by Vercel's ~4.5MB request-body limit; base64
+// adds ~33%, so the raw file must stay under ~3.3MB to avoid a pre-handler 413.
+const VERCEL_PROXY_MAX_BYTES = 3.3 * 1024 * 1024
 const OPENAI_API_URL = 'https://api.openai.com/v1/audio/transcriptions'
 
 // ─── Types ────────────────────────────────────────
@@ -112,6 +115,13 @@ export async function transcribeAudio(
 
   // Try Vercel API proxy (server keys)
   if (!apiKey) {
+    // Vercel caps request bodies at ~4.5MB and base64 inflates the file by ~33%, so
+    // anything over ~3.3MB is rejected with 413 before our function even runs. Fail
+    // early with an actionable message instead of the generic "unavailable" below.
+    if (file.size > VERCEL_PROXY_MAX_BYTES) {
+      throw new Error('파일이 서버 업로드 한도(약 3MB)를 초과합니다. 설정에서 OpenAI API 키를 등록하면 더 큰 파일도 변환할 수 있습니다.')
+    }
+    let proxyRes: Response | null = null
     try {
       const reader = new FileReader()
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -119,17 +129,20 @@ export async function transcribeAudio(
         reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다'))
         reader.readAsDataURL(file)
       })
-      const res = await fetch(apiUrl('/api/stt'), {
+      proxyRes = await fetch(apiUrl('/api/stt'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audioBase64: base64, fileName: file.name, language }),
         signal,
       })
-      if (res.ok) {
-        const data = await res.json()
-        return { text: data.text || '', language, duration: 0, segments: data.segments || [] }
-      }
-    } catch { /* fall through */ }
+    } catch { /* network error → fall through to direct path */ }
+    if (proxyRes?.ok) {
+      const data = await proxyRes.json()
+      return { text: data.text || '', language, duration: 0, segments: data.segments || [] }
+    }
+    if (proxyRes?.status === 413) {
+      throw new Error('파일이 서버 업로드 한도를 초과합니다. 설정에서 OpenAI API 키를 등록하면 더 큰 파일도 변환할 수 있습니다.')
+    }
   }
 
   // Fallback to direct API call with user-provided key

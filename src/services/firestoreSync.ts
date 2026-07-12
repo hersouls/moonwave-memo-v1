@@ -10,6 +10,7 @@ import {
 import { firestore } from '@/lib/firebase'
 import type { Memo, Folder } from '@/lib/types'
 import { extractTags } from '@/lib/tagParser'
+import { nowISO } from '@/lib/dateUtils'
 import * as database from './database'
 import { generateSyncId } from '@/utils/id'
 import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
@@ -28,16 +29,36 @@ let currentUserId: string | null = null
 let refreshMemos: (() => Promise<void>) | null = null
 let refreshFolders: (() => Promise<void>) | null = null
 
-const recentlyPushed = new Set<string>()
-const recentlyPushedTimers = new Map<string, ReturnType<typeof setTimeout>>()
+// Monotonic generation: bumped on every initSync/stopSync. A long-running initial
+// merge captures its generation and bails the moment a logout/account-switch bumps
+// it, so a stale merge can never push account A's data into account B (§sync-safety).
+let syncEpoch = 0
 let mergePromise: Promise<void> | null = null
 
-function scheduleRecentlyPushedCleanup(key: string) {
-  if (recentlyPushedTimers.has(key)) clearTimeout(recentlyPushedTimers.get(key)!)
-  recentlyPushedTimers.set(key, setTimeout(() => {
-    recentlyPushed.delete(key)
-    recentlyPushedTimers.delete(key)
-  }, 5000))
+// Tombstones older than this are garbage-collected during initial merge. Devices
+// offline longer than the window may still resurrect a deleted item — an accepted
+// trade-off for bounded tombstone growth.
+const TOMBSTONE_TTL_MS = 90 * 24 * 60 * 60 * 1000
+
+/** True once a user is authenticated and sync is active — gates offline-queue replay. */
+export function isSyncReady(): boolean {
+  return currentUserId != null
+}
+
+async function enqueueSafe(type: 'memo' | 'folder', action: 'upsert' | 'delete', syncId: string) {
+  try {
+    const { enqueueSync } = await import('./offlineQueue')
+    await enqueueSync(type, action, syncId)
+  } catch (err) {
+    console.error('enqueueSync failed:', err)
+  }
+}
+
+async function dequeueSafe(syncId: string) {
+  try {
+    const { dequeueSync } = await import('./offlineQueue')
+    await dequeueSync(syncId)
+  } catch { /* best-effort */ }
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -92,10 +113,15 @@ async function getFolderSyncId(folderId: number | null): Promise<string | null> 
 
 // ─── Push to Firestore ────────────────────────────
 
-export async function pushMemo(memo: Memo) {
-  if (!currentUserId || !memo.syncId) return
+export async function pushMemo(memo: Memo): Promise<boolean> {
+  if (!memo.syncId) return false
+  // Signed out (or sync not yet initialised): record the intent so it replays on
+  // login. Without this, edits made while logged out are stranded on the device.
+  if (!currentUserId) {
+    await enqueueSafe('memo', 'upsert', memo.syncId)
+    return false
+  }
   try {
-    recentlyPushed.add(`memo-${memo.syncId}`)
     const folderSyncId = await getFolderSyncId(memo.folderId)
     const ref = doc(firestore, `users/${currentUserId}/memos`, memo.syncId)
     await setDoc(ref, stripUndefined({
@@ -110,22 +136,22 @@ export async function pushMemo(memo: Memo) {
       updatedAt: memo.updatedAt,
       deletedAt: memo.deletedAt || null,
     }), { merge: true })
-    scheduleRecentlyPushedCleanup(`memo-${memo.syncId}`)
+    await dequeueSafe(memo.syncId)
+    return true
   } catch (err) {
-    recentlyPushed.delete(`memo-${memo.syncId}`)
-    if (!navigator.onLine && memo.syncId) {
-      import('./offlineQueue').then(({ enqueueSync }) => enqueueSync('memo', 'upsert', memo.syncId!))
-    } else {
-      console.error('Push memo failed:', err)
-      useToastStore.getState().showToast('메모 동기화에 실패했습니다', 'warning')
-    }
+    console.error('Push memo failed:', err)
+    await enqueueSafe('memo', 'upsert', memo.syncId)
+    return false
   }
 }
 
-export async function pushFolder(folder: Folder) {
-  if (!currentUserId || !folder.syncId) return
+export async function pushFolder(folder: Folder): Promise<boolean> {
+  if (!folder.syncId) return false
+  if (!currentUserId) {
+    await enqueueSafe('folder', 'upsert', folder.syncId)
+    return false
+  }
   try {
-    recentlyPushed.add(`folder-${folder.syncId}`)
     const ref = doc(firestore, `users/${currentUserId}/folders`, folder.syncId)
     await setDoc(ref, stripUndefined({
       name: folder.name,
@@ -136,199 +162,267 @@ export async function pushFolder(folder: Folder) {
       createdAt: folder.createdAt,
       updatedAt: folder.updatedAt,
     }), { merge: true })
-    scheduleRecentlyPushedCleanup(`folder-${folder.syncId}`)
+    await dequeueSafe(folder.syncId)
+    return true
   } catch (err) {
     console.error('Push folder failed:', err)
-    recentlyPushed.delete(`folder-${folder.syncId}`)
+    await enqueueSafe('folder', 'upsert', folder.syncId)
+    return false
   }
 }
 
 // ─── Delete from Firestore ────────────────────────
+//
+// User-initiated permanent delete writes a TOMBSTONE doc (not a hard delete) so a
+// device that was offline at delete time removes its local copy on next merge instead
+// of resurrecting the item back into the cloud (§sync-safety no-tombstone bug).
 
-export async function deleteMemoFromCloud(syncId: string) {
-  if (!currentUserId || !syncId) return
+export async function deleteMemoFromCloud(syncId: string): Promise<boolean> {
+  if (!syncId) return false
+  if (!currentUserId) {
+    await enqueueSafe('memo', 'delete', syncId)
+    return false
+  }
   try {
-    recentlyPushed.add(`memo-${syncId}`)
-    await deleteDoc(doc(firestore, `users/${currentUserId}/memos`, syncId))
-    scheduleRecentlyPushedCleanup(`memo-${syncId}`)
+    const ref = doc(firestore, `users/${currentUserId}/memos`, syncId)
+    await setDoc(ref, { tombstone: true, purgedAt: nowISO(), updatedAt: nowISO() })
+    await dequeueSafe(syncId)
+    return true
   } catch (err) {
     console.error('Delete memo from cloud failed:', err)
-    recentlyPushed.delete(`memo-${syncId}`)
+    await enqueueSafe('memo', 'delete', syncId)
+    return false
   }
 }
 
-export async function deleteFolderFromCloud(syncId: string) {
-  if (!currentUserId || !syncId) return
+export async function deleteFolderFromCloud(syncId: string): Promise<boolean> {
+  if (!syncId) return false
+  if (!currentUserId) {
+    await enqueueSafe('folder', 'delete', syncId)
+    return false
+  }
   try {
-    recentlyPushed.add(`folder-${syncId}`)
-    await deleteDoc(doc(firestore, `users/${currentUserId}/folders`, syncId))
-    scheduleRecentlyPushedCleanup(`folder-${syncId}`)
+    const ref = doc(firestore, `users/${currentUserId}/folders`, syncId)
+    await setDoc(ref, { tombstone: true, purgedAt: nowISO(), updatedAt: nowISO() })
+    await dequeueSafe(syncId)
+    return true
   } catch (err) {
     console.error('Delete folder from cloud failed:', err)
-    recentlyPushed.delete(`folder-${syncId}`)
+    await enqueueSafe('folder', 'delete', syncId)
+    return false
+  }
+}
+
+// Hard delete (removes the doc entirely) — used ONLY for internal dedupe of duplicate
+// seed folders, where the loser identity never legitimately existed and must not leave
+// a tombstone. Not for user deletes.
+async function hardDeleteFolderFromCloud(syncId: string): Promise<void> {
+  if (!currentUserId || !syncId) return
+  try {
+    await deleteDoc(doc(firestore, `users/${currentUserId}/folders`, syncId))
+  } catch (err) {
+    console.error('Hard delete folder from cloud failed:', err)
   }
 }
 
 // ─── Initial Merge ─────────────────────────────────
 
-async function initialMerge(userId: string) {
+async function initialMerge(userId: string, epoch: number) {
   if (mergePromise) return mergePromise
-  mergePromise = doInitialMerge(userId)
+  const own = doInitialMerge(userId, epoch)
+  mergePromise = own
+  // Only clear the barrier if this run still owns it — a superseding merge must not
+  // have its gate wiped by a stale predecessor's finally.
+  own.finally(() => { if (mergePromise === own) mergePromise = null })
   return mergePromise
 }
 
-async function doInitialMerge(userId: string) {
+async function doInitialMerge(userId: string, epoch: number) {
+  const superseded = () => epoch !== syncEpoch
+  const now = Date.now()
 
-  try {
-    // Patch local folders missing updatedAt (legacy fix)
-    const allLocalFolders = await database.getAllFolders()
-    for (const f of allLocalFolders) {
-      if (!f.updatedAt) {
-        await database.updateFolder(f.id!, {})
-      }
+  // Patch local folders missing updatedAt (legacy fix)
+  const allLocalFolders = await database.getAllFolders()
+  for (const f of allLocalFolders) {
+    if (!f.updatedAt) {
+      await database.updateFolder(f.id!, {})
     }
-
-    // Merge folders first (memos reference folders)
-    const folderSnap = await getDocs(collection(firestore, `users/${userId}/folders`))
-
-    // A freshly-installed device holds pristine seed folders that still carry their
-    // canonical syncIds. Match incoming cloud folders to those seeds by identity
-    // (flag for the singleton default/trash folders, name for the rest) and adopt the
-    // cloud's syncId, so the two devices unify on one folder instead of duplicating.
-    const localBeforeMerge = await database.getAllFolders()
-    const claimedSeedIds = new Set<number>()
-
-    for (const docSnap of folderSnap.docs) {
-      const remote = docSnap.data()
-      const syncId = docSnap.id
-      const local = await database.getFolderBySyncId(syncId)
-
-      if (!local) {
-        const seedMatch = localBeforeMerge.find((f) =>
-          f.id != null &&
-          !claimedSeedIds.has(f.id) &&
-          SEED_SYNC_IDS.has(f.syncId ?? '') &&
-          (remote.isSystem
-            ? f.isSystem
-            : remote.isDefault
-              ? f.isDefault
-              : !f.isDefault && !f.isSystem && f.name === remote.name)
-        )
-
-        if (seedMatch?.id != null) {
-          claimedSeedIds.add(seedMatch.id)
-          await database.updateFolder(seedMatch.id, {
-            syncId,
-            name: remote.name,
-            color: remote.color,
-            sortOrder: remote.sortOrder ?? seedMatch.sortOrder,
-          })
-          continue
-        }
-
-        await database.addFolder({
-          name: remote.name,
-          color: remote.color,
-          sortOrder: remote.sortOrder ?? 0,
-          isDefault: remote.isDefault ?? false,
-          isSystem: remote.isSystem ?? false,
-          syncId,
-          createdAt: remote.createdAt || new Date().toISOString(),
-          updatedAt: remote.updatedAt || new Date().toISOString(),
-        })
-      } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
-        await database.updateFolder(local.id!, {
-          name: remote.name,
-          color: remote.color,
-          sortOrder: remote.sortOrder,
-        })
-      }
-    }
-
-    // Push local folders without cloud copy + re-push legacy data
-    const localFolders = await database.getAllFolders()
-    for (const folder of localFolders) {
-      if (!folder.syncId) {
-        folder.syncId = generateSyncId()
-        await database.updateFolder(folder.id!, { syncId: folder.syncId })
-      }
-      const cloudDoc = folderSnap.docs.find((d) => d.id === folder.syncId)
-      if (!cloudDoc) {
-        await withTimeout(pushFolder(folder), 10_000).catch(console.error)
-      } else {
-        const remote = cloudDoc.data()
-        if (!remote.updatedAt) {
-          await withTimeout(pushFolder(folder), 10_000).catch(console.error)
-        }
-      }
-    }
-
-    // Merge memos
-    const memoSnap = await getDocs(collection(firestore, `users/${userId}/memos`))
-    for (const docSnap of memoSnap.docs) {
-      const remote = docSnap.data()
-      const syncId = docSnap.id
-      const local = await database.getMemoBySyncId(syncId)
-
-      // Resolve folderSyncId → local folderId (with legacy fallback)
-      const folderId = remote.folderSyncId
-        ? await resolveFolderSyncId(remote.folderSyncId)
-        : (remote.folderId ?? null)
-
-      if (!local) {
-        await database.addMemo({
-          title: remote.title || '',
-          body: remote.body || '',
-          folderId,
-          tags: resolveRemoteTags(remote),
-          isStarred: remote.isStarred ?? false,
-          color: remote.color || 'white',
-          isPinned: remote.isPinned ?? false,
-          syncId,
-          createdAt: remote.createdAt || new Date().toISOString(),
-          updatedAt: remote.updatedAt || new Date().toISOString(),
-          deletedAt: remote.deletedAt || undefined,
-        })
-      } else if (remote.updatedAt && remote.updatedAt > local.updatedAt) {
-        await database.updateMemo(local.id!, {
-          title: remote.title,
-          body: remote.body,
-          folderId,
-          tags: resolveRemoteTags(remote),
-          isStarred: remote.isStarred,
-          color: remote.color,
-          isPinned: remote.isPinned,
-          deletedAt: remote.deletedAt || undefined,
-        })
-      }
-    }
-
-    // Push local memos without cloud copy + migrate legacy folderId
-    const localMemos = await database.getAllMemos()
-    for (const memo of localMemos) {
-      if (!memo.syncId) {
-        memo.syncId = generateSyncId()
-        await database.updateMemo(memo.id!, { syncId: memo.syncId })
-      }
-      const cloudDoc = memoSnap.docs.find((d) => d.id === memo.syncId)
-      if (!cloudDoc) {
-        await withTimeout(pushMemo(memo), 10_000).catch(console.error)
-      } else {
-        const remote = cloudDoc.data()
-        if (memo.folderId != null && !remote.folderSyncId) {
-          await withTimeout(pushMemo(memo), 10_000).catch(console.error)
-        }
-      }
-    }
-
-    // Collapse any duplicate seed folders left behind by earlier buggy syncs
-    await dedupeSeedFolders()
-
-    if (refreshFolders) await refreshFolders()
-    if (refreshMemos) await refreshMemos()
-  } finally {
-    mergePromise = null
   }
+
+  // Merge folders first (memos reference folders)
+  const folderSnap = await getDocs(collection(firestore, `users/${userId}/folders`))
+  if (superseded()) return
+
+  const localBeforeMerge = await database.getAllFolders()
+  const claimedSeedIds = new Set<number>()
+
+  for (const docSnap of folderSnap.docs) {
+    const remote = docSnap.data()
+    const syncId = docSnap.id
+    const local = await database.getFolderBySyncId(syncId)
+
+    // Tombstoned folder: remove the local copy (unless it's the singleton
+    // default/trash), never re-create or re-push it.
+    if (remote.tombstone) {
+      if (local?.id != null && !local.isDefault && !local.isSystem) {
+        await database.deleteFolder(local.id)
+      }
+      continue
+    }
+
+    if (!local) {
+      const seedMatch = localBeforeMerge.find((f) =>
+        f.id != null &&
+        !claimedSeedIds.has(f.id) &&
+        SEED_SYNC_IDS.has(f.syncId ?? '') &&
+        (remote.isSystem
+          ? f.isSystem
+          : remote.isDefault
+            ? f.isDefault
+            : !f.isDefault && !f.isSystem && f.name === remote.name)
+      )
+
+      if (seedMatch?.id != null) {
+        claimedSeedIds.add(seedMatch.id)
+        await database.updateFolder(seedMatch.id, {
+          syncId,
+          name: remote.name,
+          color: remote.color,
+          sortOrder: remote.sortOrder ?? seedMatch.sortOrder,
+        })
+        continue
+      }
+
+      await database.addFolder({
+        name: remote.name,
+        color: remote.color,
+        sortOrder: remote.sortOrder ?? 0,
+        isDefault: remote.isDefault ?? false,
+        isSystem: remote.isSystem ?? false,
+        syncId,
+        createdAt: remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.updatedAt || new Date().toISOString(),
+      })
+    } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
+      await database.updateFolder(local.id!, {
+        name: remote.name,
+        color: remote.color,
+        sortOrder: remote.sortOrder,
+        // Adopt the writer's timestamp so LWW compares sender-vs-sender, not
+        // sender-vs-receiver-clock.
+        updatedAt: remote.updatedAt,
+      })
+    }
+  }
+
+  // Reconcile local folders upward: push those with no cloud copy, or whose local
+  // copy is genuinely newer than the cloud (offline/signed-out edits).
+  if (superseded()) return
+  const localFolders = await database.getAllFolders()
+  for (const folder of localFolders) {
+    if (!folder.syncId) {
+      folder.syncId = generateSyncId()
+      await database.updateFolder(folder.id!, { syncId: folder.syncId, updatedAt: folder.updatedAt })
+    }
+    const cloudDoc = folderSnap.docs.find((d) => d.id === folder.syncId)
+    const remote = cloudDoc?.data()
+    if (remote?.tombstone) continue // cloud deleted it; don't resurrect
+    if (!cloudDoc) {
+      await withTimeout(pushFolder(folder), 10_000).catch(console.error)
+    } else if (!remote!.updatedAt || (folder.updatedAt && folder.updatedAt > remote!.updatedAt)) {
+      await withTimeout(pushFolder(folder), 10_000).catch(console.error)
+    }
+  }
+
+  // Merge memos
+  if (superseded()) return
+  const memoSnap = await getDocs(collection(firestore, `users/${userId}/memos`))
+  if (superseded()) return
+  for (const docSnap of memoSnap.docs) {
+    const remote = docSnap.data()
+    const syncId = docSnap.id
+    const local = await database.getMemoBySyncId(syncId)
+
+    // Tombstoned memo: purge the local copy and never re-create/re-push it.
+    if (remote.tombstone) {
+      if (local?.id != null) await database.permanentDeleteMemo(local.id)
+      continue
+    }
+
+    // Resolve folderSyncId → local folderId (with legacy fallback)
+    const folderId = remote.folderSyncId
+      ? await resolveFolderSyncId(remote.folderSyncId)
+      : (remote.folderId ?? null)
+
+    if (!local) {
+      await database.addMemo({
+        title: remote.title || '',
+        body: remote.body || '',
+        folderId,
+        tags: resolveRemoteTags(remote),
+        isStarred: remote.isStarred ?? false,
+        color: remote.color || 'white',
+        isPinned: remote.isPinned ?? false,
+        syncId,
+        createdAt: remote.createdAt || new Date().toISOString(),
+        updatedAt: remote.updatedAt || new Date().toISOString(),
+        deletedAt: remote.deletedAt || undefined,
+      })
+    } else if (remote.updatedAt && remote.updatedAt > local.updatedAt) {
+      await database.updateMemo(local.id!, {
+        title: remote.title,
+        body: remote.body,
+        folderId,
+        tags: resolveRemoteTags(remote),
+        isStarred: remote.isStarred,
+        color: remote.color,
+        isPinned: remote.isPinned,
+        deletedAt: remote.deletedAt || undefined,
+        updatedAt: remote.updatedAt,
+      })
+    }
+  }
+
+  // Reconcile local memos upward: push those with no cloud copy OR whose local copy is
+  // newer than the cloud (offline/signed-out edits, restored backups) — this is the
+  // symmetric half that makes offline edits actually reach the cloud.
+  if (superseded()) return
+  const localMemos = await database.getAllMemos()
+  for (const memo of localMemos) {
+    if (!memo.syncId) {
+      memo.syncId = generateSyncId()
+      // Backfill without bumping updatedAt (metadata-only write).
+      await database.updateMemoLocalMeta(memo.id!, { syncId: memo.syncId })
+    }
+    const cloudDoc = memoSnap.docs.find((d) => d.id === memo.syncId)
+    const remote = cloudDoc?.data()
+    if (remote?.tombstone) continue // cloud deleted it; don't resurrect
+    if (!cloudDoc) {
+      await withTimeout(pushMemo(memo), 10_000).catch(console.error)
+    } else if (
+      (memo.updatedAt && (!remote!.updatedAt || memo.updatedAt > remote!.updatedAt)) ||
+      (memo.folderId != null && !remote!.folderSyncId)
+    ) {
+      await withTimeout(pushMemo(memo), 10_000).catch(console.error)
+    }
+  }
+
+  // Collapse any duplicate seed folders left behind by earlier buggy syncs
+  if (superseded()) return
+  await dedupeSeedFolders()
+
+  // Garbage-collect expired tombstones (bounded growth). Only the cloud doc is
+  // removed; local copies were already purged above.
+  for (const docSnap of [...folderSnap.docs, ...memoSnap.docs]) {
+    const remote = docSnap.data()
+    if (remote.tombstone && remote.purgedAt && now - new Date(remote.purgedAt).getTime() > TOMBSTONE_TTL_MS) {
+      await deleteDoc(docSnap.ref).catch(() => {})
+    }
+  }
+
+  if (superseded()) return
+  if (refreshFolders) await refreshFolders()
+  if (refreshMemos) await refreshMemos()
 }
 
 // ─── Seed folder de-duplication ────────────────────
@@ -392,7 +486,7 @@ async function dedupeSeedFolders() {
       }
 
       await database.removeFolderRecord(loser.id)
-      if (loser.syncId) await deleteFolderFromCloud(loser.syncId)
+      if (loser.syncId) await hardDeleteFolderFromCloud(loser.syncId)
     }
   }
 }
@@ -412,9 +506,19 @@ function startListeners(userId: string) {
       try {
         for (const change of snapshot.docChanges()) {
           const syncId = change.doc.id
-          if (recentlyPushed.has(`memo-${syncId}`)) continue
+          // Skip this client's own optimistic write echoes (latency compensation).
+          // The server-confirmed version arrives later with hasPendingWrites=false and
+          // is neutralised by the updatedAt guard, so no real remote edit is dropped.
+          if (change.doc.metadata.hasPendingWrites) continue
 
           const remote = change.doc.data()
+
+          // Tombstone: purge the local copy, never re-add it.
+          if (remote.tombstone) {
+            const local = await database.getMemoBySyncId(syncId)
+            if (local?.id != null) await database.permanentDeleteMemo(local.id)
+            continue
+          }
 
           if (change.type === 'added' || change.type === 'modified') {
             const local = await database.getMemoBySyncId(syncId)
@@ -447,6 +551,7 @@ function startListeners(userId: string) {
                 color: remote.color,
                 isPinned: remote.isPinned,
                 deletedAt: remote.deletedAt || undefined,
+                updatedAt: remote.updatedAt,
               })
             }
           }
@@ -476,11 +581,23 @@ function startListeners(userId: string) {
       if (mergePromise) await mergePromise
 
       try {
+        let foldersRemoved = false
         for (const change of snapshot.docChanges()) {
           const syncId = change.doc.id
-          if (recentlyPushed.has(`folder-${syncId}`)) continue
+          if (change.doc.metadata.hasPendingWrites) continue
 
           const remote = change.doc.data()
+
+          // Tombstone: remove the local folder (relocating its memos) and refresh
+          // the memo store since deleteFolder re-homes memos.
+          if (remote.tombstone) {
+            const local = await database.getFolderBySyncId(syncId)
+            if (local?.id != null && !local.isDefault && !local.isSystem) {
+              await database.deleteFolder(local.id)
+              foldersRemoved = true
+            }
+            continue
+          }
 
           if (change.type === 'added' || change.type === 'modified') {
             const local = await database.getFolderBySyncId(syncId)
@@ -511,6 +628,7 @@ function startListeners(userId: string) {
                 name: remote.name,
                 color: remote.color,
                 sortOrder: remote.sortOrder,
+                updatedAt: remote.updatedAt,
               })
             }
           }
@@ -519,11 +637,15 @@ function startListeners(userId: string) {
             const local = await database.getFolderBySyncId(syncId)
             if (local && !local.isDefault && !local.isSystem) {
               await database.deleteFolder(local.id!)
+              foldersRemoved = true
             }
           }
         }
 
         if (refreshFolders) await refreshFolders()
+        // deleteFolder relocated memos in the DB — the memo store must re-read them,
+        // otherwise the relocated memos keep a dead folderId in the UI.
+        if (foldersRemoved && refreshMemos) await refreshMemos()
       } catch (err) {
         console.error('Folder sync listener error:', err)
       }
@@ -538,9 +660,17 @@ function startListeners(userId: string) {
 // ─── Init / Stop ───────────────────────────────────
 
 export async function initSync(userId: string) {
+  const epoch = ++syncEpoch
   currentUserId = userId
-  await initialMerge(userId)
+  await initialMerge(userId, epoch)
+  // A logout/account-switch during the merge bumps syncEpoch; abort the rest so we
+  // never attach listeners (or drain the queue) for a stale/wrong account.
+  if (epoch !== syncEpoch) return
   startListeners(userId)
+
+  // Replay any writes queued while offline or signed out (now that auth is live).
+  const { processPendingSyncs } = await import('./offlineQueue')
+  await processPendingSyncs()
 
   // Settings cloud sync
   const { initSettingsSync } = await import('./settingsSync')
@@ -548,12 +678,10 @@ export async function initSync(userId: string) {
 }
 
 export function stopSync() {
+  syncEpoch++
   if (unsubMemos) { unsubMemos(); unsubMemos = null }
   if (unsubFolders) { unsubFolders(); unsubFolders = null }
   currentUserId = null
-  recentlyPushed.clear()
-  for (const timer of recentlyPushedTimers.values()) clearTimeout(timer)
-  recentlyPushedTimers.clear()
   mergePromise = null
 
   // Stop settings sync

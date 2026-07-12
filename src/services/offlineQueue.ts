@@ -1,6 +1,6 @@
 import { db } from './database'
 import { nowISO } from '@/lib/dateUtils'
-import { pushMemo, pushFolder } from './firestoreSync'
+import { pushMemo, pushFolder, isSyncReady } from './firestoreSync'
 import * as database from './database'
 
 export async function enqueueSync(
@@ -31,34 +31,42 @@ export async function enqueueSync(
   }
 }
 
+/** Remove any queued intents for a syncId (called after a confirmed push). */
+export async function dequeueSync(syncId: string): Promise<void> {
+  await db.pendingSyncs.where('syncId').equals(syncId).delete()
+}
+
 export async function processPendingSyncs(): Promise<void> {
+  // Replaying while signed out would push nothing yet delete the queue row — the
+  // 'online' event can fire before Firebase restores auth, so gate on readiness.
+  if (!isSyncReady()) return
+
   const pending = await db.pendingSyncs.toArray()
   if (pending.length === 0) return
 
   for (const item of pending) {
-    try {
-      if (item.type === 'memo') {
-        if (item.action === 'delete') {
-          const { deleteMemoFromCloud } = await import('./firestoreSync')
-          await deleteMemoFromCloud(item.syncId)
-        } else {
-          const memo = await database.getMemoBySyncId(item.syncId)
-          if (memo) await pushMemo(memo)
-        }
+    // The push/delete helpers report success as a boolean and never throw; only drop
+    // the queue row when the change was actually accepted, otherwise leave it to retry.
+    let ok = false
+    if (item.type === 'memo') {
+      if (item.action === 'delete') {
+        const { deleteMemoFromCloud } = await import('./firestoreSync')
+        ok = await deleteMemoFromCloud(item.syncId)
       } else {
-        if (item.action === 'delete') {
-          const { deleteFolderFromCloud } = await import('./firestoreSync')
-          await deleteFolderFromCloud(item.syncId)
-        } else {
-          const folder = await database.getFolderBySyncId(item.syncId)
-          if (folder) await pushFolder(folder)
-        }
+        const memo = await database.getMemoBySyncId(item.syncId)
+        // The memo no longer exists locally (deleted since queueing) → drop the intent.
+        ok = memo ? await pushMemo(memo) : true
       }
-      // Clear on success
-      await db.pendingSyncs.delete(item.id!)
-    } catch {
-      // Will retry on next sync
-      console.error(`Failed to sync ${item.type} ${item.syncId}`)
+    } else {
+      if (item.action === 'delete') {
+        const { deleteFolderFromCloud } = await import('./firestoreSync')
+        ok = await deleteFolderFromCloud(item.syncId)
+      } else {
+        const folder = await database.getFolderBySyncId(item.syncId)
+        ok = folder ? await pushFolder(folder) : true
+      }
     }
+
+    if (ok && item.id != null) await db.pendingSyncs.delete(item.id)
   }
 }

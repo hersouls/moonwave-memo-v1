@@ -58,7 +58,7 @@ export function generateInsights(memos: Memo[]): Insight[] {
   }
 
   // Day of week pattern
-  const dayCounts = new Array(7).fill(0)
+  const dayCounts = Array.from({ length: 7 }, () => 0)
   for (const memo of active) {
     dayCounts[new Date(memo.createdAt).getDay()]++
   }

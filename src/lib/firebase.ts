@@ -1,6 +1,10 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore'
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions'
 
 const env = (key: string) => (import.meta.env[key] as string || '').trim()
@@ -16,7 +20,12 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
-export const firestore = getFirestore(app)
+// Durable IndexedDB cache so writes made offline survive an app restart and replay
+// on reconnect (a plain in-memory cache silently discards them). Multi-tab manager
+// coordinates the shared cache across PWA tabs.
+export const firestore = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+})
 export const functions = getFunctions(app, 'asia-northeast3')
 
 // Connect to emulator in development

@@ -36,6 +36,8 @@ export interface ImportContext {
   recordMemo?: { updatedAt: string } | null
   /** True if a memo already exists for the file's front-matter syncId. */
   frontmatterMemoExists?: boolean
+  /** The memo matched by front-matter syncId (for the untracked conflict comparison). */
+  frontmatterMemo?: { updatedAt: string } | null
   /** Parsed file (add/change only). */
   parsed?: DeserializedMemo
 }
@@ -73,7 +75,15 @@ export function decideImport(event: FileEvent, ctx: ImportContext): ImportDecisi
   }
 
   // Untracked path, but front-matter syncId maps to an existing memo (file moved/renamed).
-  if (parsed.syncId && ctx.frontmatterMemoExists) {
+  if (parsed.syncId && (ctx.frontmatterMemo || ctx.frontmatterMemoExists)) {
+    // Apply the same strict-newer guard as tracked files: dropping an OLD copy of a
+    // file (e.g. restoring a memo from a stale backup, or Ctrl+C/V of a live file) must
+    // not silently roll the memo back. Equal-or-newer still updates so a genuine
+    // move/rename (identical timestamps) repoints tracking.
+    const memoUpdatedAt = ctx.frontmatterMemo?.updatedAt
+    if (parsed.updatedAt && memoUpdatedAt && parsed.updatedAt < memoUpdatedAt) {
+      return { action: 'skip', reason: 'app-newer-untracked' }
+    }
     return { action: 'update', memoSyncId: parsed.syncId, parsed }
   }
 

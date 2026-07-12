@@ -6,6 +6,8 @@ export type CurrentView = 'dashboard' | 'memos' | 'calendar' | 'settings'
 
 interface UIState {
   isSidebarOpen: boolean
+  // 사이드바 태그 섹션 — 태그가 많아지면 목록이 길어지므로 기본 접힘
+  isTagsSectionOpen: boolean
   currentView: CurrentView
   isMobileMenuOpen: boolean
 
@@ -49,6 +51,8 @@ interface UIState {
   // Actions
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
+  toggleTagsSection: () => void
+  setTagsSectionOpen: (open: boolean) => void
   toggleTabletSidebar: () => void
   setCurrentView: (view: CurrentView) => void
   openMobileMenu: () => void
@@ -100,6 +104,7 @@ export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       isSidebarOpen: true,
+      isTagsSectionOpen: false,
       currentView: 'dashboard',
       isMobileMenuOpen: false,
 
@@ -138,6 +143,8 @@ export const useUIStore = create<UIState>()(
 
       toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
       setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+      toggleTagsSection: () => set((s) => ({ isTagsSectionOpen: !s.isTagsSectionOpen })),
+      setTagsSectionOpen: (open) => set({ isTagsSectionOpen: open }),
       toggleTabletSidebar: () => set((s) => ({ tabletSidebarOpen: !s.tabletSidebarOpen })),
       setCurrentView: (view) => set({ currentView: view, isSelectionMode: false, selectedMemoIds: [] }),
       openMobileMenu: () => set({ isMobileMenuOpen: true }),
@@ -199,6 +206,7 @@ export const useUIStore = create<UIState>()(
       // UX-16: persist filter state across sessions
       partialize: (state) => ({
         isSidebarOpen: state.isSidebarOpen,
+        isTagsSectionOpen: state.isTagsSectionOpen,
         viewMode: state.viewMode,
         sortBy: state.sortBy,
         activeFolderId: state.activeFolderId,

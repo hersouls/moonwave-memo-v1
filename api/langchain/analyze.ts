@@ -134,7 +134,10 @@ Rules:
         const parsed = JSON.parse(match[0])
         return {
           classification: {
-            folder: typeof parsed.folder === 'string' ? parsed.folder : null,
+            // Only accept a folder the model was actually offered. A hallucinated name
+            // resolves to no folder client-side, sending the memo to 미분류 instead of
+            // the default folder (classify.ts already guards this way).
+            folder: typeof parsed.folder === 'string' && state.folderNames.includes(parsed.folder) ? parsed.folder : null,
             title: typeof parsed.title === 'string' ? parsed.title : '',
           },
         }
@@ -166,15 +169,22 @@ Rules:
 function buildGraph(provider: Provider, apiKey: string) {
   const { sentimentNode, tagNode, classifyNode, summaryNode } = createNodes(provider, apiKey)
 
+  // The four nodes are independent — each reads only content/folderNames and writes a
+  // disjoint output channel. Fan them out from __start__ so LangGraph runs them in one
+  // concurrent superstep instead of four serial LLM round-trips (~4x → ~1x latency,
+  // removing the 504-timeout risk on smart capture).
   const graph = new StateGraph(MemoAnalysisState)
     .addNode('sentiment', sentimentNode)
     .addNode('tag', tagNode)
     .addNode('classify', classifyNode)
     .addNode('summary', summaryNode)
     .addEdge('__start__', 'sentiment')
-    .addEdge('sentiment', 'tag')
-    .addEdge('tag', 'classify')
-    .addEdge('classify', 'summary')
+    .addEdge('__start__', 'tag')
+    .addEdge('__start__', 'classify')
+    .addEdge('__start__', 'summary')
+    .addEdge('sentiment', '__end__')
+    .addEdge('tag', '__end__')
+    .addEdge('classify', '__end__')
     .addEdge('summary', '__end__')
     .compile()
 

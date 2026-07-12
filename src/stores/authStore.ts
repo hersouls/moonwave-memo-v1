@@ -73,9 +73,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
         set({ user: toAuthUser(firebaseUser), isLoading: false, isSigningIn: false, error: null, syncStatus: 'syncing' })
         try {
           await initSync(firebaseUser.uid)
+          // initSync can take seconds (initial merge). If the user logged out or switched
+          // accounts meanwhile, this stale continuation must not report 'synced'.
+          if (auth.currentUser?.uid !== firebaseUser.uid) return
           set({ syncStatus: 'synced', lastSyncTime: new Date().toISOString() })
         } catch (err) {
           console.error('Sync init failed:', err)
+          if (auth.currentUser?.uid !== firebaseUser.uid) return
           stopSync()
           set({ syncStatus: 'error' })
         }
@@ -112,12 +116,18 @@ export const useAuthStore = create<AuthState>()((set) => ({
       await signInWithPopup(auth, provider)
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string }
+      // User explicitly dismissed the popup — treat as a silent cancel, NOT a reason to
+      // navigate the whole app away to Google (which would discard unsaved editor state).
       if (
-        firebaseErr.code === 'auth/popup-blocked' ||
         firebaseErr.code === 'auth/popup-closed-by-user' ||
-        firebaseErr.code === 'auth/cancelled-popup-request' ||
+        firebaseErr.code === 'auth/cancelled-popup-request'
+      ) {
+        set({ isSigningIn: false, error: null })
+      } else if (
+        firebaseErr.code === 'auth/popup-blocked' ||
         firebaseErr.code === 'auth/internal-error'
       ) {
+        // Popup genuinely couldn't open (blocker / webview) → fall back to redirect.
         try {
           await signInWithRedirect(auth, provider)
           return

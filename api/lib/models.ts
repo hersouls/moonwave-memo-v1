@@ -20,12 +20,17 @@ interface ChatModelOptions {
 
 // ─── Chat Model Factory ─────────────────────────────
 
+// Hard server-side ceiling on completion tokens — the client value is never trusted,
+// so a crafted request can't amplify cost on the operator's key.
+const MAX_TOKENS_CAP = 2000
+
 export function createChatModel(
   provider: Provider,
   apiKey: string,
   options: ChatModelOptions = {}
 ): BaseChatModel {
-  const { temperature = 0.3, maxTokens = 500 } = options
+  const { temperature = 0.3, maxTokens: requestedMaxTokens = 500 } = options
+  const maxTokens = Math.min(Math.max(Math.trunc(Number(requestedMaxTokens) || 500), 1), MAX_TOKENS_CAP)
 
   switch (provider) {
     case 'anthropic':

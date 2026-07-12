@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Hash,
@@ -60,6 +61,9 @@ export function Sidebar() {
   const setActiveFilter = useUIStore((s) => s.setActiveFilter)
   const activeTag = useUIStore((s) => s.activeTag)
   const setActiveTag = useUIStore((s) => s.setActiveTag)
+  const isTagsSectionOpen = useUIStore((s) => s.isTagsSectionOpen)
+  const toggleTagsSection = useUIStore((s) => s.toggleTagsSection)
+  const setTagsSectionOpen = useUIStore((s) => s.setTagsSectionOpen)
   const currentView = useUIStore((s) => s.currentView)
   const setCurrentView = useUIStore((s) => s.setCurrentView)
   const openSettingsModal = useUIStore((s) => s.openSettingsModal)
@@ -333,7 +337,7 @@ export function Sidebar() {
           <div className="mt-6 px-2">
             <Tooltip content={`태그 (${allTags.length})`} placement="right">
               <button
-                onClick={handleToggleSidebar}
+                onClick={() => { setTagsSectionOpen(true); handleToggleSidebar() }}
                 className="w-full flex items-center justify-center px-3 py-2.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors relative"
                 aria-label="태그 목록 보기"
               >
@@ -348,34 +352,49 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* Tags Section with frequency */}
+        {/* Tags Section with frequency — 목록이 길어 기본 접힘, 토글로 펼침 */}
         {isSidebarOpen && allTags.length > 0 && (
           <section className="mt-6 px-2" aria-labelledby="tags-heading">
-            <h2
-              id="tags-heading"
-              className="px-3 mb-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
-            >
-              태그
+            <h2 id="tags-heading" className="mb-2">
+              <button
+                type="button"
+                onClick={toggleTagsSection}
+                aria-expanded={isTagsSectionOpen}
+                aria-controls="sidebar-tags-list"
+                className="w-full flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              >
+                <span>태그</span>
+                <span className="font-normal tabular-nums normal-case">({allTags.length})</span>
+                <ChevronDown
+                  className={clsx(
+                    'w-3.5 h-3.5 ml-auto transition-transform duration-200',
+                    isTagsSectionOpen && 'rotate-180'
+                  )}
+                  aria-hidden="true"
+                />
+              </button>
             </h2>
-            <ul className="space-y-0.5">
-              {allTags.map((tag) => {
-                const count = tagCounts.get(tag) || 0
-                return (
-                  <li key={tag}>
-                    {navButton(
-                      tag,
-                      <Hash className={clsx(
-                        'w-4 h-4',
-                        count >= 10 ? 'text-primary-500' : count >= 5 ? 'text-primary-400' : 'text-zinc-400'
-                      )} aria-hidden="true" />,
-                      activeTag === tag,
-                      () => { setActiveTag(tag); handleViewChange() },
-                      count
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+            {isTagsSectionOpen && (
+              <ul id="sidebar-tags-list" className="space-y-0.5">
+                {allTags.map((tag) => {
+                  const count = tagCounts.get(tag) || 0
+                  return (
+                    <li key={tag}>
+                      {navButton(
+                        tag,
+                        <Hash className={clsx(
+                          'w-4 h-4',
+                          count >= 10 ? 'text-primary-500' : count >= 5 ? 'text-primary-400' : 'text-zinc-400'
+                        )} aria-hidden="true" />,
+                        activeTag === tag,
+                        () => { setActiveTag(tag); handleViewChange() },
+                        count
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </section>
         )}
 

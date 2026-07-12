@@ -2,6 +2,8 @@ import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { auth, callable } from '@/lib/firebase'
 import { apiUrl } from '@/lib/apiBase'
+import { getUserApiKey } from './aiFeatures'
+import { isAILimitReached, incrementAIUsage } from './aiUsage'
 
 // ─── Alter Ego (데미안) Co-Author Service ───────────
 
@@ -179,7 +181,15 @@ async function callLangGraphDemian(
 ): Promise<AIResponse> {
   const ai = useSettingsStore.getState().settings.ai
   const provider = ai.aiProvider || 'anthropic'
-  const userApiKey = ai.openaiApiKey || ai.anthropicApiKey || ai.geminiApiKey || undefined
+  // Select the key matching the chosen provider (undefined → server falls back to its
+  // own env key), instead of blindly sending the first key of any provider.
+  const userApiKey = getUserApiKey(provider)
+
+  // Respect the same 50/day free-tier gate the other AI features enforce — without this,
+  // Demian (incl. the idle auto-trigger) called the server key unlimited and uncounted.
+  if (!userApiKey && isAILimitReached()) {
+    return { text: '', error: 'daily_limit_exceeded' }
+  }
 
   // Gather writing samples and memo summaries for the agent
   const memos = useMemoStore.getState().memos.filter((m) => !m.deletedAt)
@@ -219,6 +229,8 @@ async function callLangGraphDemian(
     }
 
     const data = await res.json()
+    // Count against the daily quota when the server key was used (mirrors callLangChain).
+    if (data.usingServerKey) incrementAIUsage()
     return { text: data.text || '' }
   } catch {
     return { text: '', error: 'langchain_unavailable' }
