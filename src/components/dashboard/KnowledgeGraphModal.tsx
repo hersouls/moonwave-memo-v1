@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Download,
@@ -7,6 +16,8 @@ import {
   EyeOff,
   Folder as FolderIcon,
   Frame,
+  Loader2,
+  Rotate3d,
   Search,
   Share2,
   Sparkles,
@@ -22,6 +33,9 @@ import { useToastStore } from '@/stores/toastStore'
 import type { GraphLink, GraphNode } from '@/hooks/useGraphData'
 import { useSemanticLinks } from '@/hooks/useSemanticLinks'
 import { ForceGraph, type ForceGraphHandle, type LabelMode } from './ForceGraph'
+
+// 3D 뷰(Three.js) — 토글을 켤 때만 내려받는 지연 청크 (초기 로딩·모바일 부담 0)
+const KnowledgeGraph3D = lazy(() => import('./KnowledgeGraph3D'))
 
 interface KnowledgeGraphModalProps {
   open: boolean
@@ -69,6 +83,7 @@ export function KnowledgeGraphModal({
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hideOrphans, setHideOrphans] = useState(false)
   const [aiOn, setAiOn] = useState(true)
+  const [is3D, setIs3D] = useState(false)
 
   // AI 의미 연결 — 모달이 열려 있고 토글이 켜진 동안 계산 (Dexie 캐시 우선, 변경분만 API)
   const nodeIds = useMemo(() => nodes.map((n) => n.id), [nodes])
@@ -124,6 +139,7 @@ export function KnowledgeGraphModal({
       setLabelMode('auto')
       setHideOrphans(false)
       setAiOn(true)
+      setIs3D(false)
     }
   }, [open])
 
@@ -278,6 +294,21 @@ export function KnowledgeGraphModal({
 
             <button
               type="button"
+              onClick={() => setIs3D((v) => !v)}
+              title={is3D ? '2D 뷰로 전환' : '3D 뷰로 전환 (최초 1회 로딩)'}
+              className={clsx(
+                'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
+                is3D
+                  ? 'border-primary-300 bg-primary-50 text-primary-600 dark:border-primary-500/40 dark:bg-primary-900/20 dark:text-primary-300'
+                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
+              )}
+            >
+              <Rotate3d className="h-3.5 w-3.5" />
+              <span className="hidden md:inline">{is3D ? '2D' : '3D'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setAiOn((v) => !v)}
               title={
                 sem.capable || sem.links.length > 0
@@ -314,25 +345,30 @@ export function KnowledgeGraphModal({
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={cycleLabel}
-              title="라벨 표시 방식 전환"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
-            >
-              <Tag className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">{LABEL_TEXT[labelMode]}</span>
-            </button>
+            {/* 라벨·PNG 내보내기는 2D 전용 (3D는 호버 툴팁·조망 중심) */}
+            {!is3D && (
+              <>
+                <button
+                  type="button"
+                  onClick={cycleLabel}
+                  title="라벨 표시 방식 전환"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
+                >
+                  <Tag className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">{LABEL_TEXT[labelMode]}</span>
+                </button>
 
-            <button
-              type="button"
-              onClick={handleExport}
-              title="이미지로 저장 (PNG)"
-              aria-label="이미지로 저장"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
-            >
-              <Download className="h-4 w-4" />
-            </button>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  title="이미지로 저장 (PNG)"
+                  aria-label="이미지로 저장"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              </>
+            )}
 
             <button
               type="button"
@@ -347,7 +383,7 @@ export function KnowledgeGraphModal({
 
         {/* ── 그래프 영역 ── */}
         <div ref={areaRefCb} className="relative flex-1 overflow-hidden bg-zinc-50/60 dark:bg-black/20">
-          {size.width > 0 && display.nodes.length > 0 && (
+          {size.width > 0 && display.nodes.length > 0 && !is3D && (
             <ForceGraph
               ref={graphRef}
               nodes={display.nodes}
@@ -364,6 +400,30 @@ export function KnowledgeGraphModal({
               onActivate={handleActivate}
               onZoomChange={setZoomPct}
             />
+          )}
+
+          {size.width > 0 && display.nodes.length > 0 && is3D && (
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  3D 엔진 로딩 중…
+                </div>
+              }
+            >
+              <KnowledgeGraph3D
+                nodes={display.nodes}
+                links={display.links}
+                colorMap={colorMap}
+                width={size.width}
+                height={size.height}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onActivate={handleActivate}
+                query={query}
+                highlightGroup={highlightGroup}
+              />
+            </Suspense>
           )}
 
           {/* 모바일 검색 */}
@@ -457,7 +517,8 @@ export function KnowledgeGraphModal({
             </div>
           )}
 
-          {/* 줌 컨트롤 */}
+          {/* 줌 컨트롤 (2D 전용 — 3D는 마우스/터치로 궤도 조작) */}
+          {!is3D && (
           <div className="absolute bottom-3 right-3 z-10 flex items-center gap-0.5 rounded-xl border border-zinc-200 bg-white/90 p-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-zinc-900/80">
             <button
               type="button"
@@ -486,10 +547,13 @@ export function KnowledgeGraphModal({
               <Frame className="h-4 w-4" />
             </button>
           </div>
+          )}
 
           {/* 조작 힌트 */}
           <p className="pointer-events-none absolute left-1/2 top-3 z-0 hidden -translate-x-1/2 text-[11px] text-zinc-400 sm:block dark:text-zinc-500">
-            드래그 이동 · 휠/핀치 줌 · 더블클릭/0 전체 보기 · 실선 [[링크]] · 점선 자동 연결
+            {is3D
+              ? '드래그 회전 · 휠 줌 · 우클릭 이동 · 노드 클릭 선택, 재클릭 열기'
+              : '드래그 이동 · 휠/핀치 줌 · 더블클릭/0 전체 보기 · 실선 [[링크]] · 점선 자동 연결'}
           </p>
         </div>
       </div>
