@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ForceGraph3D, {
   type ForceGraphMethods,
   type NodeObject,
@@ -52,14 +52,24 @@ export default function KnowledgeGraph3D({
   // 테마는 마운트 시점 기준 (모달 안에서 테마 전환은 드묾 — 재열면 반영)
   const [isDark] = useState(() => document.documentElement.classList.contains('dark'))
 
-  // 라이브러리가 x/y/z를 주입하며 객체를 변형하므로 복사본 전달
-  const graphData = useMemo(
-    () => ({
-      nodes: nodes.map((n) => ({ ...n })) as FGNode[],
+  // 라이브러리가 x/y/z를 주입하며 객체를 변형하므로 복사본 전달.
+  // 직전 복사본(라이브러리가 좌표를 기록해 둔 객체)에서 x/y/z/속도를 이어받아
+  // 데이터 변경(AI 링크 도착·동기화·토글) 시 레이아웃 텔레포트를 방지 — 2D의 positionsRef와 동일 원리.
+  const prevNodesRef = useRef<FGNode[]>([])
+  const graphData = useMemo(() => {
+    const prevPos = new Map(prevNodesRef.current.map((p) => [String(p.id), p]))
+    const nodesCopy = nodes.map((n) => {
+      const p = prevPos.get(n.id)
+      return p
+        ? ({ ...n, x: p.x, y: p.y, z: p.z, vx: p.vx, vy: p.vy, vz: p.vz } as FGNode)
+        : ({ ...n } as FGNode)
+    })
+    prevNodesRef.current = nodesCopy
+    return {
+      nodes: nodesCopy,
       links: links.map((l) => ({ ...l })) as FGLink[],
-    }),
-    [nodes, links]
-  )
+    }
+  }, [nodes, links])
 
   const adjacency = useMemo(() => {
     const adj = new Map<string, Set<string>>()
@@ -120,12 +130,13 @@ export default function KnowledgeGraph3D({
       // 클릭한 노드를 향해 카메라 이동 — 초점 전환을 몸으로 느끼게
       if (n.x != null && n.y != null && n.z != null) {
         const dist = 120
-        const len = Math.hypot(n.x, n.y, n.z) || 1
-        fgRef.current?.cameraPosition(
-          { x: n.x * (1 + dist / len), y: n.y * (1 + dist / len), z: n.z * (1 + dist / len) },
-          { x: n.x, y: n.y, z: n.z },
-          800
-        )
+        const len = Math.hypot(n.x, n.y, n.z)
+        // 원점 근처 노드(단일 노드 그래프 등)는 비율 이동이 (0,0,0) 붕괴를 일으키므로 고정 오프셋
+        const target =
+          len < 1e-6
+            ? { x: n.x, y: n.y, z: n.z + dist }
+            : { x: n.x * (1 + dist / len), y: n.y * (1 + dist / len), z: n.z * (1 + dist / len) }
+        fgRef.current?.cameraPosition(target, { x: n.x, y: n.y, z: n.z }, 800)
       }
     },
     [selectedId, onSelect, onActivate]
@@ -137,6 +148,19 @@ export default function KnowledgeGraph3D({
     didFitRef.current = true
     fgRef.current?.zoomToFit(600, 60)
   }, [])
+
+  // three의 renderer.dispose()는 GL 컨텍스트를 놓지 않음(캔버스 GC 대기) —
+  // 2D↔3D 토글 반복 시 살아있는 컨텍스트가 브라우저 상한(~16)까지 쌓이므로 명시 해제
+  useEffect(
+    () => () => {
+      try {
+        fgRef.current?.renderer()?.forceContextLoss()
+      } catch {
+        // 이미 소실된 컨텍스트 — 무시
+      }
+    },
+    []
+  )
 
   return (
     <ForceGraph3D<GraphNode, { weight: number; kind: LinkKind }>

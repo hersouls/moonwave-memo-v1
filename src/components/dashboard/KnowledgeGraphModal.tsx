@@ -1,4 +1,5 @@
 import {
+  Component,
   lazy,
   Suspense,
   useCallback,
@@ -7,6 +8,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -34,8 +36,41 @@ import type { GraphLink, GraphNode } from '@/hooks/useGraphData'
 import { useSemanticLinks } from '@/hooks/useSemanticLinks'
 import { ForceGraph, type ForceGraphHandle, type LabelMode } from './ForceGraph'
 
-// 3D 뷰(Three.js) — 토글을 켤 때만 내려받는 지연 청크 (초기 로딩·모바일 부담 0)
-const KnowledgeGraph3D = lazy(() => import('./KnowledgeGraph3D'))
+// 3D 뷰(Three.js) — 토글을 켤 때만 내려받는 지연 청크 (초기 로딩·모바일 부담 0).
+// React.lazy는 로드 실패를 영구 캐시하므로 재시도 시 새 lazy 컴포넌트를 만들어 우회한다.
+const make3DLazy = () => lazy(() => import('./KnowledgeGraph3D'))
+
+// 청크 로드 실패(오프라인·배포 해시 교체)가 라우트 ErrorBoundary까지 전파되어
+// 대시보드 전체가 에러 화면으로 바뀌는 것을 막는 국소 방어벽
+class Graph3DBoundary extends Component<
+  { onRetry: () => void; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <p>3D 뷰를 불러오지 못했습니다 — 네트워크 또는 앱 업데이트를 확인해 주세요.</p>
+          <button
+            type="button"
+            onClick={() => {
+              this.setState({ failed: false })
+              this.props.onRetry()
+            }}
+            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
+          >
+            다시 시도
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 interface KnowledgeGraphModalProps {
   open: boolean
@@ -84,6 +119,8 @@ export function KnowledgeGraphModal({
   const [hideOrphans, setHideOrphans] = useState(false)
   const [aiOn, setAiOn] = useState(true)
   const [is3D, setIs3D] = useState(false)
+  // 로드 실패 시 재시도가 새 lazy 인스턴스를 받도록 상태로 보관
+  const [Lazy3D, setLazy3D] = useState(() => make3DLazy())
 
   // AI 의미 연결 — 모달이 열려 있고 토글이 켜진 동안 계산 (Dexie 캐시 우선, 변경분만 API)
   const nodeIds = useMemo(() => nodes.map((n) => n.id), [nodes])
@@ -403,27 +440,29 @@ export function KnowledgeGraphModal({
           )}
 
           {size.width > 0 && display.nodes.length > 0 && is3D && (
-            <Suspense
-              fallback={
-                <div className="flex h-full items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  3D 엔진 로딩 중…
-                </div>
-              }
-            >
-              <KnowledgeGraph3D
-                nodes={display.nodes}
-                links={display.links}
-                colorMap={colorMap}
-                width={size.width}
-                height={size.height}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-                onActivate={handleActivate}
-                query={query}
-                highlightGroup={highlightGroup}
-              />
-            </Suspense>
+            <Graph3DBoundary onRetry={() => setLazy3D(() => make3DLazy())}>
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    3D 엔진 로딩 중…
+                  </div>
+                }
+              >
+                <Lazy3D
+                  nodes={display.nodes}
+                  links={display.links}
+                  colorMap={colorMap}
+                  width={size.width}
+                  height={size.height}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onActivate={handleActivate}
+                  query={query}
+                  highlightGroup={highlightGroup}
+                />
+              </Suspense>
+            </Graph3DBoundary>
           )}
 
           {/* 모바일 검색 */}
