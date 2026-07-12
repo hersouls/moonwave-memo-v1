@@ -1,3 +1,5 @@
+import { markdownToSafeHtml } from '@/lib/markdownHtml'
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -8,19 +10,9 @@ function escapeHtml(str: string): string {
 }
 
 export function generateShareHTML(title: string, body: string, tags: string[]): string {
-  // Escape HTML tags in body first, then convert markdown to HTML
-  const html = escapeHtml(body)
-    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    .replace(/^- \[x\] (.*$)/gm, '<div style="display:flex;align-items:center;gap:6px"><input type="checkbox" checked disabled>$1</div>')
-    .replace(/^- \[ \] (.*$)/gm, '<div style="display:flex;align-items:center;gap:6px"><input type="checkbox" disabled>$1</div>')
-    .replace(/^- (.*$)/gm, '<li>$1</li>')
-    .replace(/^> (.*$)/gm, '<blockquote style="border-left:3px solid #d4d4d8;padding-left:1rem;color:#71717a;margin:0.5rem 0">$1</blockquote>')
-    .replace(/\n/g, '<br>')
+  // Real Markdown → sanitized HTML (§8): preserves tables/links/nested lists/code
+  // blocks and strips XSS, unlike the old regex converter.
+  const html = markdownToSafeHtml(body)
 
   // Escape title for use in HTML
   const safeTitle = escapeHtml(title || 'Memo')
@@ -37,7 +29,15 @@ export function generateShareHTML(title: string, body: string, tags: string[]): 
     h2 { font-size: 1.25rem; margin-top: 1.5rem; }
     h3 { font-size: 1.1rem; margin-top: 1.25rem; }
     code { background: #f4f4f5; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
-    li { margin-left: 1.5rem; }
+    ul, ol { padding-left: 1.5rem; }
+    li { margin: 0.25rem 0; }
+    a { color: #3b82f6; }
+    img { max-width: 100%; height: auto; border-radius: 8px; }
+    pre { background: #f4f4f5; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    blockquote { border-left: 3px solid #d4d4d8; padding-left: 1rem; color: #71717a; margin: 0.5rem 0; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #e4e4e7; padding: 0.4rem 0.6rem; text-align: left; }
     .tags { margin-top: 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .tag { background: #eff6ff; color: #3b82f6; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; }
     .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e4e4e7; color: #a1a1aa; font-size: 0.75rem; }

@@ -4,6 +4,8 @@ import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeRaw from 'rehype-raw'
 import rehypeHighlight from 'rehype-highlight'
+import rehypeSanitize from 'rehype-sanitize'
+import { sanitizeSchema } from '@/lib/markdownHtml'
 import { getMemoImage } from '@/services/database'
 import { useMemoStore } from '@/stores/memoStore'
 import '@/styles/markdown.css'
@@ -141,7 +143,9 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
     <div className={`memo-markdown-preview ${className ?? ''}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight]}
+        // §8: sanitize AFTER rehype-raw (strips XSS from raw HTML) and BEFORE
+        // rehype-highlight (so hljs classes, added later, survive).
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeHighlight]}
         components={{
           img: ({ src, alt, ...props }) => {
             if (src?.startsWith('memo-image:')) {
