@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderInput, Trash2, Star, Pin, X, Share2, RotateCcw, Sparkles, Loader2 } from 'lucide-react'
+import { FolderInput, Trash2, Star, Pin, X, Share2, RotateCcw, Sparkles, Tags, Loader2 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
@@ -19,12 +19,14 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
   const batchPin = useMemoStore((s) => s.batchPin)
   const batchRestore = useMemoStore((s) => s.batchRestore)
   const batchRegenerateTitles = useMemoStore((s) => s.batchRegenerateTitles)
+  const batchGenerateTags = useMemoStore((s) => s.batchGenerateTags)
   const permanentDelete = useMemoStore((s) => s.permanentDelete)
   const memos = useMemoStore((s) => s.memos)
   const pushUndo = useUndoStore((s) => s.pushUndo)
 
   const [isPermanentDeleteOpen, setIsPermanentDeleteOpen] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [isTagging, setIsTagging] = useState(false)
 
   const count = selectedMemoIds.length
 
@@ -105,6 +107,37 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
     }
   }
 
+  const handleGenerateTags = async () => {
+    if (isTagging) return
+    navigator.vibrate?.(20)
+    setIsTagging(true)
+    try {
+      const result = await batchGenerateTags(selectedMemoIds)
+      const { showToast } = useToastStore.getState()
+      const done = result.generated + result.recovered
+      if (result.alreadyRunning) {
+        showToast('태그 생성이 이미 진행 중입니다', 'info')
+      } else if (done > 0 && result.unprocessed > 0) {
+        showToast(`${done}개 메모에 태그를 생성했습니다 (${result.unprocessed}개는 생성하지 못했습니다)`, 'success')
+      } else if (done > 0) {
+        showToast(`${done}개 메모에 태그를 생성했습니다`, 'success')
+      } else if (result.unprocessed > 0) {
+        if (result.aiUnavailable) {
+          showToast('AI를 사용할 수 없어 태그를 생성하지 못했습니다. 설정에서 API 키를 등록하세요', 'warning')
+        } else {
+          showToast('AI 태그 생성에 실패했습니다. 잠시 후 다시 시도하세요', 'error')
+        }
+      } else {
+        showToast('선택한 메모에 이미 태그가 있거나 대상이 없습니다', 'info')
+      }
+    } catch {
+      useToastStore.getState().showToast('태그 생성에 실패했습니다', 'error')
+    } finally {
+      setIsTagging(false)
+      clearSelection()
+    }
+  }
+
   const handleCancel = () => {
     clearSelection()
   }
@@ -171,6 +204,20 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
                 <Sparkles className="h-4 w-4" />
               )}
               <span className="hidden sm:inline">제목 재생성</span>
+            </button>
+
+            <button
+              onClick={handleGenerateTags}
+              disabled={isTagging}
+              className={btnClass + ' disabled:opacity-50'}
+              aria-label="태그 생성"
+            >
+              {isTagging ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Tags className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">태그 생성</span>
             </button>
 
             {count === 1 && (

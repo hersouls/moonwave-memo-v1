@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware'
 import type { Memo, MemoColor } from '@/lib/types'
 import { nowISO } from '@/lib/dateUtils'
 import { generateSyncId } from '@/utils/id'
-import { extractTags } from '@/lib/tagParser'
+import { extractTags, mergeTagsOnBodyChange, normalizeAITags, normalizeTags } from '@/lib/tagParser'
 import * as database from '@/services/database'
 import { pushMemo, deleteMemoFromCloud } from '@/services/firestoreSync'
 import { notifyMemoSaved, notifyMemoDeleted } from '@/services/syncFolder'
@@ -15,6 +15,13 @@ import { useSettingsStore } from './settingsStore'
 // Track last version snapshot time per memo
 const versionTimestamps = new Map<number, number>()
 
+// updateMemo는 태그 병합 때문에 read-modify-write다. 같은 메모에 대한 동시 호출이
+// 인터리브되면 lost-update(삭제한 태그 부활 등)가 나므로 메모별로 직렬화한다.
+const memoUpdateChains = new Map<number, Promise<void>>()
+
+// batchGenerateTags 중복 실행 가드 (팔레트/액션바 동시 트리거 시 AI 한도 이중 소모 방지)
+let batchTagsRunning = false
+
 interface MemoState {
   memos: Memo[]
   isLoading: boolean
@@ -23,7 +30,7 @@ interface MemoState {
   initialize: () => Promise<void>
   refreshFromDb: () => Promise<void>
 
-  addMemo: (data: { title: string; body: string; folderId: number | null; color?: MemoColor; ephemeral?: boolean }) => Promise<number | undefined>
+  addMemo: (data: { title: string; body: string; folderId: number | null; color?: MemoColor; ephemeral?: boolean; tags?: string[] }) => Promise<number | undefined>
   saveEphemeral: (id: number) => Promise<void>
   updateMemo: (id: number, updates: Partial<Memo>) => Promise<void>
   softDelete: (id: number) => Promise<Memo | undefined>
@@ -42,6 +49,17 @@ interface MemoState {
   batchPin: (ids: number[], pinned: boolean) => Promise<void>
   batchRestore: (ids: number[]) => Promise<void>
   batchRegenerateTitles: (ids: number[]) => Promise<void>
+  batchGenerateTags: (ids: number[]) => Promise<{
+    generated: number
+    recovered: number
+    skipped: number
+    /** AI 대상이었지만 태그를 만들지 못한 수 (한도 초과·AI 실패·빈 결과). */
+    unprocessed: number
+    /** 시작 시점에 AI를 쓸 수 없었는지 (키 없음 + 무료 한도 소진). */
+    aiUnavailable: boolean
+    /** 이미 다른 배치가 실행 중이어서 아무것도 하지 않았음. */
+    alreadyRunning?: boolean
+  }>
   seedWelcomeMemos: () => Promise<void>
 }
 
@@ -75,7 +93,9 @@ export const useMemoStore = create<MemoState>()(
       addMemo: async (data) => {
         try {
           const now = nowISO()
-          const tags = extractTags(data.body)
+          // 본문 해시태그 + 호출측이 넘긴 필드 태그(AI/수동) 병합 — 본문은 오염하지 않음.
+          // 수동 태그가 섞일 수 있으므로 개수 컷 없는 normalizeTags를 쓴다.
+          const tags = [...new Set([...extractTags(data.body), ...normalizeTags(data.tags ?? [])])]
           const memo: Omit<Memo, 'id'> = {
             title: data.title,
             body: data.body,
@@ -142,6 +162,9 @@ export const useMemoStore = create<MemoState>()(
       },
 
       updateMemo: async (id, updates) => {
+        // 같은 메모에 대한 갱신을 직렬화 — 태그 병합(read-modify-write)의 인터리브 방지
+        const prevChain = memoUpdateChains.get(id) ?? Promise.resolve()
+        const task = prevChain.then(async () => {
         try {
           // Auto-snapshot for version history
           const current = get().memos.find((m) => m.id === id)
@@ -161,8 +184,16 @@ export const useMemoStore = create<MemoState>()(
             }
           }
 
-          if (updates.body !== undefined) {
-            updates.tags = extractTags(updates.body)
+          // Body edits merge tags instead of overwriting: field-only tags (AI/수동)
+          // survive typing; explicit updates.tags (태그 편집 UI) is respected as-is.
+          // 병합 기준은 스토어가 아니라 DB 최신값 — Firestore 수신 리스너 등이 DB에
+          // 직접 쓴 뒤 스토어 refresh 전인 창에서 stale 병합으로 태그를 유실하지 않도록.
+          if (updates.body !== undefined && updates.tags === undefined) {
+            const dbCurrent = await database.getMemo(id).catch(() => undefined)
+            const base = dbCurrent ?? current
+            updates.tags = base
+              ? mergeTagsOnBodyChange(base.tags ?? [], base.body ?? '', updates.body)
+              : extractTags(updates.body)
           }
           await database.updateMemo(id, updates)
           set((state) => ({
@@ -176,6 +207,13 @@ export const useMemoStore = create<MemoState>()(
         } catch (err) {
           console.error('Failed to update memo:', err)
           set({ error: '메모 수정에 실패했습니다.' })
+        }
+        })
+        memoUpdateChains.set(id, task)
+        try {
+          await task
+        } finally {
+          if (memoUpdateChains.get(id) === task) memoUpdateChains.delete(id)
         }
       },
 
@@ -501,6 +539,93 @@ export const useMemoStore = create<MemoState>()(
 
         const failed = entries.length - okIds.size
         if (failed > 0) throw new Error(`${failed}개 메모 제목 저장에 실패했습니다`)
+      },
+
+      // 태그 없는 메모 일괄 태깅: 본문 해시태그가 있으면 재추출(무료·즉시),
+      // 없으면 AI 제안. 본문은 절대 수정하지 않음 — tags 필드에만 저장.
+      batchGenerateTags: async (ids) => {
+        if (batchTagsRunning) {
+          return { generated: 0, recovered: 0, skipped: 0, unprocessed: 0, aiUnavailable: false, alreadyRunning: true }
+        }
+        batchTagsRunning = true
+        try {
+        const { planBatchTags } = await import('@/utils/batchTags')
+        const { isAIAvailable, suggestTags } = await import('@/services/aiFeatures')
+
+        const plan = planBatchTags(get().memos, ids)
+        const newTags = new Map<number, string[]>()
+        for (const { id, tags } of plan.recover) newTags.set(id, tags)
+
+        // AI 태깅은 제한된 동시성(4). 무료 한도 초과 감지 시 이후 호출 중단(토스트 스팸 방지).
+        const aiUnavailable = !isAIAvailable()
+        let useAI = !aiUnavailable
+        if (useAI && plan.aiTargets.length > 0) {
+          const targets = plan.aiTargets
+            .map((id) => get().memos.find((m) => m.id === id))
+            .filter((m): m is Memo => !!m)
+          const CONCURRENCY = 4
+          let cursor = 0
+          const worker = async () => {
+            while (cursor < targets.length) {
+              const memo = targets[cursor++]
+              if (!useAI) continue
+              try {
+                const { tags, error } = await suggestTags(memo.body)
+                if (error === 'daily_limit_exceeded') {
+                  useAI = false
+                  continue
+                }
+                const normalized = normalizeAITags(tags)
+                if (normalized.length > 0) newTags.set(memo.id!, normalized)
+              } catch { /* AI 실패 시 해당 메모는 건너뜀 */ }
+            }
+          }
+          await Promise.all(Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker))
+        }
+
+        // 저장 직전 재확인: 계획 이후(AI 호출은 수 초 걸림) 사용자가 편집·동기화로 태그를
+        // 얻은 메모는 건드리지 않는다 — stale 계획으로 최신 태그를 덮어쓰는 레이스 방지.
+        const entries: Array<[number, string[]]> = []
+        let raced = 0
+        for (const [id, tags] of newTags) {
+          const fresh = await database.getMemo(id).catch(() => undefined)
+          if (!fresh || (fresh.tags ?? []).length > 0) { raced++; continue }
+          entries.push([id, tags])
+        }
+
+        // 저장은 개별 실패가 전체를 막지 않도록 allSettled. 성공분만 상태·클라우드·미러에 반영.
+        const results = await Promise.allSettled(entries.map(([id, tags]) => database.updateMemo(id, { tags })))
+        const okIds = new Set<number>()
+        entries.forEach(([id], i) => { if (results[i].status === 'fulfilled') okIds.add(id) })
+
+        if (okIds.size > 0) {
+          const now = nowISO()
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              okIds.has(m.id!) ? { ...m, tags: newTags.get(m.id!)!, updatedAt: now } : m
+            ),
+          }))
+          await Promise.all([...okIds].map(async (id) => {
+            const updated = await database.getMemo(id)
+            if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
+          }))
+        }
+
+        const failed = entries.length - okIds.size
+        if (failed > 0) throw new Error(`${failed}개 메모 태그 저장에 실패했습니다`)
+
+        const recoverIds = new Set(plan.recover.map(({ id }) => id))
+        const recoveredOk = [...okIds].filter((id) => recoverIds.has(id)).length
+        return {
+          generated: okIds.size - recoveredOk,
+          recovered: recoveredOk,
+          skipped: plan.skipped + raced,
+          unprocessed: plan.aiTargets.filter((id) => !newTags.has(id)).length,
+          aiUnavailable,
+        }
+        } finally {
+          batchTagsRunning = false
+        }
       },
 
       seedWelcomeMemos: async () => {

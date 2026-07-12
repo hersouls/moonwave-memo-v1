@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command } from 'cmdk'
 import { Dialog as HeadlessDialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
-import { FileText, Plus, Settings, Moon, Sun, Search, Star, FolderOpen, Sparkles } from 'lucide-react'
+import { FileText, Plus, Settings, Moon, Sun, Search, Star, FolderOpen, Sparkles, Tags } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { applyTheme } from '@/stores/settingsStore'
+import { useToastStore } from '@/stores/toastStore'
 import { analyzeMemo, classifyMemo } from '@/services/aiFeatures'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { Kbd } from './Kbd'
@@ -23,6 +24,7 @@ export function CommandPalette() {
   const { navigateWithTransition } = useViewTransition()
   const memos = useMemoStore((s) => s.memos)
   const addMemo = useMemoStore((s) => s.addMemo)
+  const batchGenerateTags = useMemoStore((s) => s.batchGenerateTags)
   const folders = useFolderStore((s) => s.folders)
   const theme = useSettingsStore((s) => s.settings.theme)
   const setTheme = useSettingsStore((s) => s.setTheme)
@@ -78,15 +80,12 @@ export function CommandPalette() {
         ? folders.find((f) => f.name === result.folder)
         : folders.find((f) => f.isDefault)
 
-      // Include AI-suggested tags as hashtags in the body so extractTags picks them up
-      const tagSuffix = result.tags.length > 0
-        ? '\n\n' + result.tags.map((t) => `#${t}`).join(' ')
-        : ''
-
+      // AI 태그는 본문에 넣지 않고 tags 필드로 전달 — 본문을 해시태그로 오염하지 않음
       await addMemo({
         title: result.title || smartText.slice(0, 50),
-        body: smartText + tagSuffix,
+        body: smartText,
         folderId: targetFolder?.id ?? null,
+        tags: result.tags,
       })
     }
 
@@ -122,6 +121,39 @@ export function CommandPalette() {
       case 'all-memos':
         navigateWithTransition('/memos')
         break
+      case 'batch-tags': {
+        const targets = activeMemos
+          .filter((m) => m.id != null && (m.tags ?? []).length === 0)
+          .map((m) => m.id!)
+        if (targets.length === 0) {
+          useToastStore.getState().showToast('태그가 없는 메모가 없습니다', 'info')
+          break
+        }
+        batchGenerateTags(targets)
+          .then((result) => {
+            const { showToast } = useToastStore.getState()
+            const done = result.generated + result.recovered
+            if (result.alreadyRunning) {
+              showToast('태그 생성이 이미 진행 중입니다', 'info')
+            } else if (done > 0 && result.unprocessed > 0) {
+              showToast(`${done}개 메모에 태그를 생성했습니다 (${result.unprocessed}개는 생성하지 못했습니다)`, 'success')
+            } else if (done > 0) {
+              showToast(`${done}개 메모에 태그를 생성했습니다`, 'success')
+            } else if (result.unprocessed > 0) {
+              if (result.aiUnavailable) {
+                showToast('AI를 사용할 수 없어 태그를 생성하지 못했습니다. 설정에서 API 키를 등록하세요', 'warning')
+              } else {
+                showToast('AI 태그 생성에 실패했습니다. 잠시 후 다시 시도하세요', 'error')
+              }
+            } else {
+              showToast('태그를 생성할 대상 메모가 없습니다', 'info')
+            }
+          })
+          .catch(() => {
+            useToastStore.getState().showToast('태그 생성에 실패했습니다', 'error')
+          })
+        break
+      }
       default:
         if (action.startsWith('memo:')) {
           navigate(`/memo/${action.split(':')[1]}`)
@@ -269,6 +301,14 @@ export function CommandPalette() {
                   >
                     <Sparkles className="h-4 w-4 shrink-0 text-amber-500" />
                     스마트 메모 (AI 자동 분류)
+                  </Command.Item>
+                  <Command.Item
+                    value="태그 없는 메모 AI 태그 일괄 생성"
+                    onSelect={() => handleSelect('batch-tags')}
+                    className={itemClass}
+                  >
+                    <Tags className="h-4 w-4 shrink-0 text-amber-500" />
+                    태그 없는 메모에 AI 태그 일괄 생성
                   </Command.Item>
                   <Command.Item
                     value="새 메모 작성"

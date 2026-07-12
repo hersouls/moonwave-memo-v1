@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore'
 import { firestore } from '@/lib/firebase'
 import type { Memo, Folder } from '@/lib/types'
+import { extractTags } from '@/lib/tagParser'
 import * as database from './database'
 import { generateSyncId } from '@/utils/id'
 import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
@@ -46,6 +47,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
       setTimeout(() => reject(new Error('Sync push timed out')), ms)
     ),
   ])
+}
+
+/**
+ * 원격 문서의 tags가 비어 있으면 본문 해시태그에서 재추출한다.
+ * 레거시 문서(태그 필드 없이 본문에 #해시태그만 있는 메모)가 수신 기기에서
+ * tags 빈 배열로 저장되는 불일치를 막는다.
+ */
+export function resolveRemoteTags(remote: { tags?: string[]; body?: string }): string[] {
+  return remote.tags?.length ? remote.tags : extractTags(remote.body || '')
 }
 
 function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
@@ -270,7 +280,7 @@ async function doInitialMerge(userId: string) {
           title: remote.title || '',
           body: remote.body || '',
           folderId,
-          tags: remote.tags || [],
+          tags: resolveRemoteTags(remote),
           isStarred: remote.isStarred ?? false,
           color: remote.color || 'white',
           isPinned: remote.isPinned ?? false,
@@ -284,7 +294,7 @@ async function doInitialMerge(userId: string) {
           title: remote.title,
           body: remote.body,
           folderId,
-          tags: remote.tags || [],
+          tags: resolveRemoteTags(remote),
           isStarred: remote.isStarred,
           color: remote.color,
           isPinned: remote.isPinned,
@@ -418,7 +428,7 @@ function startListeners(userId: string) {
                 title: remote.title || '',
                 body: remote.body || '',
                 folderId,
-                tags: remote.tags || [],
+                tags: resolveRemoteTags(remote),
                 isStarred: remote.isStarred ?? false,
                 color: remote.color || 'white',
                 isPinned: remote.isPinned ?? false,
@@ -432,7 +442,7 @@ function startListeners(userId: string) {
                 title: remote.title,
                 body: remote.body,
                 folderId,
-                tags: remote.tags || [],
+                tags: resolveRemoteTags(remote),
                 isStarred: remote.isStarred,
                 color: remote.color,
                 isPinned: remote.isPinned,

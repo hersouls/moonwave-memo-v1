@@ -108,6 +108,13 @@ describe('write flow (serializer → target)', () => {
     expect(parsed.isPinned).toBe(true)
     expect(parsed.title).toBe('여행 계획')
   })
+
+  it('round-trips field-only tags (본문에 해시태그 없음 — AI/수동 태그가 frontmatter로 보존)', async () => {
+    const memo = makeMemo({ tags: ['ai태그'], body: '해시태그가 전혀 없는 본문입니다.' })
+    const { filePath, content } = await writeToTarget(target, memo, undefined, noImages)
+    const parsed = deserializeMemo(content, filePath.replace(/\.md$/, ''))
+    expect(parsed.tags).toEqual(['ai태그'])
+  })
 })
 
 describe('Dexie v7 migration', () => {

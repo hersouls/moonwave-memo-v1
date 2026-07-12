@@ -16,9 +16,10 @@ import { FocusTimer } from './FocusTimer'
 const VersionHistory = lazy(() => import('./VersionHistory').then((m) => ({ default: m.VersionHistory })))
 const RelatedMemosPanel = lazy(() => import('./RelatedMemosPanel').then((m) => ({ default: m.RelatedMemosPanel })))
 import { TagInput } from './TagInput'
+import { TagEditModal } from './TagEditModal'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { Spinner } from '@/components/ui/Spinner'
-import { extractTags } from '@/lib/tagParser'
+import { extractTags, mergeTagsOnBodyChange, normalizeAITags } from '@/lib/tagParser'
 import { useAITagSuggestions } from '@/hooks/useAIFeatures'
 import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
 import { useTypingSounds } from '@/hooks/useTypingSounds'
@@ -112,6 +113,9 @@ export function MemoEditor() {
   const [memoId, setMemoId] = useState<number | undefined>(memo?.id)
   const [activeTab, setActiveTab] = useState<EditorTab>('edit')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  // 신규 메모에서 AI/수동으로 추가한 필드 태그 — 첫 저장 시 addMemo로 전달 (본문 비침습)
+  const [pendingTags, setPendingTags] = useState<string[]>([])
+  const [isTagEditOpen, setIsTagEditOpen] = useState(false)
 
   // Ephemeral brain-dump
   const isEphemeralParam = searchParams.get('ephemeral') === 'true'
@@ -171,8 +175,8 @@ export function MemoEditor() {
   const lastAITitleBodyRef = useRef('')
   // 비동기 AI 호출이 언마운트 후 resolve될 때 setState/타이머 재예약을 막는 가드
   const isMountedRef = useRef(true)
-  const latestDataRef = useRef({ memoId, title, body, folderId, color: memoColor })
-  latestDataRef.current = { memoId, title, body, folderId, color: memoColor }
+  const latestDataRef = useRef({ memoId, title, body, folderId, color: memoColor, pendingTags, isTagEditOpen })
+  latestDataRef.current = { memoId, title, body, folderId, color: memoColor, pendingTags, isTagEditOpen }
 
   // BUG-01: Refs for cleanup to avoid stale closures
   const addMemoRef = useRef(addMemo)
@@ -220,8 +224,14 @@ export function MemoEditor() {
   const fontDef = FONT_FAMILIES.find((f) => f.id === fontFamilyId)
   const editorFontFamily = fontDef?.fontFamily || "'Pretendard', sans-serif"
 
-  // UX-06: Extract current tags from body
-  const currentTags = extractTags(body)
+  // UX-06: 표시 태그 = 저장된 필드 태그(AI/수동) + 본문 해시태그 병합 — 저장 결과와 항상 일치
+  const currentTags = useMemo(() => (
+    memo
+      ? mergeTagsOnBodyChange(memo.tags ?? [], memo.body ?? '', body)
+      : [...new Set([...extractTags(body), ...pendingTags])]
+  ), [memo, body, pendingTags])
+  const bodyTags = useMemo(() => extractTags(body), [body])
+  const fieldOnlyTags = useMemo(() => currentTags.filter((t) => !bodyTags.includes(t)), [currentTags, bodyTags])
 
   // Beyond UX: Time Machine — replay context when opening old memos
   const { isActive: timeMachineActive, dismiss: dismissTimeMachine } = useTimeMachine(
@@ -304,23 +314,30 @@ export function MemoEditor() {
     try {
       // 최신값은 latestDataRef에서 읽는다 — 디바운스 중 stale closure로 예전 title/body/folderId가
       // 저장되는 문제(폴더 이동 되돌림, AI 제목 유실 등) 방지
-      const { memoId: id, title: t, body: b, folderId: f, color: c } = latestDataRef.current
+      const { memoId: id, title: t, body: b, folderId: f, color: c, pendingTags: pt, isTagEditOpen: tagModalOpen } = latestDataRef.current
       if (id) {
         setSaveStatus('saving')
         await updateMemo(id, { title: t, body: b, folderId: f })
         setSaveStatus('saved')
-      } else if (!hasCreated.current && (t.trim() || b.trim())) {
+      } else if (!hasCreated.current && tagModalOpen) {
+        // 신규 메모 생성은 태그 편집 모달이 닫힐 때까지 보류 — 생성 시 navigate가
+        // key 리마운트를 일으켜 열려 있는 모달과 편집 중 draft를 날려버리기 때문.
+        // 모달 닫힘 핸들러가 scheduleAutoSave로 재개한다.
+      } else if (!hasCreated.current && (t.trim() || b.trim() || pt.length > 0)) {
         setSaveStatus('saving')
         const newId = await addMemo({
           title: t,
           body: b,
           folderId: f,
           color: c,
+          tags: pt,
           ...(isEphemeralParam && ephemeralBrainDumpEnabled ? { ephemeral: true } : {}),
         })
         if (newId) {
           hasCreated.current = true
           setMemoId(newId)
+          // 저장된 태그만 비운다 — addMemo 비행 중 새로 추가된 태그는 보존
+          setPendingTags((prev) => prev.filter((tag) => !pt.includes(tag)))
           navigate(`/memo/${newId}`, { replace: true })
           // Set ephemeral expiry for display
           if (isEphemeralParam && ephemeralBrainDumpEnabled) {
@@ -436,11 +453,11 @@ export function MemoEditor() {
         clearTimeout(aiTitleTimerRef.current)
         aiTitleTimerRef.current = null
       }
-      const { memoId: id, title: t, body: b, folderId: f, color: c } = latestDataRef.current
+      const { memoId: id, title: t, body: b, folderId: f, color: c, pendingTags: pt } = latestDataRef.current
       if (id && (t.trim() || b.trim())) {
         updateMemo(id, { title: t, body: b, folderId: f })
-      } else if (!id && !hasCreated.current && (t.trim() || b.trim())) {
-        addMemoRef.current({ title: t, body: b, folderId: f, color: c })
+      } else if (!id && !hasCreated.current && (t.trim() || b.trim() || pt.length > 0)) {
+        addMemoRef.current({ title: t, body: b, folderId: f, color: c, tags: pt })
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -526,11 +543,20 @@ export function MemoEditor() {
     navigateWithTransition('/memos')
   }
 
-  // UX-06: Remove tag from body
+  // UX-06: 태그 삭제 — 본문 해시태그는 본문에서 제거, 필드 전용(AI/수동) 태그는 tags 필드에서 제거
   const handleRemoveTag = (tag: string) => {
-    const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const newBody = body.replace(new RegExp(`#${escaped}\\s?`, 'g'), '').trim()
-    handleBodyChange(newBody)
+    if (extractTags(body).includes(tag)) {
+      const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      // 경계 검사 필수: #여행 삭제가 #여행계획의 접두어까지 매칭해 본문을 훼손하지 않도록
+      const newBody = body.replace(new RegExp(`#${escaped}(?![가-힣a-zA-Z0-9_])\\s?`, 'g'), '').trim()
+      handleBodyChange(newBody)
+      return
+    }
+    if (memoId) {
+      updateMemo(memoId, { tags: currentTags.filter((t) => t !== tag) })
+    } else {
+      setPendingTags((prev) => prev.filter((t) => t !== tag))
+    }
   }
 
   // TECH-01: Markdown insertion helper — uses ref to avoid stale closure
@@ -784,11 +810,32 @@ export function MemoEditor() {
     useToastStore.getState().showToast('AI 편집이 적용되었습니다. Ctrl+Z로 되돌릴 수 있습니다.', 'success')
   }, [pushUndoSnapshot, scheduleAutoSave])
 
-  // Handle AI tag click → insert as hashtag
+  // 태그 편집 모달 저장 — 필드 태그만 교체, 본문 해시태그는 본문이 진실원본
+  const handleTagModalSave = (fieldTags: string[]) => {
+    if (memoId) {
+      updateMemo(memoId, { tags: [...new Set([...bodyTags, ...fieldTags])] })
+    } else {
+      setPendingTags(fieldTags)
+      // 제목·본문이 비어 있어도 태그가 있으면 메모가 생성되도록 저장을 예약
+      // (모달이 닫힌 뒤 autoSave가 실행됨 — 열려 있는 동안은 생성 보류)
+      if (fieldTags.length > 0) scheduleAutoSave()
+    }
+  }
+
+  // 모달 닫힘: 신규 메모는 모달 열림 동안 보류된 생성 autoSave를 재개
+  const handleTagModalClose = () => {
+    setIsTagEditOpen(false)
+    if (!memoId && !hasCreated.current) scheduleAutoSave()
+  }
+
+  // AI 제안 태그 클릭 → 본문에 삽입하지 않고 tags 필드에 저장 (본문 비침습)
   const handleAITagClick = (tag: string) => {
-    const hashtag = `#${tag} `
-    if (!body.includes(`#${tag}`)) {
-      handleBodyChange(body + (body.endsWith('\n') || !body ? '' : '\n') + hashtag)
+    const [normalized] = normalizeAITags([tag])
+    if (!normalized || currentTags.includes(normalized)) return
+    if (memoId) {
+      updateMemo(memoId, { tags: [...currentTags, normalized] })
+    } else {
+      setPendingTags((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]))
     }
   }
 
@@ -879,8 +926,8 @@ export function MemoEditor() {
       )}
 
       {/* UX-06: TagInput for current tags (hide when keyboard open to maximize edit area) */}
-      {!isFocusMode && !isKeyboardOpen && currentTags.length > 0 && (
-        <TagInput tags={currentTags} onRemoveTag={handleRemoveTag} />
+      {!isFocusMode && !isKeyboardOpen && (
+        <TagInput tags={currentTags} onRemoveTag={handleRemoveTag} onEdit={() => setIsTagEditOpen(true)} />
       )}
 
       {/* AI Tag suggestions (hide when keyboard open to maximize edit area) */}
@@ -1282,6 +1329,16 @@ export function MemoEditor() {
       {showCommandPalette && (
         <EditorCommandPalette commands={paletteCommands} onClose={() => setShowCommandPalette(false)} />
       )}
+
+      {/* 태그 보기/편집 모달 — 태그는 본문에 삽입되지 않고 tags 필드에만 저장 */}
+      <TagEditModal
+        open={isTagEditOpen}
+        onClose={handleTagModalClose}
+        bodyTags={bodyTags}
+        fieldTags={fieldOnlyTags}
+        body={body}
+        onSave={handleTagModalSave}
+      />
     </div>
   )
 }
