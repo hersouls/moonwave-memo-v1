@@ -8,3 +8,13 @@ __tests__
 *.test.tsx
 vitest.config.ts
 .firebase
+
+# Local build artifacts / desktop-app files (not part of the web deploy).
+# Avoids Vercel reading large/locked local files like release/*.exe (EBUSY).
+# NOTE: do NOT exclude *.png — public/icons, favicon and splash images are needed.
+release
+build
+electron
+android
+.lighthouseci
+.playwright-mcp
