@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import type { Provider } from './models'
-import { ensureTracing } from './tracing'
+import type { Provider } from './models.js'
+import { ensureTracing } from './tracing.js'
 
 // ─── API Key Resolution ─────────────────────────────
 

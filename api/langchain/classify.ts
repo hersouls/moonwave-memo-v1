@@ -1,7 +1,7 @@
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
-import { createChatModel, type Provider } from '../lib/models'
-import { resolveApiKey, createHandler, errorResponse } from '../lib/tools'
-import { applyCors } from '../lib/cors'
+import { createChatModel, type Provider } from '../lib/models.js'
+import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
+import { applyCors } from '../lib/cors.js'
 
 export default createHandler(async (req, res) => {
   if (applyCors(req, res)) return

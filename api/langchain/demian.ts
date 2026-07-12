@@ -4,9 +4,9 @@ import { ToolNode } from '@langchain/langgraph/prebuilt'
 import { SystemMessage, HumanMessage, AIMessage, type BaseMessage } from '@langchain/core/messages'
 import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
-import { createChatModel, type Provider } from '../lib/models'
-import { resolveApiKey, createHandler, errorResponse } from '../lib/tools'
-import { applyCors } from '../lib/cors'
+import { createChatModel, type Provider } from '../lib/models.js'
+import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
+import { applyCors } from '../lib/cors.js'
 
 // ─── State ──────────────────────────────────────────
 

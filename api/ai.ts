@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyCors } from './lib/cors'
+import { applyCors } from './lib/cors.js'
 
 const MODELS = {
   openai: 'gpt-4.1-nano',

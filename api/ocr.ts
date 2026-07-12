@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyCors } from './lib/cors'
+import { applyCors } from './lib/cors.js'
 
 type Provider = 'openai' | 'anthropic' | 'gemini'
 
