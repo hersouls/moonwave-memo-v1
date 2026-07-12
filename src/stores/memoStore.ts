@@ -6,6 +6,7 @@ import { generateSyncId } from '@/utils/id'
 import { extractTags } from '@/lib/tagParser'
 import * as database from '@/services/database'
 import { pushMemo, deleteMemoFromCloud } from '@/services/firestoreSync'
+import { notifyMemoSaved, notifyMemoDeleted } from '@/services/syncFolder'
 import { calculateStreak, checkMilestones } from '@/services/gamification'
 import { captureContext } from '@/services/contextCapture'
 import { getCachedPosition } from '@/services/solarCalculator'
@@ -40,6 +41,7 @@ interface MemoState {
   batchStar: (ids: number[], starred: boolean) => Promise<void>
   batchPin: (ids: number[], pinned: boolean) => Promise<void>
   batchRestore: (ids: number[]) => Promise<void>
+  batchRegenerateTitles: (ids: number[]) => Promise<void>
   seedWelcomeMemos: () => Promise<void>
 }
 
@@ -93,6 +95,7 @@ export const useMemoStore = create<MemoState>()(
           if (newMemo) {
             set((state) => ({ memos: [...state.memos, newMemo], error: null }))
             pushMemo(newMemo).catch(console.error)
+            notifyMemoSaved(newMemo)
           }
 
           // Gamification: update streak + check milestones
@@ -132,7 +135,7 @@ export const useMemoStore = create<MemoState>()(
             ),
           }))
           const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
+          if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
         } catch (err) {
           console.error('Failed to save ephemeral memo:', err)
         }
@@ -169,7 +172,7 @@ export const useMemoStore = create<MemoState>()(
             error: null,
           }))
           const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
+          if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
         } catch (err) {
           console.error('Failed to update memo:', err)
           set({ error: '메모 수정에 실패했습니다.' })
@@ -189,6 +192,7 @@ export const useMemoStore = create<MemoState>()(
           }))
           const updated = await database.getMemo(id)
           if (updated) pushMemo(updated).catch(console.error)
+          if (memo) notifyMemoDeleted(memo)
           return memo
         } catch (err) {
           console.error('Failed to delete memo:', err)
@@ -206,7 +210,7 @@ export const useMemoStore = create<MemoState>()(
             error: null,
           }))
           const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
+          if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
         } catch (err) {
           console.error('Failed to restore memo:', err)
         }
@@ -223,6 +227,7 @@ export const useMemoStore = create<MemoState>()(
             error: null,
           }))
           if (syncId) deleteMemoFromCloud(syncId).catch(console.error)
+          if (memo) notifyMemoDeleted(memo)
         } catch (err) {
           console.error('Failed to permanently delete memo:', err)
         }
@@ -238,6 +243,7 @@ export const useMemoStore = create<MemoState>()(
             error: null,
           }))
           syncIds.forEach((syncId) => deleteMemoFromCloud(syncId).catch(console.error))
+          trashed.forEach((m) => notifyMemoDeleted(m))
         } catch (err) {
           console.error('Failed to empty trash:', err)
         }
@@ -265,7 +271,7 @@ export const useMemoStore = create<MemoState>()(
             ...(clearEphemeral ? { ephemeralExpiresAt: undefined } : {}),
           })
           const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
+          if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
         } catch (err) {
           console.error('Failed to toggle star:', err)
           // Rollback: use inverse of newStarred to avoid stale closure
@@ -292,7 +298,7 @@ export const useMemoStore = create<MemoState>()(
         try {
           await database.updateMemo(id, { isPinned: newPinned })
           const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
+          if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
         } catch (err) {
           console.error('Failed to toggle pin:', err)
           // Rollback: use inverse of newPinned to avoid stale closure
@@ -313,7 +319,7 @@ export const useMemoStore = create<MemoState>()(
             ),
           }))
           const updated = await database.getMemo(id)
-          if (updated) pushMemo(updated).catch(console.error)
+          if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
         } catch (err) {
           console.error('Failed to move memo:', err)
         }
@@ -360,7 +366,7 @@ export const useMemoStore = create<MemoState>()(
           }))
           await Promise.all(ids.map(async (id) => {
             const updated = await database.getMemo(id)
-            if (updated) pushMemo(updated).catch(console.error)
+            if (updated) { pushMemo(updated).catch(console.error); notifyMemoDeleted(updated) }
           }))
         } catch (err) {
           console.error('Failed to batch delete memos:', err)
@@ -378,7 +384,7 @@ export const useMemoStore = create<MemoState>()(
           }))
           await Promise.all(ids.map(async (id) => {
             const updated = await database.getMemo(id)
-            if (updated) pushMemo(updated).catch(console.error)
+            if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
           }))
         } catch (err) {
           console.error('Failed to batch move memos:', err)
@@ -395,7 +401,7 @@ export const useMemoStore = create<MemoState>()(
           }))
           await Promise.all(ids.map(async (id) => {
             const updated = await database.getMemo(id)
-            if (updated) pushMemo(updated).catch(console.error)
+            if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
           }))
         } catch (err) {
           console.error('Failed to batch star memos:', err)
@@ -412,7 +418,7 @@ export const useMemoStore = create<MemoState>()(
           }))
           await Promise.all(ids.map(async (id) => {
             const updated = await database.getMemo(id)
-            if (updated) pushMemo(updated).catch(console.error)
+            if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
           }))
         } catch (err) {
           console.error('Failed to batch pin memos:', err)
@@ -428,11 +434,73 @@ export const useMemoStore = create<MemoState>()(
           }))
           await Promise.all(ids.map(async (id) => {
             const updated = await database.getMemo(id)
-            if (updated) pushMemo(updated).catch(console.error)
+            if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
           }))
         } catch (err) {
           console.error('Failed to batch restore memos:', err)
         }
+      },
+
+      // 카테고리별 제목 재생성: [폴더]_요약_YYMMDD. AI 사용 가능 시 요약을 다듬고, 아니면 규칙 기반.
+      // 실패는 삼키지 않고 호출측으로 전파(성공분은 반영 후 남은 실패 개수만큼 throw).
+      batchRegenerateTitles: async (ids) => {
+        const { useFolderStore } = await import('./folderStore')
+        const { buildRuleTitle, composeTitle, getCategoryLabel, formatTitleDate } = await import('@/utils/memoTitle')
+        const { isAIAvailable, summarizeTitleKeyword } = await import('@/services/aiFeatures')
+
+        const folders = useFolderStore.getState().folders
+        const targets = get().memos.filter((m) => ids.includes(m.id!) && !m.deletedAt)
+        if (targets.length === 0) return
+
+        let useAI = isAIAvailable()
+        const newTitles = new Map<number, string>()
+
+        // AI 다듬기는 제한된 동시성(4). 무료 한도 초과가 감지되면 이후 AI 호출을 멈춰 토스트 스팸 방지.
+        const CONCURRENCY = 4
+        let cursor = 0
+        const worker = async () => {
+          while (cursor < targets.length) {
+            const memo = targets[cursor++]
+            let title = buildRuleTitle(
+              { folderId: memo.folderId, createdAt: memo.createdAt, body: memo.body },
+              folders,
+            )
+            if (useAI) {
+              try {
+                const { keyword, error } = await summarizeTitleKeyword(memo.body)
+                if (error === 'daily_limit_exceeded') {
+                  useAI = false // 이후 메모는 규칙 기반으로만 — 한도 초과 토스트 반복 방지
+                } else if (keyword) {
+                  title = composeTitle(getCategoryLabel(memo.folderId, folders), keyword, formatTitleDate(memo.createdAt))
+                }
+              } catch { /* AI 실패 시 규칙 기반 제목 유지 */ }
+            }
+            newTitles.set(memo.id!, title)
+          }
+        }
+        await Promise.all(Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker))
+
+        // 저장은 개별 실패가 전체를 막지 않도록 allSettled. 성공분만 상태·클라우드·폴더 동기화에 반영.
+        const entries = [...newTitles]
+        const results = await Promise.allSettled(entries.map(([id, title]) => database.updateMemo(id, { title })))
+        const okIds = new Set<number>()
+        entries.forEach(([id], i) => { if (results[i].status === 'fulfilled') okIds.add(id) })
+
+        if (okIds.size > 0) {
+          const now = nowISO()
+          set((state) => ({
+            memos: state.memos.map((m) =>
+              okIds.has(m.id!) ? { ...m, title: newTitles.get(m.id!)!, updatedAt: now } : m
+            ),
+          }))
+          await Promise.all([...okIds].map(async (id) => {
+            const updated = await database.getMemo(id)
+            if (updated) { pushMemo(updated).catch(console.error); notifyMemoSaved(updated) }
+          }))
+        }
+
+        const failed = entries.length - okIds.size
+        if (failed > 0) throw new Error(`${failed}개 메모 제목 저장에 실패했습니다`)
       },
 
       seedWelcomeMemos: async () => {

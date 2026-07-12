@@ -55,6 +55,7 @@ import { stopSync } from '@/services/firestoreSync'
 import { useToastStore } from '@/stores/toastStore'
 import type { ThemeMode, ColorPalette, MemoColor, InputStartPosition, STTLanguage } from '@/lib/types'
 import type { SyncStatus } from '@/lib/types'
+import { SyncFolderSection } from './SyncFolderSection'
 
 // ─── Theme Options ──────────────────────────────────
 const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
@@ -902,6 +903,11 @@ export function SettingsModal() {
     <div className="space-y-8">
       {/* Cloud Sync */}
       <CloudSyncSection />
+
+      <div className="border-t border-[var(--color-border-subtle)]" />
+
+      {/* Sync Folder (Phase 1) — 로컬 폴더에 .md 파일로 저장 */}
+      <SyncFolderSection />
 
       <div className="border-t border-[var(--color-border-subtle)]" />
 

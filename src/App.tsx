@@ -169,6 +169,10 @@ export default function App() {
         )
         useAuthStore.getState().initialize()
 
+        // Restore sync-folder handle + permission (device-local; no-op when disabled).
+        // Dynamically imported so the feature stays out of the initial bundle.
+        import('@/services/syncFolder').then(({ initSyncFolder }) => initSyncFolder()).catch(() => {})
+
         // Re-resolve orchestrator after initSettings to restore environment/event palette
         useThemeOrchestrator.getState().resolve()
       } finally {

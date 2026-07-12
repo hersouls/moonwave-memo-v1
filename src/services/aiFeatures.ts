@@ -326,6 +326,30 @@ export async function summarizeMemo(content: string): Promise<{ summary: string;
   return result
 }
 
+// 카테고리별 제목용 초단문 요약(띄어쓰기 포함 20자 이내). 실패/키없음 시 빈 문자열 → 규칙 기반으로 폴백.
+export async function summarizeTitleKeyword(content: string): Promise<{ keyword: string; error?: string }> {
+  if (!content.trim() || content.length < 10) return { keyword: '' }
+
+  const cacheKey = generateCacheKey('titleKeyword', content)
+  const cached = getCached<{ keyword: string }>(cacheKey)
+  if (cached) return cached
+
+  const systemPrompt = `You are a title-phrase generator for a Korean memo app. Read the memo content and produce ONE very short Korean phrase capturing its core topic. Rules:
+- Korean, at most 20 characters INCLUDING spaces (fewer is better)
+- Nouns/keywords only — no verbs endings, no punctuation, no quotes, no markdown, no line breaks
+- Do NOT include the folder name, date, or brackets
+- Return ONLY the phrase itself, nothing else
+Example: content about reviewing the legal terms of a PPA contract → "법률 검토"`
+
+  const aiResult = await callAI(content.slice(0, 1500), systemPrompt, 40)
+  if (aiResult.error) return { keyword: '', error: aiResult.error }
+
+  const keyword = aiResult.text.replace(/["'`]/g, '').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 20).trim()
+  const result = { keyword }
+  setCache(cacheKey, result)
+  return result
+}
+
 export async function autocomplete(_content: string, cursorContext: string): Promise<{ suggestion: string; error?: string }> {
   if (!cursorContext.trim() || cursorContext.length < 10) return { suggestion: '' }
 

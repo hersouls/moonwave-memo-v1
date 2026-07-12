@@ -44,6 +44,8 @@ import { setLastViewedMemo } from '@/components/ui/ContinueBanner'
 import { useToastStore } from '@/stores/toastStore'
 import { toggleChecklistItem, getChecklistStats } from '@/utils/checklistParser'
 import { getAllTemplates } from '@/utils/memoTemplates'
+import { buildRuleTitle, composeTitle, getCategoryLabel, formatTitleDate } from '@/utils/memoTitle'
+import { isAIAvailable, summarizeTitleKeyword } from '@/services/aiFeatures'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 type EditorTab = 'edit' | 'preview'
@@ -90,11 +92,20 @@ export function MemoEditor() {
   const templateId = isNew ? searchParams.get('template') : null
   const template = templateId ? getAllTemplates().find((t) => t.id === templateId) : null
 
-  const [title, setTitle] = useState(memo?.title || template?.title || '')
+  const initialFolderId = memo?.folderId ?? defaultFolderId ?? getDefaultFolder()?.id ?? null
+  // YYMMDD 기준일: 기존 메모는 생성일, 신규는 세션 시작 시각(편집 중 자정 넘어가도 고정)
+  const creationDateRef = useRef(memo?.createdAt ?? new Date().toISOString())
+
+  const [title, setTitle] = useState(() => {
+    if (memo?.title) return memo.title
+    if (template?.title) return template.title
+    // 신규 메모: 본문이 있으면 카테고리 규칙 제목([폴더]_요약_YYMMDD), 없으면 빈 제목
+    const initBody = memo?.body ?? template?.body ?? ''
+    if (!initBody.trim()) return ''
+    return buildRuleTitle({ folderId: initialFolderId, createdAt: creationDateRef.current, body: initBody }, folders)
+  })
   const [body, setBody] = useState(memo?.body || template?.body || '')
-  const [folderId, setFolderId] = useState<number | null>(
-    memo?.folderId ?? defaultFolderId ?? getDefaultFolder()?.id ?? null
-  )
+  const [folderId, setFolderId] = useState<number | null>(initialFolderId)
   const [isStarred, setIsStarred] = useState(memo?.isStarred || false)
   const [memoColor, setMemoColor] = useState<import('@/lib/types').MemoColor>(memo?.color || template?.color || 'white')
   const [memoId, setMemoId] = useState<number | undefined>(memo?.id)
@@ -154,6 +165,11 @@ export function MemoEditor() {
   const hasCreated = useRef(false)
   // Auto-title: track whether title was set by user or auto-generated
   const isAutoTitle = useRef(!memo?.title && !template?.title)
+  // 하이브리드 제목: AI 요약 다듬기 디바운스 타이머 + 마지막으로 요약한 본문(중복 호출 방지)
+  const aiTitleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastAITitleBodyRef = useRef('')
+  // 비동기 AI 호출이 언마운트 후 resolve될 때 setState/타이머 재예약을 막는 가드
+  const isMountedRef = useRef(true)
   const latestDataRef = useRef({ memoId, title, body, folderId, color: memoColor })
   latestDataRef.current = { memoId, title, body, folderId, color: memoColor }
 
@@ -273,17 +289,20 @@ export function MemoEditor() {
     if (savingRef.current) return
     savingRef.current = true
     try {
-      if (memoId) {
+      // 최신값은 latestDataRef에서 읽는다 — 디바운스 중 stale closure로 예전 title/body/folderId가
+      // 저장되는 문제(폴더 이동 되돌림, AI 제목 유실 등) 방지
+      const { memoId: id, title: t, body: b, folderId: f, color: c } = latestDataRef.current
+      if (id) {
         setSaveStatus('saving')
-        await updateMemo(memoId, { title, body, folderId })
+        await updateMemo(id, { title: t, body: b, folderId: f })
         setSaveStatus('saved')
-      } else if (!hasCreated.current && (title.trim() || body.trim())) {
+      } else if (!hasCreated.current && (t.trim() || b.trim())) {
         setSaveStatus('saving')
         const newId = await addMemo({
-          title,
-          body,
-          folderId,
-          color: memoColor,
+          title: t,
+          body: b,
+          folderId: f,
+          color: c,
           ...(isEphemeralParam && ephemeralBrainDumpEnabled ? { ephemeral: true } : {}),
         })
         if (newId) {
@@ -307,7 +326,7 @@ export function MemoEditor() {
     } finally {
       savingRef.current = false
     }
-  }, [memoId, title, body, folderId, memoColor, updateMemo, addMemo, navigate, isEphemeralParam, ephemeralBrainDumpEnabled])
+  }, [updateMemo, addMemo, navigate, isEphemeralParam, ephemeralBrainDumpEnabled])
 
   // Auto-clear saved status after 2s
   useEffect(() => {
@@ -325,6 +344,35 @@ export function MemoEditor() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(autoSave, 500)
   }, [autoSave])
+
+  // 규칙 기반 제목 즉시 갱신([폴더]_본문요약_YYMMDD). 본문 비면 빈 제목(플레이스홀더 노출)
+  const recomputeAutoTitle = useCallback((nextBody: string, nextFolderId: number | null) => {
+    if (!isAutoTitle.current) return
+    if (!nextBody.trim()) { setTitle(''); return }
+    setTitle(buildRuleTitle(
+      { folderId: nextFolderId, createdAt: creationDateRef.current, body: nextBody },
+      useFolderStore.getState().folders,
+    ))
+  }, [])
+
+  // 유휴 4초 후 AI로 요약을 다듬어 제목 교체(자동 제목 상태일 때만, AI 사용 가능 시).
+  const scheduleAITitleRefine = useCallback(() => {
+    if (aiTitleTimerRef.current) clearTimeout(aiTitleTimerRef.current)
+    aiTitleTimerRef.current = setTimeout(async () => {
+      if (!isAutoTitle.current) return
+      const b = latestDataRef.current.body
+      if (b.trim().length < 20 || b === lastAITitleBodyRef.current) return
+      if (!isAIAvailable()) return
+      lastAITitleBodyRef.current = b
+      const { keyword, error } = await summarizeTitleKeyword(b)
+      // 언마운트됐거나 그 사이 사용자가 제목을 직접 편집했으면 중단(stale write·타이머 누수 방지)
+      if (!isMountedRef.current || error || !keyword || !isAutoTitle.current) return
+      const label = getCategoryLabel(latestDataRef.current.folderId, useFolderStore.getState().folders)
+      setTitle(composeTitle(label, keyword, formatTitleDate(creationDateRef.current)))
+      setSaveStatus('modified')
+      scheduleAutoSave()
+    }, 4000)
+  }, [scheduleAutoSave])
 
   // Text undo/redo actions
   const pushUndoSnapshot = useCallback((text: string) => {
@@ -363,10 +411,17 @@ export function MemoEditor() {
 
   // BUG-01: Flush pending save on unmount — handles both existing and NEW memos
   useEffect(() => {
+    // StrictMode(dev)는 mount 시 setup→cleanup→setup을 실행하므로 setup마다 true로 되돌린다
+    isMountedRef.current = true
     return () => {
+      isMountedRef.current = false
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current)
         saveTimerRef.current = null
+      }
+      if (aiTitleTimerRef.current) {
+        clearTimeout(aiTitleTimerRef.current)
+        aiTitleTimerRef.current = null
       }
       const { memoId: id, title: t, body: b, folderId: f, color: c } = latestDataRef.current
       if (id && (t.trim() || b.trim())) {
@@ -390,18 +445,16 @@ export function MemoEditor() {
     if (!isTiptapRef.current) pushUndoSnapshot(value)
     setBody(value)
 
-    // Auto-title: extract first line as title when user hasn't manually set one
+    // 카테고리별 제목 규칙: 작성 중엔 규칙 기반 즉시 갱신, 유휴 시 AI로 요약 다듬기(하이브리드)
     if (isAutoTitle.current) {
-      const firstLine = value.split('\n').find((l) => l.trim())?.trim() || ''
-      // Strip leading markdown markers (# - * > 1.)
-      const cleaned = firstLine.replace(/^(?:[#\-*>]+|\d+\.)\s*/, '').slice(0, 50)
-      setTitle(cleaned)
+      recomputeAutoTitle(value, latestDataRef.current.folderId)
+      scheduleAITitleRefine()
     }
 
     setSaveStatus('modified')
     scheduleAutoSave()
     dismissSuggestion()
-  }, [scheduleAutoSave, dismissSuggestion, pushUndoSnapshot])
+  }, [scheduleAutoSave, dismissSuggestion, pushUndoSnapshot, recomputeAutoTitle, scheduleAITitleRefine])
 
   // TECH-01: Keep ref up to date
   handleBodyChangeRef.current = handleBodyChange
@@ -428,8 +481,20 @@ export function MemoEditor() {
   // UX-12: handleFolderChange triggers save for new memos too
   const handleFolderChange = (newFolderId: number) => {
     setFolderId(newFolderId)
+    // 자동 제목이면 폴더(카테고리) 변경 시 제목의 [폴더] 부분도 함께 갱신
+    let nextTitle: string | undefined
+    if (isAutoTitle.current) {
+      const b = latestDataRef.current.body
+      nextTitle = b.trim()
+        ? buildRuleTitle({ folderId: newFolderId, createdAt: creationDateRef.current, body: b }, useFolderStore.getState().folders)
+        : ''
+      setTitle(nextTitle)
+      // 폴더(카테고리)가 바뀌면 [폴더] 라벨이 달라지므로 AI 요약도 새 라벨로 다시 다듬도록 재예약
+      lastAITitleBodyRef.current = ''
+      scheduleAITitleRefine()
+    }
     if (memoId) {
-      updateMemo(memoId, { folderId: newFolderId })
+      updateMemo(memoId, { folderId: newFolderId, ...(nextTitle !== undefined ? { title: nextTitle } : {}) })
     } else {
       scheduleAutoSave()
     }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderInput, Trash2, Star, Pin, X, Share2, RotateCcw } from 'lucide-react'
+import { FolderInput, Trash2, Star, Pin, X, Share2, RotateCcw, Sparkles, Loader2 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
@@ -18,11 +18,13 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
   const batchStar = useMemoStore((s) => s.batchStar)
   const batchPin = useMemoStore((s) => s.batchPin)
   const batchRestore = useMemoStore((s) => s.batchRestore)
+  const batchRegenerateTitles = useMemoStore((s) => s.batchRegenerateTitles)
   const permanentDelete = useMemoStore((s) => s.permanentDelete)
   const memos = useMemoStore((s) => s.memos)
   const pushUndo = useUndoStore((s) => s.pushUndo)
 
   const [isPermanentDeleteOpen, setIsPermanentDeleteOpen] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   const count = selectedMemoIds.length
 
@@ -88,6 +90,21 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
     clearSelection()
   }
 
+  const handleRegenerateTitles = async () => {
+    if (isRegenerating) return
+    navigator.vibrate?.(20)
+    setIsRegenerating(true)
+    try {
+      await batchRegenerateTitles(selectedMemoIds)
+      useToastStore.getState().showToast(`${count}개 메모 제목을 재생성했습니다`, 'success')
+    } catch {
+      useToastStore.getState().showToast('제목 재생성에 실패했습니다', 'error')
+    } finally {
+      setIsRegenerating(false)
+      clearSelection()
+    }
+  }
+
   const handleCancel = () => {
     clearSelection()
   }
@@ -140,6 +157,20 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
             <button onClick={handlePin} className={btnClass} aria-label="고정">
               <Pin className="h-4 w-4" />
               <span className="hidden sm:inline">고정</span>
+            </button>
+
+            <button
+              onClick={handleRegenerateTitles}
+              disabled={isRegenerating}
+              className={btnClass + ' disabled:opacity-50'}
+              aria-label="제목 재생성"
+            >
+              {isRegenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">제목 재생성</span>
             </button>
 
             {count === 1 && (

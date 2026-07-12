@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, X } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
+import { useFolderStore } from '@/stores/folderStore'
 import { useToastStore } from '@/stores/toastStore'
+import { buildRuleTitle } from '@/utils/memoTitle'
 import { Kbd } from '@/components/ui/Kbd'
 
 interface QuickMemoInputProps {
@@ -19,8 +21,10 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
 
   const handleSubmit = async () => {
     if (!body.trim()) return
-    const firstLine = body.split('\n')[0].slice(0, 50)
-    await addMemo({ title: firstLine, body, folderId: null })
+    // 카테고리별 제목 규칙 적용([폴더]_요약_YYMMDD). 빠른 메모는 미분류.
+    const folders = useFolderStore.getState().folders
+    const title = buildRuleTitle({ folderId: null, createdAt: new Date().toISOString(), body }, folders)
+    await addMemo({ title, body, folderId: null })
     useToastStore.getState().showToast('메모가 저장되었습니다', 'success')
     setBody('')
     onClose()

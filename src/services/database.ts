@@ -4,6 +4,16 @@ import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
 
+// Maps a memo (by its stable syncId) to the file it was last written to, so the
+// sync-folder layer can detect renames (title changed → old path differs) and skip
+// no-op rewrites (contentHash unchanged). Device-local; never synced.
+export interface FileSyncRecord {
+  memoSyncId: string
+  filePath: string
+  contentHash: string
+  lastWrittenAt: string
+}
+
 class MemoDatabase extends Dexie {
   memos!: Table<Memo>
   folders!: Table<Folder>
@@ -12,6 +22,10 @@ class MemoDatabase extends Dexie {
   ambientImages!: Table<AmbientImage>
   demianChats!: Table<{ id?: number; memoId: number; messages: Array<{ role: string; content: string }>; updatedAt: string }>
   pendingSyncs!: Table<{ id?: number; type: string; action: string; syncId: string; createdAt: string }>
+  // Sync-folder (Phase 1): per-memo file mapping + device-local key-value store.
+  // Both are device-local and intentionally excluded from Firestore sync (§4.8).
+  fileSyncMap!: Table<FileSyncRecord>
+  syncFolderKV!: Table<{ key: string; value: unknown }>
 
   constructor() {
     super('MemoApp')
@@ -59,6 +73,21 @@ class MemoDatabase extends Dexie {
       ambientImages: '++id, type, generatedAt, expiresAt',
       demianChats: '++id, &memoId, updatedAt',
       pendingSyncs: '++id, type, syncId, createdAt',
+    })
+
+    // v7: sync-folder support (§Phase 1). Existing 7 stores carried forward
+    // unchanged; two device-local stores added. Dexie has no downgrade path —
+    // a rollback below v7 requires a JSON backup (§10 호환성·마이그레이션).
+    this.version(7).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
+      ambientImages: '++id, type, generatedAt, expiresAt',
+      demianChats: '++id, &memoId, updatedAt',
+      pendingSyncs: '++id, type, syncId, createdAt',
+      fileSyncMap: '&memoSyncId, filePath',
+      syncFolderKV: '&key',
     })
 
     this.on('populate', () => {
@@ -306,4 +335,41 @@ export async function saveAmbientImage(image: Omit<AmbientImage, 'id'>): Promise
 export async function clearExpiredAmbientImages(): Promise<void> {
   const now = new Date().toISOString()
   await db.ambientImages.filter((img) => img.expiresAt <= now).delete()
+}
+
+// ─── Sync-folder mapping (device-local) ───────────────
+
+export async function getFileSyncRecord(memoSyncId: string): Promise<FileSyncRecord | undefined> {
+  return db.fileSyncMap.get(memoSyncId)
+}
+
+export async function putFileSyncRecord(record: FileSyncRecord): Promise<void> {
+  await db.fileSyncMap.put(record)
+}
+
+export async function deleteFileSyncRecord(memoSyncId: string): Promise<void> {
+  await db.fileSyncMap.delete(memoSyncId)
+}
+
+export async function countFileSyncRecords(): Promise<number> {
+  return db.fileSyncMap.count()
+}
+
+export async function clearFileSyncMap(): Promise<void> {
+  await db.fileSyncMap.clear()
+}
+
+// ─── Sync-folder key-value (device-local; e.g. directory handle) ──
+
+export async function getSyncFolderValue<T>(key: string): Promise<T | undefined> {
+  const row = await db.syncFolderKV.get(key)
+  return row?.value as T | undefined
+}
+
+export async function setSyncFolderValue(key: string, value: unknown): Promise<void> {
+  await db.syncFolderKV.put({ key, value })
+}
+
+export async function deleteSyncFolderValue(key: string): Promise<void> {
+  await db.syncFolderKV.delete(key)
 }
