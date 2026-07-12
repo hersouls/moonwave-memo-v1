@@ -10,7 +10,7 @@
  * Security posture: contextIsolation on, nodeIntegration off, a minimal preload
  * bridge, and every fs path validated to stay inside the user-chosen root.
  */
-import { app, BrowserWindow, ipcMain, dialog, protocol, net, type WebContents } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, protocol, net, shell, type WebContents } from 'electron'
 import { promises as fs } from 'node:fs'
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -19,6 +19,9 @@ import { autoUpdater } from 'electron-updater'
 
 const isDev = !app.isPackaged
 const DEV_URL = 'http://localhost:3000'
+// Packaged app loads the hosted https site (not the local app:// bundle) so Firebase
+// Google auth works — a custom app:// origin isn't an authorized OAuth domain (§Phase 2 login).
+const PROD_URL = 'https://memo.moonwave.kr'
 // Packaged layout: resources/app/electron/out/main.cjs + resources/app/dist/.
 // From electron/out, the renderer dist is two levels up.
 const RENDERER_DIR = path.join(__dirname, '..', '..', 'dist')
@@ -47,11 +50,23 @@ function createWindow(): void {
 
   win.once('ready-to-show', () => win.show())
 
+  // Firebase/Google auth opens a popup via window.open. Allow the auth popups to open
+  // as child windows; route any other external link to the system browser.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\/(accounts\.google\.com|[\w-]+\.firebaseapp\.com)/.test(url) || url.includes('/__/auth/')) {
+      return { action: 'allow' }
+    }
+    if (/^https?:/.test(url)) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+
   if (isDev) {
     win.loadURL(DEV_URL)
     win.webContents.openDevTools({ mode: 'detach' })
   } else {
-    win.loadURL('app://bundle/index.html')
+    // Hosted https origin → Google auth works; the preload still injects the native fs
+    // bridge, so the sync-folder feature uses the native backend. Needs internet to start.
+    win.loadURL(PROD_URL)
   }
 }
 

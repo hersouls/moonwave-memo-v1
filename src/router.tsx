@@ -1,4 +1,4 @@
-import { createBrowserRouter, useParams } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 import App from './App'
@@ -109,5 +109,11 @@ export const router = createBrowserRouter([
   {
     path: '/share-target',
     element: <ShareTargetPage />,
+  },
+  {
+    // Any unmatched path (e.g. Electron's app://bundle/index.html, or a stale deep
+    // link) redirects home instead of react-router's default 404 error screen.
+    path: '*',
+    element: <Navigate to="/" replace />,
   },
 ])
