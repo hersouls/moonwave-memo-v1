@@ -38,9 +38,23 @@ jobs:
       - name: Bundle Electron main/preload
         run: npm run electron:build
 
-      - name: Package + publish Windows installer (unsigned)
-        run: npx electron-builder --win --publish always
+      - name: Package Windows installer (unsigned, no publish)
+        run: npx electron-builder --win --publish never
+
+      # electron-builder's own GitHub publisher races on release creation and
+      # intermittently drops the large .exe (only the .blockmap lands). Upload the
+      # artifacts explicitly with the gh CLI instead — deterministic for big files.
+      - name: Publish installer to GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v$(node -p "require('./package.json').version")"
+          echo "Publishing installer to release $tag"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --title "$tag" --notes "Automated unsigned desktop build."
+          fi
+          gh release upload "$tag" release/*.exe release/*.blockmap --clobber
+          echo "Assets now on $tag:"
+          gh release view "$tag" --json assets --jq '.assets[] | "\(.name)  \(.size) bytes"'
         env:
-          # electron-builder reads GH_TOKEN to publish to the repo's Releases.
-          # The auto-provided GITHUB_TOKEN works for the same (private) repo.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
