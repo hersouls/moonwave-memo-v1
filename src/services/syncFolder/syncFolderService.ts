@@ -413,6 +413,58 @@ async function removeFolderDirEverywhere(seg: string): Promise<void> {
 }
 
 /**
+ * Create a directory for every non-system folder on the primary + mirrors — materializes
+ * empty folders and any that predate enabling the sync folder. Returns the folder count.
+ * Caller holds the lock. Forward-only: no directory is ever removed here.
+ */
+async function ensureAllFolderDirs(): Promise<number> {
+  if (!target) return 0
+  const folders = (await getAllFolders()).filter((f) => !f.isSystem)
+  const segs = new Set<string>()
+  for (const f of folders) {
+    const seg = sanitizeSegment(f.name)
+    if (seg) segs.add(seg)
+  }
+  let count = 0
+  for (const seg of segs) {
+    try {
+      await target.ensureDir(seg)
+      for (const m of mirrorTargets) {
+        try { await m.ensureDir(seg) } catch { /* mirror best-effort; real writes create it */ }
+      }
+      count++
+    } catch (err) {
+      console.error('Sync folder ensure-dir failed:', err)
+    }
+  }
+  return count
+}
+
+/**
+ * Reconcile the on-disk folder structure with the app's folders (§6 폴더 구조 동기화 · manual
+ * fallback). Creates a directory for every folder — including empty ones and folders created
+ * before the sync folder was enabled — without rewriting any memo files. Forward-only
+ * (app → disk): directories the user created directly in the vault are never removed.
+ */
+export async function syncFolderStructure(): Promise<{ folders: number }> {
+  if (!useSyncFolderStore.getState().enabled) return { folders: 0 }
+  if (!(await ensureReady()) || !target) return { folders: 0 }
+  const store = useSyncFolderStore.getState()
+  let folders = 0
+  await withLock(target.key, async () => {
+    try {
+      store.setStatus('writing')
+      folders = await ensureAllFolderDirs()
+      store.setStatus('idle')
+    } catch (err) {
+      console.error('Sync folder structure sync failed:', err)
+      store.setStatus('error', '폴더 구조를 동기화하지 못했습니다.')
+    }
+  })
+  return { folders }
+}
+
+/**
  * A folder was created — materialize its (empty) directory on disk + mirrors so it shows
  * up in the sync folder immediately, before any memo is placed in it. No-op when disabled.
  */
@@ -527,6 +579,8 @@ export async function exportAllMemosToFolder(
 
   await withLock(target.key, async () => {
     store.setStatus('writing')
+    // Materialize every folder as a directory first, so folders with no memos still appear.
+    await ensureAllFolderDirs()
     for (let i = 0; i < memos.length; i++) {
       // writeMemoNow swallows its own errors and reports the real outcome, so we count
       // actual writes instead of blindly reporting every memo as "written".
