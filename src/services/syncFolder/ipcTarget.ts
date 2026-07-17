@@ -37,6 +37,14 @@ export class IpcFileSyncTarget implements FileSyncTarget {
     return this.bridge.exists(this.root, path)
   }
 
+  async ensureDir(path: string): Promise<void> {
+    await this.bridge.ensureDir(this.root, path)
+  }
+
+  async removeDir(path: string): Promise<void> {
+    await this.bridge.removeDir(this.root, path)
+  }
+
   async listPaths(): Promise<string[]> {
     return this.bridge.listPaths(this.root)
   }

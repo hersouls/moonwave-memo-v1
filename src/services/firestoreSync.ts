@@ -225,6 +225,25 @@ async function hardDeleteFolderFromCloud(syncId: string): Promise<void> {
   }
 }
 
+// ─── Disk sync-folder reflection (device-local) ─────
+//
+// Remote folder create/rename/delete arrive here (initial merge + live snapshot) and
+// mutate the local DB, but the device-local disk sync folder is memo-file driven and
+// would not otherwise follow folder-level changes made on another device. These mirror
+// the folderStore notifications so a folder renamed/deleted elsewhere is reflected on
+// THIS device's sync folder too. A dynamic import breaks the firestoreSync ⇄ syncFolder
+// module cycle; every call is a no-op when the sync-folder feature is disabled here.
+function reflectFolderCreatedOnDisk(name: string): void {
+  void import('@/services/syncFolder').then((m) => m.notifyFolderCreated(name)).catch(() => {})
+}
+function reflectFolderRenamedOnDisk(folderId: number, oldName: string, newName: string): void {
+  if (oldName === newName) return
+  void import('@/services/syncFolder').then((m) => m.notifyFolderRenamed(folderId, oldName, newName)).catch(() => {})
+}
+function reflectFolderDeletedOnDisk(oldName: string, memoIds: number[]): void {
+  void import('@/services/syncFolder').then((m) => m.notifyFolderDeleted(oldName, memoIds)).catch(() => {})
+}
+
 // ─── Initial Merge ─────────────────────────────────
 
 async function initialMerge(userId: string, epoch: number) {
@@ -265,7 +284,11 @@ async function doInitialMerge(userId: string, epoch: number) {
     // default/trash), never re-create or re-push it.
     if (remote.tombstone) {
       if (local?.id != null && !local.isDefault && !local.isSystem) {
+        const affected = await database.getMemosByFolderId(local.id)
+        const oldName = local.name
         await database.deleteFolder(local.id)
+        // Relocate this folder's files out of its directory on this device's sync folder.
+        reflectFolderDeletedOnDisk(oldName, affected.map((m) => m.id).filter((x): x is number => x != null))
       }
       continue
     }
@@ -303,7 +326,11 @@ async function doInitialMerge(userId: string, epoch: number) {
         createdAt: remote.createdAt || new Date().toISOString(),
         updatedAt: remote.updatedAt || new Date().toISOString(),
       })
+      // A folder created on another device (offline catch-up) — materialize its directory
+      // on this device's sync folder too, matching the live-snapshot 'added' path.
+      if (!remote.isSystem) reflectFolderCreatedOnDisk(remote.name)
     } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
+      const oldName = local.name
       await database.updateFolder(local.id!, {
         name: remote.name,
         color: remote.color,
@@ -312,6 +339,8 @@ async function doInitialMerge(userId: string, epoch: number) {
         // sender-vs-receiver-clock.
         updatedAt: remote.updatedAt,
       })
+      // A remote rename must move this folder's memo files into the new-named directory.
+      reflectFolderRenamedOnDisk(local.id!, oldName, remote.name)
     }
   }
 
@@ -449,15 +478,24 @@ async function dedupeSeedFolders() {
     groups.push({ members: systems, canonicalSyncId: CANONICAL_SYSTEM_SYNC_ID })
   }
 
-  // Named seed folders (스크랩/아이디어/쇼핑): only collapse folders that still match the
-  // seed template exactly (name + colour, ordinary flags), so a user's own folder that
-  // merely shares a name is never merged away.
+  // Named seed folders (스크랩/아이디어/쇼핑): collapse only genuine LEGACY clones — the
+  // old bug seeded these with random per-device syncIds, so an account could accrue two
+  // random-syncId "쇼핑" folders that should merge.
+  //
+  // A folder matching a seed's name+colour is NOT sufficient evidence of a clone: the seed
+  // palette (FOLDER_COLORS) is user-selectable, so a user can legitimately create a folder
+  // named "쇼핑" in the seed's colour. When the canonical seed itself is present in the
+  // group, the OTHER same-name+colour folders may be exactly those user folders — merging
+  // them would hard-delete a real user folder across every device (§data-safety). So we
+  // only dedupe groups that do NOT contain the canonical seed (pure legacy-clone clusters);
+  // a stray clone sitting next to the canonical seed is left for manual cleanup instead.
   for (const seed of DEFAULT_FOLDERS) {
     if (seed.isDefault || seed.isSystem) continue
     const members = folders.filter(
       (f) => !f.isDefault && !f.isSystem && f.name === seed.name && f.color === seed.color
     )
-    if (members.length > 1) {
+    const hasCanonical = members.some((f) => f.syncId === seed.syncId)
+    if (members.length > 1 && !hasCanonical) {
       groups.push({ members, canonicalSyncId: seed.syncId })
     }
   }
@@ -593,8 +631,11 @@ function startListeners(userId: string) {
           if (remote.tombstone) {
             const local = await database.getFolderBySyncId(syncId)
             if (local?.id != null && !local.isDefault && !local.isSystem) {
+              const affected = await database.getMemosByFolderId(local.id)
+              const oldName = local.name
               await database.deleteFolder(local.id)
               foldersRemoved = true
+              reflectFolderDeletedOnDisk(oldName, affected.map((m) => m.id).filter((x): x is number => x != null))
             }
             continue
           }
@@ -623,21 +664,29 @@ function startListeners(userId: string) {
                 createdAt: remote.createdAt || new Date().toISOString(),
                 updatedAt: remote.updatedAt || new Date().toISOString(),
               })
+              // A folder created on another device — materialize it on this device's disk.
+              if (!remote.isSystem) reflectFolderCreatedOnDisk(remote.name)
             } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
+              const oldName = local.name
               await database.updateFolder(local.id!, {
                 name: remote.name,
                 color: remote.color,
                 sortOrder: remote.sortOrder,
                 updatedAt: remote.updatedAt,
               })
+              // A remote rename must move this folder's memo files on this device's disk.
+              reflectFolderRenamedOnDisk(local.id!, oldName, remote.name)
             }
           }
 
           if (change.type === 'removed') {
             const local = await database.getFolderBySyncId(syncId)
-            if (local && !local.isDefault && !local.isSystem) {
-              await database.deleteFolder(local.id!)
+            if (local?.id != null && !local.isDefault && !local.isSystem) {
+              const affected = await database.getMemosByFolderId(local.id)
+              const oldName = local.name
+              await database.deleteFolder(local.id)
               foldersRemoved = true
+              reflectFolderDeletedOnDisk(oldName, affected.map((m) => m.id).filter((x): x is number => x != null))
             }
           }
         }

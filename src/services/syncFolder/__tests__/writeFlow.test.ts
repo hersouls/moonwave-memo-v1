@@ -16,11 +16,18 @@ class MemoryFileSyncTarget implements FileSyncTarget {
   readonly key = 'memory'
   files = new Map<string, string>()
   binaries = new Map<string, Blob>()
+  dirs = new Set<string>()
 
   async writeText(path: string, text: string): Promise<void> { this.files.set(path, text) }
   async writeBinary(path: string, blob: Blob): Promise<void> { this.binaries.set(path, blob) }
   async deleteFile(path: string): Promise<void> { this.files.delete(path); this.binaries.delete(path) }
   async exists(path: string): Promise<boolean> { return this.files.has(path) || this.binaries.has(path) }
+  async ensureDir(path: string): Promise<void> { if (path) this.dirs.add(path) }
+  async removeDir(path: string): Promise<void> {
+    // Mirror the real backends: only remove an empty directory (no file under this prefix).
+    const hasChild = [...this.files.keys(), ...this.binaries.keys()].some((p) => p.startsWith(`${path}/`))
+    if (!hasChild) this.dirs.delete(path)
+  }
   async listPaths(): Promise<string[]> { return [...this.files.keys(), ...this.binaries.keys()] }
 }
 
@@ -114,6 +121,67 @@ describe('write flow (serializer → target)', () => {
     const { filePath, content } = await writeToTarget(target, memo, undefined, noImages)
     const parsed = deserializeMemo(content, filePath.replace(/\.md$/, ''))
     expect(parsed.tags).toEqual(['ai태그'])
+  })
+})
+
+describe('folder lifecycle (ensureDir / removeDir contract)', () => {
+  let target: MemoryFileSyncTarget
+  beforeEach(() => { target = new MemoryFileSyncTarget() })
+
+  it('ensureDir materializes an empty folder directory (create → shows on disk before any memo)', async () => {
+    await target.ensureDir('프로젝트')
+    expect(target.dirs.has('프로젝트')).toBe(true)
+    // No memo file was written — the folder exists purely as a directory.
+    expect(await target.listPaths()).toEqual([])
+  })
+
+  it('removeDir removes an empty directory', async () => {
+    await target.ensureDir('빈폴더')
+    await target.removeDir('빈폴더')
+    expect(target.dirs.has('빈폴더')).toBe(false)
+  })
+
+  it('removeDir NEVER deletes a directory that still holds a file (safety invariant)', async () => {
+    await writeToTarget(target, makeMemo({ folderId: 2 }), '아이디어', noImages)
+    expect(await target.exists('아이디어/여행 계획-abc123.md')).toBe(true)
+    // Even if asked to remove the folder, a non-empty directory must be left intact —
+    // no user memo file may be destroyed by a folder-delete/rename cleanup.
+    await target.removeDir('아이디어')
+    expect(await target.exists('아이디어/여행 계획-abc123.md')).toBe(true)
+  })
+
+  it('rename flow: memo files move into the new directory and the emptied old one is dropped', async () => {
+    const memo = makeMemo({ folderId: 5 })
+    // Original write under the old folder name.
+    const before = await writeToTarget(target, memo, '옛폴더', noImages)
+    expect(before.filePath).toBe('옛폴더/여행 계획-abc123.md')
+
+    // Simulate notifyFolderRenamed: ensure new dir, move each memo file, drop old dir.
+    await target.ensureDir('새폴더')
+    const after = await writeToTarget(target, memo, '새폴더', noImages, before.filePath)
+    await target.removeDir('옛폴더')
+
+    expect(after.filePath).toBe('새폴더/여행 계획-abc123.md')
+    expect(await target.exists('옛폴더/여행 계획-abc123.md')).toBe(false)
+    expect(await target.exists('새폴더/여행 계획-abc123.md')).toBe(true)
+    // The renamed frontmatter carries the new folder name (drives the disk move + import).
+    expect(after.content).toContain('folder: 새폴더')
+  })
+
+  it('delete flow: relocated memo moves to the default location and the old dir is removed', async () => {
+    const memo = makeMemo({ folderId: 9 })
+    const before = await writeToTarget(target, memo, '삭제될폴더', noImages)
+    expect(await target.exists(before.filePath)).toBe(true)
+
+    // Simulate notifyFolderDeleted: memo now relocated to the default folder ('메모함'),
+    // rewrite it there (deletes the old file), then remove the emptied deleted-folder dir.
+    const relocated = makeMemo({ folderId: 1 })
+    const after = await writeToTarget(target, relocated, '메모함', noImages, before.filePath)
+    await target.removeDir('삭제될폴더')
+
+    expect(await target.exists('삭제될폴더/여행 계획-abc123.md')).toBe(false)
+    expect(await target.exists('메모함/여행 계획-abc123.md')).toBe(true)
+    expect(after.filePath).toBe('메모함/여행 계획-abc123.md')
   })
 })
 

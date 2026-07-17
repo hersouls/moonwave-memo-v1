@@ -29,6 +29,7 @@ import {
   softDeleteMemo,
   getFileSyncRecord,
   getFileSyncRecordByPath,
+  getFileSyncRecordsUnderDir,
   putFileSyncRecord,
   deleteFileSyncRecord,
   countFileSyncRecords,
@@ -387,6 +388,120 @@ export function notifyMemoDeleted(memo: Memo): void {
     if (prev) { clearTimeout(prev); writeTimers.delete(id) }
   }
   void ensureReady().then((ok) => { if (ok) return withLock(target!.key, () => deleteMemoFileNow(memo)) })
+}
+
+// ─── Folder lifecycle → directory mapping (§4.3 folder ⇄ subdirectory) ──────────
+//
+// The disk layer is memo-file driven: a folder's subdirectory is otherwise only created
+// as a side-effect of writing a memo into it (writeMemoNow), so a newly-created *empty*
+// folder never appears on disk, and a renamed/deleted folder leaves a stale directory.
+// These three notifications keep the on-disk folder structure in step with folderStore.
+// All run behind the single-writer lock and reuse writeMemoNow for the file moves, which
+// already handles the new-path write + stale old-file delete + watcher self-delete guard.
+
+/** Remove a now-empty folder directory on the primary + every mirror (best-effort). */
+async function removeFolderDirEverywhere(seg: string): Promise<void> {
+  if (!target || !seg) return
+  try {
+    await target.removeDir(seg)
+  } catch (err) {
+    console.error('Sync folder remove-dir failed:', err)
+  }
+  for (const m of mirrorTargets) {
+    try { await m.removeDir(seg) } catch { /* mirror best-effort */ }
+  }
+}
+
+/**
+ * A folder was created — materialize its (empty) directory on disk + mirrors so it shows
+ * up in the sync folder immediately, before any memo is placed in it. No-op when disabled.
+ */
+export async function notifyFolderCreated(name: string): Promise<void> {
+  if (!useSyncFolderStore.getState().enabled) return
+  if (!(await ensureReady()) || !target) return
+  const seg = sanitizeSegment(name)
+  await withLock(target.key, async () => {
+    try {
+      await target!.ensureDir(seg)
+      for (const m of mirrorTargets) {
+        try { await m.ensureDir(seg) } catch { /* mirror best-effort; real writes create it */ }
+      }
+    } catch (err) {
+      console.error('Sync folder create-dir failed:', err)
+      useSyncFolderStore.getState().setStatus('error', '폴더를 만들지 못했습니다.')
+    }
+  })
+}
+
+/**
+ * A folder was renamed — move every memo file from the old directory into the new one and
+ * drop the emptied old directory. The DB folder name is already updated before this runs,
+ * so writeMemoNow resolves each memo to its new path and deletes the stale old file.
+ */
+export async function notifyFolderRenamed(folderId: number, oldName: string, newName: string): Promise<void> {
+  if (!useSyncFolderStore.getState().enabled) return
+  if (!(await ensureReady()) || !target) return
+  const oldSeg = sanitizeSegment(oldName)
+  const newSeg = sanitizeSegment(newName)
+  await withLock(target.key, async () => {
+    try {
+      await target!.ensureDir(newSeg)
+      const memos = (await getActiveMemos()).filter(
+        (m) => m.folderId === folderId && !m.ephemeralExpiresAt && m.syncId,
+      )
+      for (const memo of memos) await writeMemoNow(memo)
+      // Only drop the old dir when the sanitized name actually changed — a rename that
+      // sanitizes to the same segment (e.g. trailing space) writes into the same folder.
+      if (oldSeg !== newSeg) await removeFolderDirEverywhere(oldSeg)
+      useSyncFolderStore.getState().setStatus('idle')
+    } catch (err) {
+      console.error('Sync folder rename failed:', err)
+      useSyncFolderStore.getState().setStatus('error', '폴더 이름 변경을 반영하지 못했습니다.')
+    }
+  })
+}
+
+/**
+ * A folder was deleted — its memos were already relocated (to the default folder / root)
+ * in the DB, so rewrite each relocated memo to its new path (which deletes the old file)
+ * then remove the emptied deleted-folder directory. `memoIds` are the affected memos
+ * captured before deletion.
+ */
+export async function notifyFolderDeleted(oldName: string, memoIds: number[]): Promise<void> {
+  if (!useSyncFolderStore.getState().enabled) return
+  if (!(await ensureReady()) || !target) return
+  const oldSeg = sanitizeSegment(oldName)
+  await withLock(target.key, async () => {
+    try {
+      const done = new Set<number>()
+      // Primary source of truth is the fileSyncMap, not a DB folderId snapshot: rewrite every
+      // memo whose file still lives in the deleted folder's directory. This is race-proof —
+      // if a remote memo relocation changed the memo's folderId before this ran (so the
+      // caller's `memoIds` came back empty), the file record still points here and gets moved.
+      const records = await getFileSyncRecordsUnderDir(`${oldSeg}/`)
+      for (const rec of records) {
+        const memo = await getMemoBySyncId(rec.memoSyncId)
+        if (memo?.id != null && !done.has(memo.id)) {
+          done.add(memo.id)
+          await writeMemoNow(memo)
+        }
+      }
+      // Belt-and-braces: also the ids captured at delete time (covers memos not yet on disk).
+      for (const id of memoIds) {
+        if (done.has(id)) continue
+        const fresh = await getMemo(id)
+        if (fresh) {
+          done.add(id)
+          await writeMemoNow(fresh)
+        }
+      }
+      await removeFolderDirEverywhere(oldSeg)
+      useSyncFolderStore.getState().setStatus('idle')
+    } catch (err) {
+      console.error('Sync folder delete cleanup failed:', err)
+      useSyncFolderStore.getState().setStatus('error', '폴더 삭제를 반영하지 못했습니다.')
+    }
+  })
 }
 
 // ─── Full export (§6 전체 내보내기) ──────────────────

@@ -17,6 +17,17 @@ export interface FileSyncTarget {
   /** Delete a file. A missing file is not an error. */
   deleteFile(path: string): Promise<void>
   exists(path: string): Promise<boolean>
+  /**
+   * Create a directory (with any intermediate dirs) so an empty memo folder is
+   * materialized on disk without waiting for a file to be written into it. Creating a
+   * directory that already exists is not an error.
+   */
+  ensureDir(path: string): Promise<void>
+  /**
+   * Remove a directory ONLY if it is empty (non-recursive). A missing or non-empty
+   * directory is not an error — implementations must never delete user files here.
+   */
+  removeDir(path: string): Promise<void>
   /** All file paths under the root (recursive), relative to the root. */
   listPaths(): Promise<string[]>
 }

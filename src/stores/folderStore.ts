@@ -5,6 +5,7 @@ import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 import * as database from '@/services/database'
 import { pushFolder, pushMemo, deleteFolderFromCloud } from '@/services/firestoreSync'
+import { notifyFolderCreated, notifyFolderRenamed, notifyFolderDeleted } from '@/services/syncFolder'
 import { useUIStore } from './uiStore'
 
 // Heal a persisted activeFolderId that points at a folder deleted while this device
@@ -74,6 +75,9 @@ export const useFolderStore = create<FolderState>()(
           if (folder) {
             set((state) => ({ folders: [...state.folders, folder] }))
             pushFolder(folder).catch(console.error)
+            // Materialize the (empty) folder in the disk sync folder immediately, so a
+            // newly-created folder isn't missing on disk until its first memo is saved.
+            notifyFolderCreated(folder.name).catch(console.error)
           }
           return id
         } catch (err) {
@@ -84,6 +88,7 @@ export const useFolderStore = create<FolderState>()(
 
       updateFolder: async (id, updates) => {
         try {
+          const prev = get().folders.find((f) => f.id === id)
           await database.updateFolder(id, updates)
           set((state) => ({
             folders: state.folders.map((f) =>
@@ -92,6 +97,11 @@ export const useFolderStore = create<FolderState>()(
           }))
           const updated = await database.getFolder(id)
           if (updated) pushFolder(updated).catch(console.error)
+          // A rename must move the folder's memo files into the new-named directory on
+          // disk (and drop the old one); the DB name is already updated above.
+          if (prev && updates.name != null && updates.name !== prev.name) {
+            notifyFolderRenamed(id, prev.name, updates.name).catch(console.error)
+          }
         } catch (err) {
           console.error('Failed to update folder:', err)
         }
@@ -127,6 +137,15 @@ export const useFolderStore = create<FolderState>()(
           // Clear a now-dead active filter so the memo list isn't stuck on an empty view.
           if (useUIStore.getState().activeFolderId === id) {
             useUIStore.getState().setActiveFolderId(null)
+          }
+
+          // Move the relocated memos' files out of the deleted folder's on-disk directory
+          // (they now carry the default folderId) and remove the emptied directory.
+          if (folder) {
+            notifyFolderDeleted(
+              folder.name,
+              affected.map((m) => m.id).filter((mid): mid is number => mid != null),
+            ).catch(console.error)
           }
 
           if (syncId) deleteFolderFromCloud(syncId).catch(console.error)

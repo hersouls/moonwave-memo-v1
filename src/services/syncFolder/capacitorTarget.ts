@@ -74,6 +74,26 @@ export class CapacitorFileSyncTarget implements FileSyncTarget {
     }
   }
 
+  async ensureDir(path: string): Promise<void> {
+    if (!path) return
+    try {
+      await Filesystem.mkdir({ path: this.full(path), directory: DIR, recursive: true })
+    } catch {
+      /* already exists → fine; a real permission error surfaces on the next file write */
+    }
+  }
+
+  async removeDir(path: string): Promise<void> {
+    if (!path) return
+    try {
+      // recursive:false → the plugin rejects a non-empty directory, so user files are
+      // never deleted here; a missing dir also just rejects and is ignored.
+      await Filesystem.rmdir({ path: this.full(path), directory: DIR, recursive: false })
+    } catch {
+      /* missing or non-empty → leave it */
+    }
+  }
+
   async listPaths(): Promise<string[]> {
     const out: string[] = []
     const walk = async (rel: string): Promise<void> => {

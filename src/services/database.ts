@@ -425,6 +425,13 @@ export async function getFileSyncRecordByPath(filePath: string): Promise<FileSyn
   return db.fileSyncMap.where('filePath').equals(filePath).first()
 }
 
+// All file-sync records whose primary path is under a directory prefix (e.g. '쇼핑/').
+// Used to reconcile a deleted/renamed folder's files from disk truth, independently of
+// the memos' current DB folderId (which a racing remote relocation may have changed).
+export async function getFileSyncRecordsUnderDir(dirPrefix: string): Promise<FileSyncRecord[]> {
+  return db.fileSyncMap.where('filePath').startsWith(dirPrefix).toArray()
+}
+
 export async function putFileSyncRecord(record: FileSyncRecord): Promise<void> {
   await db.fileSyncMap.put(record)
 }
