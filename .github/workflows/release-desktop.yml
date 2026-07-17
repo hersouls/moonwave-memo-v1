@@ -1,0 +1,46 @@
+name: Release Desktop
+
+# Builds the Windows desktop installer on a real Windows runner (sidestepping local
+# sandbox/filesystem limits) and publishes it — UNSIGNED — to this PRIVATE repo's GitHub
+# Releases. The in-app download proxy (api/download-desktop.ts) then serves it to users.
+#
+# Trigger: push a version tag matching package.json (e.g. `git tag v1.0.1 && git push --tags`),
+# or run manually from the Actions tab (workflow_dispatch).
+#
+# Signing (later): add repo secrets CSC_LINK (base64 .pfx) + CSC_KEY_PASSWORD and expose
+# them as env on the publish step — electron-builder picks them up automatically.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write # required to create/upload the GitHub Release
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build renderer (Vite)
+        run: npm run build
+
+      - name: Bundle Electron main/preload
+        run: npm run electron:build
+
+      - name: Package + publish Windows installer (unsigned)
+        run: npx electron-builder --win --publish always
+        env:
+          # electron-builder reads GH_TOKEN to publish to the repo's Releases.
+          # The auto-provided GITHUB_TOKEN works for the same (private) repo.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
