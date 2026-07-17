@@ -11,6 +11,10 @@ interface ElectronSyncBridge {
   writeBinary(root: string, relPath: string, data: ArrayBuffer): Promise<void>
   deleteFile(root: string, relPath: string): Promise<void>
   exists(root: string, relPath: string): Promise<boolean>
+  /** Create a directory (recursive) under the root — materializes an empty memo folder. */
+  ensureDir(root: string, relPath: string): Promise<void>
+  /** Remove a directory only if empty (non-recursive). Missing/non-empty is not an error. */
+  removeDir(root: string, relPath: string): Promise<void>
   listPaths(root: string): Promise<string[]>
   /** Whether the stored root folder still exists (it may have been moved/deleted). */
   dirExists(root: string): Promise<boolean>

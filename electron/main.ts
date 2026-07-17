@@ -145,6 +145,20 @@ function registerFsHandlers(): void {
     }
   })
 
+  ipcMain.handle('syncFolder:ensureDir', async (_e, root: string, relPath: string) => {
+    await fs.mkdir(resolveWithin(root, relPath), { recursive: true })
+  })
+
+  ipcMain.handle('syncFolder:removeDir', async (_e, root: string, relPath: string) => {
+    try {
+      // Non-recursive rmdir: removes an empty directory only. ENOTEMPTY (still has files)
+      // and ENOENT (already gone) are expected and ignored — never delete user files here.
+      await fs.rmdir(resolveWithin(root, relPath))
+    } catch {
+      /* non-empty or missing → leave it in place */
+    }
+  })
+
   ipcMain.handle('syncFolder:dirExists', async (_e, root: string) => {
     try {
       const stat = await fs.stat(root)

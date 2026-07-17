@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld('electronBridge', {
     ipcRenderer.invoke('syncFolder:deleteFile', root, relPath),
   exists: (root: string, relPath: string) =>
     ipcRenderer.invoke('syncFolder:exists', root, relPath),
+  ensureDir: (root: string, relPath: string) =>
+    ipcRenderer.invoke('syncFolder:ensureDir', root, relPath),
+  removeDir: (root: string, relPath: string) =>
+    ipcRenderer.invoke('syncFolder:removeDir', root, relPath),
   listPaths: (root: string) => ipcRenderer.invoke('syncFolder:listPaths', root),
   dirExists: (root: string) => ipcRenderer.invoke('syncFolder:dirExists', root),
 

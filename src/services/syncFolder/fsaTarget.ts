@@ -78,6 +78,28 @@ export class FsaFileSyncTarget implements FileSyncTarget {
     }
   }
 
+  async ensureDir(path: string): Promise<void> {
+    const dirs = path.split('/').filter(Boolean)
+    if (!dirs.length) return
+    const handle = await this.dirHandle(dirs, true)
+    if (!handle) throw new Error(`디렉터리를 만들 수 없습니다: ${dirs.join('/')}`)
+  }
+
+  async removeDir(path: string): Promise<void> {
+    const { dirs, name } = splitPath(path)
+    if (!name) return
+    const parent = await this.dirHandle(dirs, false)
+    if (!parent) return // already gone
+    try {
+      // recursive:false → throws if the directory still contains entries, so we never
+      // delete user files; a still-populated folder is intentionally left in place.
+      await parent.removeEntry(name, { recursive: false })
+    } catch (err) {
+      const n = (err as DOMException)?.name
+      if (n !== 'NotFoundError' && n !== 'InvalidModificationError') throw err
+    }
+  }
+
   async listPaths(): Promise<string[]> {
     const out: string[] = []
     const walk = async (dir: FileSystemDirectoryHandle, prefix: string): Promise<void> => {

@@ -203,4 +203,46 @@ describe('firestoreSync seed-folder duplication', () => {
     expect(fsStore.has(`users/${uid}/folders/d-bbb`)).toBe(false)
     expect((fsStore.get(`users/${uid}/memos/memo-1`) as Record<string, unknown>).folderSyncId).toBe('d-aaa')
   })
+
+  it('preserves a user folder that shares a seed name+colour instead of merging it into the seed', async () => {
+    const uid = 'user-seed-collide'
+    await seedFreshDevice()
+
+    // The user created their own "쇼핑" folder in the seed's exact colour (the seed palette
+    // is user-selectable), and it already carries a memo. It must never be swept into the
+    // canonical seed and hard-deleted across devices.
+    const userFolderId = (await db.folders.add({
+      name: '쇼핑', color: '#06B6D4', sortOrder: 10,
+      isDefault: false, isSystem: false, syncId: 'user-shopping',
+      createdAt: PAST, updatedAt: PAST,
+    })) as unknown as number
+    await db.memos.add({
+      title: '장보기', body: '', folderId: userFolderId, tags: [],
+      isStarred: false, color: 'white', isPinned: false, syncId: 'memo-u',
+      createdAt: PAST, updatedAt: PAST,
+    })
+
+    // Cloud holds the canonical seeds AND the user's folder as distinct identities.
+    for (const f of [...DEFAULT_FOLDERS, ...SYSTEM_FOLDERS]) {
+      putCloudFolder(uid, f.syncId, { name: f.name, color: f.color, isDefault: f.isDefault, isSystem: f.isSystem })
+    }
+    putCloudFolder(uid, 'user-shopping', { name: '쇼핑', color: '#06B6D4' })
+    putCloudMemo(uid, 'memo-u', { folderSyncId: 'user-shopping' })
+
+    await initSync(uid)
+
+    const folders = await database.getAllFolders()
+    // Both the canonical seed 쇼핑 and the user's 쇼핑 survive — no silent merge/delete.
+    expect(countByName(folders)['쇼핑']).toBe(2)
+    expect(folders.find((f) => f.syncId === 'user-shopping')).toBeTruthy()
+    expect(folders.find((f) => f.syncId === 'seed-default-shopping')).toBeTruthy()
+
+    // The user's memo stays in the user's folder (not re-homed onto the seed).
+    const userFolder = folders.find((f) => f.syncId === 'user-shopping')!
+    const memo = await database.getMemoBySyncId('memo-u')
+    expect(memo?.folderId).toBe(userFolder.id)
+
+    // And the user's folder was not hard-deleted from the cloud.
+    expect(fsStore.has(`users/${uid}/folders/user-shopping`)).toBe(true)
+  })
 })
