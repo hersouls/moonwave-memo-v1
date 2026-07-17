@@ -43,6 +43,9 @@ publish:
   provider: github
   owner: hersouls
   repo: moonwave-memo-v1
+  # Publish a real (non-draft) release so `releases/latest` resolves it — the in-app
+  # download proxy (api/download-desktop.ts) fetches the latest published installer.
+  releaseType: release
 
 # Code signing is env-driven (electron-builder reads these automatically):
 #   Windows: CSC_LINK (base64 .pfx or path) + CSC_KEY_PASSWORD

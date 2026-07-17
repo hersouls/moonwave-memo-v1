@@ -57,6 +57,7 @@ import { useToastStore } from '@/stores/toastStore'
 import type { ThemeMode, ColorPalette, MemoColor, InputStartPosition, STTLanguage } from '@/lib/types'
 import type { SyncStatus } from '@/lib/types'
 import { SyncFolderSection } from './SyncFolderSection'
+import { DesktopDownloadSection } from './DesktopDownloadSection'
 
 // ─── Theme Options ──────────────────────────────────
 const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
@@ -921,6 +922,11 @@ export function SettingsModal() {
 
       {/* Sync Folder (Phase 1) — 로컬 폴더에 .md 파일로 저장 */}
       <SyncFolderSection />
+
+      <div className="border-t border-[var(--color-border-subtle)]" />
+
+      {/* 데스크톱 앱(Windows) 설치본 다운로드 — 비공개 릴리스를 서버 프록시로 제공 */}
+      <DesktopDownloadSection />
 
       <div className="border-t border-[var(--color-border-subtle)]" />
 
