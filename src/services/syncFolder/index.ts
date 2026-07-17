@@ -16,6 +16,7 @@ export {
   notifyFolderCreated,
   notifyFolderRenamed,
   notifyFolderDeleted,
+  syncFolderStructure,
   exportAllMemosToFolder,
   setSyncFolderFormat,
   importHtmlFiles,

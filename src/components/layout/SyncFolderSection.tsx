@@ -12,6 +12,7 @@ import {
   X,
   Server,
   Info,
+  FolderTree,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -25,6 +26,7 @@ import {
   reconnectSyncFolder,
   disableSyncFolder,
   exportAllMemosToFolder,
+  syncFolderStructure,
   setSyncFolderFormat,
   importHtmlFiles,
   addMirrorFolder,
@@ -142,6 +144,19 @@ export function SyncFolderSection() {
     } finally {
       setBusy(false)
       setExportProgress(null)
+    }
+  }
+
+  const handleSyncStructure = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const { folders } = await syncFolderStructure()
+      showToast(`폴더 구조를 동기화했습니다 — 폴더 ${folders}개를 디스크에 반영`, 'success')
+    } catch {
+      showToast('폴더 구조 동기화에 실패했습니다.', 'error')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -419,12 +434,31 @@ export function SyncFolderSection() {
           </div>
         )}
 
-        {/* ⑥ 전체 내보내기 */}
+        {/* ⑥ 폴더 구조 동기화 — 앱의 모든 폴더를 디스크에 디렉터리로 생성(빈 폴더 포함) */}
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">폴더 구조 동기화</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+              앱의 모든 폴더를 디스크에 폴더로 만듭니다(빈 폴더 포함). 파일·외부 폴더는 건드리지 않습니다.
+            </div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleSyncStructure}
+            disabled={busy || !enabled || !folderName}
+          >
+            <FolderTree className="w-4 h-4 mr-1.5" />
+            폴더 동기화
+          </Button>
+        </div>
+
+        {/* ⑦ 전체 내보내기 */}
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
             {exportProgress
               ? `내보내는 중… ${exportProgress.done}/${exportProgress.total}`
-              : '기존 메모 전부를 폴더에 파일로 채웁니다.'}
+              : '기존 메모와 폴더 구조 전부를 폴더에 채웁니다.'}
           </div>
           <Button
             variant="secondary"
