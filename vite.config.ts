@@ -36,6 +36,8 @@ export default defineConfig({
           org: process.env.SENTRY_ORG,
           project: process.env.SENTRY_PROJECT,
           authToken: process.env.SENTRY_AUTH_TOKEN,
+          // Upload, then remove the maps so they are never served publicly.
+          sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
         })]
       : []),
   ],
@@ -48,7 +50,9 @@ export default defineConfig({
     port: 3000,
   },
   build: {
-    sourcemap: true,
+    // Public source maps exposed the full source; build them only for the Sentry upload
+    // ('hidden' = no sourceMappingURL comment), and the plugin deletes them afterwards.
+    sourcemap: process.env.SENTRY_AUTH_TOKEN ? 'hidden' : false,
     rollupOptions: {
       output: {
         manualChunks: {
