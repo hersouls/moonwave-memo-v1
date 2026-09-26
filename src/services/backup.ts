@@ -3,6 +3,7 @@ import type { Memo, Folder, MemoImage, MemoVersion, AmbientImage, BackupFile } f
 import { BACKUP_CONFIG, DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
 import { nowISO } from '@/lib/dateUtils'
 import { generateSyncId } from '@/utils/id'
+import { dedupeSyncRows, isValidSyncId } from './syncIdDedupe'
 
 export interface BackupValidationResult {
   valid: boolean
@@ -61,7 +62,7 @@ export async function createBackup(): Promise<BackupFile> {
   }
 }
 
-export function downloadBackup(backup: BackupFile): void {
+export function downloadBackup(backup: BackupFile, filePrefix: string = BACKUP_CONFIG.FILE_PREFIX): void {
   const json = JSON.stringify(backup, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -69,7 +70,7 @@ export function downloadBackup(backup: BackupFile): void {
   const date = new Date()
   const dateStr = date.toISOString().slice(0, 10)
   const timeStr = date.toTimeString().slice(0, 5).replace(':', '')
-  const filename = `${BACKUP_CONFIG.FILE_PREFIX}_${dateStr}_${timeStr}.json`
+  const filename = `${filePrefix}_${dateStr}_${timeStr}.json`
 
   const link = document.createElement('a')
   link.href = url
@@ -149,16 +150,26 @@ export async function restoreFromBackup(
     // the restored content instead of the cloud silently reverting it. Backfill missing
     // syncIds so every restored memo/folder participates in sync.
     const restoreStamp = new Date().toISOString()
-    const memos = (backup.data.memos || []).map((m: Memo) => ({
+    // syncId is unique in the DB: collapse duplicates a legacy backup may carry (newest
+    // updatedAt wins, attached rows re-pointed) BEFORE restamping, or bulkAdd would reject
+    // the whole restore.
+    const clean = dedupeSyncRows({
+      memos: backup.data.memos || [],
+      folders: backup.data.folders || [],
+      memoImages: backup.data.memoImages || [],
+      memoVersions: backup.data.memoVersions || [],
+      demianChats: backup.data.demianChats || [],
+    })
+    const memos = clean.memos.map((m: Memo) => ({
       ...m,
-      syncId: m.syncId || generateSyncId(),
+      syncId: isValidSyncId(m.syncId) ? m.syncId : generateSyncId(),
       createdAt: m.createdAt || restoreStamp,
       updatedAt: restoreStamp,
     }))
 
-    const folders = (backup.data.folders || []).map((f: Folder) => ({
+    const folders = clean.folders.map((f: Folder) => ({
       ...f,
-      syncId: f.syncId || generateSyncId(),
+      syncId: isValidSyncId(f.syncId) ? f.syncId : generateSyncId(),
       createdAt: f.createdAt || restoreStamp,
       updatedAt: restoreStamp,
     }))
@@ -166,12 +177,12 @@ export async function restoreFromBackup(
     // Drop child rows referencing a memo id absent from the restored set so a
     // pre-existing inconsistent backup can't seed phantom version/image history.
     const memoIds = new Set(memos.map((m) => m.id).filter((id): id is number => id != null))
-    const backupImages = (backup.data.memoImages || []).filter((img) => memoIds.has(img.memoId))
-    const backupVersions = (backup.data.memoVersions || []).filter((v) => memoIds.has(v.memoId))
+    const backupImages = (clean.memoImages || []).filter((img) => memoIds.has(img.memoId))
+    const backupVersions = (clean.memoVersions || []).filter((v) => memoIds.has(v.memoId))
     const backupAmbient = backup.data.ambientImages || []
-    const backupChats = (backup.data.demianChats || []).filter((c) => memoIds.has(c.memoId))
+    const backupChats = (clean.demianChats || []).filter((c) => memoIds.has(c.memoId))
 
-    await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages, db.demianChats], async () => {
+    await db.transaction('rw', [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages, db.demianChats, db.pendingSyncs], async () => {
       await db.memos.clear()
       await db.folders.clear()
       await db.memoImages.clear()
@@ -180,6 +191,10 @@ export async function restoreFromBackup(
       // Clear stale chats so a cross-device restore can't leave one device's private
       // Demian thread misattached to an unrelated memo that inherited the same numeric id.
       await db.demianChats.clear()
+      // Queued intents describe the replaced data; a stale queued delete would otherwise
+      // tombstone a memo the restore just brought back. The restored rows are stamped
+      // newer than the cloud, so the next merge uploads them anyway.
+      await db.pendingSyncs.clear()
 
       if (folders.length > 0) {
         await db.folders.bulkAdd(folders)
@@ -230,9 +245,12 @@ export async function clearAllData(): Promise<void> {
   // embeddings, or the pendingFileOps/syncFolder queues behind means "delete all data"
   // leaks private content — and a surviving queued mirror op could even rewrite a
   // "deleted" memo's file back into the connected folder after reload.
+  // syncMeta/orphanBackups too: account-switch snapshots hold private memos, and the owner
+  // record is re-established on the next sign-in.
   await db.transaction('rw',
     [db.memos, db.folders, db.memoImages, db.memoVersions, db.ambientImages,
-     db.demianChats, db.pendingSyncs, db.pendingFileOps, db.embeddings, db.fileSyncMap, db.syncFolderKV],
+     db.demianChats, db.pendingSyncs, db.pendingFileOps, db.embeddings, db.fileSyncMap, db.syncFolderKV,
+     db.syncMeta, db.orphanBackups],
     async () => {
       await db.memos.clear()
       await db.folders.clear()
@@ -245,6 +263,8 @@ export async function clearAllData(): Promise<void> {
       await db.embeddings.clear()
       await db.fileSyncMap.clear()
       await db.syncFolderKV.clear()
+      await db.syncMeta.clear()
+      await db.orphanBackups.clear()
     })
 
   // Recreate default folders

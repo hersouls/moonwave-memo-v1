@@ -1,8 +1,9 @@
-import Dexie, { type Table } from 'dexie'
+import Dexie, { type Table, type Transaction } from 'dexie'
 import type { Memo, Folder, MemoImage, MemoVersion, AmbientImage } from '@/lib/types'
 import { generateSyncId } from '@/utils/id'
 import { nowISO } from '@/lib/dateUtils'
 import { DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
+import { planSyncIdDedupe, duplicateHasDistinctText } from './syncIdDedupe'
 
 // Maps a memo (by its stable syncId) to the file it was last written to, so the
 // sync-folder layer can detect renames (title changed → old path differs) and skip
@@ -38,14 +39,68 @@ export interface PendingFileOp {
   createdAt: string
 }
 
+export interface DemianChatRow {
+  id?: number
+  memoId: number
+  messages: Array<{ role: string; content: string }>
+  updatedAt: string
+}
+
+// Offline write queue (cloud intents that could not be delivered yet). Owned by the
+// account recorded as the local-data owner — see syncMeta / localOwner.ts.
+export interface PendingSyncRow {
+  id?: number
+  type: string
+  action: string
+  syncId: string
+  createdAt: string
+}
+
+// Device-local sync bookkeeping (never synced). Keys:
+//  'owner'         → { uid, email?, since }: the account the local memos/folders/queue belong to
+//  'syncedThrough' → { uid, at }: local edits up to `at` were confirmed in that account's cloud
+export interface SyncMetaRow {
+  key: string
+  value: unknown
+}
+
+export interface OrphanBackupData {
+  memos: Memo[]
+  folders: Folder[]
+  memoImages: MemoImage[]
+  memoVersions: MemoVersion[]
+  demianChats: DemianChatRow[]
+  pendingSyncs: PendingSyncRow[]
+}
+
+// Snapshot of a previous account's local data, taken when a DIFFERENT account signs in on
+// this device (the live tables are then reset for the new account instead of uploading the
+// old data into it). Restored automatically when that account signs in here again, and
+// downloadable as a regular backup file from Settings until then.
+export interface OrphanBackup {
+  id?: number
+  ownerUid: string
+  ownerEmail?: string
+  createdAt: string
+  reason: 'account-switch'
+  /** Watermark of the last confirmed sync for that account (null = never confirmed). */
+  syncedThrough: string | null
+  memoCount: number
+  /** Memos that were not confirmed in that account's cloud when the snapshot was taken. */
+  unsyncedMemoCount: number
+  unsyncedMemoSyncIds: string[]
+  pendingOpCount: number
+  data: OrphanBackupData
+}
+
 class MemoDatabase extends Dexie {
   memos!: Table<Memo>
   folders!: Table<Folder>
   memoImages!: Table<MemoImage>
   memoVersions!: Table<MemoVersion>
   ambientImages!: Table<AmbientImage>
-  demianChats!: Table<{ id?: number; memoId: number; messages: Array<{ role: string; content: string }>; updatedAt: string }>
-  pendingSyncs!: Table<{ id?: number; type: string; action: string; syncId: string; createdAt: string }>
+  demianChats!: Table<DemianChatRow>
+  pendingSyncs!: Table<PendingSyncRow>
   // Sync-folder (Phase 1): per-memo file mapping + device-local key-value store.
   // Both are device-local and intentionally excluded from Firestore sync (§4.8).
   fileSyncMap!: Table<FileSyncRecord>
@@ -54,6 +109,9 @@ class MemoDatabase extends Dexie {
   pendingFileOps!: Table<PendingFileOp>
   // 지식 그래프 AI 연결: 메모 임베딩 캐시 (device-local).
   embeddings!: Table<MemoEmbedding>
+  // Account ownership of the local data + account-switch snapshots (device-local).
+  syncMeta!: Table<SyncMetaRow, string>
+  orphanBackups!: Table<OrphanBackup, number>
 
   constructor() {
     super('MemoApp')
@@ -147,6 +205,47 @@ class MemoDatabase extends Dexie {
       embeddings: '&memoId',
     })
 
+    // v10: account ownership + account-switch backups, and collapse duplicate syncIds so
+    // v11 can make syncId unique. The dedupe must run in a version BEFORE the unique index:
+    // Dexie creates a version's indexes before running its upgrade(), and creating a unique
+    // index over duplicate values aborts the whole upgrade (the DB would not open at all).
+    this.version(10).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
+      ambientImages: '++id, type, generatedAt, expiresAt',
+      demianChats: '++id, &memoId, updatedAt',
+      pendingSyncs: '++id, type, syncId, createdAt',
+      fileSyncMap: '&memoSyncId, filePath',
+      syncFolderKV: '&key',
+      pendingFileOps: '++id, targetKey, nextRetryAt, [targetKey+filePath]',
+      embeddings: '&memoId',
+      syncMeta: '&key',
+      orphanBackups: '++id, ownerUid, createdAt',
+    }).upgrade((tx) => dedupeSyncIdsForUniqueIndex(tx))
+
+    // v11: syncId is unique for memos and folders, so concurrent remote-apply (several
+    // tabs, merge vs. live listener) can never insert the same incoming item twice. Rows
+    // without a syncId stay allowed — IndexedDB leaves records whose key is absent/invalid
+    // out of an index, so the constraint only applies to real ids. No data upgrade needed:
+    // v10's upgrade (run earlier in the same versionchange transaction) removed duplicates.
+    this.version(11).stores({
+      memos: '++id, folderId, isStarred, isPinned, createdAt, updatedAt, deletedAt, &syncId, *tags',
+      folders: '++id, name, isDefault, isSystem, sortOrder, &syncId',
+      memoImages: '++id, memoId, syncId, createdAt',
+      memoVersions: '++id, memoId, createdAt',
+      ambientImages: '++id, type, generatedAt, expiresAt',
+      demianChats: '++id, &memoId, updatedAt',
+      pendingSyncs: '++id, type, syncId, createdAt',
+      fileSyncMap: '&memoSyncId, filePath',
+      syncFolderKV: '&key',
+      pendingFileOps: '++id, targetKey, nextRetryAt, [targetKey+filePath]',
+      embeddings: '&memoId',
+      syncMeta: '&key',
+      orphanBackups: '++id, ownerUid, createdAt',
+    })
+
     this.on('populate', () => {
       const now = nowISO()
       const allFolders = [...DEFAULT_FOLDERS, ...SYSTEM_FOLDERS]
@@ -164,6 +263,58 @@ class MemoDatabase extends Dexie {
         })
       })
     })
+  }
+}
+
+// v10 upgrade: collapse memos/folders sharing a syncId (newest updatedAt survives) without
+// losing anything attached to the removed duplicates, and clear unusable syncIds ('' etc.)
+// so the v11 unique index accepts the table.
+async function dedupeSyncIdsForUniqueIndex(tx: Transaction): Promise<void> {
+  const memos = tx.table<Memo, number>('memos')
+  const folders = tx.table<Folder, number>('folders')
+  const memoImages = tx.table<MemoImage, number>('memoImages')
+  const memoVersions = tx.table<MemoVersion, number>('memoVersions')
+  const demianChats = tx.table<DemianChatRow, number>('demianChats')
+  const embeddings = tx.table<MemoEmbedding, number>('embeddings')
+
+  // Folders first: memos of a removed duplicate folder move to the surviving copy (same
+  // syncId = same cloud folder, so the memos' cloud folderSyncId is unchanged).
+  const folderPlan = planSyncIdDedupe(await folders.toArray())
+  for (const row of folderPlan.invalid) await folders.update(row.id!, { syncId: undefined })
+  for (const { loser, survivor } of folderPlan.losers) {
+    await memos.where('folderId').equals(loser.id!).modify({ folderId: survivor.id! })
+    await folders.delete(loser.id!)
+  }
+
+  const memoPlan = planSyncIdDedupe(await memos.toArray())
+  for (const row of memoPlan.invalid) await memos.update(row.id!, { syncId: undefined })
+  for (const { loser, survivor } of memoPlan.losers) {
+    const loserId = loser.id!
+    const survivorId = survivor.id!
+    // A stale copy is normally identical; if its text differs, keep it as a version of
+    // the survivor so no words are silently dropped.
+    if (duplicateHasDistinctText(loser, survivor)) {
+      await memoVersions.add({
+        memoId: survivorId,
+        title: loser.title ?? '',
+        body: loser.body ?? '',
+        createdAt: loser.updatedAt || loser.createdAt || nowISO(),
+      })
+    }
+    await memoVersions.where('memoId').equals(loserId).modify({ memoId: survivorId })
+    await memoImages.where('memoId').equals(loserId).modify({ memoId: survivorId })
+    const loserChat = await demianChats.where('memoId').equals(loserId).first()
+    if (loserChat?.id != null) {
+      const survivorChat = await demianChats.where('memoId').equals(survivorId).first()
+      if (survivorChat?.id != null) {
+        await demianChats.update(survivorChat.id, { messages: [...survivorChat.messages, ...loserChat.messages] })
+        await demianChats.delete(loserChat.id)
+      } else {
+        await demianChats.update(loserChat.id, { memoId: survivorId })
+      }
+    }
+    await embeddings.delete(loserId)
+    await memos.delete(loserId)
   }
 }
 

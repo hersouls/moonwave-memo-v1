@@ -46,10 +46,13 @@ vi.mock('firebase/firestore', () => {
     deleteDoc: async (ref: Ref) => {
       fsStore.delete(ref.__path)
     },
-    onSnapshot: (ref: Ref, next: (snap: unknown) => Promise<void> | void) => {
+    // onSnapshot(ref, [options,] next, error) — the listener callback is the first function.
+    onSnapshot: (ref: Ref, ...args: unknown[]) => {
+      const next = args.find((a) => typeof a === 'function') as (snap: unknown) => Promise<void> | void
       listeners.set(ref.__path, next)
       return () => listeners.delete(ref.__path)
     },
+    waitForPendingWrites: async () => {},
   }
 })
 

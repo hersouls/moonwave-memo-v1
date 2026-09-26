@@ -40,6 +40,7 @@ vi.mock('firebase/firestore', () => {
       fsStore.delete(ref.__path)
     },
     onSnapshot: () => () => {},
+    waitForPendingWrites: async () => {},
   }
 })
 
@@ -109,6 +110,10 @@ describe('firestoreSync seed-folder duplication', () => {
     fsStore.clear()
     await db.folders.clear()
     await db.memos.clear()
+    // Each case is a fresh device signing into its own account (no recorded owner yet),
+    // not an account switch on the same device.
+    await db.syncMeta.clear()
+    await db.orphanBackups.clear()
   })
 
   afterEach(() => {

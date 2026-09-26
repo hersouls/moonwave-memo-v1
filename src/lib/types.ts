@@ -204,7 +204,9 @@ export interface MemoFilterState {
 }
 
 // ─── Sync Types ────────────────────────────────────
-export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error'
+// idle = not signed in; synced = the cloud confirmed every local write; offline = signed
+// in but the network is confirmed unreachable (changes are kept and sent on reconnect).
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline'
 
 export interface AuthUser {
   uid: string

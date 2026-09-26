@@ -12,12 +12,16 @@ import {
 import { Capacitor } from '@capacitor/core'
 import { auth } from '@/lib/firebase'
 import type { AuthUser, SyncStatus } from '@/lib/types'
-import { initSync, stopSync } from '@/services/firestoreSync'
+import { initSync, stopSync, flushPendingBeforeSignOut } from '@/services/firestoreSync'
+import { getSyncStatus, subscribeSyncStatus } from '@/services/syncStatus'
+import { useToastStore } from '@/stores/toastStore'
 
 interface AuthState {
   user: AuthUser | null
   isLoading: boolean
   isSigningIn: boolean
+  isSigningOut: boolean
+  /** Mirrors services/syncStatus — derived from real sync signals, not set by hand. */
   syncStatus: SyncStatus
   lastSyncTime: string | null
   error: string | null
@@ -25,8 +29,19 @@ interface AuthState {
   initialize: () => void
   login: () => Promise<void>
   logout: () => Promise<void>
-  setSyncStatus: (status: SyncStatus) => void
-  setLastSyncTime: (time: string) => void
+}
+
+// Sign-in sync that failed (e.g. the initial merge could not reach the server) is retried
+// with capped backoff while the same account stays signed in.
+const INIT_RETRY_BASE_MS = 5_000
+const INIT_RETRY_MAX_MS = 5 * 60_000
+let initRetryTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearInitRetry() {
+  if (initRetryTimer) {
+    clearTimeout(initRetryTimer)
+    initRetryTimer = null
+  }
 }
 
 function toAuthUser(u: User): AuthUser {
@@ -39,19 +54,42 @@ function toAuthUser(u: User): AuthUser {
 }
 
 let unsubAuth: (() => void) | null = null
+let unsubSyncStatus: (() => void) | null = null
+
+async function startSync(user: User, attempt: number): Promise<void> {
+  try {
+    await initSync(user.uid, { email: user.email ?? undefined })
+  } catch (err) {
+    console.error('Sync init failed:', err)
+    // initSync can take seconds (initial merge). If the user logged out or switched
+    // accounts meanwhile, this stale continuation must not touch the new session.
+    if (auth.currentUser?.uid !== user.uid) return
+    stopSync({ failed: true })
+    const delay = Math.min(INIT_RETRY_BASE_MS * 2 ** attempt, INIT_RETRY_MAX_MS)
+    clearInitRetry()
+    initRetryTimer = setTimeout(() => {
+      initRetryTimer = null
+      if (auth.currentUser?.uid === user.uid) void startSync(user, attempt + 1)
+    }, delay)
+  }
+}
 
 export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   isLoading: false,
   isSigningIn: false,
-  syncStatus: 'idle',
-  lastSyncTime: null,
+  isSigningOut: false,
+  syncStatus: getSyncStatus().status,
+  lastSyncTime: getSyncStatus().lastSyncTime,
   error: null,
 
   initialize: () => {
     if (unsubAuth) {
       unsubAuth()
       unsubAuth = null
+    }
+    if (!unsubSyncStatus) {
+      unsubSyncStatus = subscribeSyncStatus(({ status, lastSyncTime }) => set({ syncStatus: status, lastSyncTime }))
     }
 
     getRedirectResult(auth)
@@ -69,23 +107,14 @@ export const useAuthStore = create<AuthState>()((set) => ({
       })
 
     unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      clearInitRetry()
       if (firebaseUser) {
-        set({ user: toAuthUser(firebaseUser), isLoading: false, isSigningIn: false, error: null, syncStatus: 'syncing' })
-        try {
-          await initSync(firebaseUser.uid)
-          // initSync can take seconds (initial merge). If the user logged out or switched
-          // accounts meanwhile, this stale continuation must not report 'synced'.
-          if (auth.currentUser?.uid !== firebaseUser.uid) return
-          set({ syncStatus: 'synced', lastSyncTime: new Date().toISOString() })
-        } catch (err) {
-          console.error('Sync init failed:', err)
-          if (auth.currentUser?.uid !== firebaseUser.uid) return
-          stopSync()
-          set({ syncStatus: 'error' })
-        }
+        set({ user: toAuthUser(firebaseUser), isLoading: false, isSigningIn: false, error: null })
+        // Status ('syncing' → 'synced'/'error'/'offline') is driven by the sync layer.
+        await startSync(firebaseUser, 0)
       } else {
         stopSync()
-        set({ user: null, isLoading: false, syncStatus: 'idle', lastSyncTime: null })
+        set({ user: null, isLoading: false })
       }
     })
   },
@@ -143,20 +172,30 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   logout: async () => {
+    set({ isSigningOut: true })
     try {
+      // Deliver what we can while still authenticated. Anything left stays queued for
+      // this account on this device (never for whoever signs in next).
+      const leftover = await flushPendingBeforeSignOut().catch(() => ({ queued: 0, unconfirmed: true }))
       if (Capacitor.isNativePlatform()) {
         // 네이티브 레이어 세션도 함께 종료 (signInWithGoogle의 짝)
         const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
         await FirebaseAuthentication.signOut().catch(() => {})
       }
       await signOut(auth)
-      set({ user: null, syncStatus: 'idle', lastSyncTime: null, error: null })
+      set({ user: null, error: null })
+      if (leftover.queued > 0 || leftover.unconfirmed) {
+        useToastStore.getState().showToast(
+          '아직 클라우드에 올라가지 않은 변경사항은 이 기기에 보관됩니다. 같은 계정으로 다시 로그인하면 동기화됩니다.',
+          'warning',
+          { duration: 8000 },
+        )
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : '로그아웃에 실패했습니다.'
       set({ error: message })
+    } finally {
+      set({ isSigningOut: false })
     }
   },
-
-  setSyncStatus: (status) => set({ syncStatus: status }),
-  setLastSyncTime: (time) => set({ lastSyncTime: time }),
 }))
