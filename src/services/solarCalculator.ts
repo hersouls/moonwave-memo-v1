@@ -143,10 +143,22 @@ async function getPositionByIP(): Promise<GeoPosition | null> {
   return null
 }
 
+// The web deploy sends `Permissions-Policy: geolocation=()` (vercel.json) so the app never
+// prompts for location there — calling the API anyway only logs a policy violation. Native
+// shells (Capacitor/Electron) don't get that header and keep using GPS.
+function geolocationAllowed(): boolean {
+  const doc = document as Document & {
+    permissionsPolicy?: { allowsFeature?: (f: string) => boolean }
+    featurePolicy?: { allowsFeature?: (f: string) => boolean }
+  }
+  const policy = doc.permissionsPolicy ?? doc.featurePolicy
+  return policy?.allowsFeature ? policy.allowsFeature('geolocation') : true
+}
+
 // Browser Geolocation API wrapper
 function getBrowserPosition(timeoutMs: number): Promise<GeoPosition | null> {
   return new Promise<GeoPosition | null>((resolve) => {
-    if (!navigator.geolocation) {
+    if (!navigator.geolocation || !geolocationAllowed()) {
       resolve(null)
       return
     }
