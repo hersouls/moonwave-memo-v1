@@ -8,7 +8,6 @@
  * WebView origin via CORS (api/lib/cors.ts).
  */
 import { Capacitor } from '@capacitor/core'
-import { auth } from '@/lib/firebase'
 
 const PROD_API_ORIGIN = 'https://memo.moonwave.kr'
 
@@ -34,6 +33,9 @@ export class AuthRequiredError extends Error {
 }
 
 async function currentIdToken(forceRefresh = false): Promise<string | null> {
+  // Lazy: apiBase is also imported by modules that must not initialise Firebase at load
+  // (e.g. services/connectivity and their tests); the app has already loaded it by now.
+  const { auth } = await import('@/lib/firebase')
   // At startup Firebase restores a persisted session asynchronously; until then
   // currentUser is null even for a signed-in user, so a mount-time call must wait.
   await auth.authStateReady()
