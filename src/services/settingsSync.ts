@@ -174,7 +174,26 @@ function startStoreSubscription(uid: string) {
   })
 }
 
-export async function initSettingsSync(userId: string) {
+/**
+ * Per-account settings must not follow the device to another Google account: after an
+ * account switch the previous owner's profile (name …) and default-folder id (a local id of
+ * their folders) are reset before pulling — otherwise, for an account with no cloud
+ * settings yet, pullAndMergeSettings would push them into the new account. Visual
+ * preferences (theme, fonts) are device taste and stay.
+ */
+function resetAccountScopedSettings() {
+  const initial = useSettingsStore.getInitialState().settings
+  useSettingsStore.setState((state) => ({
+    settings: {
+      ...state.settings,
+      userProfile: { ...initial.userProfile },
+      memoSettings: { ...state.settings.memoSettings, defaultFolderId: null },
+    },
+  }))
+}
+
+export async function initSettingsSync(userId: string, opts: { accountSwitched?: boolean } = {}) {
+  if (opts.accountSwitched) resetAccountScopedSettings()
   await pullAndMergeSettings(userId)
   startSettingsListener(userId)
   startStoreSubscription(userId)

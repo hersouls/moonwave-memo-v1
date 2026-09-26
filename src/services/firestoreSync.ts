@@ -899,7 +899,7 @@ export async function initSync(userId: string, opts: InitSyncOptions = {}) {
 
   // Settings cloud sync
   const { initSettingsSync } = await import('./settingsSync')
-  await initSettingsSync(userId)
+  await initSettingsSync(userId, { accountSwitched: claim.kind === 'switched' })
   if (!isWriteContextLive(ctx)) return
 
   syncStatus.syncSessionRunning()

@@ -218,7 +218,7 @@ export async function reconnectSyncFolder(): Promise<boolean> {
       store.setStatus('needs-permission')
       return false
     }
-    setActiveTarget(result.target, result.displayName ?? store.folderName ?? '')
+    setActiveTarget(result.target, result.displayName ?? store.folderName ?? '', watchRootFromRef(ref))
     return true
   } catch (err) {
     console.error('Sync folder reconnect failed:', err)
