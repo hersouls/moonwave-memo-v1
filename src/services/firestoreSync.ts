@@ -244,6 +244,21 @@ function reflectFolderDeletedOnDisk(oldName: string, memoIds: number[]): void {
   void import('@/services/syncFolder').then((m) => m.notifyFolderDeleted(oldName, memoIds)).catch(() => {})
 }
 
+// Remote memo changes likewise bypass memoStore (the only caller of notifyMemoSaved/Deleted),
+// so without these an edit made on another device never reached this device's sync folder —
+// nor the NAS pipeline that reads it — until the memo was edited here or fully re-exported.
+// Same trash semantics as memoStore: a trashed memo has no file.
+async function reflectMemoOnDisk(localId: number): Promise<void> {
+  const memo = await database.getMemo(localId)
+  if (!memo) return
+  void import('@/services/syncFolder')
+    .then((m) => (memo.deletedAt ? m.notifyMemoDeleted(memo) : m.notifyMemoSaved(memo)))
+    .catch(() => {})
+}
+function reflectMemoPurgedOnDisk(memo: Memo): void {
+  void import('@/services/syncFolder').then((m) => m.notifyMemoDeleted(memo)).catch(() => {})
+}
+
 // ─── Initial Merge ─────────────────────────────────
 
 async function initialMerge(userId: string, epoch: number) {
@@ -374,7 +389,7 @@ async function doInitialMerge(userId: string, epoch: number) {
 
     // Tombstoned memo: purge the local copy and never re-create/re-push it.
     if (remote.tombstone) {
-      if (local?.id != null) await database.permanentDeleteMemo(local.id)
+      if (local?.id != null) { await database.permanentDeleteMemo(local.id); reflectMemoPurgedOnDisk(local) }
       continue
     }
 
@@ -384,7 +399,7 @@ async function doInitialMerge(userId: string, epoch: number) {
       : (remote.folderId ?? null)
 
     if (!local) {
-      await database.addMemo({
+      const newId = await database.addMemo({
         title: remote.title || '',
         body: remote.body || '',
         folderId,
@@ -397,6 +412,7 @@ async function doInitialMerge(userId: string, epoch: number) {
         updatedAt: remote.updatedAt || new Date().toISOString(),
         deletedAt: remote.deletedAt || undefined,
       })
+      await reflectMemoOnDisk(newId)
     } else if (remote.updatedAt && remote.updatedAt > local.updatedAt) {
       await database.updateMemo(local.id!, {
         title: remote.title,
@@ -409,6 +425,7 @@ async function doInitialMerge(userId: string, epoch: number) {
         deletedAt: remote.deletedAt || undefined,
         updatedAt: remote.updatedAt,
       })
+      await reflectMemoOnDisk(local.id!)
     }
   }
 
@@ -554,7 +571,7 @@ function startListeners(userId: string) {
           // Tombstone: purge the local copy, never re-add it.
           if (remote.tombstone) {
             const local = await database.getMemoBySyncId(syncId)
-            if (local?.id != null) await database.permanentDeleteMemo(local.id)
+            if (local?.id != null) { await database.permanentDeleteMemo(local.id); reflectMemoPurgedOnDisk(local) }
             continue
           }
 
@@ -566,7 +583,7 @@ function startListeners(userId: string) {
               : (remote.folderId ?? null)
 
             if (!local) {
-              await database.addMemo({
+              const newId = await database.addMemo({
                 title: remote.title || '',
                 body: remote.body || '',
                 folderId,
@@ -579,6 +596,7 @@ function startListeners(userId: string) {
                 updatedAt: remote.updatedAt || new Date().toISOString(),
                 deletedAt: remote.deletedAt || undefined,
               })
+              await reflectMemoOnDisk(newId)
             } else if (remote.updatedAt && remote.updatedAt > local.updatedAt) {
               await database.updateMemo(local.id!, {
                 title: remote.title,
@@ -591,6 +609,7 @@ function startListeners(userId: string) {
                 deletedAt: remote.deletedAt || undefined,
                 updatedAt: remote.updatedAt,
               })
+              await reflectMemoOnDisk(local.id!)
             }
           }
 
@@ -598,6 +617,7 @@ function startListeners(userId: string) {
             const local = await database.getMemoBySyncId(syncId)
             if (local) {
               await database.permanentDeleteMemo(local.id!)
+              reflectMemoPurgedOnDisk(local)
             }
           }
         }
