@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Monitor, Download, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { apiUrl } from '@/lib/apiBase'
-import { isCapacitor } from '@/services/syncFolder'
+import { isCapacitor, isElectron } from '@/services/syncFolder'
 
 interface ReleaseInfo {
   version: string
@@ -12,6 +12,17 @@ interface ReleaseInfo {
 }
 
 const normalize = (v?: string) => (v ?? '').replace(/^v/i, '')
+
+/** Numeric semver-ish compare ("1.0.10" > "1.0.9"); pre-release tags are ignored. */
+function compareVersions(a: string, b: string): number {
+  const pa = normalize(a).split(/[.+-]/).map((n) => parseInt(n, 10) || 0)
+  const pb = normalize(b).split(/[.+-]/).map((n) => parseInt(n, 10) || 0)
+  for (let i = 0; i < 3; i++) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0)
+    if (diff !== 0) return diff
+  }
+  return 0
+}
 
 /**
  * In-app download of the (unsigned) Windows desktop installer, served through the
@@ -23,8 +34,10 @@ export function DesktopDownloadSection() {
   const [info, setInfo] = useState<ReleaseInfo | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'unavailable'>('loading')
   const mobile = isCapacitor()
-  const installedVersion = typeof window !== 'undefined' ? window.electronBridge?.appVersion : undefined
-  const isElectronApp = !!installedVersion
+  // Detect the desktop app by the bridge itself — older desktop builds expose an empty
+  // appVersion (npm_package_version isn't set in an installed app).
+  const isElectronApp = isElectron()
+  const installedVersion = isElectronApp ? normalize(window.electronBridge?.appVersion) : ''
 
   useEffect(() => {
     if (mobile) return
@@ -39,7 +52,9 @@ export function DesktopDownloadSection() {
   if (mobile) return null
 
   const sizeMB = info ? `${Math.round(info.size / 1024 / 1024)} MB` : ''
-  const hasUpdate = isElectronApp && info != null && normalize(info.version) !== normalize(installedVersion)
+  // Unknown installed version (older build) counts as outdated.
+  const hasUpdate =
+    isElectronApp && info != null && (!installedVersion || compareVersions(info.version, installedVersion) > 0)
 
   return (
     <section>
@@ -52,7 +67,11 @@ export function DesktopDownloadSection() {
             <Monitor className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm text-zinc-600 dark:text-zinc-300">
               {isElectronApp ? (
-                <span>설치된 버전 <span className="tabular-nums">v{normalize(installedVersion)}</span></span>
+                installedVersion ? (
+                  <span>설치된 버전 <span className="tabular-nums">v{installedVersion}</span></span>
+                ) : (
+                  <span>설치된 버전을 확인할 수 없습니다 (이전 버전)</span>
+                )
               ) : (
                 'Windows용 데스크톱 앱을 내려받아 설치할 수 있습니다.'
               )}

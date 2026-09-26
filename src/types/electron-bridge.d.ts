@@ -4,9 +4,16 @@
 
 interface ElectronSyncBridge {
   readonly isElectron: true
+  /** App version from the main process (app.getVersion()); empty in older desktop builds. */
   readonly appVersion: string
   /** Native folder picker. Returns the chosen absolute path + basename, or null if cancelled. */
   pickDirectory(): Promise<{ path: string; name: string } | null>
+  /**
+   * Re-authorize a previously saved root: main opens the native picker at that folder and
+   * accepts only the same folder. Resolves true when the root is (now) on main's allowlist.
+   * Absent in desktop builds from before the root allowlist.
+   */
+  authorizeRoot?(root: string): Promise<boolean>
   writeText(root: string, relPath: string, text: string): Promise<void>
   writeBinary(root: string, relPath: string, data: ArrayBuffer): Promise<void>
   deleteFile(root: string, relPath: string): Promise<void>

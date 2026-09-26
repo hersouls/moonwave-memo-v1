@@ -108,7 +108,10 @@ export async function restoreTarget(ref: unknown): Promise<RestoreResult> {
     : { status: 'needs-permission', displayName: handle.name }
 }
 
-/** Re-grant access from a user gesture (reconnect button). Electron never needs this. */
+/**
+ * Re-grant access from a user gesture (reconnect button). On Electron this re-authorizes
+ * the saved folder with the main process (needed once after the root-allowlist update).
+ */
 export async function requestPermissionFor(ref: unknown): Promise<{ ok: boolean; target?: FileSyncTarget; displayName?: string }> {
   const normalized = normalizeRef(ref)
   if (!normalized) return { ok: false }
@@ -116,6 +119,9 @@ export async function requestPermissionFor(ref: unknown): Promise<{ ok: boolean;
   if (normalized.kind === 'ipc') {
     const b = bridge()
     if (!b) return { ok: false }
+    // The desktop main process only touches folders the user allowed in a native dialog;
+    // reconnect = re-select the saved folder once (older desktop builds lack this → no-op).
+    if (b.authorizeRoot && !(await b.authorizeRoot(normalized.path))) return { ok: false }
     return { ok: true, target: new IpcFileSyncTarget(normalized.path, b), displayName: normalized.name }
   }
 

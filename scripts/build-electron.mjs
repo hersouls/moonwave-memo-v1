@@ -14,6 +14,23 @@ const common = {
 }
 
 await build({ ...common, entryPoints: ['electron/main.ts'], outfile: 'electron/out/main.cjs' })
-await build({ ...common, entryPoints: ['electron/preload.ts'], outfile: 'electron/out/preload.cjs' })
+const preload = await build({
+  ...common,
+  entryPoints: ['electron/preload.ts'],
+  outfile: 'electron/out/preload.cjs',
+  metafile: true,
+})
+
+// The preload runs sandboxed (webPreferences.sandbox: true), where require() only knows
+// 'electron'. Any other runtime import — a node builtin such as node:path, or a package —
+// would throw at load time and silently remove window.electronBridge. Fail the build instead.
+const badImports = Object.values(preload.metafile.outputs)
+  .flatMap((output) => output.imports)
+  .filter((imp) => imp.external && imp.path !== 'electron')
+  .map((imp) => imp.path)
+if (badImports.length > 0) {
+  console.error(`✗ sandboxed preload must only require 'electron', found: ${[...new Set(badImports)].join(', ')}`)
+  process.exit(1)
+}
 
 console.log('✓ electron main/preload → electron/out/')
