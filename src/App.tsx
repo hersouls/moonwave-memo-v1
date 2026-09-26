@@ -46,6 +46,7 @@ import { useAuthStore } from './stores/authStore'
 import { useUndoStore } from './stores/undoStore'
 import { useThemeOrchestrator } from './stores/themeOrchestratorStore'
 import { registerRefreshCallbacks } from './services/firestoreSync'
+import { connectivity } from './services/connectivity'
 import { getCachedPosition, requestAndCachePosition, getSolarMode } from './services/solarCalculator'
 import { fetchWeather } from './services/weatherService'
 import { MEDIA } from '@/utils/breakpoints'
@@ -112,23 +113,23 @@ export default function App() {
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
-    // Online event → process pending syncs
-    const handleOnline = () => {
-      import('./services/offlineQueue').then(({ processPendingSyncs }) => processPendingSyncs())
+    // Back online (browser 'online' event, or a reachability probe that proved a stuck
+    // navigator.onLine wrong) → replay the offline queue. The replay holds a cross-tab
+    // Web Lock, so the other open tabs receiving the same signal skip instead of racing.
+    const replayQueue = () => {
+      import('./services/offlineQueue').then(({ processPendingSyncs }) => processPendingSyncs()).catch(console.error)
     }
-    window.addEventListener('online', handleOnline)
+    const unsubConnectivity = connectivity.subscribe((online) => { if (online) replayQueue() })
 
-    // SW message → process pending syncs
+    // SW background sync is broadcast to every tab → same lock-guarded replay
     const handleSWMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'SYNC_PENDING_MEMOS') {
-        import('./services/offlineQueue').then(({ processPendingSyncs }) => processPendingSyncs())
-      }
+      if (event.data?.type === 'SYNC_PENDING_MEMOS') replayQueue()
     }
     navigator.serviceWorker?.addEventListener('message', handleSWMessage)
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility)
-      window.removeEventListener('online', handleOnline)
+      unsubConnectivity()
       navigator.serviceWorker?.removeEventListener('message', handleSWMessage)
     }
   }, [])

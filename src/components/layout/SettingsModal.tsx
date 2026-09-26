@@ -57,6 +57,7 @@ import { useToastStore } from '@/stores/toastStore'
 import type { ThemeMode, ColorPalette, MemoColor, InputStartPosition, STTLanguage } from '@/lib/types'
 import type { SyncStatus } from '@/lib/types'
 import { SyncFolderSection } from './SyncFolderSection'
+import { OrphanBackupsSection } from './OrphanBackupsSection'
 import { DesktopDownloadSection } from './DesktopDownloadSection'
 
 // ─── Theme Options ──────────────────────────────────
@@ -88,6 +89,13 @@ function SyncStatusBadge({ status }: { status: SyncStatus }) {
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
           <CloudOff className="w-3 h-3" />
           동기화 오류
+        </span>
+      )
+    case 'offline':
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300">
+          <CloudOff className="w-3 h-3" />
+          오프라인 — 연결되면 동기화
         </span>
       )
     default:
@@ -131,6 +139,7 @@ function CloudSyncSection() {
   const login = useAuthStore((s) => s.login)
   const logout = useAuthStore((s) => s.logout)
   const isSigningIn = useAuthStore((s) => s.isSigningIn)
+  const isSigningOut = useAuthStore((s) => s.isSigningOut)
   const authError = useAuthStore((s) => s.error)
 
   const formatSyncTime = (time: string | null) => {
@@ -184,9 +193,10 @@ function CloudSyncSection() {
               <button
                 type="button"
                 onClick={logout}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-danger-600 bg-zinc-50 hover:bg-danger-50 dark:bg-zinc-800 dark:hover:bg-danger-900/20 transition-colors border border-[var(--color-border-default)] hover:border-danger-200 dark:hover:border-danger-800"
+                disabled={isSigningOut}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-danger-600 bg-zinc-50 hover:bg-danger-50 dark:bg-zinc-800 dark:hover:bg-danger-900/20 transition-colors border border-[var(--color-border-default)] hover:border-danger-200 dark:hover:border-danger-800 disabled:opacity-60 disabled:cursor-wait"
               >
-                로그아웃
+                {isSigningOut ? '동기화 마무리 중...' : '로그아웃'}
               </button>
             </div>
 
@@ -249,6 +259,8 @@ function CloudSyncSection() {
           </div>
         )}
       </div>
+
+      <OrphanBackupsSection />
     </div>
   )
 }

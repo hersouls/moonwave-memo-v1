@@ -44,7 +44,7 @@ export function Header() {
   // UX-08: hide header on desktop when viewing editor
   const isEditorRoute = /^\/memo\/\d+$/.test(location.pathname) || location.pathname === '/memo/new'
 
-  const syncStatusLabel = syncStatus === 'syncing' ? '동기화 중...' : syncStatus === 'synced' ? '동기화 완료' : syncStatus === 'error' ? '동기화 오류' : '로컬 전용'
+  const syncStatusLabel = syncStatus === 'syncing' ? '동기화 중...' : syncStatus === 'synced' ? '동기화 완료' : syncStatus === 'error' ? '동기화 오류' : syncStatus === 'offline' ? '오프라인 — 연결되면 동기화' : '로컬 전용'
 
   // 로고 클릭도 View Transition 크로스페이드를 타도록 (수정키/휠클릭은 브라우저 기본 동작 유지)
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {

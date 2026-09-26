@@ -1,22 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
+import { connectivity } from '@/services/connectivity'
 
-export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  )
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [])
-
-  return isOnline
+/**
+ * Network state for the offline banner / status pill. "Offline" is only reported after the
+ * browser says so AND a reachability probe fails (see services/connectivity) — a stuck
+ * `navigator.onLine` alone no longer pins the banner on.
+ */
+export function useOnlineStatus(): boolean {
+  return useSyncExternalStore(connectivity.subscribe, connectivity.isOnline, () => true)
 }
