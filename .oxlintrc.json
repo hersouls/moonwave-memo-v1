@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicolo-ribaudo/oxc-config-schema/refs/heads/main/schema.json",
-  "rules": {
+  "categories": {
     "correctness": "deny",
     "suspicious": "warn",
     "perf": "warn"
