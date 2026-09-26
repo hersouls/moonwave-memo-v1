@@ -4,7 +4,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { incrementAIUsage, isAILimitReached } from './aiUsage'
 import { generateCacheKey, getCached, setCache } from '@/utils/promptCache'
 import { streamFetch } from '@/utils/streamFetch'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch, apiErrorMessage, AuthRequiredError } from '@/lib/apiBase'
 import type { AIProvider } from '@/lib/types'
 
 interface AIResponse {
@@ -123,6 +123,10 @@ async function callGeminiDirect(apiKey: string, prompt: string, systemPrompt: st
 
 // ─── Server proxy call (uses Vercel API route with server keys) ──
 
+// Background callers (autocomplete, idle auto-title) can hit the server's per-account
+// limit repeatedly — show its toast at most once a minute.
+let lastRateLimitToastAt = 0
+
 async function callViaServerProxy(prompt: string, systemPrompt: string, provider: AIProvider, maxTokens: number): Promise<AIResponse> {
   // Check daily limit before calling
   if (isAILimitReached()) {
@@ -135,24 +139,28 @@ async function callViaServerProxy(prompt: string, systemPrompt: string, provider
   }
 
   try {
-    const res = await fetch(apiUrl('/api/ai'), {
+    const res = await authedFetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, systemPrompt, provider, maxTokens }),
     })
 
     if (res.status === 429) {
-      useToastStore.getState().showToast(
-        '오늘의 무료 AI 사용 횟수를 초과했습니다',
-        'warning',
-        { action: { label: 'API 키 등록', onClick: () => useUIStore.getState().openSettingsModal() } }
-      )
+      // Server-side per-account limit. Reported as daily_limit_exceeded so batch callers
+      // (title/tag regeneration) stop issuing further AI calls.
+      if (Date.now() - lastRateLimitToastAt > 60_000) {
+        lastRateLimitToastAt = Date.now()
+        useToastStore.getState().showToast(
+          await apiErrorMessage(res),
+          'warning',
+          { action: { label: 'API 키 등록', onClick: () => useUIStore.getState().openSettingsModal() } }
+        )
+      }
       return { text: '', error: 'daily_limit_exceeded' }
     }
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error || `서버 오류: ${res.status}` }
+      return { text: '', error: await apiErrorMessage(res) }
     }
 
     const data = await res.json()
@@ -160,6 +168,8 @@ async function callViaServerProxy(prompt: string, systemPrompt: string, provider
     if (data.usingServerKey) incrementAIUsage()
     return { text: data.text || '' }
   } catch (err) {
+    // Signed out and no personal key: say so instead of calling the server.
+    if (err instanceof AuthRequiredError) return { text: '', error: err.message }
     return { text: '', error: `서버 연결 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
   }
 }
@@ -197,7 +207,9 @@ async function callLangChain<T>(
   }
 
   try {
-    const res = await fetch(apiUrl(`/api/langchain/${endpoint}`), {
+    // Signed out → AuthRequiredError → null here, so callers fall back to callAI (the
+    // user's own key directly, or the login-required message).
+    const res = await authedFetch(`/api/langchain/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...body, provider, userApiKey }),
@@ -230,7 +242,7 @@ export async function analyzeMemo(
   const userApiKey = getUserApiKey(provider)
 
   try {
-    const res = await fetch(apiUrl('/api/langchain/analyze'), {
+    const res = await authedFetch('/api/langchain/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -242,8 +254,7 @@ export async function analyzeMemo(
     })
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      return { result: null, error: err.error || `서버 오류: ${res.status}` }
+      return { result: null, error: await apiErrorMessage(res) }
     }
 
     const data = await res.json()
@@ -257,7 +268,8 @@ export async function analyzeMemo(
         summary: data.summary,
       },
     }
-  } catch {
+  } catch (err) {
+    if (err instanceof AuthRequiredError) return { result: null, error: err.message }
     // LangGraph endpoint unavailable, return null to trigger fallback
     return { result: null, error: 'langchain_unavailable' }
   }

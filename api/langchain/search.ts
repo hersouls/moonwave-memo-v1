@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { createChatModel, createEmbeddingModel, type Provider } from '../lib/models.js'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
+import { POLICIES } from '../lib/guard.js'
 
 // ─── Cosine Similarity ──────────────────────────────
 
@@ -17,6 +18,13 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denom === 0 ? 0 : dot / denom
 }
 
+/** Response copy without the (large) caller-supplied vector. */
+function withoutEmbedding<T extends { embedding?: number[] }>(memo: T): Omit<T, 'embedding'> {
+  const copy = { ...memo }
+  delete copy.embedding
+  return copy
+}
+
 // ─── RAG Search Endpoint ────────────────────────────
 
 interface MemoSummary {
@@ -27,8 +35,10 @@ interface MemoSummary {
   embedding?: number[]
 }
 
-export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
-  const { query, memoSummaries = [], provider = 'openai', userApiKey, topK = 10 } = req.body || {}
+export default createHandler(POLICIES.search, async (req: VercelRequest, res: VercelResponse) => {
+  const { query, memoSummaries = [], provider = 'openai', userApiKey } = req.body || {}
+  // Numeric and bounded — it is interpolated into the re-rank prompt.
+  const topK = Math.min(Math.max(Math.trunc(Number(req.body?.topK)) || 10, 1), 20)
 
   if (!query || typeof query !== 'string') {
     return errorResponse(res, 400, 'query is required')
@@ -79,8 +89,9 @@ export default createHandler(async (req: VercelRequest, res: VercelResponse) => 
     if (chatApiKey) {
       try {
         const model = createChatModel(provider as Provider, chatApiKey, { temperature: 0, maxTokens: 300 })
+        // Every field is sliced — memoSummaries is caller-supplied and only size-capped as a whole.
         const candidateList = scored.slice(0, 10).map((m, i) =>
-          `[${i}] "${m.title}" - ${m.body.slice(0, 100)}... (tags: ${m.tags.join(', ')})`
+          `[${i}] "${String(m.title).slice(0, 200)}" - ${m.body.slice(0, 100)}... (tags: ${m.tags.join(', ').slice(0, 200)})`
         ).join('\n')
 
         const result = await model.invoke([
@@ -99,7 +110,7 @@ export default createHandler(async (req: VercelRequest, res: VercelResponse) => 
 
           if (reranked.length > 0) {
             return res.status(200).json({
-              results: reranked.map(({ embedding: _, ...rest }) => rest),
+              results: reranked.map(withoutEmbedding),
               reranked: true,
               usingServerKey,
             })
@@ -113,7 +124,7 @@ export default createHandler(async (req: VercelRequest, res: VercelResponse) => 
 
   // Fallback: return hybrid-scored results
   return res.status(200).json({
-    results: scored.slice(0, topK).map(({ embedding: _, ...rest }) => rest),
+    results: scored.slice(0, topK).map(withoutEmbedding),
     reranked: false,
     usingServerKey,
   })

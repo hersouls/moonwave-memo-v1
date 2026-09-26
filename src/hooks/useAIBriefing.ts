@@ -4,7 +4,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { parseChecklist } from '@/utils/checklistParser'
 import { isAIAvailable, getUserApiKey } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch } from '@/lib/apiBase'
 
 export interface AIBriefing {
   greeting: string
@@ -83,7 +83,7 @@ export function useAIBriefing() {
 
       setIsLoading(true)
       try {
-        const res = await fetch(apiUrl('/api/langchain/briefing'), {
+        const res = await authedFetch('/api/langchain/briefing', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -102,7 +102,7 @@ export function useAIBriefing() {
           if (data.briefing) setBriefing(data.briefing)
         }
       } catch {
-        // AI briefing unavailable or aborted
+        // signed out (AuthRequiredError — nothing sent), unavailable or aborted
       } finally {
         setIsLoading(false)
       }

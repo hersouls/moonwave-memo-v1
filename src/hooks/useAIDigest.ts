@@ -4,7 +4,7 @@ import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { isAIAvailable, getUserApiKey } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch } from '@/lib/apiBase'
 
 export interface AIDigest {
   summary: string
@@ -57,7 +57,7 @@ export function useAIDigest() {
 
       setIsLoading(true)
       try {
-        const res = await fetch(apiUrl('/api/langchain/digest'), {
+        const res = await authedFetch('/api/langchain/digest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ weeklyMemos, provider, userApiKey }),
@@ -70,7 +70,7 @@ export function useAIDigest() {
           if (data.digest) setDigest(data.digest)
         }
       } catch {
-        // AI digest unavailable or aborted
+        // signed out (AuthRequiredError — nothing sent), unavailable or aborted
       } finally {
         setIsLoading(false)
       }

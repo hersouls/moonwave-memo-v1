@@ -1,7 +1,7 @@
 import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { auth, callable } from '@/lib/firebase'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch, apiErrorMessage } from '@/lib/apiBase'
 import { getUserApiKey } from './aiFeatures'
 import { isAILimitReached, incrementAIUsage } from './aiUsage'
 
@@ -210,7 +210,9 @@ async function callLangGraphDemian(
     }))
 
   try {
-    const res = await fetch(apiUrl('/api/langchain/demian'), {
+    // Signed out → AuthRequiredError → caught below → legacy flow (own keys, or the
+    // "로그인하거나 API 키를 입력" message).
+    const res = await authedFetch('/api/langchain/demian', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -224,8 +226,7 @@ async function callLangGraphDemian(
     })
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error || 'LangGraph agent 호출 실패' }
+      return { text: '', error: await apiErrorMessage(res) }
     }
 
     const data = await res.json()

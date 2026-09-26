@@ -16,7 +16,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { generateInsights, type Insight } from '@/services/insightEngine'
 import { isAIAvailable, getUserApiKey } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch } from '@/lib/apiBase'
 import { WidgetCard } from './WidgetCard'
 
 const INSIGHT_ICONS: Record<string, LucideIcon> = {
@@ -67,7 +67,7 @@ export function InsightsWidget() {
 
       setAILoading(true)
       try {
-        const res = await fetch(apiUrl('/api/langchain/insights'), {
+        const res = await authedFetch('/api/langchain/insights', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ memos: memoData, provider, userApiKey }),
@@ -84,7 +84,7 @@ export function InsightsWidget() {
           }
         }
       } catch {
-        // AI insights unavailable or aborted
+        // signed out (AuthRequiredError — nothing sent), unavailable or aborted
       } finally {
         setAILoading(false)
       }

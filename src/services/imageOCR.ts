@@ -1,6 +1,6 @@
 import type { OCRProvider } from '@/lib/types'
 import { auth, callable } from '@/lib/firebase'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch, apiErrorMessage, AuthRequiredError } from '@/lib/apiBase'
 
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
@@ -241,19 +241,26 @@ export async function extractTextFromImage(
     }
     let proxyRes: Response | null = null
     try {
-      proxyRes = await fetch(apiUrl('/api/ocr'), {
+      proxyRes = await authedFetch('/api/ocr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageDataUrl, provider, language }),
         signal,
       })
-    } catch { /* network error → fall through to direct path */ }
+    } catch (err) {
+      // Signed out: the server path needs a login — say so (no request was sent).
+      if (err instanceof AuthRequiredError) throw err
+      /* network error → fall through to direct path */
+    }
     if (proxyRes?.ok) {
       const data = await proxyRes.json()
       return { text: data.text || '', provider }
     }
     if (proxyRes?.status === 413) {
       throw new Error('이미지가 서버 업로드 한도를 초과합니다. 설정에서 API 키를 등록하면 더 큰 이미지도 인식할 수 있습니다.')
+    }
+    if (proxyRes && [401, 403, 429].includes(proxyRes.status)) {
+      throw new Error(await apiErrorMessage(proxyRes))
     }
   }
 

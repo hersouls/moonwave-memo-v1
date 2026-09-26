@@ -1,5 +1,5 @@
 import { auth, callable } from '@/lib/firebase'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch, apiErrorMessage, AuthRequiredError } from '@/lib/apiBase'
 
 // ─── Constants ────────────────────────────────────
 const ALLOWED_EXTENSIONS = ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg']
@@ -129,19 +129,26 @@ export async function transcribeAudio(
         reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다'))
         reader.readAsDataURL(file)
       })
-      proxyRes = await fetch(apiUrl('/api/stt'), {
+      proxyRes = await authedFetch('/api/stt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audioBase64: base64, fileName: file.name, language }),
         signal,
       })
-    } catch { /* network error → fall through to direct path */ }
+    } catch (err) {
+      // Signed out: the server path needs a login — say so (no request was sent).
+      if (err instanceof AuthRequiredError) throw err
+      /* network error → fall through to direct path */
+    }
     if (proxyRes?.ok) {
       const data = await proxyRes.json()
       return { text: data.text || '', language, duration: 0, segments: data.segments || [] }
     }
     if (proxyRes?.status === 413) {
       throw new Error('파일이 서버 업로드 한도를 초과합니다. 설정에서 OpenAI API 키를 등록하면 더 큰 파일도 변환할 수 있습니다.')
+    }
+    if (proxyRes && [401, 403, 429].includes(proxyRes.status)) {
+      throw new Error(await apiErrorMessage(proxyRes))
     }
   }
 

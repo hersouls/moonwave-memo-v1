@@ -4,6 +4,8 @@ import { createChatModel, type Provider } from '../lib/models.js'
 import { resolveApiKey } from '../lib/tools.js'
 import { ensureTracing } from '../lib/tracing.js'
 import { applyCors } from '../lib/cors.js'
+import { guardAiRequest, POLICIES } from '../lib/guard.js'
+import { GENERIC_AI_ERROR, logUpstreamError } from '../lib/upstream.js'
 
 const PROMPTS: Record<string, string> = {
   readability: `You are a readability enhancement assistant for a memo app. Reformat the given memo content to improve readability using Markdown formatting. Rules:
@@ -21,13 +23,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  // Auth (401/403), string/provider checks (400), size caps (413), per-uid limits (429).
+  if (!(await guardAiRequest(req, res, POLICIES.stream))) return
+
   ensureTracing()
 
   const { content, task = 'readability', provider = 'openai', userApiKey } = req.body || {}
   if (!content) return res.status(400).json({ error: 'Missing content' })
 
-  const systemPrompt = PROMPTS[task]
-  if (!systemPrompt) return res.status(400).json({ error: `Unknown task: ${task}` })
+  const systemPrompt = Object.prototype.hasOwnProperty.call(PROMPTS, task) ? PROMPTS[task] : undefined
+  if (!systemPrompt) return res.status(400).json({ error: 'Unknown task' })
 
   const apiKey = resolveApiKey(provider as Provider, userApiKey)
   if (!apiKey) return res.status(500).json({ error: `${provider} API key not configured` })
@@ -56,8 +61,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.write(`data: ${JSON.stringify({ usingServerKey: !userApiKey })}\n\n`)
     res.write('data: [DONE]\n\n')
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Stream error'
-    res.write(`data: ${JSON.stringify({ error: message })}\n\n`)
+    // Never stream the provider's error text to the client — log it (redacted) instead.
+    logUpstreamError('langchain:stream', err)
+    res.write(`data: ${JSON.stringify({ error: GENERIC_AI_ERROR })}\n\n`)
   }
 
   res.end()

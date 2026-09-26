@@ -80,6 +80,19 @@ APK의 origin(`https://localhost`)에는 Vercel `/api`가 없으므로, 서버 �
 
 ⚠️ **api/ 변경이 memo.moonwave.kr에 배포된 뒤에만** APK에서 동작한다 (CORS·ESM 수정 모두 서버측). 검증: `curl -X OPTIONS .../api/langchain/tags -H "Origin: https://localhost"` → 204 + `Access-Control-Allow-Origin`.
 
+### 7-1. 인증·사용 한도 (2026-09-26)
+
+서버 키로 유료 AI를 부르는 라우트(`ai`·`ocr`·`stt`·`langchain/*` 13종)는 모두 `api/lib/guard.ts`의 `guardAiRequest`를 먼저 통과해야 한다 (langchain은 `createHandler(POLICIES.x, …)`가 강제).
+
+- **로그인 필수**: `Authorization: Bearer <Firebase ID 토큰>`. `api/lib/auth.ts`가 서비스 계정 없이 Google 공개 JWKS(`securetoken@system…`)로 검증 — RS256, iss `https://securetoken.google.com/moonwave-memo-v1`, aud `moonwave-memo-v1`, sub 필수, 시계 오차 60초, 익명 로그인 거부. 없음/무효 → 401 `{error:"unauthorized"}`, Google 키 조회 실패 → 503. 토큰 폐기(revocation)는 확인하지 못한다(최대 1시간 유효).
+- **허용 목록(선택)**: Vercel env `AI_ALLOWED_UIDS`(쉼표 구분 uid)를 설정하면 그 uid만 통과, 나머지 403. 미설정이면 로그인한 누구나(= Google 계정만 있으면 누구나) — 개인용이면 설정 권장.
+- **uid별 한도**(`POLICIES`): 라우트별 5분 30회·24시간 300회, autocomplete 60/600, ocr·stt 10/50, embedding 400/3000, 전 라우트 합산 120/1000(embedding 제외). 초과 → 429 + `Retry-After`. **인스턴스 메모리 기준(best effort)** — 동시 인스턴스 수만큼 늘고 콜드 스타트 시 초기화된다.
+- **입력 상한**: 라우트별 글자 수(대화 20k, autocomplete 4k, 이미지 data URL 3.5M, 오디오 base64 4.65M 등) 초과 → 413. 프롬프트로 들어가는 필드는 문자열만 허용(400). `max_tokens`는 서버에서 2000(OCR 4096 고정)으로 제한.
+- **오류 원문 비노출**: 제공자 오류 본문은 키 패턴을 가린 채 로그로만 남기고, 응답은 일반 메시지(502).
+- **클라이언트**: `/api` 호출은 전부 `src/lib/apiBase.ts`의 `authedFetch()` — ID 토큰 첨부, 401이면 토큰 갱신 후 1회 재시도, 로그아웃 상태면 호출 없이 "AI 기능은 로그인 후 사용할 수 있어요". 본인 API 키로 제공자를 직접 부르는 경로는 그대로.
+- CORS가 `Authorization` 헤더를 허용하도록 바뀌었으므로 APK의 서버 AI는 이 변경이 배포된 뒤에만 동작한다. `download-desktop`은 브라우저 이동(헤더 불가) 방식이라 인증하지 않는다.
+- 검사: `npm run typecheck:api`(`tsconfig.api.json`), 테스트 `api/__tests__/`.
+
 ## 8. APK 알려진 한계 (2026-07-12 코드 감사 — 미해결 항목)
 
 | 한계 | 원인 | 해결 방향 |

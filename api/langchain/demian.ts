@@ -6,6 +6,7 @@ import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
 import { createChatModel, type Provider } from '../lib/models.js'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
+import { POLICIES } from '../lib/guard.js'
 
 // ─── State ──────────────────────────────────────────
 
@@ -176,7 +177,11 @@ function buildDemianGraph(provider: Provider, apiKey: string, memoSummaries: Arr
 
 // ─── API Handler ────────────────────────────────────
 
-export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
+const MAX_MESSAGES = 20
+/** agent → tools → agent … : 10 steps ≈ at most 5 LLM calls per request. */
+const MAX_GRAPH_STEPS = 10
+
+export default createHandler(POLICIES.demian, async (req: VercelRequest, res: VercelResponse) => {
   const {
     messages = [],
     currentBody = '',
@@ -188,6 +193,14 @@ export default createHandler(async (req: VercelRequest, res: VercelResponse) => 
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return errorResponse(res, 400, 'messages array is required')
+  }
+  // Plain-text turns only: a non-string `content` would reach the model as content blocks
+  // (e.g. remote image_url parts billed on our key). The app sends ≤ 10 turns.
+  if (
+    messages.length > MAX_MESSAGES ||
+    !messages.every((m: unknown) => m !== null && typeof m === 'object' && typeof (m as { content?: unknown }).content === 'string')
+  ) {
+    return errorResponse(res, 400, 'messages must be ≤ 20 {role, content: string} items')
   }
 
   const apiKey = resolveApiKey(provider as Provider, userApiKey)
@@ -209,12 +222,16 @@ export default createHandler(async (req: VercelRequest, res: VercelResponse) => 
     Array.isArray(memoSummaries) ? memoSummaries : []
   )
 
-  const result = await graph.invoke({
-    messages: langchainMessages,
-    memoContext: currentBody || '',
-    writingSamples: Array.isArray(writingSamples) ? writingSamples : [],
-    memoSummaries: Array.isArray(memoSummaries) ? memoSummaries : [],
-  })
+  const result = await graph.invoke(
+    {
+      messages: langchainMessages,
+      memoContext: currentBody || '',
+      writingSamples: Array.isArray(writingSamples) ? writingSamples : [],
+      memoSummaries: Array.isArray(memoSummaries) ? memoSummaries : [],
+    },
+    // Bound the agent ⇄ tools loop (each agent step is a paid LLM call); default is 25.
+    { recursionLimit: MAX_GRAPH_STEPS },
+  )
 
   // Extract the last AI message
   const lastMessage = result.messages[result.messages.length - 1]

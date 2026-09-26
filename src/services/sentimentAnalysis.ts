@@ -1,4 +1,4 @@
-import { apiUrl } from '../lib/apiBase'
+import { authedFetch } from '../lib/apiBase'
 
 const POSITIVE_WORDS = [
   '\uC88B\uC740', '\uD589\uBCF5', '\uAC10\uC0AC', '\uC990\uAC70\uC6B4', '\uAE30\uC05C', '\uC0AC\uB791', '\uC131\uACF5', '\uC644\uB8CC', '\uB2EC\uC131', '\uCD95\uD558',
@@ -38,7 +38,8 @@ export async function analyzeAISentiment(
   if (!text.trim() || text.length < 10) return null
 
   try {
-    const res = await fetch(apiUrl('/api/langchain/analyze'), {
+    // Signed out → AuthRequiredError → keyword-based fallback below.
+    const res = await authedFetch('/api/langchain/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

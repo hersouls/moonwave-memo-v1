@@ -1,19 +1,19 @@
-import { apiUrl } from '../lib/apiBase'
+import { authedFetch, apiErrorMessage } from '../lib/apiBase'
 
 export async function streamFetch(
   url: string,
   body: Record<string, unknown>,
   onChunk: (text: string) => void,
 ): Promise<{ usingServerKey: boolean }> {
-  const res = await fetch(apiUrl(url), {
+  // Throws AuthRequiredError (Korean login message) when signed out — no request is sent.
+  const res = await authedFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || `Stream error: ${res.status}`)
+    throw new Error(await apiErrorMessage(res))
   }
 
   const reader = res.body?.getReader()

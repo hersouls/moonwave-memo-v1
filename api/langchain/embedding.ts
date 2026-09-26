@@ -1,10 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createEmbeddingModel } from '../lib/models.js'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
+import { POLICIES } from '../lib/guard.js'
 
 // ─── LangChain Embedding Endpoint ───────────────────
 
-export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
+export default createHandler(POLICIES.embedding, async (req: VercelRequest, res: VercelResponse) => {
 
   const { text, userApiKey } = req.body || {}
 

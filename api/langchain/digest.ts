@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { createChatModel, type Provider } from '../lib/models.js'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
+import { POLICIES } from '../lib/guard.js'
 
 // ─── AI Weekly Digest Endpoint ──────────────────────
 
@@ -13,7 +14,7 @@ interface MemoInput {
   updatedAt: string
 }
 
-export default createHandler(async (req: VercelRequest, res: VercelResponse) => {
+export default createHandler(POLICIES.digest, async (req: VercelRequest, res: VercelResponse) => {
 
   const {
     weeklyMemos = [],

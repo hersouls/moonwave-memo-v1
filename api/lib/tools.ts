@@ -2,6 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { Provider } from './models.js'
 import { ensureTracing } from './tracing.js'
 import { applyCors } from './cors.js'
+import { guardAiRequest, type RoutePolicy } from './guard.js'
+import { GENERIC_AI_ERROR, logUpstreamError } from './upstream.js'
 
 // ─── API Key Resolution ─────────────────────────────
 
@@ -23,8 +25,8 @@ function keyMatchesProvider(provider: Provider, key: string): boolean {
   return true
 }
 
-export function resolveApiKey(provider: Provider, userApiKey?: string): string | null {
-  if (userApiKey && keyMatchesProvider(provider, userApiKey)) return userApiKey
+export function resolveApiKey(provider: Provider, userApiKey?: unknown): string | null {
+  if (typeof userApiKey === 'string' && userApiKey && keyMatchesProvider(provider, userApiKey)) return userApiKey
   return serverKey(provider)
 }
 
@@ -38,7 +40,12 @@ export function errorResponse(res: VercelResponse, status: number, message: stri
 
 type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<void | VercelResponse>
 
-export function createHandler(fn: HandlerFn) {
+/**
+ * Wrap a LangChain route: CORS → POST only → guardAiRequest (Firebase ID token, input
+ * shape/size caps, per-uid rate limit — see api/lib/guard.ts) → handler. The policy is
+ * required so no paid route can be added without the gate.
+ */
+export function createHandler(policy: RoutePolicy, fn: HandlerFn) {
   return async (req: VercelRequest, res: VercelResponse) => {
     // CORS + preflight must run before the method gate — an OPTIONS preflight is
     // not POST, so checking method first would 405 the preflight (blocking the APK).
@@ -48,17 +55,18 @@ export function createHandler(fn: HandlerFn) {
       return errorResponse(res, 405, 'Method not allowed')
     }
 
+    if (!(await guardAiRequest(req, res, policy))) return
+
     ensureTracing()
 
     try {
       await fn(req, res)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Internal server error'
-      // Log the full upstream message but return a GENERIC one — the raw provider error
-      // can contain the masked server key, org id, or billing/quota state, and these
-      // endpoints are reachable without auth.
-      console.error('[LangChain API Error]', message)
-      return errorResponse(res, 500, 'AI 서비스 요청에 실패했습니다.')
+      // Log the (redacted) upstream message but return a GENERIC one — the raw provider
+      // error can contain the masked server key, org id, or billing/quota state.
+      logUpstreamError(policy.family, err)
+      if (res.headersSent) return
+      return errorResponse(res, 500, GENERIC_AI_ERROR)
     }
   }
 }

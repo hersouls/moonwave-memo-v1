@@ -2,8 +2,9 @@ import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { createChatModel, type Provider } from '../lib/models.js'
 import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
+import { POLICIES } from '../lib/guard.js'
 
-export default createHandler(async (req, res) => {
+export default createHandler(POLICIES.summarize, async (req, res) => {
   const { content, provider = 'openai', userApiKey } = req.body || {}
   if (!content || content.length < 50) return res.json({ summary: '', usingServerKey: false })
 

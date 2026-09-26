@@ -1,6 +1,6 @@
 import { useSettingsStore } from '@/stores/settingsStore'
 import { auth, callable } from '@/lib/firebase'
-import { apiUrl } from '@/lib/apiBase'
+import { authedFetch } from '@/lib/apiBase'
 import { db } from './database'
 
 // ─── Embedding Service ──────────────────────────────
@@ -67,7 +67,8 @@ async function callLangChainEmbedding(text: string): Promise<number[] | null> {
   const openaiKey = useSettingsStore.getState().settings.ai.openaiApiKey
 
   try {
-    const res = await fetch(apiUrl('/api/langchain/embedding'), {
+    // Signed out → AuthRequiredError → null → direct OpenAI with the user's own key.
+    const res = await authedFetch('/api/langchain/embedding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -133,7 +134,7 @@ export async function semanticSearchWithRAG(
   const userApiKey = ai.openaiApiKey || ai.anthropicApiKey || ai.geminiApiKey || undefined
 
   try {
-    const res = await fetch(apiUrl('/api/langchain/search'), {
+    const res = await authedFetch('/api/langchain/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, memoSummaries, provider, userApiKey, topK }),
