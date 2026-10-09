@@ -122,5 +122,18 @@
     "vite": "^6.4.3",
     "vite-plugin-compression2": "^2.5.3",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "@vercel/node": {
+      "path-to-regexp": "6.3.0",
+      "undici": "^6.29.0"
+    },
+    "@vercel/static-config": {
+      "ajv": "^8.18.0"
+    },
+    "xcode": {
+      "uuid": "^11.1.1"
+    },
+    "@grpc/grpc-js": "^1.13.6"
   }
 }
