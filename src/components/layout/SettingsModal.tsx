@@ -59,6 +59,7 @@ import type { SyncStatus } from '@/lib/types'
 import { SyncFolderSection } from './SyncFolderSection'
 import { OrphanBackupsSection } from './OrphanBackupsSection'
 import { DesktopDownloadSection } from './DesktopDownloadSection'
+import { AndroidDownloadSection } from './AndroidDownloadSection'
 
 // ─── Theme Options ──────────────────────────────────
 const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
@@ -939,6 +940,7 @@ export function SettingsModal() {
 
       {/* 데스크톱 앱(Windows) 설치본 다운로드 — 비공개 릴리스를 서버 프록시로 제공 */}
       <DesktopDownloadSection />
+      <AndroidDownloadSection />
 
       <div className="border-t border-[var(--color-border-subtle)]" />
 

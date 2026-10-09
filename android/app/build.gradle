@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+// Release signing and version come from the build (scripts/build-android.sh), never from this file:
+//   MEMO_APK_KEYSTORE / MEMO_APK_STORE_PASS / MEMO_APK_KEY_ALIAS  the Moonwave Memo release key (env, not in the repo)
+//   -PmemoVersionCode / -PmemoVersionName                         one build number per commit, the package.json version
+// Without them (Android Studio, a plain `gradlew assembleDebug`) the build is unsigned-release / debug as before.
+def memoKeystore = System.getenv('MEMO_APK_KEYSTORE')
+
 android {
     namespace = "kr.moonwave.memo"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +13,8 @@ android {
         applicationId "kr.moonwave.memo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode ((project.findProperty('memoVersionCode') ?: '1') as Integer)
+        versionName (project.findProperty('memoVersionName') ?: '1.0')
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +22,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (memoKeystore) {
+                storeFile file(memoKeystore)
+                storePassword System.getenv('MEMO_APK_STORE_PASS')
+                keyAlias System.getenv('MEMO_APK_KEY_ALIAS') ?: 'moonwave-memo'
+                keyPassword System.getenv('MEMO_APK_KEY_PASS') ?: System.getenv('MEMO_APK_STORE_PASS')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (memoKeystore) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
