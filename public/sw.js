@@ -11,6 +11,8 @@ const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/moonwave-original.svg',
+  '/moonwave-original-192.png',
   '/favicon.png',
   '/icons/icon-192.png',
   '/icons/apple-touch-icon-180.png',

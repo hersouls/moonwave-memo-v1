@@ -208,9 +208,7 @@ export function Sidebar() {
           className="flex items-center gap-3 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-lg"
           aria-label="홈으로 이동"
         >
-          <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center flex-shrink-0">
-            <StickyNote className="w-5 h-5 text-white" aria-hidden="true" />
-          </div>
+          <img src="/moonwave-original.svg" alt="" className="w-8 h-8 rounded-lg flex-shrink-0" />
           {isSidebarOpen && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">

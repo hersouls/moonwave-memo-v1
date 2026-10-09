@@ -1,7 +1,7 @@
 import { Fragment, useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Transition } from '@headlessui/react'
-import { Menu, StickyNote, Settings, LogOut, Cloud } from 'lucide-react'
+import { Menu, Settings, LogOut, Cloud } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -72,9 +72,7 @@ export function Header() {
           </button>
 
           <Link to="/" onClick={handleLogoClick} className="md:hidden flex items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
-            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-              <StickyNote className="w-5 h-5 text-white" />
-            </div>
+            <img src="/moonwave-original.svg" alt="" className="w-8 h-8 rounded-lg" />
             <span className="font-bold text-zinc-900 dark:text-zinc-100">Memo</span>
           </Link>
         </div>
