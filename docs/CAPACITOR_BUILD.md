@@ -37,7 +37,23 @@ cd android && JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" ./gradlew 
 - `READ_EXTERNAL_STORAGE`(maxSdkVersion 32) + `WRITE_EXTERNAL_STORAGE`(maxSdkVersion 29) — API 29 이하에서 공용 Documents 쓰기에 필요. API 33+는 플러그인이 자동 승인, API 30–32는 하위 경로 쓰기에 권한 불요(플러그인 네이티브 소스 확인).
 - `<application android:requestLegacyExternalStorage="true">` — Android 10(API 29)에서 Documents 접근용, 30+에서는 무시됨.
 
-릴리스 APK/AAB는 서명 키(keystore)로 서명해야 배포 가능(§10 절차와 유사, `gradlew bundleRelease`).
+릴리스 APK는 `scripts/build-android.sh`가 서명해서 만든다 (아래 §2-1).
+
+## 2-1. 릴리스 APK — 자동 빌드 · 게시 (2026-10-10)
+
+APK는 웹 빌드를 안에 담고 있어서(`webDir: dist`) 웹 배포만으로는 갱신되지 않는다. 그래서 한 명령으로 만들고, 매일 자동으로 돈다.
+
+```sh
+./scripts/build-android.sh              # release/android/moonwave-memo.apk + android.json (약 1~2분)
+./scripts/build-android.sh --publish    # GitHub의 고정 릴리스 "android"에 덮어 올림
+```
+
+- **내려받는 곳**: <https://github.com/hersouls/moonwave-memo-v1/releases/download/android/moonwave-memo.apk> (웹의 설정 › Android 앱이 이 주소로 간다). 같은 릴리스의 `android.json`에 버전 · 커밋 · sha256.
+- **버전**: `versionName` = `package.json`의 version, `versionCode` = 커밋 수(`git rev-list --count HEAD`) — 커밋마다 하나, 항상 커진다. `android/app/build.gradle`은 `-PmemoVersionCode/-PmemoVersionName`으로 받는다.
+- **서명 키**: `~/Library/Application Support/Moonwave/android/memo-release.jks` (`CN=Moonwave Memo`), 비밀번호와 별칭은 `~/Library/Application Support/Moonwave/memo-android.env`의 `MEMO_APK_*` (모드 600, 저장소에 없음). 같은 파일의 `VITE_FIREBASE_*`는 Vercel이 쓰는 공개 웹 설정으로, 로컬 웹 빌드에 넣는다. **이 키를 잃으면 모든 폰에서 앱을 지우고 다시 설치해야 한다** — 두 파일을 안전한 곳에 따로 보관할 것.
+- **Google 로그인**: 이 키의 SHA-1(`C8:30:C3:DD…`) · SHA-256(`40:F3:A2:FA…`)을 Firebase Android 앱에 등록했다(§6). 2026-10-10보다 앞선 설치본은 다른 PC의 디버그 키로 서명돼 있어 **처음 한 번은 예전 앱을 지우고 설치**해야 한다.
+- **자동 빌드**: 이 Mac의 LaunchAgent `com.moonwave.memo.apk`(매일 05:40)가 `origin/master`의 전용 복사본(`~/Library/Caches/moonwave-memo-apk/repo`)에서 `--if-changed --publish`로 실행한다. 올라가 있는 APK 뒤로 앱에 들어가는 것(`src`, `public`, `android`, 빌드 설정)이 바뀌지 않았으면 건너뛴다. 실패 · 새 빌드는 Moonwave 알림(`memo-apk`)으로 온다. 원본과 설치: `Vector_DB_Memo_v1.0/deploy/`. 지금 실행: `launchctl kickstart gui/$(id -u)/com.moonwave.memo.apk`.
+- 환경: JDK 21, Android SDK(`~/Library/Android/sdk`, platform 36). `gradlew`는 `sh ./gradlew`로 실행한다.
 
 ## 4. 폴더 저장 방식 (구현됨)
 
@@ -106,5 +122,5 @@ APK의 origin(`https://localhost`)에는 Vercel `/api`가 없으므로, 서버 �
 
 - §8 한계 해소 (우선순위: 내보내기 → 뒤로가기).
 - 앱 아이콘·스플래시(`@capacitor/assets`로 생성).
-- 릴리스 서명 keystore(+ SHA 등록, §6) + Play Store 또는 사이드로드 배포 결정.
+- ~~릴리스 서명 keystore + SHA 등록~~ → §2-1 (사이드로드 배포). Play Store 등록은 정하지 않았다.
 - SAF 직접 선택(§5) 실기기 스파이크.
