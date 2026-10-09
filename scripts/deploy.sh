@@ -19,7 +19,7 @@ cd "${0:A:h}/.."
 
 REPO=hersouls/moonwave-memo-v1
 SITE=https://memo.moonwave.kr
-WAIT_SECONDS=${MEMO_DEPLOY_WAIT:-1200}
+WAIT_SECONDS=${MEMO_DEPLOY_WAIT:-900}
 say() { print -r -- "[deploy] $*" }
 die() { print -r -- "[deploy] 실패: $*" >&2; exit 1 }
 
