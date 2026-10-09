@@ -5,6 +5,7 @@ import { compression } from 'vite-plugin-compression2'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import path from 'path'
 import fs from 'fs'
+import { execSync } from 'child_process'
 
 function swVersionPlugin(): Plugin {
   return {
@@ -23,11 +24,31 @@ function swVersionPlugin(): Plugin {
   }
 }
 
+/**
+ * dist/version.json = which commit this build is. scripts/deploy.sh polls the live copy to
+ * know the push has really reached production (also after a CI-gated promote), instead of
+ * guessing from a timer. Vercel sets VERCEL_GIT_COMMIT_SHA; locally it falls back to git.
+ */
+function buildVersionPlugin(): Plugin {
+  return {
+    name: 'build-version',
+    writeBundle() {
+      let sha = process.env.VERCEL_GIT_COMMIT_SHA || ''
+      if (!sha) {
+        try { sha = execSync('git rev-parse HEAD', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() } catch { sha = 'unknown' }
+      }
+      const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'))
+      fs.writeFileSync(path.resolve(__dirname, 'dist/version.json'), JSON.stringify({ sha, version: pkg.version, builtAt: new Date().toISOString() }) + '\n', 'utf-8')
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
     swVersionPlugin(),
+    buildVersionPlugin(),
     compression({ algorithm: 'gzip', exclude: [/\.(br)$/], threshold: 1024 }),
     compression({ algorithm: 'brotliCompress', exclude: [/\.(gz)$/], threshold: 1024 }),
     // Sentry source map upload (only when auth token is available)

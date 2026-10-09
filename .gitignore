@@ -55,3 +55,6 @@ release/
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Moonwave agent rules written per machine by the UX project (not for the public repo)
+AGENTS.md
