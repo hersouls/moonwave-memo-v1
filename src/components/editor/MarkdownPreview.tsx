@@ -97,20 +97,19 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
     return <code className={className} {...props}>{children}</code>
   }
 
+  // 언어 이름과 복사 버튼은 코드 위의 한 줄이에요. 코드 위에 겹쳐 띄우면 첫 줄을 가리고, 손가락으로 쓰는 화면에서는 복사 버튼이 보이지 않아요.
   return (
-    <div className="relative group">
-      {language && (
-        <div className="absolute top-0 left-0 px-2 py-0.5 text-xs font-mono text-[var(--text-secondary)] bg-[var(--background-secondary)] rounded-br-md rounded-tl-md uppercase">
-          {language}
-        </div>
-      )}
-      <button type="button"
-        onClick={handleCopy}
-        className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default absolute top-1 right-1 opacity-0 group-hover:opacity-100"
-        aria-label="코드 복사"
-      >
-        <span>{copied ? '복사됨' : '복사'}</span>
-      </button>
+    <div>
+      <div className="flex items-center justify-between gap-2 pl-4 pr-1">
+        <span className="text-xs font-mono uppercase text-[var(--text-secondary)]">{language}</span>
+        <button type="button"
+          onClick={handleCopy}
+          className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
+          aria-label="코드 복사"
+        >
+          <span>{copied ? '복사했어요' : '복사'}</span>
+        </button>
+      </div>
       <code className={className} {...props}>{children}</code>
     </div>
   )

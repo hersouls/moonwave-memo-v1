@@ -5,9 +5,10 @@ import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
 import type { EditorMode } from '@/lib/types'
+import { useCloseRequest } from '@/mw/close'
 import { ShareCardModal } from './ShareCardModal'
 import { ShareLinkModal } from './ShareLinkModal'
-import { IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwHistory, IcMwList, IcMwStar } from '@/mw/icons'
+import { IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwHistory, IcMwList, IcMwStar, IcMwStarFill } from '@/mw/icons'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 
@@ -26,6 +27,8 @@ interface EditorHeaderProps {
 
 export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, tags, isPinned }: EditorHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  // 메뉴는 Esc와 폰의 뒤로 가기로도 닫혀요
+  useCloseRequest(isMenuOpen, () => setIsMenuOpen(false))
   const [showShareCard, setShowShareCard] = useState(false)
   const [showShareLink, setShowShareLink] = useState(false)
   const softDelete = useMemoStore((s) => s.softDelete)
@@ -211,13 +214,9 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           className="mw-icon-button"
           aria-label={isStarred ? '중요 해제' : '중요 표시'}
         >
-          <IcMwStar size={20}
-            className={`  ${
-              isStarred
-                ? 'fill-primary-500 text-primary-500'
-                : 'text-zinc-500 dark:text-zinc-400'
-            }`}
-          />
+          {isStarred
+            ? <IcMwStarFill size={20} className="text-primary-500" />
+            : <IcMwStar size={20} className="text-zinc-500 dark:text-zinc-400" />}
         </button>
 
         <div className="relative">

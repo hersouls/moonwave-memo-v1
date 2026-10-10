@@ -37,18 +37,13 @@ export function usePinchZoom() {
     [zoomLevel]
   )
 
-  // Column counts scale with the list container width (container queries).
-  // @5xl/@7xl tiers add columns on wide/ultrawide desktops while leaving
-  // standard laptops (~1280px) unchanged.
-  const gridCols: Record<ZoomLevel, string> = {
-    compact: 'grid-cols-2 @2xs:grid-cols-3 @sm:grid-cols-4 @lg:grid-cols-5 @xl:grid-cols-6 @5xl:grid-cols-7 @7xl:grid-cols-8',
-    normal: 'grid-cols-1 @2xs:grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5 @5xl:grid-cols-6 @7xl:grid-cols-7',
-    expanded: 'grid-cols-1 @2xs:grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4 @5xl:grid-cols-5 @7xl:grid-cols-6',
-  }
+  // 칸 수는 카드 한 장의 가장 좁은 너비로 정해져요(.memo-grid, index.css): 목록이 놓인 자리의 너비를 그대로 따라가요.
+  // 예전에는 컨테이너 쿼리(@sm …)로 칸 수를 적었는데, 그 기준이 목록이 아니라 내용 영역 전체여서 폰에서 세 칸으로 찌그러졌어요.
+  const gridClass = `memo-grid memo-grid--${zoomLevel}`
 
   return {
     zoomLevel,
-    gridColsClass: gridCols[zoomLevel],
+    gridClass,
     handleTouchStart,
     handleTouchMove,
   }

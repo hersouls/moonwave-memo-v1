@@ -138,7 +138,7 @@ export function MemoSearchBar() {
 
   if (!isExpanded) {
     return (
-      <div className="px-4 lg:px-0">
+      <div>
         <button type="button"
           onClick={handleExpand}
           className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left w-full"
@@ -151,7 +151,7 @@ export function MemoSearchBar() {
   }
 
   return (
-    <div className="px-4 lg:px-0" ref={containerRef}>
+    <div ref={containerRef}>
       <div className="relative">
         <div className="mw-searchbar" role="search">
           <IcLineSearch size={20} />

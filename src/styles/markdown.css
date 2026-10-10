@@ -178,62 +178,19 @@
   padding-left: var(--space-4);
 }
 
-.memo-markdown-preview li.task-list-item {
-  display: flex;
+/* 할 일 줄은 키트의 체크박스 항목(mw-checkbox-item)이에요. 체크 모양은 키트가 그려요.
+   글이 여러 줄이어도 되게 줄 높이를 풀고(가장 낮아도 44px), 체크는 첫 줄에 맞춰요. */
+.memo-markdown-preview li.task-list-item > .mw-checkbox-item {
+  height: auto;
+  min-height: var(--mw-touch);
   align-items: flex-start;
-  gap: var(--space-8);
+  padding: var(--memo-space-10) 0;
+  user-select: text;
 }
 
-.memo-markdown-preview li.task-list-item input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 1.125rem;
-  height: 1.125rem;
-  min-width: 1.125rem;
-  border: 1.5px solid var(--color-text-tertiary);
-  border-radius: var(--radius-4);
-  margin-top: var(--space-4);
-  cursor: pointer;
-  position: relative;
-  background-color: transparent;
-  transition:
-    background-color var(--motion-duration-short) var(--mw-ease),
-    border-color var(--motion-duration-short) var(--mw-ease),
-    transform var(--motion-duration-short) var(--ease-spring);
-}
-
-/* Expanded hit area (~42px) without moving layout — checkboxes are tappable in preview */
-.memo-markdown-preview li.task-list-item input[type="checkbox"]::before {
-  content: '';
-  position: absolute;
-  inset: -12px;
-}
-
-/* Checkmark is always present — pops in with a spring scale on check */
-.memo-markdown-preview li.task-list-item input[type="checkbox"]::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 5.5px;
-  width: 4.5px;
-  height: 9px;
-  border: solid var(--static-white);
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg) scale(0);
-  transition: transform var(--motion-duration-short) var(--mw-ease-pop);
-}
-
-.memo-markdown-preview li.task-list-item input[type="checkbox"]:active {
-  transform: scale(0.9);
-}
-
-.memo-markdown-preview li.task-list-item input[type="checkbox"]:checked {
-  background-color: var(--color-primary-500, #6366f1);
-  border-color: var(--color-primary-500, #6366f1);
-}
-
-.memo-markdown-preview li.task-list-item input[type="checkbox"]:checked::after {
-  transform: rotate(45deg) scale(1);
+/* 표는 키트의 Table이에요. 키트는 첫 열을 줄 이름으로 보고 머리 칸에 세로 선을 긋는데, 메모의 표에는 줄 이름 열이 따로 없어서 긋지 않아요. */
+.memo-markdown-preview .mw-table__header:first-child {
+  border-right: 0;
 }
 
 /* ----------------------------------------
@@ -465,8 +422,6 @@
 [data-theme="dark"] .memo-markdown-preview a:hover {
   color: var(--color-primary-300, #a5b4fc);
 }
-
-/* Dark: task checkboxes — border tracks --color-text-tertiary (flips automatically) */
 
 /* ----------------------------------------
    Dark: Inline Code

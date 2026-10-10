@@ -1,14 +1,6 @@
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
-import type { SortBy } from '@/lib/types'
-import { IcLineClose, IcMwSort } from '@/mw/icons'
-
-const SORT_LABELS: Record<SortBy, string> = {
-  updatedAt: '수정일',
-  createdAt: '생성일',
-  title: '이름순',
-}
-const SORT_ORDER: SortBy[] = ['updatedAt', 'createdAt', 'title']
+import { IcLineClose } from '@/mw/icons'
 
 export function MemoFilterTabs() {
   const folders = useFolderStore((s) => s.folders)
@@ -17,8 +9,6 @@ export function MemoFilterTabs() {
   const activeTag = useUIStore((s) => s.activeTag)
   const setActiveFilter = useUIStore((s) => s.setActiveFilter)
   const setActiveFolderId = useUIStore((s) => s.setActiveFolderId)
-  const sortBy = useUIStore((s) => s.sortBy)
-  const setSortBy = useUIStore((s) => s.setSortBy)
 
   const userFolders = folders
     .filter((f) => !f.isSystem)
@@ -55,19 +45,6 @@ export function MemoFilterTabs() {
           <span className="mw-input-chip__icon"><IcLineClose size={16} /></span>
         </button>
       )}
-
-      {/* Sort indicator chip */}
-      <button type="button"
-        onClick={() => {
-          const idx = SORT_ORDER.indexOf(sortBy)
-          setSortBy(SORT_ORDER[(idx + 1) % SORT_ORDER.length])
-        }}
-        className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left shrink-0"
-        aria-label={`정렬: ${SORT_LABELS[sortBy]}`}
-      >
-        <IcMwSort size={12} />
-        {SORT_LABELS[sortBy]}
-      </button>
     </div>
   )
 }

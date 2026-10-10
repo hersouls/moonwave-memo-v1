@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Memo } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
 import { formatMemoDate } from '@/utils/format'
-import { IcLineFolder, IcLineInbox, IcMwStar } from '@/mw/icons'
+import { IcLineFolder, IcLineInbox, IcMwStarFill } from '@/mw/icons'
 
 interface KanbanViewProps {
   memos: Memo[]
@@ -154,7 +154,7 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
 
       <div className="flex items-center gap-1.5 text-xs tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400">
         {memo.isStarred && (
-          <IcMwStar size={12} className="shrink-0 fill-primary-500 text-primary-500" />
+          <IcMwStarFill size={12} className="shrink-0 text-primary-500" />
         )}
         <span>{formatMemoDate(memo.updatedAt)}</span>
       </div>

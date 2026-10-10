@@ -24,6 +24,8 @@ import { IcLineMore, IcLinePin, IcLineTrash } from '@/mw/icons'
 
 // PERF-01: initial visible count
 const INITIAL_VISIBLE = 30
+// 목록 보기: 한 줄에 카드 하나. 내용 영역이 넓으면 읽기 좋은 너비에서 멈춰요.
+const LIST_CLASS = 'flex flex-col gap-2.5 @lg:max-w-3xl @lg:mx-auto'
 const LOAD_MORE_COUNT = 30
 
 // Infinite scroll sentinel using IntersectionObserver
@@ -64,9 +66,9 @@ function SkeletonMemoCard() {
 export function MemoList() {
   const filteredMemos = useMemoFilters()
   const viewMode = useUIStore((s) => s.viewMode)
-  const { gridColsClass, handleTouchStart, handleTouchMove } = usePinchZoom()
+  const { gridClass, handleTouchStart, handleTouchMove } = usePinchZoom()
   const isSelectionMode = useUIStore((s) => s.isSelectionMode)
-  const isNarrowFold = useUIStore((s) => s.isNarrowFold)
+  const isDesktop = useUIStore((s) => s.isDesktop)
   const openContextMenu = useUIStore((s) => s.openContextMenu)
   const activeFolderId = useUIStore((s) => s.activeFolderId)
   const folders = useFolderStore((s) => s.folders)
@@ -207,7 +209,7 @@ export function MemoList() {
         )}
         <button
           onClick={openContextMenu}
-          className="mw-icon-button shrink-0 mr-4 lg:mr-0"
+          className="mw-icon-button shrink-0"
           aria-label="더보기 메뉴"
         >
           <IcLineMore size={20} className="text-zinc-500 dark:text-zinc-400" />
@@ -228,15 +230,22 @@ export function MemoList() {
         </div>
       )}
 
+      {/* 손짓 안내: 손가락으로 쓰는 화면에서 한 번, 목록 위에 */}
+      {showSwipeHint && !isDesktop && filteredMemos.length > 0 && viewMode !== 'kanban' && (
+        <div className="mt-3">
+          <FeatureHint id="swipe-onboarding" message="카드를 옆으로 밀면 중요 표시나 삭제를 할 수 있어요. 길게 누르면 여러 개를 골라요." />
+        </div>
+      )}
+
       {/* Memo list / grid / timeline */}
       {filteredMemos.length === 0 ? (
         <MemoEmptyState />
       ) : viewMode === 'kanban' ? (
-        <div className="mt-3 px-4 fold:px-2.5 pb-4 lg:px-0">
+        <div className="mt-3 pb-4">
           <KanbanView memos={filteredMemos} />
         </div>
       ) : viewMode === 'timeline' ? (
-        <div className="mt-3 px-4 fold:px-2.5 pb-4 lg:px-0">
+        <div className="mt-3 pb-4">
           <TimelineView memos={visibleMemos} />
         </div>
       ) : (() => {
@@ -248,6 +257,7 @@ export function MemoList() {
             data-memo-item
             className={clsx(
               'animate-in slide-in-from-bottom',
+              viewMode === 'grid' && 'h-full',
               showSwipeHint && index === 0 && 'animate-wiggle'
             )}
             style={{
@@ -257,9 +267,6 @@ export function MemoList() {
             }}
           >
             <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} isTrashView={isTrashView} />
-            {showSwipeHint && index === 0 && (
-              <FeatureHint id="swipe-onboarding" message="좌우로 밀어 중요 표시/삭제할 수 있습니다. 길게 눌러 선택 모드로 진입합니다." />
-            )}
           </div>
         )
         const sectionHeaderClass = clsx(
@@ -272,14 +279,8 @@ export function MemoList() {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             className={clsx(
-              'mt-3 pb-4 lg:px-0',
-              isNarrowFold ? 'px-2.5' : 'px-4',
-              '@container',
-              viewMode === 'grid'
-                ? isNarrowFold
-                  ? 'grid grid-cols-1 gap-2'
-                  : `grid ${gridColsClass} gap-3`
-                : clsx('flex flex-col', isNarrowFold ? 'gap-2' : 'gap-2.5 @lg:max-w-3xl @lg:mx-auto')
+              'mt-3 pb-4',
+              viewMode === 'grid' ? gridClass : LIST_CLASS
             )}
           >
             {showPinnedSections ? (
@@ -302,16 +303,7 @@ export function MemoList() {
       {/* Skeleton loading + Infinite scroll sentinel */}
       {hasMore && (
         <>
-          <div className={clsx(
-            'lg:px-0',
-            isNarrowFold ? 'px-2.5' : 'px-4',
-            '@container',
-            viewMode === 'grid'
-              ? isNarrowFold
-                ? 'grid grid-cols-1 gap-2'
-                : 'grid grid-cols-1 @2xs:grid-cols-2 @sm:grid-cols-3 @lg:grid-cols-4 @xl:grid-cols-5 @5xl:grid-cols-6 @7xl:grid-cols-7 gap-3'
-              : clsx('flex flex-col', isNarrowFold ? 'gap-2' : 'gap-2.5 @lg:max-w-3xl @lg:mx-auto')
-          )}>
+          <div className={viewMode === 'grid' ? gridClass : LIST_CLASS}>
             {Array.from({ length: viewMode === 'grid' ? 4 : 2 }, (_, i) => <SkeletonMemoCard key={i} />)}
           </div>
           <InfiniteScrollSentinel onIntersect={handleLoadMore} />

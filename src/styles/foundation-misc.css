@@ -147,6 +147,7 @@
   background: transparent;
   border: none;
   width: 100%;
+  white-space: nowrap;
   cursor: pointer;
   transition: var(--ctx-menu-transition), transform var(--motion-duration-short) var(--mw-ease);
 }

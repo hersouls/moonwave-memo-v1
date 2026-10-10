@@ -859,7 +859,7 @@ export function MemoEditor() {
 
       {/* UX-18: maxLength={100} on title + 제목 재생성 버튼([폴더]_요약_YYMMDD) */}
       {/* 제목: 키트의 Text Field예요. 레이블이 늘 보여요. */}
-      <div className="flex items-start gap-2 mb-3">
+      <div className="memo-editor-title flex items-start gap-2 mb-3">
         <TextField
           ref={titleRef}
           id="memo-title"
@@ -890,8 +890,9 @@ export function MemoEditor() {
         tiptapBodyContent
       ) : (
         <>
-          {/* 내용: 키트의 Text Area예요. 글이 늘면 칸이 따라 늘고, 이 영역이 스크롤돼요. */}
-          <div className={clsx('relative flex-1 min-h-0 overflow-y-auto pb-32', isBreathing && 'breathing-active')}>
+          {/* 내용: 키트의 Text Area예요. 칸이 남은 높이를 채우고 글은 칸 안에서 스크롤돼요(.memo-editor-body, index.css).
+              칸이 글을 따라 늘어나게 두면 긴 메모에서 글자를 칠 때마다 스크롤이 맨 위로 튀어요. */}
+          <div className={clsx('memo-editor-body relative flex flex-1 min-h-0 flex-col', isBreathing && 'breathing-active')}>
             <TextArea
               ref={bodyRef}
               id="memo-body"
@@ -903,7 +904,7 @@ export function MemoEditor() {
             />
             {/* AI Autocomplete ghost text */}
             {ghostText && (
-              <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-[var(--text-secondary)] italic truncate max-w-full px-1">
+              <div className="pointer-events-none absolute bottom-2 left-4 right-4 text-xs text-[var(--text-secondary)] italic truncate">
                 Tab을 눌러 수락: <span className="text-zinc-500 dark:text-zinc-500">{ghostText.slice(0, 80)}{ghostText.length > 80 ? '...' : ''}</span>
               </div>
             )}
@@ -1066,7 +1067,7 @@ export function MemoEditor() {
           'flex-1 flex flex-col min-h-0 overflow-y-auto',
           isFocusMode
             ? 'max-w-2xl mx-auto w-full px-6 pt-12'
-            : 'px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full',
+            : 'px-4 pt-3 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full',
           // 키보드가 뜨면 헤더가 숨으므로 제목이 상단에 바짝 붙지 않게 여백을 준다
           isKeyboardOpen && !isFocusMode && 'pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]'
         )}>
@@ -1114,7 +1115,7 @@ export function MemoEditor() {
                     onFolderChange={handleFolderChange}
                     className=""
                   />
-                  <div className="shrink-0">
+                  <div className="w-40 shrink-0">
                     <div className="mw-tab-group mw-tab-group--fixed" role="tablist" aria-label="편집기 모드">
                       <button type="button" role="tab" aria-selected={activeTab === 'edit'} id="tab-edit" aria-controls="panel-edit" onClick={() => setActiveTab('edit')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'edit' ? 'selected' : 'default'}`}>
                         편집

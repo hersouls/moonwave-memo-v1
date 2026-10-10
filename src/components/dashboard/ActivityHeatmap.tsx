@@ -1,7 +1,6 @@
-import { useMemo, useEffect, useRef, memo } from 'react'
+import { useMemo, useEffect, useRef, useState, memo } from 'react'
 import clsx from 'clsx'
 import { useMemoStore } from '@/stores/memoStore'
-import { useUIStore } from '@/stores/uiStore'
 import { generateHeatmapData } from '@/services/gamification'
 import { WidgetCard } from './WidgetCard'
 import { IcMwPulse } from '@/mw/icons'
@@ -27,11 +26,22 @@ function getIntensityIndex(count: number): number {
 
 export const ActivityHeatmap = memo(function ActivityHeatmap() {
   const memos = useMemoStore((s) => s.memos)
-  const isNarrowFold = useUIStore((s) => s.isNarrowFold)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // F-07: Show fewer weeks on fold front screen
-  const weekCount = isNarrowFold ? 8 : 16
+  // 카드 너비에 들어가는 만큼의 주를 보여 줘요 (한 주 = 칸 0.75rem + 사이 0.25rem, 요일 줄 1.75rem)
+  const [weekCount, setWeekCount] = useState(16)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const fit = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      if (el.clientWidth > 0) setWeekCount(Math.max(8, Math.min(26, Math.floor((el.clientWidth - rem * 1.75) / rem))))
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const heatmapData = useMemo(() => generateHeatmapData(memos, weekCount), [memos, weekCount])
 
   // Group into weeks (columns of 7)

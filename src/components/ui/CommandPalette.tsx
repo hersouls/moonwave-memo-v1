@@ -12,7 +12,7 @@ import { analyzeMemo, classifyMemo } from '@/services/aiFeatures'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { Kbd } from './Kbd'
 import { Spinner } from './Spinner'
-import { IcLineAdd, IcLineDocument, IcLineFolder, IcLineSearch, IcLineSetting, IcMwMoon, IcMwSparkles, IcMwStar, IcMwSun, IcMwTag } from '@/mw/icons'
+import { IcLineAdd, IcLineDocument, IcLineFolder, IcLineSearch, IcLineSetting, IcMwMoon, IcMwSparkles, IcMwSun, IcMwTag, IcMwStarFill } from '@/mw/icons'
 import { TextArea } from '@/mw/TextArea'
 
 const itemClass =
@@ -269,7 +269,7 @@ export function CommandPalette() {
                         className={itemClass}
                       >
                         {memo.isStarred ? (
-                          <IcMwStar size={16} className="shrink-0 fill-primary-500 text-primary-500" />
+                          <IcMwStarFill size={16} className="shrink-0 text-primary-500" />
                         ) : (
                           <IcLineDocument size={16} className="shrink-0 text-zinc-400" />
                         )}

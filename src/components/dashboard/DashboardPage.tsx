@@ -75,7 +75,8 @@ export function DashboardPage() {
   const profileName = useSettingsStore((s) => s.settings.userProfile.name)
   const isEmpty = useMemoStore((s) => s.memos.filter((m) => !m.deletedAt).length === 0)
 
-  const displayName = user?.displayName || profileName || '사용자'
+  // 이름을 모르면 인사만 해요 ('사용자'는 설정의 자리 표시 값이에요)
+  const displayName = user?.displayName || (profileName && profileName !== '사용자' ? profileName : '')
   const todayStr = new Date().toLocaleDateString('ko-KR', {
     month: 'long',
     day: 'numeric',
@@ -85,7 +86,7 @@ export function DashboardPage() {
   return (
     <div className="mw-page @container">
       {/* 페이지 머리: 인사와 오늘 날짜, 오른쪽에 주 행동 */}
-      <PageHead title={`${getTimeGreeting()}, ${displayName}님`} description={todayStr} actions={<CreateActions />} />
+      <PageHead title={displayName ? `${getTimeGreeting()}, ${displayName}님` : getTimeGreeting()} description={todayStr} actions={<CreateActions />} />
 
       {isEmpty ? (
         /* 첫 실행 상태 — 첫 메모 작성 CTA 히어로 */

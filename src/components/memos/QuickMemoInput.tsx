@@ -32,7 +32,7 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
   }
 
   return (
-    <div className="mx-4 mb-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-md border border-[var(--card-hairline)] p-3 animate-in slide-in-from-bottom duration-200">
+    <div className="mb-3 animate-in slide-in-from-bottom duration-200">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <TextArea
@@ -65,7 +65,7 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
           </button>
         </div>
       </div>
-      <p className="mt-1.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="mw-wide-only mt-1.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
         <Kbd>Ctrl</Kbd>
         <span aria-hidden="true">+</span>
         <Kbd>Enter</Kbd>

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import clsx from 'clsx'
 import { ContextMenu } from '@/components/ui/ContextMenu'
@@ -14,7 +14,7 @@ import { useToastStore } from '@/stores/toastStore'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { useMemoryDecay } from '@/hooks/useMemoryDecay'
 import { MemoHoverPreview } from './MemoHoverPreview'
-import { IcFillPlay, IcLinePin, IcLineTrash, IcLineUndo, IcMwCheckCircle, IcMwFlame, IcMwStar } from '@/mw/icons'
+import { IcFillPlay, IcLinePin, IcLineTrash, IcLineUndo, IcMwCheckCircle, IcMwFlame, IcMwStar, IcMwStarFill } from '@/mw/icons'
 
 // F-06: Dynamic swipe threshold for fold screens
 function getSwipeThreshold() {
@@ -71,7 +71,6 @@ interface MemoCardProps {
 }
 
 export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTrashView = false }: MemoCardProps) {
-  const navigate = useNavigate()
   const { navigateWithTransition } = useViewTransition()
   const location = useLocation()
   // PERF-02: Subscribe only to the needed folder, not entire array
@@ -85,7 +84,6 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
   const selectedMemoIds = useUIStore((s) => s.selectedMemoIds)
   const toggleMemoSelection = useUIStore((s) => s.toggleMemoSelection)
   const searchQuery = useUIStore((s) => s.searchQuery)
-  const setActiveTag = useUIStore((s) => s.setActiveTag)
   const digitalGardenEnabled = useSettingsStore((s) => s.settings.livingWorkspace.digitalGardenEnabled)
   const toggleStar = useMemoStore((s) => s.toggleStar)
   const softDelete = useMemoStore((s) => s.softDelete)
@@ -386,7 +384,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       onMouseLeave={handleMouseLeave}
       draggable={isDesktop && !isSelectionMode && !isTrashView}
       onDragStart={handleDragStart}
-      className={clsx('group relative overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}
+      className={clsx('group relative overflow-hidden rounded-2xl fold:rounded-xl', isGrid && 'h-full', isDeleting && 'animate-card-shrink')}
     >
       {/* Swipe action backgrounds with progressive visual feedback */}
       {isTouchDevice && !isSelectionMode && (() => {
@@ -413,8 +411,8 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
               ) : (
-                <IcMwStar
-                  className="text-white fill-white transition-transform duration-200 ease-spring"
+                <IcMwStarFill
+                  className="text-white transition-transform duration-200 ease-spring"
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
               )}
@@ -456,7 +454,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           isSelected && 'ring-2 ring-primary-500',
           // UX-07: stronger active highlight
           isActive && 'lg:ring-1 lg:ring-primary-300 lg:dark:ring-primary-700 lg:bg-primary-50/50 lg:dark:bg-primary-900/10',
-          isGrid ? 'flex-col' : 'flex-row gap-0',
+          isGrid ? 'h-full flex-col' : 'flex-row gap-0',
           isRecent && digitalGardenEnabled && 'memo-glow-active'
         )}
         onContextMenu={(e) => {
@@ -524,7 +522,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
               <IcLinePin size={16} className="shrink-0 text-primary-500 rotate-[-30deg]" />
             )}
             {memo.isStarred && (
-              <IcMwStar size={16} className={clsx('  shrink-0 fill-primary-500 text-primary-500', starPulse && 'animate-star-pulse')} />
+              <IcMwStarFill size={16} className={clsx('shrink-0 text-primary-500', starPulse && 'animate-star-pulse')} />
             )}
           </div>
 
@@ -538,25 +536,16 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             </p>
           )}
 
-          {/* Tags — true sibling buttons layered above the stretched card link */}
+          {/* 태그: 키트의 Tag예요. 눌리지 않는 표시라서 카드 어디를 눌러도 메모가 열려요 (태그로 거르기는 홈의 태그와 찾기에서 해요). */}
           {memo.tags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex max-h-6 flex-wrap items-center gap-1 overflow-hidden">
               {memo.tags.slice(0, isGrid ? 2 : 3).map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    setActiveTag(tag)
-                    useUIStore.getState().setSearchQuery('')
-                    navigate('/memos')
-                  }}
-                  className="mw-button mw-button--secondary mw-button--medium relative z-[2] after:absolute after:-inset-y-2 after:-inset-x-1.5"
-                >
+                <span key={tag} className="mw-tag mw-tag--category-basic mw-tag--large whitespace-nowrap">
                   #{tag}
-                </button>
+                </span>
               ))}
               {memo.tags.length > (isGrid ? 2 : 3) && (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
                   +{memo.tags.length - (isGrid ? 2 : 3)}
                 </span>
               )}
@@ -622,7 +611,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                   aria-label={memo.isStarred ? '중요 해제' : '중요 표시'}
                   className="mw-icon-button"
                 >
-                  <IcMwStar size={16} className={clsx(' ', memo.isStarred && 'fill-primary-500 text-primary-500')} />
+                  {memo.isStarred ? <IcMwStarFill size={16} className="text-primary-500" /> : <IcMwStar size={16} />}
                 </button>
                 <button
                   type="button"

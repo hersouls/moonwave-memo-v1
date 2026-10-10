@@ -21,7 +21,7 @@ export const StatsRow = memo(function StatsRow() {
   }
 
   return (
-    <div className="grid grid-cols-2 fold:flex fold:overflow-x-auto fold:scrollbar-none fold:-mx-4 fold:px-4 gap-3">
+    <div className="grid grid-cols-2 gap-3">
       <Link
         to="/memos"
         onClick={(e) => { e.preventDefault(); handleAllClick() }}

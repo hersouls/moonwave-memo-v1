@@ -234,6 +234,10 @@
   --memo-space-10: 10px;
   --memo-space-14: 14px;
   --memo-space-28: 28px;
+  --memo-editor-body-min: 160px; /* 편집기의 내용 칸이 줄어들 수 있는 가장 낮은 높이 */
+  --memo-card-min: 168px; /* 격자 보기에서 메모 카드 한 장의 가장 좁은 너비: 380px 폰은 한 칸, 그보다 넓으면 두 칸부터 */
+  --memo-card-min-compact: 132px;
+  --memo-card-min-expanded: 280px;
 }
 
 /* Base styles */
@@ -441,6 +445,46 @@ body {
 
 .breathing-active textarea {
   animation: breathe var(--memo-breathe-cycle) var(--motion-easing-ease-in-out) infinite;
+}
+
+/* ========================================
+   메모 목록: 격자 보기
+   ======================================== */
+
+/* 칸 수를 적지 않아요. 카드 한 장의 가장 좁은 너비만 정하면 목록이 놓인 자리(폰 화면, 나란히 보기의 왼쪽 칸, 넓은 화면)에 맞춰
+   칸이 늘고 줄어요. 380px 폰은 한 칸, 그보다 넓은 폰은 두 칸이에요 (키트의 격자와 같은 걸음). 두 손가락으로 벌리고 오므리면 단계가 바뀌어요. */
+.memo-grid {
+  display: grid;
+  gap: var(--space-12);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--memo-card-min)), 1fr));
+}
+.memo-grid--compact { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--memo-card-min-compact)), 1fr)); }
+.memo-grid--expanded { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--memo-card-min-expanded)), 1fr)); }
+
+/* ========================================
+   편집기: 내용 칸
+   ======================================== */
+
+/* 키트의 Text Area는 글을 따라 높이가 늘어요. 편집기에서는 칸이 화면의 남은 높이를 채우고 글이 칸 안에서 스크롤돼요.
+   긴 메모에서도 테두리가 끊기지 않고, 글자를 칠 때 스크롤이 튀지 않고, 목차 · 나란히 보기가 칸의 스크롤을 따라가요.
+   키트 컴포넌트가 글자를 칠 때마다 적는 높이(style.height)는 여기서 눌러요. */
+/* 제목 칸과 내용 칸은 편집기 너비를 그대로 따라가요. 키트의 가장 좁은 너비(320px)를 두면 360px 폰에서 제목 칸이 옆의 버튼 밑으로 들어가요. */
+.memo-editor-title .mw-textfield,
+.memo-editor-body .mw-textarea { min-width: 0; }
+.memo-editor-body { min-height: var(--memo-editor-body-min); }
+.memo-editor-body > .mw-textarea-container,
+.memo-editor-body .mw-textarea { flex: 1 1 auto; min-height: 0; }
+.memo-editor-body .mw-textarea__textarea {
+  flex: 1 1 0;
+  box-sizing: border-box;
+  height: auto !important;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 칸 전체가 누르는 영역이라, 한 줄짜리 칸을 위한 키트의 넓힘(위아래 11px)은 쓰지 않아요. 넓혀 두면 스크롤된 글이 레이블에 겹쳐요.
+     아래는 마지막 줄이 칸 끝에 붙지 않게 비워요. */
+  margin-block: 0 !important;
+  padding-block: 0 var(--space-32) !important;
 }
 
 /* ========================================

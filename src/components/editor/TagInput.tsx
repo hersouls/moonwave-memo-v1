@@ -1,3 +1,5 @@
+import { IcMwTag } from '@/mw/icons'
+import { ChipGroup, InputChip } from '@/mw/Chip'
 
 interface TagInputProps {
   tags: string[]
@@ -6,39 +8,39 @@ interface TagInputProps {
   onEdit?: () => void
 }
 
+/**
+ * 편집기 아래의 태그 줄이에요. 키트의 Input 칩(고른 값을 보여 주고 X로 지워요)을 한 줄로 놓고,
+ * 넘치면 옆으로 넘겨요. 여러 줄로 감으면 폰에서 글 쓸 자리를 태그가 차지해요.
+ */
 export function TagInput({ tags, onRemoveTag, onEdit }: TagInputProps) {
   if (tags.length === 0 && !onEdit) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 px-4 py-2">
-      {tags.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 "
-        >
-          #{tag}
-          {onRemoveTag && (
-            <button type="button"
-              onClick={() => onRemoveTag(tag)}
-              className="mw-icon-button"
-            >
-              <IcLineClose size={12} />
-            </button>
-          )}
-        </span>
-      ))}
+    <div className="flex shrink-0 items-center gap-2 pt-3">
+      {tags.length > 0 && (
+        <div className="min-w-0 flex-1">
+          <ChipGroup role="group" aria-label="태그">
+            {tags.map((tag) => (
+              onRemoveTag ? (
+                <InputChip key={tag} onClick={onEdit} onIconClick={() => onRemoveTag(tag)}>
+                  #{tag}
+                </InputChip>
+              ) : (
+                <span key={tag} className="mw-tag mw-tag--category-basic mw-tag--large">#{tag}</span>
+              )
+            ))}
+          </ChipGroup>
+        </div>
+      )}
       {onEdit && (
         <button type="button"
           onClick={onEdit}
-          className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left"
-          aria-label="태그 편집"
+          className="mw-button mw-button--secondary mw-button--small mw-button--icon-left shrink-0"
         >
-          <IcMwTag size={12} />
+          <IcMwTag size={16} />
           태그 편집
         </button>
       )}
     </div>
   )
 }
-
-import { IcLineClose, IcMwTag } from '@/mw/icons'
