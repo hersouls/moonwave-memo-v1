@@ -13,6 +13,11 @@
 # It ends with 0 only when the live site reports this commit (dist/version.json, written by buildVersionPlugin in
 # vite.config.ts) and the API functions answer. That also holds once production is promoted by CI (promote.yml):
 # the wait is on what is live, not on the push.
+#
+# A failure from the push on (push refused, Vercel build failed, the site never changed, a function does not answer)
+# also goes to the owner's phone through the Moonwave notification hub: fix sessions run this unattended, and from
+# there on the public site may not be what the repository says. Failures of the checks before the push do not: nothing
+# left this Mac. The alert is skipped where the hub is not installed.
 set -u
 setopt pipefail
 cd "${0:A:h}/.."
@@ -20,8 +25,19 @@ cd "${0:A:h}/.."
 REPO=hersouls/moonwave-memo-v1
 SITE=https://memo.moonwave.kr
 WAIT_SECONDS=${MEMO_DEPLOY_WAIT:-900}
+NOTIFY=/Volumes/Work/Moonwave_Web/Vector_DB_Bot_v1.0/scripts/notify.mjs
+ALERT=0   # 1 from the push on
 say() { print -r -- "[deploy] $*" }
-die() { print -r -- "[deploy] 실패: $*" >&2; exit 1 }
+die() {
+  print -r -- "[deploy] 실패: $*" >&2
+  # fixed wording (it shows on the lock screen, after the hub's "Memo · "): no commit text, no command output
+  if (( ALERT )) && [[ -f $NOTIFY ]]; then
+    node $NOTIFY --source memo --kind alert --priority high --tag memo-deploy --url $SITE \
+      --dedupe memo-deploy-fail --dedupe-window 3600 --title "새 판을 운영에 올리지 못했어요" \
+      --body "memo.moonwave.kr을 열어 보고 Mac에서 배포를 다시 실행해 주세요." >/dev/null 2>&1
+  fi
+  exit 1
+}
 
 CHECK_ONLY=0
 [[ "${1:-}" == "--check" ]] && { CHECK_ONLY=1; shift }
@@ -65,6 +81,7 @@ fi
 SHA=$(git rev-parse HEAD)
 
 # ── 3. push (this is the deploy)
+ALERT=1
 if [[ "$(git rev-parse origin/master)" != "$SHA" ]]; then
   PUSHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   git -c credential.helper= -c credential.helper='!gh auth git-credential' push -q origin HEAD:master || die "git push (gh auth status 로 로그인을 확인해요)"

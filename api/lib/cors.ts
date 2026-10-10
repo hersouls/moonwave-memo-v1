@@ -8,7 +8,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
  * responses; it is not an authentication layer (that is api/lib/auth.ts, which
  * needs the `Authorization` request header allowed below).
  */
-const ALLOWED_ORIGINS = new Set(['https://localhost', 'capacitor://localhost'])
+const ALLOWED_ORIGINS = ['https://localhost', 'capacitor://localhost'] as const
 
 /**
  * Apply CORS headers and answer preflights.
@@ -16,8 +16,9 @@ const ALLOWED_ORIGINS = new Set(['https://localhost', 'capacitor://localhost'])
  * Returns true when the request was an OPTIONS preflight and is fully handled.
  */
 export function applyCors(req: VercelRequest, res: VercelResponse): boolean {
-  const origin = req.headers.origin
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
+  // The header value is our own entry from the list above, never the text the request sent.
+  const origin = ALLOWED_ORIGINS.find((allowed) => allowed === req.headers.origin)
+  if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin)
     res.setHeader('Vary', 'Origin')
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')

@@ -40,11 +40,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const maxTokens = task === 'readability' ? 2000 : 500
   const model = createChatModel(provider as Provider, apiKey, { temperature: 0.3, maxTokens })
 
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-  })
+  // Server-sent events carrying JSON, never HTML: the type is declared here and a browser may not guess another.
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.writeHead(200)
 
   try {
     const stream = await model.stream([
