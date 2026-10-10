@@ -57,13 +57,14 @@ export function FolderSelector({ currentFolder, onFolderChange, className = 'mb-
       {/* A11Y-05: aria-haspopup + aria-expanded */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 py-1 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+        type="button"
+        className="mw-button mw-button--tertiary-subtle mw-button--medium"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
         <span
           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: currentFolder?.color || '#F59E0B' }}
+          style={{ backgroundColor: currentFolder?.color || 'var(--mw-cat-2)' }}
         />
         <span>{currentFolder?.name || '내 메모'}</span>
         {isOpen ? (
@@ -81,7 +82,7 @@ export function FolderSelector({ currentFolder, onFolderChange, className = 'mb-
             ref={listRef}
             role="listbox"
             aria-label="폴더 선택"
-            className="ctx-menu absolute left-0 top-full mt-1 z-[var(--z-dropdown)] min-w-[180px] origin-top-left animate-in fade-in zoom-in-95 slide-in-from-top-1 duration-150 ease-enter"
+            className="ctx-menu absolute left-0 top-full mt-1 z-[var(--z-dropdown)] min-w-[180px] origin-top-left animate-in fade-in zoom-in-95 slide-in-from-top-1 duration-200 ease-enter"
           >
             {folders.map((folder, index) => (
               <button

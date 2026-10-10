@@ -25,7 +25,7 @@ function ScanAnimation() {
       <div
         className="absolute left-0 right-0 h-0.5 bg-primary-500"
         style={{
-          animation: 'scanLine 2s ease-in-out infinite',
+          animation: 'scanLine var(--motion-duration-loop) var(--motion-easing-ease-in-out) infinite alternate',
         }}
       />
       <IcLineCamera size={32} className="absolute inset-0 m-auto text-primary-500/60" />
@@ -94,7 +94,7 @@ function StepImageSelect({
           className={clsx(
             'flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
             activeTab === 'upload'
-              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+              ? 'border-primary-500 text-primary-600 '
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
@@ -106,7 +106,7 @@ function StepImageSelect({
           className={clsx(
             'flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
             activeTab === 'camera'
-              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+              ? 'border-primary-500 text-primary-600 '
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
@@ -135,7 +135,7 @@ function StepImageSelect({
             className={clsx(
               'flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-[border-color,background-color]',
               dragOver
-                ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10'
+                ? 'border-primary-500 bg-primary-50/50 '
                 : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'
             )}
           >
@@ -166,7 +166,7 @@ function StepImageSelect({
       ) : (
         /* Camera tab */
         <div className="flex flex-col items-center gap-4 py-4">
-          <div className="w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center">
             <IcLineCamera size={32} className="text-primary-500" />
           </div>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center">
@@ -271,7 +271,7 @@ function StepProcessing({
       <div className="w-full max-w-xs">
         <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary-500 rounded-full transition-[width] duration-500 ease-out"
+            className="h-full bg-primary-500 rounded-full transition-[width] duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -497,7 +497,7 @@ export function ImageOCRModal() {
           <div
             key={step}
             className="animate-in fade-in slide-in-from-bottom-2"
-            style={{ animationDuration: '250ms', animationTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
+            style={{ animationDuration: 'var(--motion-duration-medium)', animationTimingFunction: 'var(--mw-ease)' }}
           >
             {step === 1 && (
               <StepImageSelect onImageSelect={handleImageSelect} />

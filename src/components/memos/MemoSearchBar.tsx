@@ -173,7 +173,7 @@ export function MemoSearchBar() {
             className={clsx(
               '-my-2 flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full transition-colors',
               showFilters
-                ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
+                ? 'bg-primary-100 text-primary-600 '
                 : 'text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
             )}
             aria-label="필터"
@@ -206,8 +206,8 @@ export function MemoSearchBar() {
 
         {/* Recent searches dropdown — elevated surface tokens (dark parity with menus/popovers) */}
         {showRecent && !localQuery && recentSearches.length > 0 && (
-          <div className="absolute left-0 right-0 top-full mt-1 z-[var(--z-dropdown)] rounded-xl border border-[var(--card-hairline)] bg-[var(--color-bg-elevated)] py-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
-            <div className="px-3 py-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+          <div className="absolute left-0 right-0 top-full mt-1 z-[var(--z-dropdown)] rounded-xl border border-[var(--card-hairline)] bg-[var(--color-bg-elevated)] py-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="px-3 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               최근 검색
             </div>
             {/* Select + remove as sibling buttons — no interactive nesting */}
@@ -240,7 +240,7 @@ export function MemoSearchBar() {
 
       {/* Filter chips */}
       {showFilters && (
-        <div className="animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
           <SearchFilters />
         </div>
       )}

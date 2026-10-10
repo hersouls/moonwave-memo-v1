@@ -23,6 +23,7 @@ import {
 } from 'd3-force'
 import { toPng } from 'html-to-image'
 import type { GraphLink, GraphNode, LinkKind } from '@/hooks/useGraphData'
+import { resolveCssColor } from '@/utils/cssColor'
 
 /* ────────────────────────────────────────────────────────────────
    지식 그래프 렌더 엔진 (ForceGraph)
@@ -38,11 +39,7 @@ import type { GraphLink, GraphNode, LinkKind } from '@/hooks/useGraphData'
    ──────────────────────────────────────────────────────────────── */
 
 // 폴더 고유색이 없을 때의 팔레트 폴백 (KnowledgeGraph 위젯에서 사용)
-export const GROUP_COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
-  '#14b8a6', '#a855f7', '#eab308', '#f43f5e', '#0ea5e9',
-]
+export const GROUP_COLORS = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `var(--mw-cat-${n})`)
 
 // auto: 줌 레벨에 따라 허브→말단 순으로 라벨이 서서히 나타남 (옵시디언식)
 export type LabelMode = 'none' | 'auto' | 'all'
@@ -159,7 +156,7 @@ const GraphContent = memo(function GraphContent({
       </g>
       <g>
         {nodes.map((n) => {
-          const color = colorMap.get(n.group) || '#a1a1aa'
+          const color = colorMap.get(n.group) || 'var(--mw-cat-other)'
           return (
             <g
               key={n.id}
@@ -192,11 +189,10 @@ const GraphContent = memo(function GraphContent({
                 }}
                 x={nodeRadius(n.degree, interactive) + 4}
                 y={4}
-                fontSize={11}
                 className="fill-zinc-700 dark:fill-zinc-200"
                 // opacity transition 없음 — 자동 라벨의 k-램프 자체가 페이드 역할
                 // (transition을 두면 매 프레임 재시작되어 램프보다 180ms 뒤처짐)
-                style={{ opacity: 0, pointerEvents: 'none', paintOrder: 'stroke' }}
+                style={{ fontSize: 'var(--font-size-12)', opacity: 0, pointerEvents: 'none', paintOrder: 'stroke' }}
                 stroke="var(--dialog-bg, transparent)"
                 strokeWidth={3}
               >
@@ -611,7 +607,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     if (!hadPrevLayout && svgRef.current && !prefersReducedMotion()) {
       const el = svgRef.current
       el.style.opacity = '0'
-      el.style.transition = 'opacity 280ms var(--ease-enter, ease-out)'
+      el.style.transition = 'opacity var(--motion-duration-long) var(--motion-easing-ease-out)'
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           el.style.opacity = '1'
@@ -871,11 +867,10 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       exportPNG: async () => {
         const target = exportRef.current
         if (!target) return
-        const isDark = document.documentElement.dataset.theme === 'dark'
         const dataUrl = await toPng(target, {
           pixelRatio: 2,
           cacheBust: true,
-          backgroundColor: isDark ? '#18181b' : '#ffffff',
+          backgroundColor: resolveCssColor('var(--background-primary)'),
         })
         const a = document.createElement('a')
         a.href = dataUrl

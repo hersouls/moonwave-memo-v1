@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useMemoStore } from '@/stores/memoStore'
 import { parseChecklist } from '@/utils/checklistParser'
 import { WidgetCard } from './WidgetCard'
 import { IcMwCheckSquare } from '@/mw/icons'
+import { Link } from 'react-router-dom'
 
 interface TodoItem {
   text: string
@@ -13,7 +13,6 @@ interface TodoItem {
 
 export function TodoWidget() {
   const memos = useMemoStore((s) => s.memos)
-  const navigate = useNavigate()
 
   const uncheckedTodos = useMemo(() => {
     const todos: TodoItem[] = []
@@ -44,20 +43,20 @@ export function TodoWidget() {
       <ul className="space-y-2">
         {uncheckedTodos.map((todo, index) => (
           <li key={`${todo.memoId}-${index}`}>
-            <button
-              onClick={() => navigate(`/memo/${todo.memoId}`)}
-              className="w-full text-left group flex items-start gap-2 py-1 px-1.5 -mx-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors"
+            <Link
+              to={`/memo/${todo.memoId}`}
+              className="w-full text-left group flex items-start gap-2 py-3 px-1.5 -mx-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors"
             >
               <span className="mt-1 w-3.5 h-3.5 shrink-0 rounded border border-zinc-300 dark:border-zinc-600" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-zinc-700 dark:text-zinc-300 truncate">
                   {todo.text}
                 </p>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                   {todo.memoTitle}
                 </p>
               </div>
-            </button>
+            </Link>
           </li>
         ))}
       </ul>

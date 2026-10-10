@@ -1,6 +1,4 @@
-import clsx from 'clsx'
 import { FOLDER_COLORS, FOLDER_COLOR_NAMES } from '@/utils/constants'
-import { IcLineCheck } from '@/mw/icons'
 
 interface ColorSwatchPickerProps {
   value: string
@@ -10,18 +8,12 @@ interface ColorSwatchPickerProps {
 }
 
 /**
- * 공유 색상 스와치 피커 — 폴더/템플릿 색상 선택에 사용.
- * 선택 상태는 링 대신 체크 아이콘 + 스케일로 표시(다크모드 흰 halo 방지),
- * 한국어 색상명 aria-label과 aria-pressed로 보조기기에 상태를 노출한다.
+ * 폴더의 색을 골라요. 키트의 Select 칩이에요: 색 점과 이름을 함께 보여서 색만으로 알리지 않아요.
+ * 고를 수 있는 색은 일곱 가지(키트의 범주 색)예요.
  */
-export function ColorSwatchPicker({
-  value,
-  onChange,
-  colors = FOLDER_COLORS,
-  className,
-}: ColorSwatchPickerProps) {
+export function ColorSwatchPicker({ value, onChange, colors = FOLDER_COLORS, className }: ColorSwatchPickerProps) {
   return (
-    <div role="group" aria-label="색상 선택" className={clsx('flex flex-wrap gap-2', className)}>
+    <div role="group" aria-label="색 고르기" className={['flex flex-wrap gap-2', className].filter(Boolean).join(' ')}>
       {colors.map((c) => {
         const isSelected = value === c
         return (
@@ -29,17 +21,11 @@ export function ColorSwatchPicker({
             key={c}
             type="button"
             onClick={() => onChange(c)}
-            aria-label={FOLDER_COLOR_NAMES[c] ?? c}
             aria-pressed={isSelected}
-            className={clsx(
-              'w-8 h-8 rounded-full flex items-center justify-center',
-              'transition-transform duration-150 ease-standard hover:scale-110 active:scale-95',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-              isSelected && 'scale-110'
-            )}
-            style={{ backgroundColor: c }}
+            className={`mw-select-chip mw-select-chip--${isSelected ? 'on' : 'off'}`}
           >
-            {isSelected && <IcLineCheck size={16} className="text-white drop-shadow-sm" aria-hidden="true" />}
+            <span className="memo-nav__dot" style={{ backgroundColor: c }} aria-hidden="true" />
+            {FOLDER_COLOR_NAMES[c] ?? '고른 색'}
           </button>
         )
       })}

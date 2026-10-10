@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/stores/authStore'
+import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { useViewTransition } from '@/hooks/useViewTransition'
 import { IcMwDoor } from '@/mw/icons'
 
 export function ProfileCard() {
@@ -8,7 +8,6 @@ export function ProfileCard() {
   const login = useAuthStore((s) => s.login)
   const isSigningIn = useAuthStore((s) => s.isSigningIn)
   const userProfile = useSettingsStore((s) => s.settings.userProfile)
-  const { navigateWithTransition } = useViewTransition()
 
   if (!user) {
     return (
@@ -27,7 +26,7 @@ export function ProfileCard() {
         <button type="button"
           onClick={login}
           disabled={isSigningIn}
-          className="mw-button mw-button--primary mw-button--medium mw-button--icon-left"
+          className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left"
         >
           <IcMwDoor size={16} />
           로그인
@@ -42,9 +41,11 @@ export function ProfileCard() {
 
   return (
     <button
-      onClick={() => navigateWithTransition('/settings')}
-      className="card card--interactive flex w-full items-center gap-4 px-5 py-4 text-left"
+      type="button"
+      onClick={() => useUIStore.getState().openSettingsModal()}
+      className="mw-surface mw-surface--link w-full text-left"
     >
+      <span className="flex items-center gap-4">
       {photoURL ? (
         <img
           src={photoURL}
@@ -53,8 +54,8 @@ export function ProfileCard() {
           referrerPolicy="no-referrer"
         />
       ) : (
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900">
-          <span className="text-lg font-semibold text-primary-600 dark:text-primary-300">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-100 ">
+          <span className="text-lg font-semibold text-primary-600 ">
             {displayName.charAt(0)}
           </span>
         </div>
@@ -69,6 +70,7 @@ export function ProfileCard() {
           </p>
         )}
       </div>
+    </span>
     </button>
   )
 }

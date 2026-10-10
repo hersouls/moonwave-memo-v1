@@ -98,11 +98,11 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
                 onClick={() => navigate(`/memo/${memo.id}`)}
                 className="w-full text-left py-1.5 px-2 -mx-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors group"
               >
-                <p className="text-sm text-zinc-700 dark:text-zinc-300 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 truncate group-hover:text-primary-600 transition-colors">
                   {memo.title || '제목 없음'}
                 </p>
                 {memo.tags.length > 0 && (
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                     {memo.tags.slice(0, 3).map((t) => `#${t}`).join(' ')}
                   </p>
                 )}

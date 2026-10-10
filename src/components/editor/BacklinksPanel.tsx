@@ -37,12 +37,12 @@ export function BacklinksPanel({ memoId, title }: BacklinksPanelProps) {
       </button>
 
       {isOpen && (
-        <div className="px-3 pb-3 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="px-3 pb-3 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
           {backlinks.map((memo) => (
             <button type="button"
               key={memo.id}
               onClick={() => navigate(`/memo/${memo.id}`)}
-              className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default w-full truncate"
+              className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default w-full truncate"
             >
               <span>{memo.title || '제목 없음'}</span>
             </button>

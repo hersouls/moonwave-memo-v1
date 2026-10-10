@@ -120,7 +120,7 @@ export function InsightsWidget() {
       {aiLoading && (
         <div className="flex items-center gap-2 mt-3">
           <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-          <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
         </div>
       )}
     </WidgetCard>

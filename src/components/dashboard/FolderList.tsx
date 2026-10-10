@@ -5,6 +5,7 @@ import { useMemoStats } from '@/hooks/useMemoStats'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
 import { IcLineFolder } from '@/mw/icons'
+import { Link } from 'react-router-dom'
 
 export const FolderList = memo(function FolderList() {
   const { navigateWithTransition } = useViewTransition()
@@ -36,7 +37,7 @@ export const FolderList = memo(function FolderList() {
           type="button"
           onClick={handleEditClick}
           aria-label="폴더 편집"
-          className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
+          className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
         >
           <span>편집</span>
         </button>
@@ -50,7 +51,7 @@ export const FolderList = memo(function FolderList() {
           <button
             type="button"
             onClick={handleEditClick}
-            className="mw-text-button mw-text-button--underline mw-text-button--small mw-text-button--default"
+            className="mw-text-button mw-text-button--underline mw-text-button--medium mw-text-button--default"
           >
             <span>폴더 만들기</span>
           </button>
@@ -59,9 +60,10 @@ export const FolderList = memo(function FolderList() {
         userFolders.map((folder) => {
           const count = folderCounts.get(folder.id!) || 0
           return (
-            <button
+            <Link
               key={folder.id}
-              onClick={() => handleFolderClick(folder.id!)}
+              to="/memos"
+              onClick={(e) => { e.preventDefault(); handleFolderClick(folder.id!) }}
               className="list-item list-item--button flex w-full items-center gap-3"
             >
               <span
@@ -74,7 +76,7 @@ export const FolderList = memo(function FolderList() {
               <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                 {count}
               </span>
-            </button>
+            </Link>
           )
         })
       )}

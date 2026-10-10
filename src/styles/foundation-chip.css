@@ -12,7 +12,7 @@
   --chip-border-radius: 9999px;
   --chip-font-size: 14px;
   --chip-font-weight: 500;
-  --chip-transition: background-color 200ms ease, color 200ms ease, transform 150ms ease;
+  --chip-transition: background-color var(--motion-duration-medium) var(--mw-ease), color var(--motion-duration-medium) var(--mw-ease), transform var(--motion-duration-short) var(--mw-ease);
 }
 
 /* -----------------------------------------
@@ -30,9 +30,6 @@
   --chip-sm-font-size: 12px;
 
   /* XS */
-  --chip-xs-height: 20px;
-  --chip-xs-padding-x: 8px;
-  --chip-xs-font-size: 10px;
 }
 
 /* -----------------------------------------
@@ -40,24 +37,12 @@
    ----------------------------------------- */
 :root {
   --chip-text-bg: var(--color-bg-elevated);
-  --chip-text-color: #3f3f46;
-  --chip-text-bg-hover: #f4f4f5;
+  --chip-text-color: var(--text-secondary);
+  --chip-text-bg-hover: var(--background-secondary);
   /* Selected = inverted pill (semantic tokens auto-flip in dark mode) */
   --chip-text-bg-pressed: var(--color-text-primary);
   --chip-text-color-pressed: var(--color-bg-primary);
-  --chip-text-border-color: #e4e4e7;
-}
-
-/* -----------------------------------------
-   4. Badge Chip Color Tokens
-   ----------------------------------------- */
-:root {
-  --chip-badge-bg: var(--color-bg-elevated);
-  --chip-badge-color: #3f3f46;
-  --chip-badge-bg-pressed: #e4e4e7;
-  --chip-badge-icon-size: 20px;
-  --chip-badge-icon-gap: 8px;
-  --chip-badge-icon-color: #d4d4d8;
+  --chip-text-border-color: var(--border-secondary);
 }
 
 /* -----------------------------------------
@@ -69,25 +54,12 @@
   --badge-padding-y: 2px;
   --badge-font-size: 12px;
   --badge-font-weight: 500;
-  --badge-icon-size: 12px;
   --badge-gap: 4px;
-  --chip-group-gap: 8px;
 }
 
 /* -----------------------------------------
    6. Dark Mode Overrides
    ----------------------------------------- */
-[data-theme="dark"] {
-  /* Text Chip — pressed/selected colors flip automatically via semantic tokens */
-  --chip-text-color: #d4d4d8;
-  --chip-text-bg-hover: #3f3f46;
-  --chip-text-border-color: #52525b;
-
-  /* Badge Chip */
-  --chip-badge-color: #d4d4d8;
-  --chip-badge-bg-pressed: #52525b;
-  --chip-badge-icon-color: #52525b;
-}
 
 /* ========================================
    Text Chip Utility Classes
@@ -144,7 +116,7 @@
 
 .chip-text--sm {
   height: var(--chip-sm-height);
-  padding: 4px var(--chip-sm-padding-x);
+  padding: var(--space-4) var(--chip-sm-padding-x);
   font-size: var(--chip-sm-font-size);
 }
 

@@ -73,8 +73,8 @@ export function IOSInstallBanner() {
         {/* Steps */}
         <div className="px-4 py-3 space-y-2.5">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-50 dark:bg-primary-900/30 shrink-0">
-              <span className="text-xs font-bold text-primary-600 dark:text-primary-400">1</span>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-50 shrink-0">
+              <span className="text-xs font-bold text-primary-600 ">1</span>
             </div>
             <p className="text-sm text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
               하단의 공유
@@ -85,8 +85,8 @@ export function IOSInstallBanner() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-50 dark:bg-primary-900/30 shrink-0">
-              <span className="text-xs font-bold text-primary-600 dark:text-primary-400">2</span>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-50 shrink-0">
+              <span className="text-xs font-bold text-primary-600 ">2</span>
             </div>
             <p className="text-sm text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
               <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-200">
@@ -101,7 +101,7 @@ export function IOSInstallBanner() {
         <div className="px-4 pb-3 flex justify-end">
           <button type="button"
             onClick={handleDismiss}
-            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
+            className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
           >
             <span>다시 보지 않기</span>
           </button>

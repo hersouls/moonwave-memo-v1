@@ -92,7 +92,7 @@ export function DashboardPage() {
         <div className="space-y-4">
           <ProfileCard />
           <div className="card flex flex-col items-center gap-3 px-6 py-12 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-500 dark:bg-primary-900/20 dark:text-primary-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-500 ">
               <IcLineWrite size={24} />
             </div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">

@@ -11,10 +11,10 @@ const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 /* 강도 스케일 — 셀과 범례가 같은 배열을 공유 */
 const INTENSITY_SCALE = [
   'bg-zinc-100 dark:bg-zinc-800',
-  'bg-primary-200 dark:bg-primary-900/40',
-  'bg-primary-300 dark:bg-primary-800/60',
-  'bg-primary-400 dark:bg-primary-700/70',
-  'bg-primary-500 dark:bg-primary-600',
+  'bg-primary-200 ',
+  'bg-primary-300 ',
+  'bg-primary-400 ',
+  'bg-primary-500 ',
 ] as const
 
 function getIntensityIndex(count: number): number {
@@ -62,14 +62,14 @@ export const ActivityHeatmap = memo(function ActivityHeatmap() {
       title="활동 히트맵"
       meta={`최근 ${weekCount}주 · ${totalCount}개 메모`}
     >
-      <div ref={scrollRef} className="flex gap-1 overflow-x-auto pb-1">
+      <div ref={scrollRef} tabIndex={0} role="group" aria-label="날짜별 활동 기록" className="flex gap-1 overflow-x-auto pb-1">
         {/* Day labels */}
         <div className="mr-1 flex shrink-0 flex-col gap-1">
           <div className="h-3.5" aria-hidden="true" />
           {DAYS.map((day, i) => (
             <div key={i} className="flex h-3 w-5 items-center">
               {(i === 1 || i === 3 || i === 5) && (
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{day}</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">{day}</span>
               )}
             </div>
           ))}
@@ -80,7 +80,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap() {
           <div key={weekIdx} className="flex flex-col gap-1">
             <div className="relative h-3.5 w-3" aria-hidden="true">
               {monthLabels[weekIdx] && (
-                <span className="absolute left-0 top-0 whitespace-nowrap text-[10px] leading-none text-zinc-500 dark:text-zinc-400">
+                <span className="absolute left-0 top-0 whitespace-nowrap text-xs leading-none text-zinc-500 dark:text-zinc-400">
                   {monthLabels[weekIdx]}
                 </span>
               )}
@@ -101,11 +101,11 @@ export const ActivityHeatmap = memo(function ActivityHeatmap() {
 
       {/* Legend */}
       <div className="mt-2 flex items-center justify-end gap-1.5">
-        <span className="text-[10px] text-zinc-500 dark:text-zinc-400">적음</span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">적음</span>
         {INTENSITY_SCALE.map((cls) => (
           <div key={cls} className={clsx('h-2.5 w-2.5 rounded-sm', cls)} />
         ))}
-        <span className="text-[10px] text-zinc-500 dark:text-zinc-400">많음</span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">많음</span>
       </div>
     </WidgetCard>
   )

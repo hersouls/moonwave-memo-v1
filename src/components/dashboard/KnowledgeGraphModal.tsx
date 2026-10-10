@@ -45,7 +45,7 @@ class Graph3DBoundary extends Component<
               this.setState({ failed: false })
               this.props.onRetry()
             }}
-            className="mw-button mw-button--tertiary-subtle mw-button--small"
+            className="mw-button mw-button--tertiary-subtle mw-button--medium"
           >
             다시 시도
           </button>
@@ -217,7 +217,7 @@ export function KnowledgeGraphModal({
   // 이유 없이 튕겨 보이므로 즉시 닫는다.
   const handleDialogClose = useCallback(() => {
     const detailVisible =
-      typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches
+      typeof window !== 'undefined' && window.matchMedia('(min-width: 601px)').matches
     if (selectedId && detailVisible) {
       setSelectedId(null)
       return
@@ -278,7 +278,7 @@ export function KnowledgeGraphModal({
       <div className="flex flex-col overflow-hidden rounded-t-2xl sm:rounded-xl" style={{ height: 'min(80vh, 780px)' }}>
         {/* ── 헤더 / 툴바 ── */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-zinc-100 px-4 py-3 dark:border-white/[0.06] sm:px-5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 dark:bg-primary-900/20 dark:text-primary-400">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 ">
             <IcLineShare size={16} />
           </span>
           <div className="min-w-0">
@@ -307,7 +307,7 @@ export function KnowledgeGraphModal({
                 className="h-9 w-48 rounded-lg border border-zinc-200 bg-white pl-8 pr-9 text-sm text-zinc-800 placeholder:text-zinc-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-100"
               />
               {query.trim() && (
-                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] tabular-nums text-zinc-400">
+                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs tabular-nums text-zinc-400">
                   {matches.length}
                 </span>
               )}
@@ -320,7 +320,7 @@ export function KnowledgeGraphModal({
               className={clsx(
                 'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
                 is3D
-                  ? 'border-primary-300 bg-primary-50 text-primary-600 dark:border-primary-500/40 dark:bg-primary-900/20 dark:text-primary-300'
+                  ? 'border-primary-300 bg-primary-50 text-primary-600 '
                   : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
               )}
             >
@@ -357,7 +357,7 @@ export function KnowledgeGraphModal({
                 className={clsx(
                   'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
                   hideOrphans
-                    ? 'border-primary-300 bg-primary-50 text-primary-600 dark:border-primary-500/40 dark:bg-primary-900/20 dark:text-primary-300'
+                    ? 'border-primary-300 bg-primary-50 text-primary-600 '
                     : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
                 )}
               >
@@ -481,7 +481,7 @@ export function KnowledgeGraphModal({
               <div className="flex items-start gap-2">
                 <span
                   className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: colorMap.get(selected.group) || '#a1a1aa' }}
+                  style={{ backgroundColor: colorMap.get(selected.group) || 'var(--mw-cat-other)' }}
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold leading-snug text-zinc-900 dark:text-zinc-100">
@@ -526,13 +526,13 @@ export function KnowledgeGraphModal({
                     type="button"
                     onClick={() => setHighlightGroup(on ? null : g)}
                     className={clsx(
-                      'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors',
+                      'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium transition-colors',
                       on
                         ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
                         : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10'
                     )}
                   >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colorMap.get(g) || '#a1a1aa' }} />
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colorMap.get(g) || 'var(--mw-cat-other)' }} />
                     {folderName(g)}
                   </button>
                 )
@@ -573,7 +573,7 @@ export function KnowledgeGraphModal({
           )}
 
           {/* 조작 힌트 */}
-          <p className="pointer-events-none absolute left-1/2 top-3 z-0 hidden -translate-x-1/2 text-[11px] text-zinc-400 sm:block dark:text-zinc-500">
+          <p className="pointer-events-none absolute left-1/2 top-3 z-0 hidden -translate-x-1/2 text-xs text-zinc-400 sm:block dark:text-zinc-500">
             {is3D
               ? '드래그 회전 · 휠 줌 · 우클릭 이동 · 노드 클릭 선택, 재클릭 열기'
               : '드래그 이동 · 휠/핀치 줌 · 더블클릭/0 전체 보기 · 실선 [[링크]] · 점선 자동 연결'}

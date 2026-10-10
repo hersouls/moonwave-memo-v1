@@ -1,29 +1,4 @@
 
-/* ============================================
-   Foundation Misc — Design Token & Utility
-   12_기타 디자인 시스템
-   Section Header + Empty State + Context Menu
-   + Icon System + Text Expand + Completion Page
-   + File Upload + Tooltip Utility
-   ============================================ */
-
-/* -----------------------------------------
-   1. Section Header Tokens
-   ----------------------------------------- */
-:root {
-  --section-header-height: 48px;
-  --section-header-padding: 0 20px;
-  --section-header-border-top: 1px solid #d4d4d8;
-  --section-header-title-size: 16px;
-  --section-header-title-weight: 700;
-  --section-header-title-color: var(--color-text-primary);
-  --section-header-action-size: 14px;
-  --section-header-action-color: var(--color-text-secondary);
-  --section-header-action-weight: 500;
-  --section-header-chevron-size: 16px;
-  --section-header-chevron-color: var(--color-text-tertiary);
-}
-
 /* -----------------------------------------
    2. Empty State Tokens
    ----------------------------------------- */
@@ -31,12 +6,12 @@
   --empty-icon-size: 56px;
   --empty-icon-color: var(--color-text-tertiary);
   --empty-icon-bg: var(--color-bg-tertiary);
-  --empty-icon-radius: 18px;
+  --empty-icon-radius: var(--radius-16);
   --empty-title-size: 16px;
   --empty-title-weight: 600;
-  --empty-title-color: #3f3f46;
+  --empty-title-color: var(--text-primary);
   --empty-desc-size: 14px;
-  --empty-desc-color: #71717a;
+  --empty-desc-color: var(--text-tertiary);
   --empty-desc-max-width: 280px;
   --empty-action-margin-top: 16px;
 }
@@ -46,8 +21,8 @@
    ----------------------------------------- */
 :root {
   --ctx-menu-bg: var(--color-bg-elevated);
-  --ctx-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
-  --ctx-menu-radius: 14px;
+  --ctx-menu-shadow: var(--shadow-2);
+  --ctx-menu-radius: var(--radius-12);
   --ctx-menu-padding: 6px;
   --ctx-menu-min-width: 160px;
   --ctx-menu-item-height: 44px;
@@ -55,110 +30,17 @@
   --ctx-menu-item-gap: 12px;
   --ctx-menu-item-radius: 8px;
   --ctx-menu-item-font-size: 14px;
-  --ctx-menu-item-color: #18181b;
+  --ctx-menu-item-color: var(--text-primary);
   --ctx-menu-item-icon-size: 20px;
   --ctx-menu-item-icon-color: var(--color-text-secondary);
-  --ctx-menu-hover-bg: #f4f4f5;
-  --ctx-menu-pressed-bg: #e4e4e7;
-  --ctx-menu-transition: background-color 150ms ease;
-}
-
-/* -----------------------------------------
-   4. Icon System Tokens
-   ----------------------------------------- */
-:root {
-  --icon-size-sm: 16px;
-  --icon-size-md: 20px;
-  --icon-size-default: 24px;
-  --icon-touch-target: 44px;
-  --icon-color-default: #3f3f46;
-  --icon-color-active: #09090b;
-  --icon-color-muted: #71717a;
-  --icon-color-disabled: #a1a1aa;
-}
-
-/* -----------------------------------------
-   5. Text Expand/Collapse Tokens
-   ----------------------------------------- */
-:root {
-  --text-expand-max-lines: 4;
-  --text-expand-line-height: 1.5;
-  --text-expand-font-size: 16px;
-  --text-expand-toggle-size: 14px;
-  --text-expand-toggle-color: #71717a;
-  --text-expand-toggle-weight: 500;
-  --text-expand-toggle-gap: 4px;
-  --text-expand-transition: max-height 300ms ease;
-}
-
-/* -----------------------------------------
-   6. Completion Page Tokens
-   ----------------------------------------- */
-:root {
-  --completion-top-spacing: 80px;
-  --completion-icon-size: 64px;
-  --completion-icon-bg: #09090b;
-  --completion-icon-color: white;
-  --completion-icon-radius: 50%;
-  --completion-title-size: 20px;
-  --completion-title-weight: 700;
-  --completion-title-color: var(--color-text-primary);
-  --completion-desc-size: 14px;
-  --completion-desc-color: #71717a;
-  --completion-button-margin-top: 24px;
-}
-
-/* -----------------------------------------
-   7. File Upload Tokens
-   ----------------------------------------- */
-:root {
-  --upload-thumb-size: 64px;
-  --upload-thumb-radius: 8px;
-  --upload-thumb-bg: #f4f4f5;
-  --upload-close-size: 20px;
-  --upload-close-bg: #27272a;
-  --upload-close-color: white;
-  --upload-close-offset: -6px;
-  --upload-spinner-size: 24px;
-  --upload-spinner-color: #71717a;
-  --upload-error-color: var(--color-danger-500);
-  --upload-overlay-bg: rgba(0, 0, 0, 0.3);
+  --ctx-menu-hover-bg: var(--background-secondary);
+  --ctx-menu-pressed-bg: var(--fill-tertiary-hover);
+  --ctx-menu-transition: background-color var(--motion-duration-short) var(--mw-ease);
 }
 
 /* -----------------------------------------
    8. Dark Mode Overrides
    ----------------------------------------- */
-[data-theme="dark"] {
-  /* Section Header */
-  --section-header-border-top: 1px solid #3f3f46;
-
-  /* Empty State */
-  --empty-title-color: #d4d4d8;
-  --empty-desc-color: #71717a;
-
-  /* Context Menu */
-  --ctx-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --ctx-menu-item-color: #f4f4f5;
-  --ctx-menu-hover-bg: #3f3f46;
-  --ctx-menu-pressed-bg: #52525b;
-
-  /* Icon */
-  --icon-color-default: #d4d4d8;
-  --icon-color-active: #f4f4f5;
-  --icon-color-disabled: #52525b;
-
-  /* Completion Page */
-  --completion-icon-bg: #f4f4f5;
-  --completion-icon-color: #09090b;
-  --completion-desc-color: #71717a;
-
-  /* File Upload */
-  --upload-thumb-bg: #3f3f46;
-  --upload-close-bg: #f4f4f5;
-  --upload-close-color: #18181b;
-  --upload-spinner-color: #a1a1aa;
-  --upload-overlay-bg: rgba(0, 0, 0, 0.5);
-}
 
 /* ========================================
    Empty State Utility Classes
@@ -172,7 +54,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 20px;
+  padding: var(--space-48) var(--space-20);
   text-align: center;
 }
 
@@ -188,7 +70,7 @@
   border-radius: var(--empty-icon-radius);
   background: var(--empty-icon-bg);
   color: var(--empty-icon-color);
-  margin-bottom: 16px;
+  margin-bottom: var(--space-16);
 }
 
 .empty-state__icon svg {
@@ -201,7 +83,7 @@
   font-weight: var(--empty-title-weight);
   color: var(--empty-title-color);
   line-height: 1.4;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-8);
 }
 
 .empty-state__desc {
@@ -231,7 +113,7 @@
 }
 
 .animate-empty-in {
-  animation: empty-in 400ms var(--ease-enter) both;
+  animation: empty-in var(--motion-duration-long) var(--ease-enter) both;
 }
 
 /* ========================================
@@ -266,7 +148,7 @@
   border: none;
   width: 100%;
   cursor: pointer;
-  transition: var(--ctx-menu-transition), transform 100ms ease;
+  transition: var(--ctx-menu-transition), transform var(--motion-duration-short) var(--mw-ease);
 }
 
 .ctx-menu__item:hover {
@@ -298,7 +180,7 @@
 .ctx-menu__divider {
   height: 1px;
   background: var(--color-border-default);
-  margin: 4px 0;
+  margin: var(--space-4) 0;
 }
 
 .ctx-menu__item--danger {
@@ -308,43 +190,6 @@
 .ctx-menu__item--danger .ctx-menu__item-icon {
   color: var(--color-danger-500);
 }
-
-/* -----------------------------------------
-   16. Icon Button & States
-   ----------------------------------------- */
-.f-icon-btn {
-  width: var(--icon-touch-target);
-  height: var(--icon-touch-target);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: background-color 150ms ease, transform 150ms ease;
-}
-
-.f-icon-btn:hover {
-  background: #f4f4f5;
-}
-
-.f-icon-btn:active {
-  transform: scale(0.9);
-  background: #e4e4e7;
-}
-
-[data-theme="dark"] .f-icon-btn:hover {
-  background: #3f3f46;
-}
-
-[data-theme="dark"] .f-icon-btn:active {
-  background: #52525b;
-}
-
-.f-icon--default { color: var(--icon-color-default); }
-
-.f-icon--muted { color: var(--icon-color-muted); }
 
 /* Toggle Tooltip 유틸리티는 사용처가 없어 제거됨 —
    툴팁은 ui/Tooltip 프리미티브(포털 + 지연 + Escape)가 담당 */

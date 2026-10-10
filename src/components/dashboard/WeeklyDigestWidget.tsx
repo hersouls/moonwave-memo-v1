@@ -82,13 +82,13 @@ export function WeeklyDigestWidget() {
         {/* AI Themes (or fallback to local tags) */}
         {((aiDigest?.themes?.length ? aiDigest.themes : null) || localDigest.topTags).length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
               {aiDigest?.themes?.length ? '주요 테마' : '상위 태그'}
             </span>
             {(aiDigest?.themes?.length ? aiDigest.themes : localDigest.topTags).map((item) => (
               <span
                 key={item}
-                className="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
+                className="rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-600 "
               >
                 {aiDigest?.themes?.length ? item : `#${item}`}
               </span>
@@ -108,7 +108,7 @@ export function WeeklyDigestWidget() {
 
         {/* AI Growth */}
         {aiDigest?.growth && (
-          <p className="text-xs text-primary-600 dark:text-primary-400 pl-5.5">
+          <p className="text-xs text-primary-600 pl-5.5">
             {aiDigest.growth}
           </p>
         )}
@@ -129,7 +129,7 @@ export function WeeklyDigestWidget() {
         {aiDigest?.nextWeekSuggestion && (
           <div className="flex items-start gap-2 pt-1">
             <IcMwArrowRight size={16} className="text-primary-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="text-xs text-primary-600 dark:text-primary-400 italic leading-relaxed">
+            <p className="text-xs text-primary-600 italic leading-relaxed">
               {aiDigest.nextWeekSuggestion}
             </p>
           </div>
@@ -139,7 +139,7 @@ export function WeeklyDigestWidget() {
         {aiLoading && (
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
           </div>
         )}
       </div>

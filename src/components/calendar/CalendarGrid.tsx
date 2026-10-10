@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   startOfMonth,
   startOfWeek,
@@ -12,16 +12,10 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import clsx from 'clsx'
 import { CalendarDayCell } from './CalendarDayCell'
-import { useFolderStore } from '@/stores/folderStore'
-import type { Memo } from '@/lib/types'
 import { IcLineChevronLeft, IcLineChevronRight } from '@/mw/icons'
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토']
-
-// 셀 React.memo가 유효하도록 빈 칩 배열은 단일 참조를 재사용
-const EMPTY_MEMOS: Memo[] = []
 
 // 그리드 스와이프 커밋 임계 — fold(≤420) 좁은 화면은 화면 폭 비례 (MemoCard 문법)
 function getSwipeThreshold() {
@@ -34,7 +28,6 @@ interface CalendarGridProps {
   selectedDate: string | null
   onDateSelect: (date: string) => void
   memoCounts: Map<string, number>
-  getMemosForDate: (dateStr: string) => Memo[]
 }
 
 export function CalendarGrid({
@@ -43,17 +36,10 @@ export function CalendarGrid({
   selectedDate,
   onDateSelect,
   memoCounts,
-  getMemosForDate,
 }: CalendarGridProps) {
   const monthStart = startOfMonth(currentMonth)
 
-  // 월 전환 방향 — 그리드 슬라이드 애니메이션에 사용
-  const [monthDirection, setMonthDirection] = useState<'left' | 'right' | null>(null)
-
   const changeMonth = (target: Date) => {
-    if (!isSameMonth(target, currentMonth)) {
-      setMonthDirection(target.getTime() > currentMonth.getTime() ? 'right' : 'left')
-    }
     onMonthChange(target)
   }
 
@@ -67,22 +53,6 @@ export function CalendarGrid({
   const today = new Date()
   const todayStr = format(today, 'yyyy-MM-dd')
   const isTodaySelected = isSameMonth(currentMonth, today) && selectedDate === todayStr
-
-  // 폴더 색 → 칩 dot (셀 42개가 각자 구독하지 않도록 여기서 1회 계산)
-  const folders = useFolderStore((s) => s.folders)
-  const folderColorById = useMemo(
-    () => new Map(folders.filter((f) => f.id != null).map((f) => [f.id as number, f.color])),
-    [folders]
-  )
-
-  // 칩 배열을 날짜별로 메모이즈 — 선택만 바뀌는 렌더에서 배열 참조가 유지돼야 셀 memo가 유효
-  const chipsByDate = useMemo(() => {
-    const map = new Map<string, Memo[]>()
-    memoCounts.forEach((count, dateStr) => {
-      if (count > 0) map.set(dateStr, getMemosForDate(dateStr).slice(0, 2))
-    })
-    return map
-  }, [memoCounts, getMemosForDate])
 
   // 로빙 tabindex 대상: 선택 날짜 → 오늘 → 당월 1일 (42셀 창 내에서)
   const firstStr = format(gridDays[0], 'yyyy-MM-dd')
@@ -171,7 +141,6 @@ export function CalendarGrid({
       if (!isSameMonth(day, currentMonth)) {
         // 인접월 셀 활성화: 그리드가 key 리마운트되므로 포커스를 새 셀로 이송
         pendingFocusRef.current = dateStr
-        setMonthDirection(day.getTime() > currentMonth.getTime() ? 'right' : 'left')
         onMonthChange(day)
       }
       onDateSelect(dateStr)
@@ -227,111 +196,74 @@ export function CalendarGrid({
     }
   }
 
+  const weeks = Array.from({ length: gridDays.length / 7 }, (_, w) => gridDays.slice(w * 7, w * 7 + 7))
+  const monthLabel = format(currentMonth, 'yyyy년 M월', { locale: ko })
+
+  // 키트의 Date Picker(달력)예요. 화면에 늘 펼쳐 두는 달력이라 팝오버가 아니라 카드 안에 그려요.
   return (
-    <div className="card @container p-3 md:p-4 fold:p-2">
-      {/* Month navigation — 제목 좌측 위계 + [◀ 오늘 ▶] 세그먼트 그룹 */}
-      <div className="mb-3 flex items-center justify-between fold:mb-2">
-        <h2
-          aria-live="polite"
-          className="text-lg font-bold tracking-[-0.01em] tabular-nums text-zinc-900 dark:text-zinc-100 fold:text-base"
-        >
-          {format(currentMonth, 'yyyy년 M월', { locale: ko })}
-        </h2>
-        <div
-          role="group"
-          aria-label="월 이동"
-          className="flex items-center gap-0.5 rounded-lg border border-[var(--card-hairline)] p-0.5"
-        >
-          <button
-            type="button"
-            onClick={() => changeMonth(subMonths(currentMonth, 1))}
-            aria-label="이전 달"
-            className="mw-icon-button"
-          >
-            <IcLineChevronLeft size={16} />
+    <div className="mw-surface">
+      <div className="mw-date-picker">
+        <div className="mw-date-picker__header">
+          <button type="button" className="mw-date-picker__nav" onClick={() => changeMonth(subMonths(currentMonth, 1))} aria-label="이전 달">
+            <IcLineChevronLeft size={20} />
+          </button>
+          <h2 className="mw-date-picker__title" aria-live="polite">{monthLabel}</h2>
+          <button type="button" className="mw-date-picker__nav" onClick={() => changeMonth(addMonths(currentMonth, 1))} aria-label="다음 달">
+            <IcLineChevronRight size={20} />
           </button>
           <button
             type="button"
-            onClick={() => {
-              changeMonth(today)
-              onDateSelect(todayStr)
-            }}
+            className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
+            onClick={() => { changeMonth(today); onDateSelect(todayStr) }}
             disabled={isTodaySelected}
-            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
           >
             <span>오늘</span>
           </button>
-          <button
-            type="button"
-            onClick={() => changeMonth(addMonths(currentMonth, 1))}
-            aria-label="다음 달"
-            className="mw-icon-button"
-          >
-            <IcLineChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* 스와이프 영역 = 요일 헤더 + 그리드 (메모 카드 스와이프와 서브트리 분리) */}
-      <div
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchCancel}
-        onKeyDown={handleKeyDown}
-        className="[touch-action:pan-y]"
-      >
-        {/* Day of week headers — 확장 모드에서는 셀 좌상단 숫자와 좌정렬 */}
-        <div className="mb-1 grid grid-cols-7">
-          {DAY_NAMES.map((day, i) => (
-            <div
-              key={i}
-              className={clsx(
-                'py-1.5 text-center text-[11px] font-medium @lg:pl-1.5 @lg:text-left fold:text-[10px]',
-                i === 0 && 'text-danger-600 dark:text-danger-400',
-                i === 6 && 'text-primary-600 dark:text-primary-400',
-                i > 0 && i < 6 && 'text-zinc-500 dark:text-zinc-400'
-              )}
-            >
-              {day}
-            </div>
-          ))}
         </div>
 
-        {/* Calendar grid — 42셀 고정, 월 전환 시 방향성 슬라이드 (fade는 상시, 이동은 motion-safe) */}
+        {/* 옆으로 밀면 달이 넘어가요. 화살표 키로 날짜를 옮겨요. */}
         <div
           ref={gridRef}
-          key={format(currentMonth, 'yyyy-MM')}
-          className={clsx(
-            'grid grid-cols-7 gap-0.5 fold:gap-0',
-            // 확장 모드: gap-px + 래퍼 배경색 = hairline 그리드 (다크는 border-default로 시인성 확보)
-            '@lg:gap-px @lg:overflow-hidden @lg:rounded-xl @lg:border @lg:border-[var(--color-border-subtle)] @lg:bg-[var(--color-border-subtle)]',
-            'dark:@lg:border-[var(--color-border-default)] dark:@lg:bg-[var(--color-border-default)]',
-            'animate-in fade-in duration-200 ease-enter',
-            monthDirection === 'right' && 'motion-safe:slide-in-from-right-3',
-            monthDirection === 'left' && 'motion-safe:slide-in-from-left-3'
-          )}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+          onKeyDown={handleKeyDown}
+          className="[touch-action:pan-y]"
+          data-gesture="off"
         >
-          {gridDays.map((day) => {
-            const dateStr = format(day, 'yyyy-MM-dd')
-            const inMonth = isSameMonth(day, currentMonth)
-            const count = inMonth ? memoCounts.get(dateStr) || 0 : 0
-            return (
-              <CalendarDayCell
-                key={dateStr}
-                day={day}
-                dateStr={dateStr}
-                inMonth={inMonth}
-                isSelected={selectedDate === dateStr}
-                isTodayDate={isToday(day)}
-                count={count}
-                chipMemos={(inMonth && chipsByDate.get(dateStr)) || EMPTY_MEMOS}
-                folderColorById={folderColorById}
-                tabbable={rovingDate === dateStr}
-                onSelect={handleSelect}
-              />
-            )
-          })}
+          <table className="mw-date-picker__grid" role="grid" aria-label={monthLabel} key={format(currentMonth, 'yyyy-MM')}>
+            <thead>
+              <tr>
+                {DAY_NAMES.map((day, i) => (
+                  <th key={i} scope="col" className="mw-date-picker__weekday" abbr={`${day}요일`}>{day}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {weeks.map((week) => (
+                <tr key={format(week[0], 'yyyy-MM-dd')}>
+                  {week.map((day) => {
+                    const dateStr = format(day, 'yyyy-MM-dd')
+                    const inMonth = isSameMonth(day, currentMonth)
+                    return (
+                      <CalendarDayCell
+                        key={dateStr}
+                        day={day}
+                        dateStr={dateStr}
+                        inMonth={inMonth}
+                        isSelected={selectedDate === dateStr}
+                        isTodayDate={isToday(day)}
+                        count={inMonth ? memoCounts.get(dateStr) || 0 : 0}
+                        tabbable={rovingDate === dateStr}
+                        onSelect={handleSelect}
+                      />
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

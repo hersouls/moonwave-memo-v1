@@ -69,7 +69,7 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
           </p>
           <button type="button"
             onClick={() => useUIStore.getState().openSettingsModal()}
-            className="mw-button mw-button--primary mw-button--small mw-button--icon-left"
+            className="mw-button mw-button--primary mw-button--medium mw-button--icon-left"
           >
             <IcLineSetting size={16} />
             설정 열기
@@ -86,7 +86,7 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
         <div className="flex items-center gap-2">
           <IcMwSpark size={16} className="text-purple-500" />
           <span className="font-medium text-sm text-zinc-800 dark:text-zinc-200">데미안</span>
-          <span className="text-[10px] text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
             {exchangeCount}/{maxExchanges}
           </span>
         </div>

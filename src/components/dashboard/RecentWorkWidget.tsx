@@ -1,13 +1,12 @@
-import { useNavigate } from 'react-router-dom'
 import { useMemoStore } from '@/stores/memoStore'
 import { formatMemoDate } from '@/utils/format'
 import { stripMarkdown } from '@/utils/textUtils'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
 import { IcLineChevronRight, IcLineTime } from '@/mw/icons'
+import { Link } from 'react-router-dom'
 
 export function RecentWorkWidget() {
-  const navigate = useNavigate()
   const { navigateWithTransition } = useViewTransition()
   const memos = useMemoStore((s) => s.memos)
 
@@ -24,22 +23,22 @@ export function RecentWorkWidget() {
       tint="primary"
       title="최근 작업"
       action={
-        <button
-          type="button"
-          onClick={() => navigateWithTransition('/memos')}
-          className="flex items-center gap-0.5 rounded-md px-2 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
+        <Link
+          to="/memos"
+          onClick={(e) => { e.preventDefault(); navigateWithTransition('/memos') }}
+          className="mw-text-button mw-text-button--chevron mw-text-button--medium mw-text-button--default"
         >
-          전체보기
-          <IcLineChevronRight size={12} />
-        </button>
+          <span>모두 보기</span>
+          <IcLineChevronRight />
+        </Link>
       }
       bodyClassName="p-0"
     >
       <div className="divide-y divide-zinc-100 dark:divide-white/[0.06]">
         {recentMemos.map((memo) => (
-          <button
+          <Link
             key={memo.id}
-            onClick={() => navigate(`/memo/${memo.id}`)}
+            to={`/memo/${memo.id}`}
             className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.03]"
           >
             <div className="flex-1 min-w-0">
@@ -50,10 +49,10 @@ export function RecentWorkWidget() {
                 {stripMarkdown(memo.body).slice(0, 60) || '내용 없음'}
               </p>
             </div>
-            <span className="text-[10px] tabular-nums text-zinc-500 dark:text-zinc-400 shrink-0">
+            <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 shrink-0">
               {formatMemoDate(memo.updatedAt)}
             </span>
-          </button>
+          </Link>
         ))}
       </div>
     </WidgetCard>

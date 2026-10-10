@@ -198,7 +198,7 @@ export function MemoList() {
         {isTrashView && filteredMemos.length > 0 && (
           <button type="button"
             onClick={() => setIsEmptyTrashOpen(true)}
-            className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left shrink-0"
+            className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left shrink-0"
             aria-label="휴지통 비우기"
           >
             <IcLineTrash size={16} />
@@ -251,7 +251,7 @@ export function MemoList() {
               showSwipeHint && index === 0 && 'animate-wiggle'
             )}
             style={{
-              animationDuration: '200ms',
+              animationDuration: 'var(--motion-duration-medium)',
               animationDelay: index < 8 ? `${index * 30}ms` : '0ms',
               animationFillMode: 'both',
             }}
@@ -263,7 +263,7 @@ export function MemoList() {
           </div>
         )
         const sectionHeaderClass = clsx(
-          'flex items-center gap-1.5 px-1 pb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400',
+          'flex items-center gap-1.5 px-1 pb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400',
           viewMode === 'grid' && 'col-span-full'
         )
         return (

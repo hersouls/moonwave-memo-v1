@@ -17,7 +17,7 @@ function SearchIllustration() {
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="text-zinc-300 dark:text-zinc-600">
       <circle cx="34" cy="34" r="20" stroke="currentColor" strokeWidth="3" />
       <line x1="48.5" y1="48.5" x2="64" y2="64" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <text x="26" y="40" fontSize="18" fill="currentColor" fontWeight="bold">?</text>
+      <text x="26" y="40" style={{ fontSize: 'var(--font-size-18)' }} fill="currentColor" fontWeight="bold">?</text>
     </svg>
   )
 }

@@ -110,7 +110,7 @@ export function SmartFolderCreateModal({ isOpen, onClose }: SmartFolderCreateMod
                 onClick={() => handleToggle(folder.id)}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
                   isSelected
-                    ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-900/20'
+                    ? 'border-primary-300 bg-primary-50 '
                     : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >

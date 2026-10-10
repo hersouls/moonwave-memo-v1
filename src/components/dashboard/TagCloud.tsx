@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { clsx } from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
-import { IcLineChevronDown, IcMwTag } from '@/mw/icons'
+import { IcMwTag } from '@/mw/icons'
 
 /** 대시보드에서 기본으로 노출할 상위 태그 수 — 나머지는 "더 보기"로 펼침 */
 const VISIBLE_LIMIT = 12
@@ -50,7 +49,7 @@ export function TagCloud() {
           <button
             type="button"
             onClick={() => navigate('/memo/new')}
-            className="mw-text-button mw-text-button--underline mw-text-button--small mw-text-button--default"
+            className="mw-text-button mw-text-button--underline mw-text-button--medium mw-text-button--default"
           >
             <span>메모 작성하기</span>
           </button>
@@ -60,7 +59,7 @@ export function TagCloud() {
           <div className="flex flex-wrap gap-2">
             <button type="button"
               onClick={() => handleTagClick(null)}
-              className="mw-button mw-button--primary mw-button--small"
+              className="mw-select-chip mw-select-chip--on"
             >
               모든 태그
             </button>
@@ -68,7 +67,7 @@ export function TagCloud() {
               <button
                 key={tag}
                 onClick={() => handleTagClick(tag)}
-                className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 active:bg-zinc-200 dark:border-white/10 dark:bg-white/[0.06] dark:text-zinc-300 dark:hover:bg-white/10 dark:active:bg-white/15"
+                className="mw-select-chip mw-select-chip--off\"
               >
                 #{tag}
               </button>
@@ -79,13 +78,9 @@ export function TagCloud() {
               type="button"
               onClick={() => setShowAll((v) => !v)}
               aria-expanded={showAll}
-              className="mt-3 flex items-center gap-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
             >
-              <span>{showAll ? '접기' : `+${hiddenCount}개 더 보기`}</span>
-              <IcLineChevronDown size={16}
-                aria-hidden="true"
-                className={clsx('  transition-transform duration-200', showAll && 'rotate-180')}
-              />
+              <span>{showAll ? '접기' : `${hiddenCount}개 더 보기`}</span>
             </button>
           )}
         </>

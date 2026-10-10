@@ -174,13 +174,13 @@ export function CommandPalette() {
     <HeadlessDialog open={isOpen} onClose={handleClose} className="relative z-[var(--z-modal)]">
       <DialogBackdrop
         transition
-        className="fixed inset-0 transition data-[closed]:opacity-0 data-[enter]:duration-200 data-[enter]:ease-enter data-[leave]:duration-150 data-[leave]:ease-exit"
+        className="fixed inset-0 transition data-[closed]:opacity-0 data-[enter]:duration-200 data-[enter]:ease-enter data-[leave]:duration-200 data-[leave]:ease-exit"
         style={{ background: 'var(--overlay-bg)' }}
       />
       <div className="fixed inset-0 flex items-start justify-center px-4 pt-[20dvh]">
         <DialogPanel
           transition
-          className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden transition data-[closed]:opacity-0 data-[closed]:scale-[0.98] data-[enter]:duration-200 data-[enter]:ease-enter data-[leave]:duration-150 data-[leave]:ease-exit"
+          className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden transition data-[closed]:opacity-0 data-[closed]:scale-[0.98] data-[enter]:duration-200 data-[enter]:ease-enter data-[leave]:duration-200 data-[leave]:ease-exit"
         >
           {smartMode ? (
             <>
@@ -233,7 +233,7 @@ export function CommandPalette() {
                       <>
                         <IcMwSparkles size={16} />
                         저장
-                        <kbd className="ml-1 text-[10px] opacity-70">Ctrl+↵</kbd>
+                        <kbd className="ml-1 text-xs opacity-70">Ctrl+↵</kbd>
                       </>
                     )}
                   </button>
@@ -350,7 +350,7 @@ export function CommandPalette() {
               </Command.List>
 
               {/* 키보드 힌트 푸터 */}
-              <div className="flex items-center gap-3 border-t border-zinc-200 px-4 py-2 text-[11px] text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+              <div className="flex items-center gap-3 border-t border-zinc-200 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
                   <Kbd>↑↓</Kbd> 이동
                 </span>

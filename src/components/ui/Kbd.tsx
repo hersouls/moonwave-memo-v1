@@ -13,7 +13,7 @@ export function Kbd({ children, className }: KbdProps) {
       className={clsx(
         'inline-flex h-5 min-w-5 items-center justify-center rounded px-1',
         'border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)]',
-        'font-mono text-[11px] font-medium text-[var(--color-text-secondary)]',
+        'font-mono text-xs font-medium text-[var(--color-text-secondary)]',
         className
       )}
     >

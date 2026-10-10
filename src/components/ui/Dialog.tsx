@@ -113,7 +113,7 @@ export function Dialog({ open, onClose, children, size = 'lg', noPadding = false
               transition: isDragging
                 ? 'none'
                 : isSnapping
-                  ? 'transform 250ms var(--ease-spring)'
+                  ? 'transform var(--motion-duration-medium) var(--mw-ease-sheet)'
                   : undefined,
             }}
           >

@@ -6,7 +6,7 @@ import { ForceGraph, GROUP_COLORS } from './ForceGraph'
 import { KnowledgeGraphModal } from './KnowledgeGraphModal'
 import { IcLineExpand, IcLineShare } from '@/mw/icons'
 
-const NONE_COLOR = '#a1a1aa'
+const NONE_COLOR = 'var(--mw-cat-other)'
 
 export function KnowledgeGraph() {
   const { nodes, links, groups, total, truncated } = useGraphData()
@@ -78,12 +78,7 @@ export function KnowledgeGraph() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">메모가 3개 이상 필요합니다</p>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            aria-label="지식 그래프 확대하여 탐색"
-            className="group relative block w-full overflow-hidden rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-          >
+          <div className="relative block w-full overflow-hidden rounded-lg">
             <div ref={containerRef} className="w-full" style={{ height: size.height || 220 }}>
               {size.width > 0 && (
                 <ForceGraph
@@ -95,14 +90,7 @@ export function KnowledgeGraph() {
                 />
               )}
             </div>
-            {/* 확대 유도 오버레이 */}
-            <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-white/70 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 dark:from-zinc-900/70">
-              <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-zinc-900/80 px-3 py-1 text-xs font-medium text-white backdrop-blur dark:bg-white/90 dark:text-zinc-900">
-                <IcLineExpand size={12} />
-                확대하여 탐색
-              </span>
-            </div>
-          </button>
+          </div>
         )}
       </WidgetCard>
 

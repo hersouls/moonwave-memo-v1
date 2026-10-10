@@ -85,19 +85,16 @@ function TiptapBubbleMenu({ editor }: { editor: Editor }) {
     <>
       <div
         ref={menuRef}
-        className="bubble-menu-enter flex items-center gap-0.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-1 py-1 shadow-xl ring-1 ring-white/10 dark:ring-black/10"
+        className="bubble-menu-enter flex items-center gap-0.5 rounded-xl border border-[var(--border-secondary)] bg-[var(--surface-floating)] px-1 py-1 shadow-md"
         style={{ visibility: 'hidden', position: 'absolute', zIndex: 'var(--z-modal)' }}
       >
         {tools.map((tool) => (
           <button
             key={tool.label}
             onMouseDown={(e) => { e.preventDefault(); tool.action() }}
-            className={clsx(
-              'p-1.5 rounded-lg transition-colors active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 dark:focus-visible:ring-primary-500',
-              tool.active
-                ? 'bg-zinc-700 text-white dark:bg-zinc-300 dark:text-zinc-900'
-                : 'text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300'
-            )}
+            type="button"
+            aria-pressed={tool.active}
+            className={tool.active ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'}
             aria-label={tool.label}
           >
             {tool.icon}

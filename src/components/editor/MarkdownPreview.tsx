@@ -99,13 +99,13 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
   return (
     <div className="relative group">
       {language && (
-        <div className="absolute top-0 left-0 px-2 py-0.5 text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-800 dark:bg-zinc-900 rounded-br-md rounded-tl-md uppercase">
+        <div className="absolute top-0 left-0 px-2 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-800 dark:bg-zinc-900 rounded-br-md rounded-tl-md uppercase">
           {language}
         </div>
       )}
       <button
         onClick={handleCopy}
-        className="absolute top-1 right-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-1 right-1 px-1.5 py-0.5 text-xs font-medium rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity"
         aria-label="코드 복사"
       >
         {copied ? '복사됨' : '복사'}
@@ -212,7 +212,7 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
               return (
                 <a
                   href={href}
-                  className="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 underline decoration-primary-300 dark:decoration-primary-700"
+                  className="text-primary-500 hover:text-primary-600 underline decoration-primary-300 "
                   {...props}
                 >
                   {children}

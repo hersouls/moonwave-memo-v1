@@ -112,13 +112,13 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
     >
       <DialogBackdrop
         transition
-        className="fixed inset-0 transition data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150 data-[enter]:ease-out data-[leave]:ease-in"
+        className="fixed inset-0 transition data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
         style={{ background: 'var(--overlay-bg)' }}
       />
       <div className="fixed inset-0 flex items-start justify-center px-4 pt-[12vh]">
         <DialogPanel
           transition
-          className="w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 transition duration-200 data-[closed]:-translate-y-2 data-[closed]:scale-[0.98] data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:duration-150 data-[leave]:ease-in"
+          className="w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 transition duration-200 data-[closed]:-translate-y-2 data-[closed]:scale-[0.98] data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:duration-200 data-[leave]:ease-in"
         >
           <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
             <IcLineSearch size={16} className="shrink-0 text-zinc-400" />
@@ -137,7 +137,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
             ) : (
               groups.map(([group, cmds]) => (
                 <div key={group}>
-                  <div className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  <div className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     {group}
                   </div>
                   {cmds.map((cmd) => {
@@ -151,7 +151,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
                         onClick={() => runCommand(cmd)}
                         className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
                           idx === selected
-                            ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                            ? 'bg-primary-50 text-primary-700 '
                             : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
                         }`}
                       >
@@ -168,7 +168,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
             )}
           </div>
           {/* 키보드 힌트 푸터 */}
-          <div className="flex items-center gap-3 border-t border-zinc-100 px-4 py-2 text-[11px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <div className="flex items-center gap-3 border-t border-zinc-100 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
             <span className="flex items-center gap-1">
               <Kbd>↑↓</Kbd> 이동
             </span>

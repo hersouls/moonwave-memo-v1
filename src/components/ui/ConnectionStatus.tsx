@@ -80,7 +80,7 @@ export function ConnectionStatus() {
 
   if (syncStatus === 'syncing' && showSyncing) {
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-xs font-medium animate-in fade-in duration-200">
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-medium animate-in fade-in duration-200">
         <IcLineRefresh size={16} className="animate-spin" />
         <span>동기화 중</span>
       </div>

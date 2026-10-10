@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { WidgetCard } from './WidgetCard'
-import { IcLineBulb, IcMwArrowRight } from '@/mw/icons'
+import { IcLineBulb, IcLineChevronRight } from '@/mw/icons'
+import { Link } from 'react-router-dom'
 
 const PROMPTS = [
   '오늘 가장 기억에 남는 순간은?',
@@ -67,7 +67,6 @@ function getDayOfYear(): number {
 }
 
 export function WritingPromptWidget() {
-  const navigate = useNavigate()
 
   const prompt = useMemo(() => {
     const dayOfYear = getDayOfYear()
@@ -80,14 +79,10 @@ export function WritingPromptWidget() {
         {prompt}
       </p>
 
-      <button
-        type="button"
-        onClick={() => navigate('/memo/new')}
-        className="inline-flex min-h-11 items-center gap-1 -mx-2 -my-1 rounded-lg px-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-100/60 dark:text-amber-400 dark:hover:bg-amber-900/20"
-      >
-        이 주제로 작성하기
-        <IcMwArrowRight size={16} aria-hidden="true" />
-      </button>
+      <Link to="/memo/new" className="mw-text-button mw-text-button--chevron mw-text-button--medium mw-text-button--default">
+        <span>이 주제로 쓰기</span>
+        <IcLineChevronRight />
+      </Link>
     </WidgetCard>
   )
 }

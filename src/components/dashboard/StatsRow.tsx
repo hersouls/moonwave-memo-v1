@@ -3,6 +3,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { IcLineDocument, IcMwStar } from '@/mw/icons'
+import { Link } from 'react-router-dom'
 
 export const StatsRow = memo(function StatsRow() {
   const { navigateWithTransition } = useViewTransition()
@@ -21,21 +22,23 @@ export const StatsRow = memo(function StatsRow() {
 
   return (
     <div className="grid grid-cols-2 fold:flex fold:overflow-x-auto fold:scrollbar-none fold:-mx-4 fold:px-4 gap-3">
-      <button
-        onClick={handleAllClick}
+      <Link
+        to="/memos"
+        onClick={(e) => { e.preventDefault(); handleAllClick() }}
         className="card card--interactive flex items-center gap-3 px-4 py-3.5"
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 dark:bg-primary-900/20 dark:text-primary-400">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 ">
           <IcLineDocument size={16} />
         </div>
         <div className="text-left">
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">전체</p>
           <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">{totalCount}</p>
         </div>
-      </button>
+      </Link>
 
-      <button
-        onClick={handleStarredClick}
+      <Link
+        to="/memos"
+        onClick={(e) => { e.preventDefault(); handleStarredClick() }}
         className="card card--interactive flex items-center gap-3 px-4 py-3.5"
       >
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500 dark:bg-amber-900/20 dark:text-amber-400">
@@ -45,7 +48,7 @@ export const StatsRow = memo(function StatsRow() {
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">중요</p>
           <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">{starredCount}</p>
         </div>
-      </button>
+      </Link>
     </div>
   )
 })

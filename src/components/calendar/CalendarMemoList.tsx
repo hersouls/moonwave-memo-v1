@@ -53,7 +53,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
         <div className="-mx-4 mb-3 border-b border-[var(--card-hairline)] px-4 pb-3 lg:sticky lg:top-0 lg:z-10 lg:-mt-4 lg:bg-[var(--card-bg-default)] lg:pt-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-baseline gap-1.5">
-              <h3 className="shrink-0 text-[15px] font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100">
+              <h3 className="shrink-0 text-15 font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100">
                 {format(selected, 'M월 d일', { locale: ko })}
               </h3>
               <span className="truncate text-sm font-medium text-zinc-500 dark:text-zinc-400">
@@ -61,14 +61,14 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
                 <span className="hidden fold:inline">{format(selected, 'EEE', { locale: ko })}</span>
               </span>
               {isSelectedToday && (
-                <span className="shrink-0 rounded-md bg-primary-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary-600 dark:bg-primary-400/15 dark:text-primary-400">
+                <span className="shrink-0 rounded-md bg-primary-500/10 px-1.5 py-0.5 text-xs font-semibold text-primary-600 ">
                   오늘
                 </span>
               )}
             </div>
             <span
               aria-live="polite"
-              className="shrink-0 rounded-full bg-[var(--color-bg-tertiary)] px-2 py-0.5 text-[11px] font-medium tabular-nums text-[var(--color-text-secondary)]"
+              className="shrink-0 rounded-full bg-[var(--color-bg-tertiary)] px-2 py-0.5 text-xs font-medium tabular-nums text-[var(--color-text-secondary)]"
             >
               {memos.length}개<span className="fold:hidden"> 메모</span>
             </span>

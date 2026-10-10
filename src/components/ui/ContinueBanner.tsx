@@ -32,13 +32,13 @@ export function ContinueBanner() {
   if (!memo) return null
 
   return (
-    <div className="mx-4 lg:mx-0 mb-3 flex items-center gap-3 p-3 rounded-xl bg-primary-50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-800 animate-in fade-in slide-in-from-top-2 duration-200">
+    <div className="mx-4 lg:mx-0 mb-3 flex items-center gap-3 p-3 rounded-xl bg-primary-50 border border-primary-200 animate-in fade-in slide-in-from-top-2 duration-200">
       <IcLineDocument size={20} className="text-primary-500 shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-primary-700 dark:text-primary-300">
+        <p className="text-sm text-primary-700 ">
           이전에 보던 메모가 있습니다
         </p>
-        <p className="text-xs text-primary-500 dark:text-primary-400 truncate">
+        <p className="text-xs text-primary-500 truncate">
           {memo.title || '제목 없음'}
         </p>
       </div>
@@ -47,7 +47,7 @@ export function ContinueBanner() {
           navigate(`/memo/${memoId}`)
           setDismissed(true)
         }}
-        className="mw-button mw-button--primary mw-button--small shrink-0"
+        className="mw-button mw-button--primary mw-button--medium shrink-0"
       >
         이어서 보기
       </button>

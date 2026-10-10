@@ -82,7 +82,7 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
           enter="ease-out duration-200"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="ease-in duration-150"
+          leave="ease-in duration-200"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
@@ -95,7 +95,7 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
             enter="ease-out duration-200"
             enterFrom="opacity-0 scale-95"
             enterTo="opacity-100 scale-100"
-            leave="ease-in duration-150"
+            leave="ease-in duration-200"
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
@@ -128,7 +128,7 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
                     onClick={() => setIcon(iconName)}
                     className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all ${
                       icon === iconName
-                        ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 ring-2 ring-primary-500'
+                        ? 'bg-primary-100 text-primary-600 ring-2 ring-primary-500'
                         : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700'
                     }`}
                     title={iconName}

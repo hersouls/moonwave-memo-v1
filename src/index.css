@@ -224,6 +224,11 @@
 :root {
   --memo-saved-hold: 1400ms; /* '저장했어요' 표시가 사라지기 전에 머무는 시간 */
   --memo-breathe-cycle: 10s; /* 숨 쉬는 글자(설정에서 켰을 때)의 한 호흡 */
+  /* 간격 단계(2 4 8 12 …)에 없는 값: 글 본문과 편집기의 촘촘한 자리에서만 써요 */
+  --memo-space-6: 6px;
+  --memo-space-10: 10px;
+  --memo-space-14: 14px;
+  --memo-space-28: 28px;
 }
 
 /* Base styles */
@@ -244,9 +249,14 @@ body {
 }
 
 @layer base {
-  /* Focus ring offsets must track the theme background */
-  * {
+  /* Focus ring offsets must track the theme background.
+     곡선을 따로 정하지 않은 움직임도 브라우저의 기본값(ease)이 아니라 키트의 곡선으로 움직여요. */
+  *,
+  ::before,
+  ::after {
     --tw-ring-offset-color: var(--surface-primary);
+    transition-timing-function: var(--mw-ease);
+    animation-timing-function: var(--mw-ease);
   }
   /* tw-animate-css의 기본 길이(150ms)와 곡선(ease) 대신 키트의 값 */
   .animate-in,

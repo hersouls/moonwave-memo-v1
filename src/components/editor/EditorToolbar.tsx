@@ -32,17 +32,13 @@ interface EditorToolbarProps {
   onDismissKeyboard?: () => void
 }
 
-// Unified toolbar button system — refined, consistent hover/active/focus states
-const toolBtnBase =
-  'inline-flex items-center justify-center size-9 rounded-lg transition-[background-color,color,transform] duration-150 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 disabled:opacity-30 disabled:pointer-events-none'
-const toolBtnDefault =
-  'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
-const toolBtnActive =
-  'bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300'
-const toolBtnAccent =
-  'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10'
+// 도구 막대의 버튼은 키트의 아이콘 버튼이에요. 켜진 서식(굵게 등)은 aria-pressed와 memo-tool--on으로 알려요.
+const toolBtnBase = 'mw-icon-button'
+const toolBtnDefault = ''
+const toolBtnActive = 'memo-tool--on'
+const toolBtnAccent = 'memo-tool--accent'
 const toolSep = 'h-5 w-px bg-zinc-200/70 dark:bg-zinc-700/70 mx-1 shrink-0'
-const toolIcon = 'w-[18px] h-[18px]'
+const toolIcon = undefined
 
 // 툴팁 내용: 라벨 + (있으면) 단축키 칩 — 네이티브 title 대체
 const tip = (label: string, kbd?: string): ReactNode =>

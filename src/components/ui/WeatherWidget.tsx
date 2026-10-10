@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { Tooltip } from '@/components/ui/Tooltip'
-import { IcLineCloud, IcMwRain, IcMwSnow, IcMwSun } from '@/mw/icons'
+import { IcMwCloud, IcMwRain, IcMwSnow, IcMwSun } from '@/mw/icons'
 
 export function WeatherWidget() {
   const environmentThemeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.environmentThemeEnabled)
@@ -13,8 +12,8 @@ export function WeatherWidget() {
   const widgetContent = useMemo(() => {
     if (!weather) return null
 
-    let Icon = IcLineCloud
-    let conditionName = '알 수 없음'
+    let Icon = IcMwCloud
+    let conditionName = '확인 전'
 
     switch (weather) {
       case 'clear':
@@ -30,7 +29,7 @@ export function WeatherWidget() {
         conditionName = '눈'
         break
       case 'overcast':
-        Icon = IcLineCloud
+        Icon = IcMwCloud
         conditionName = '흐림'
         break
     }
@@ -38,17 +37,11 @@ export function WeatherWidget() {
     const tempString = temperature !== null ? `${temperature.toFixed(1)}°C` : '--'
 
     return (
-      <Tooltip 
-        content={`현재 날씨: ${conditionName}, 온도: ${tempString}`} 
-        placement="bottom"
-      >
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/50 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-default select-none">
-          <Icon className="w-4 h-4" />
-          <span className="text-xs font-semibold tracking-wide">
-            {temperature !== null ? `${Math.round(temperature)}°` : '--'}
-          </span>
-        </div>
-      </Tooltip>
+      <span className="mw-state" title={`지금 날씨: ${conditionName}, 기온 ${tempString}`}>
+        <Icon size={16} />
+        <span className="mw-num">{temperature !== null ? `${Math.round(temperature)}°` : '확인 전'}</span>
+        <span className="mw-sr-only">{conditionName}</span>
+      </span>
     )
   }, [weather, temperature])
 

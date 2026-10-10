@@ -130,7 +130,7 @@ export function BriefingWidget() {
               {aiBriefing.keyTopics.map((topic) => (
                 <span
                   key={topic}
-                  className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                  className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
                 >
                   {topic}
                 </span>
@@ -150,7 +150,7 @@ export function BriefingWidget() {
         {aiLoading && (
           <div className="flex items-center gap-2 pl-7">
             <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
           </div>
         )}
       </div>

@@ -6,262 +6,41 @@
 
 :root {
   /* ── Card 공통 ──────────────────────── */
-  --card-radius-sm: var(--radius-8, 8px);
   --card-radius-md: var(--radius-12, 12px);
   --card-radius-lg: var(--radius-16, 16px);
-  --card-shadow-none: none;
-  --card-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.06);
-  --card-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --card-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
-  --card-padding-sm: 12px;
-  --card-padding-md: 16px;
-  --card-padding-lg: 20px;
-  --card-margin-horizontal: 20px;
-  --card-gap-sm: 8px;
-  --card-gap-md: 12px;
-  --card-gap-lg: 16px;
-  --card-bg-default: white;
-  --card-bg-muted: #fafafa;
-  --card-bg-elevated: white;
-  --card-hairline: rgba(9, 9, 11, 0.06);
-  --card-border-outlined: 1px solid #e4e4e7;
-  --card-border-divider: 1px solid #f4f4f5;
+  --card-shadow-sm: var(--shadow-1);
+  --card-shadow-hover: var(--shadow-2);
+  --card-bg-default: var(--surface-primary);
+  --card-hairline: var(--border-secondary);
   /* Scoped (not `all`) so list reflows/layout changes never animate */
-  --card-transition: background-color 0.2s var(--ease-standard), border-color 0.2s var(--ease-standard),
-    box-shadow 0.2s var(--ease-standard), transform 0.2s var(--ease-standard);
+  --card-transition: background-color var(--motion-duration-medium) var(--mw-ease), border-color var(--motion-duration-medium) var(--mw-ease), box-shadow var(--motion-duration-medium) var(--mw-ease), transform var(--motion-duration-medium) var(--mw-ease);
   --card-hover-translate: -2px;
 
   /* ── Image + Text Card ──────────────── */
-  --imgcard-image-radius: var(--card-radius-md);
-  --imgcard-image-aspect-ratio: 4 / 3;
-  --imgcard-image-aspect-square: 1 / 1;
-  --imgcard-image-aspect-wide: 16 / 9;
-  --imgcard-text-padding: 16px;
-  --imgcard-category-size: 13px;
-  --imgcard-category-color: #71717a;
-  --imgcard-category-margin-bottom: 4px;
-  --imgcard-title-size: 16px;
-  --imgcard-title-weight: 700;
-  --imgcard-title-color: #18181b;
 
   /* ── Full Image Card ────────────────── */
-  --fullimg-radius: var(--card-radius-lg);
-  --fullimg-overlay-gradient: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.6) 0%,
-    rgba(0, 0, 0, 0) 60%
-  );
-  --fullimg-text-color: white;
-  --fullimg-title-size: 20px;
-  --fullimg-title-weight: 700;
-  --fullimg-subtitle-size: 14px;
-  --fullimg-text-padding: 20px;
 
   /* ── Product Card ───────────────────── */
-  --product-image-bg: #f4f4f5;
-  --product-image-aspect: 1 / 1;
-  --product-image-radius: var(--card-radius-md);
-  --product-heart-size: 24px;
-  --product-heart-offset: 12px;
-  --product-heart-color-default: #a1a1aa;
-  --product-heart-color-active: var(--color-danger-500);
-  --product-category-size: 13px;
-  --product-category-color: #71717a;
-  --product-name-size: 14px;
-  --product-name-weight: 700;
-  --product-name-color: #18181b;
-  --product-discount-color: var(--color-danger-500);
-  --product-discount-weight: 700;
-  --product-original-color: #a1a1aa;
-  --product-original-decoration: line-through;
-  --product-price-size: 16px;
-  --product-price-weight: 700;
-  --product-price-color: #18181b;
-  --product-grid-columns: 2;
-  --product-grid-gap: 16px;
 
   /* ── Logo Card ──────────────────────── */
-  --logo-card-avatar-size: 48px;
-  --logo-card-avatar-radius: 50%;
-  --logo-card-avatar-bg: #f4f4f5;
-  --logo-card-gap: 12px;
-  --logo-card-brand-size: 13px;
-  --logo-card-brand-color: #71717a;
-  --logo-card-text-size: 16px;
-  --logo-card-text-weight: 700;
-  --logo-card-text-color: #18181b;
-  --logo-card-padding: 16px;
-  --logo-card-radius: var(--card-radius-lg);
 
   /* ── List Item ──────────────────────── */
   --list-item-height: 48px;
   --list-item-padding-x: 20px;
   --list-item-padding-y: 12px;
-  --list-item-gap: 12px;
-  --list-item-headline-size: 16px;
-  --list-item-headline-weight: 400;
-  --list-item-headline-color: #18181b;
-  --list-item-value-size: 16px;
-  --list-item-value-weight: 700;
-  --list-item-value-color: #18181b;
-  --list-section-title-size: 13px;
-  --list-section-title-color: #71717a;
-  --list-section-title-weight: 400;
-  --list-section-title-padding: 24px 20px 8px;
-  --list-divider: 1px solid #f4f4f5;
-  --list-divider-margin: 0 20px;
-  --list-chevron-size: 20px;
-  --list-chevron-color: #a1a1aa;
-  --list-radio-size: 24px;
-  --list-radio-gap: 12px;
-  --list-radio-color-default: #a1a1aa;
-  --list-radio-color-selected: #18181b;
 
   /* ── File Output Card ───────────────── */
-  --file-card-padding: 16px;
-  --file-card-radius: var(--card-radius-lg);
-  --file-card-bg: white;
-  --file-card-shadow: var(--card-shadow-sm);
-  --file-card-gap: 12px;
-  --file-card-icon-size: 32px;
-  --file-card-icon-color: #52525b;
-  --file-card-icon-bg: #f4f4f5;
-  --file-card-icon-radius: var(--radius-8, 8px);
-  --file-card-icon-padding: 8px;
-  --file-card-name-size: 16px;
-  --file-card-name-weight: 700;
-  --file-card-name-color: #18181b;
-  --file-card-meta-size: 13px;
-  --file-card-meta-color: #71717a;
-  --file-card-download-size: 24px;
-  --file-card-download-color: #52525b;
-  --file-card-download-touch-target: 44px;
 
   /* ── Image List ─────────────────────── */
-  --imglist-avatar-size: 48px;
-  --imglist-avatar-size-lg: 56px;
-  --imglist-avatar-radius: 50%;
-  --imglist-avatar-bg: #f4f4f5;
-  --imglist-item-height: 72px;
-  --imglist-item-padding: 12px 20px;
-  --imglist-item-gap: 16px;
-  --imglist-brand-size: 13px;
-  --imglist-brand-color: #71717a;
-  --imglist-desc-size: 16px;
-  --imglist-desc-weight: 700;
-  --imglist-desc-color: #18181b;
-  --imglist-divider: 1px solid #f4f4f5;
 
   /* ── Event / Banner Card ────────────── */
-  --event-card-radius: var(--card-radius-lg);
-  --event-card-padding: 20px;
-  --event-card-min-height: 100px;
-  --event-card-title-size: 16px;
-  --event-card-title-weight: 700;
-  --event-card-title-color: #18181b;
-  --event-card-date-size: 13px;
-  --event-card-date-color: #71717a;
-  --event-card-image-width: 80px;
-  --benefit-card-radius: var(--card-radius-lg);
-  --benefit-card-padding: 16px;
-  --benefit-card-aspect: 1 / 1;
-  --benefit-card-grid-columns: 2;
-  --benefit-card-grid-gap: 12px;
-  --card-badge-radius: 9999px;
-  --card-badge-padding: 4px 8px;
-  --card-badge-font-size: 11px;
-  --card-badge-font-weight: 600;
-  --card-badge-bg: #18181b;
-  --card-badge-color: white;
 
   /* ── Range Slider ───────────────────── */
-  --slider-track-height: 4px;
-  --slider-track-radius: 9999px;
-  --slider-track-active-color: var(--color-danger-500);
-  --slider-track-inactive-color: #e4e4e7;
-  --slider-thumb-size: 24px;
-  --slider-thumb-bg: white;
-  --slider-thumb-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  --slider-thumb-border: none;
-  --slider-label-size: 13px;
-  --slider-label-color: #71717a;
-  --slider-label-margin-top: 8px;
-  --slider-popover-bg: #18181b;
-  --slider-popover-color: white;
-  --slider-popover-radius: var(--radius-8, 8px);
-  --slider-popover-padding: 6px 12px;
-  --slider-popover-font-size: 14px;
-  --slider-popover-font-weight: 600;
-  --slider-popover-arrow-size: 6px;
-  --slider-popover-offset: 8px;
 
   /* ── Search Autocomplete Highlight ──── */
-  --search-highlight-weight: 700;
-  --search-highlight-color: #18181b;
-  --search-normal-weight: 400;
-  --search-normal-color: #71717a;
-  --search-item-height: 48px;
-  --search-item-padding: 12px 20px;
 }
 
 /* ── Dark Mode ───────────────────────── */
-[data-theme="dark"] {
-  /* Card 공통 — dark elevation: deeper black shadow + hairline light ring
-     (hover was previously undefined here, leaving black-on-black = invisible) */
-  --card-bg-default: #27272a;
-  --card-bg-muted: #18181b;
-  --card-bg-elevated: #27272a;
-  --card-hairline: rgba(255, 255, 255, 0.08);
-  --card-border-outlined: 1px solid #3f3f46;
-  --card-border-divider: 1px solid #3f3f46;
-  --card-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --card-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --card-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
-
-  /* Image + Text Card */
-  --imgcard-category-color: #71717a;
-  --imgcard-title-color: #f4f4f5;
-
-  /* Product Card */
-  --product-image-bg: #3f3f46;
-  --product-name-color: #f4f4f5;
-  --product-price-color: #f4f4f5;
-
-  /* Logo Card */
-  --logo-card-avatar-bg: #3f3f46;
-  --logo-card-text-color: #f4f4f5;
-
-  /* List Item */
-  --list-item-headline-color: #f4f4f5;
-  --list-item-value-color: #f4f4f5;
-  --list-divider: 1px solid #3f3f46;
-  --list-section-title-color: #71717a;
-  --list-radio-color-selected: #f4f4f5;
-
-  /* File Output Card */
-  --file-card-bg: #27272a;
-  --file-card-icon-bg: #3f3f46;
-  --file-card-name-color: #f4f4f5;
-
-  /* Image List */
-  --imglist-avatar-bg: #3f3f46;
-  --imglist-desc-color: #f4f4f5;
-
-  /* Event/Banner Card */
-  --event-card-title-color: #f4f4f5;
-  --card-badge-bg: #f4f4f5;
-  --card-badge-color: #18181b;
-
-  /* Range Slider */
-  --slider-track-inactive-color: #52525b;
-  --slider-thumb-bg: #f4f4f5;
-  --slider-popover-bg: #f4f4f5;
-  --slider-popover-color: #18181b;
-
-  /* Search Highlight */
-  --search-highlight-color: #f4f4f5;
-  --search-normal-color: #71717a;
-}
 
 /* ========================================
    Card Base Utility Classes
@@ -285,13 +64,13 @@
 /* 다크 엘리베이션: 표면 밝힘 = 높이 (Linear/Arc 패턴) —
    검정 그림자만으로는 #09090b 배경에서 hover 상승이 보이지 않음 */
 [data-theme="dark"] .card--interactive:hover {
-  background: color-mix(in oklch, var(--card-bg-default), white 4%);
+  background: var(--surface-floating);
 }
 
 .card--interactive:active {
   transform: scale(0.97);
   box-shadow: var(--card-shadow-sm);
-  transition-duration: 0.1s;
+  transition-duration: var(--motion-duration-short);
 }
 
 /* 차트 바 draw-in — 대시보드 분석 위젯 펼침 시 scaleY 성장 */
@@ -303,7 +82,7 @@
 
 .chart-bar {
   transform-origin: bottom;
-  animation: card-chart-bar-grow 0.35s var(--ease-enter, ease-out) backwards;
+  animation: card-chart-bar-grow var(--motion-duration-long) var(--ease-enter, var(--motion-easing-ease-out)) backwards;
 }
 
 /* 전정계 안전: 카드 리프트/축소·차트 성장 애니메이션 비활성화 */
@@ -335,22 +114,14 @@
 /* Text + Button */
 .list-item--button {
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: background-color var(--motion-duration-short) var(--mw-ease);
   border-radius: var(--card-radius-md);
 }
 
 .list-item--button:hover {
-  background: #fafafa;
+  background: var(--background-secondary);
 }
 
 .list-item--button:active {
-  background: #f4f4f5;
-}
-
-[data-theme="dark"] .list-item--button:hover {
-  background: #3f3f46;
-}
-
-[data-theme="dark"] .list-item--button:active {
-  background: #52525b;
+  background: var(--fill-tertiary-hover);
 }

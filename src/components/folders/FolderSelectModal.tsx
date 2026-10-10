@@ -42,7 +42,7 @@ export function FolderSelectModal() {
                   'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors',
                   'hover:bg-zinc-50 dark:hover:bg-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-700',
                   'focus:outline-none focus-visible:bg-zinc-50 dark:focus-visible:bg-zinc-800',
-                  isCurrent && 'bg-primary-50/50 dark:bg-primary-900/10'
+                  isCurrent && 'bg-primary-50/50 '
                 )}
               >
                 <span

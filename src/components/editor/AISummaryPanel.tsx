@@ -46,7 +46,7 @@ export function AISummaryPanel({ content }: AISummaryPanelProps) {
       </button>
 
       {isOpen && (summary || error) && (
-        <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="px-3 pb-3 animate-in fade-in slide-in-from-top-1 duration-200">
           {error ? (
             <p className="text-xs text-danger-500">{error}</p>
           ) : (
@@ -56,7 +56,7 @@ export function AISummaryPanel({ content }: AISummaryPanelProps) {
           )}
           <button type="button"
             onClick={handleGenerate}
-            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default mt-2"
+            className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default mt-2"
           >
             <span>다시 생성</span>
           </button>

@@ -46,7 +46,7 @@ export function EphemeralBanner({ expiresAt, onSave }: EphemeralBannerProps) {
       </span>
       <button type="button"
         onClick={onSave}
-        className="mw-button mw-button--primary mw-button--small shrink-0"
+        className="mw-button mw-button--primary mw-button--medium shrink-0"
       >
         영구 저장
       </button>

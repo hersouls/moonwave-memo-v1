@@ -5,6 +5,7 @@ import ForceGraph3D, {
   type LinkObject,
 } from 'react-force-graph-3d'
 import type { GraphLink, GraphNode, LinkKind } from '@/hooks/useGraphData'
+import { resolveCssColor } from '@/utils/cssColor'
 
 /* 지식 그래프 3D 뷰 (Three.js/WebGL — react-force-graph-3d)
    - 모달의 "3D" 토글에서만 lazy-load되는 무거운 청크. 2D(SVG)가 기본.
@@ -84,9 +85,11 @@ export default function KnowledgeGraph3D({
 
   const ql = query.trim().toLowerCase()
   const neighbors = selectedId ? adjacency.get(selectedId) : undefined
-  const dimColor = isDark ? '#3f3f46' : '#d4d4d8'
-  const baseLink = isDark ? '#52525b' : '#a1a1aa'
-  const dimLink = isDark ? '#27272a' : '#e4e4e7'
+  const dimColor = useMemo(() => resolveCssColor('var(--border-disabled)'), [isDark])
+  const baseLink = useMemo(() => resolveCssColor('var(--border-primary)'), [isDark])
+  const dimLink = useMemo(() => resolveCssColor('var(--border-secondary)'), [isDark])
+  const strongLink = useMemo(() => resolveCssColor('var(--border-inverse)'), [isDark])
+  const noneColor = useMemo(() => resolveCssColor('var(--mw-cat-other)'), [isDark])
 
   const passes = useCallback(
     (n: FGNode) => {
@@ -101,7 +104,7 @@ export default function KnowledgeGraph3D({
     (n: FGNode) => {
       const inHood = !selectedId || n.id === selectedId || neighbors?.has(String(n.id))
       if (!passes(n) || !inHood) return dimColor
-      return colorMap.get(n.group) || '#a1a1aa'
+      return resolveCssColor(colorMap.get(n.group) || '', noneColor)
     },
     [selectedId, neighbors, passes, dimColor, colorMap]
   )
@@ -111,7 +114,7 @@ export default function KnowledgeGraph3D({
       const s = endId(l.source)
       const t = endId(l.target)
       if (selectedId && (s === selectedId || t === selectedId)) {
-        return isDark ? '#e4e4e7' : '#52525b' // 선택 연결 강조
+        return strongLink // 선택 연결 강조
       }
       if (selectedId || ql || highlightGroup) return dimLink
       return baseLink
@@ -168,15 +171,13 @@ export default function KnowledgeGraph3D({
       width={width}
       height={height}
       graphData={graphData}
-      backgroundColor="rgba(0,0,0,0)"
+      backgroundColor="transparent"
       showNavInfo={false}
       nodeVal={(n) => 1 + n.degree * 1.5}
       nodeColor={nodeColor}
       nodeOpacity={0.85}
       nodeLabel={(n) =>
-        `<div style="padding:4px 8px;border-radius:8px;font-size:12px;background:${
-          isDark ? 'rgba(24,24,27,.92)' : 'rgba(255,255,255,.95)'
-        };color:${isDark ? '#e4e4e7' : '#27272a'};box-shadow:0 2px 8px rgba(0,0,0,.25)">${escapeHtml(
+        `<div class="memo-graph-tip">${escapeHtml(
           n.label
         )} · 연결 ${n.degree}</div>`
       }

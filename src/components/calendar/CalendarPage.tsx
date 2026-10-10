@@ -26,7 +26,6 @@ export function CalendarPage() {
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
             memoCounts={memoCounts}
-            getMemosForDate={getMemosForDate}
           />
         </div>
         <div className="w-full xl:sticky xl:top-0 xl:w-[360px] xl:shrink-0">

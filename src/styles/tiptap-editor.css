@@ -14,7 +14,7 @@
   outline: none;
   min-height: 200px;
   padding-bottom: 25vh; /* end-of-document runway (iA Writer/Notion pattern) */
-  font-size: 1.0625rem;       /* 17px — comfortable reading size */
+  font-size: var(--font-size-17);       /* 17px — comfortable reading size */
   line-height: 1.8;
   letter-spacing: -0.003em;
   cursor: text;
@@ -42,20 +42,20 @@
 /* ── Task List (Tiptap DOM structure) ── */
 .tiptap-editor ul[data-type="taskList"] {
   list-style-type: none;
-  padding-left: 0.25rem;
+  padding-left: var(--space-4);
 }
 
 .tiptap-editor li[data-type="taskItem"] {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
+  gap: var(--space-8);
+  margin-bottom: var(--space-4);
 }
 
 .tiptap-editor li[data-type="taskItem"] > label {
   display: flex;
   align-items: center;
-  margin-top: 0.25rem;
+  margin-top: var(--space-4);
   flex-shrink: 0;
 }
 
@@ -66,14 +66,14 @@
   height: 1.125rem;
   min-width: 1.125rem;
   border: 1.5px solid var(--color-text-tertiary);
-  border-radius: 0.25rem;
+  border-radius: var(--radius-4);
   cursor: pointer;
   position: relative;
   background-color: transparent;
   transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    transform 150ms var(--ease-spring);
+    background-color var(--motion-duration-short) var(--mw-ease),
+    border-color var(--motion-duration-short) var(--mw-ease),
+    transform var(--motion-duration-short) var(--ease-spring);
 }
 
 /* Expanded hit area (~42px) without moving layout */
@@ -91,10 +91,10 @@
   left: 5.5px;
   width: 4.5px;
   height: 9px;
-  border: solid white;
+  border: solid var(--static-white);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg) scale(0);
-  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--motion-duration-short) var(--mw-ease-pop);
 }
 
 .tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"]:active {
@@ -113,7 +113,7 @@
 .tiptap-editor li[data-type="taskItem"] > div {
   flex: 1;
   min-width: 0;
-  transition: opacity 200ms var(--ease-standard);
+  transition: opacity var(--motion-duration-medium) var(--ease-standard);
 }
 
 .tiptap-editor li[data-type="taskItem"][data-checked="true"] > div {
@@ -137,12 +137,12 @@
 }
 
 .bubble-menu-enter {
-  animation: bubbleIn 150ms var(--ease-enter);
+  animation: bubbleIn var(--motion-duration-short) var(--ease-enter);
 }
 
 /* Breathing typography animation for Tiptap */
 .breathing-active .tiptap {
-  animation: breathe 10s ease-in-out infinite;
+  animation: breathe var(--motion-duration-loop) var(--motion-easing-ease-in-out) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,32 +2,36 @@
 // Cross-device sync identifies folders by syncId, so seeding with a random id
 // per device made every new device's defaults look distinct from the cloud's,
 // producing duplicates on login. Canonical ids keep them unified everywhere.
+// 폴더의 색은 키트의 범주 색(--mw-cat-*)에서 골라요. 값은 토큰 이름째로 저장해요: 테마가 바뀌면 함께 바뀌어요.
+// 예전에 고른 색(#F59E0B 같은 값)은 폴더에 저장된 그대로 그려요.
+const CAT = (n: number | 'other') => `var(--mw-cat-${n})`
+
 export const DEFAULT_FOLDERS = [
-  { name: '내 메모', color: '#F59E0B', isDefault: true, isSystem: false, syncId: 'seed-default-my-memos' },
-  { name: '스크랩', color: '#84CC16', isDefault: false, isSystem: false, syncId: 'seed-default-scrap' },
-  { name: '아이디어', color: '#22C55E', isDefault: false, isSystem: false, syncId: 'seed-default-idea' },
-  { name: '쇼핑', color: '#06B6D4', isDefault: false, isSystem: false, syncId: 'seed-default-shopping' },
+  { name: '내 메모', color: CAT(2), isDefault: true, isSystem: false, syncId: 'seed-default-my-memos' },
+  { name: '스크랩', color: CAT(6), isDefault: false, isSystem: false, syncId: 'seed-default-scrap' },
+  { name: '아이디어', color: CAT(8), isDefault: false, isSystem: false, syncId: 'seed-default-idea' },
+  { name: '쇼핑', color: CAT(7), isDefault: false, isSystem: false, syncId: 'seed-default-shopping' },
 ] as const
 
 export const SYSTEM_FOLDERS = [
-  { name: '삭제된 메모', color: '#A1A1AA', isDefault: false, isSystem: true, syncId: 'seed-system-trash' },
+  { name: '삭제된 메모', color: CAT('other'), isDefault: false, isSystem: true, syncId: 'seed-system-trash' },
 ] as const
 
-export const FOLDER_COLORS = [
-  '#F59E0B', '#84CC16', '#22C55E', '#06B6D4',
-  '#3B82F6', '#8B5CF6', '#EC4899', '#EF4444',
-] as const
+/** 폴더 색이 없을 때 */
+export const FOLDER_FALLBACK_COLOR = CAT('other')
 
-// Korean color names for accessible labels on color swatch pickers (aria-label)
+// 고를 수 있는 색은 일곱 가지예요 (한눈에 고르는 선택지는 일곱 개 안쪽)
+export const FOLDER_COLORS = [CAT(2), CAT(6), CAT(8), CAT(7), CAT(5), CAT(3), CAT(4)] as const
+
+// 색의 이름: 색만으로 알리지 않고 이름을 함께 보여 줘요
 export const FOLDER_COLOR_NAMES: Record<string, string> = {
-  '#F59E0B': '주황',
-  '#84CC16': '연두',
-  '#22C55E': '초록',
-  '#06B6D4': '청록',
-  '#3B82F6': '파랑',
-  '#8B5CF6': '보라',
-  '#EC4899': '분홍',
-  '#EF4444': '빨강',
+  [CAT(2)]: '주황',
+  [CAT(6)]: '연두',
+  [CAT(8)]: '초록',
+  [CAT(7)]: '하늘',
+  [CAT(5)]: '파랑',
+  [CAT(3)]: '보라',
+  [CAT(4)]: '분홍',
 }
 
 export const FONT_SIZES = [

@@ -96,7 +96,7 @@ export function TemplateSelectModal() {
                   onClick={() => setIsManageMode(!isManageMode)}
                   className={`p-2 rounded-lg transition-colors ${
                     isManageMode
-                      ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
+                      ? 'bg-primary-100 text-primary-600 '
                       : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700'
                   }`}
                   aria-label="관리"
@@ -168,7 +168,7 @@ export function TemplateSelectModal() {
               {isManageMode && (
                 <button
                   onClick={handleAddNew}
-                  className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 hover:border-primary-400 hover:text-primary-500 dark:hover:border-primary-500 dark:hover:text-primary-400 transition-colors"
+                  className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 hover:border-primary-400 hover:text-primary-500 transition-colors"
                 >
                   <IcLineAdd size={24} />
                   <span className="text-sm font-medium">새 템플릿</span>

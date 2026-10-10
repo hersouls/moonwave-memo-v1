@@ -79,10 +79,10 @@ export function MoodGraphWidget() {
           return (
             <div key={mood} className="flex items-center gap-1.5">
               <span className={`h-3 w-3 shrink-0 rounded-full ${color}`} aria-hidden="true" />
-              <span className="text-[11px] text-zinc-600 dark:text-zinc-400">
+              <span className="text-xs text-zinc-600 dark:text-zinc-400">
                 {label}
               </span>
-              <span className="text-[11px] font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+              <span className="text-xs font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                 {moodData.counts[mood]}
               </span>
             </div>

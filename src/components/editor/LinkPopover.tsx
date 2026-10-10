@@ -54,7 +54,7 @@ export function LinkPopover({ position, initialUrl = '', onUnlink, onSubmit, onC
       <div
         role="dialog"
         aria-label="링크 입력"
-        className="fixed z-[var(--z-context-menu)] w-[280px] -translate-x-1/2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg p-1 animate-in fade-in zoom-in-95 duration-150 ease-enter"
+        className="fixed z-[var(--z-context-menu)] w-[280px] -translate-x-1/2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg p-1 animate-in fade-in zoom-in-95 duration-200 ease-enter"
         style={{ top: `${top}px`, left: `${left}px` }}
         // 키보드 액세서리 툴바의 컨테이너 mousedown preventDefault가
         // (포털을 통해 React 트리로 버블링되어) 입력 포커스를 막지 않도록 차단
@@ -95,7 +95,7 @@ export function LinkPopover({ position, initialUrl = '', onUnlink, onSubmit, onC
         {onUnlink && (
           <button type="button"
             onClick={onUnlink}
-            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default mt-0.5 w-full"
+            className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default mt-0.5 w-full"
           >
             <span>링크 끊기</span>
           </button>

@@ -118,7 +118,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
   return createPortal(
     <div
       ref={toolbarRef}
-      className="fixed z-[var(--z-modal)] flex items-center gap-0.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-1 py-1 shadow-xl ring-1 ring-white/10 dark:ring-black/10 animate-in fade-in slide-in-from-bottom-1 duration-150 ease-enter"
+      className="fixed z-[var(--z-modal)] flex items-center gap-0.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-1 py-1 shadow-xl ring-1 ring-white/10 dark:ring-black/10 animate-in fade-in slide-in-from-bottom-1 duration-200 ease-enter"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
@@ -141,7 +141,7 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
       {/* 선택 영역을 가리키는 앵커 노치 */}
       <span
         aria-hidden="true"
-        className="absolute left-1/2 top-full -ml-1 -mt-[3px] h-2 w-2 rotate-45 rounded-[1px] bg-zinc-900 dark:bg-zinc-100"
+        className="absolute left-1/2 top-full -ml-1 -mt-[3px] h-2 w-2 rotate-45 rounded-xs bg-zinc-900 dark:bg-zinc-100"
       />
     </div>,
     document.body

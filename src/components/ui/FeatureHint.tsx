@@ -30,7 +30,7 @@ export function FeatureHint({ id, message }: FeatureHintProps) {
   }
 
   return (
-    <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-xs animate-in fade-in duration-300">
+    <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-primary-50 text-primary-700 text-xs animate-in fade-in duration-300">
       <IcLineBulb size={16} className="mt-0.5 shrink-0" />
       <span className="flex-1">{message}</span>
       <button type="button"

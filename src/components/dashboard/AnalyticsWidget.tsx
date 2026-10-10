@@ -26,7 +26,7 @@ export function AnalyticsWidget() {
               <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">
                 {analytics.totalWords.toLocaleString()}
               </p>
-              <p className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">{'총 단어'}</p>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{'총 단어'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -35,7 +35,7 @@ export function AnalyticsWidget() {
               <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">
                 {analytics.averageLength.toLocaleString()}
               </p>
-              <p className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">{'평균 글자'}</p>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{'평균 글자'}</p>
             </div>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function AnalyticsWidget() {
                 title={`${hour}시: ${count}개`}
               >
                 <div
-                  className="chart-bar w-full rounded-sm bg-primary-400 transition-colors group-hover:bg-primary-500 dark:bg-primary-500 dark:group-hover:bg-primary-400"
+                  className="chart-bar w-full rounded-sm bg-primary-400 transition-colors group-hover:bg-primary-500 "
                   style={{
                     height: `${Math.max((count / maxHour) * 100, count > 0 ? 8 : 2)}%`,
                     minHeight: count > 0 ? '3px' : '1px',
@@ -67,11 +67,11 @@ export function AnalyticsWidget() {
             ))}
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-[10px] tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">0</span>
-            <span className="text-[10px] tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">6</span>
-            <span className="text-[10px] tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">12</span>
-            <span className="text-[10px] tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">18</span>
-            <span className="text-[10px] tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">23</span>
+            <span className="text-xs tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">0</span>
+            <span className="text-xs tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">6</span>
+            <span className="text-xs tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">12</span>
+            <span className="text-xs tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">18</span>
+            <span className="text-xs tabular-nums tracking-wide text-zinc-500 dark:text-zinc-400">23</span>
           </div>
         </div>
 
@@ -87,8 +87,8 @@ export function AnalyticsWidget() {
                   className={clsx(
                     'chart-bar w-full rounded-sm',
                     day === 0 || day === 6
-                      ? 'bg-primary-200 dark:bg-primary-800'
-                      : 'bg-primary-400 dark:bg-primary-500'
+                      ? 'bg-primary-200 '
+                      : 'bg-primary-400 '
                   )}
                   style={{
                     height: `${Math.max((count / maxDay) * 100, count > 0 ? 12 : 4)}%`,
@@ -97,7 +97,7 @@ export function AnalyticsWidget() {
                     animationDelay: `${day * 20}ms`,
                   }}
                 />
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
                   {DAY_LABELS[day]}
                 </span>
               </div>
@@ -115,14 +115,14 @@ export function AnalyticsWidget() {
               {analytics.monthlyTrend.map((item, i) => (
                 <div key={item.month} className="flex-1 flex flex-col items-center gap-1 self-stretch justify-end">
                   <div
-                    className="chart-bar w-full rounded-sm bg-primary-300 dark:bg-primary-700"
+                    className="chart-bar w-full rounded-sm bg-primary-300 "
                     style={{
                       height: `${Math.max((item.count / maxMonthly) * 100, 8)}%`,
                       minHeight: '3px',
                       animationDelay: `${i * 25}ms`,
                     }}
                   />
-                  <span className="text-[10px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                  <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                     {item.month.split('-')[1]}{'월'}
                   </span>
                 </div>
@@ -141,10 +141,10 @@ export function AnalyticsWidget() {
               {analytics.topTags.map(({ tag, count }) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-primary-50 text-primary-600 "
                 >
                   #{tag}
-                  <span className="text-[10px] tabular-nums text-primary-400 dark:text-primary-500">{count}</span>
+                  <span className="text-xs tabular-nums text-primary-400 ">{count}</span>
                 </span>
               ))}
             </div>

@@ -1,8 +1,7 @@
-import clsx from 'clsx'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
 import type { SortBy } from '@/lib/types'
-import { IcMwSort } from '@/mw/icons'
+import { IcLineClose, IcMwSort } from '@/mw/icons'
 
 const SORT_LABELS: Record<SortBy, string> = {
   updatedAt: '수정일',
@@ -28,64 +27,32 @@ export function MemoFilterTabs() {
   const isAllActive = activeFilter === 'all' && activeFolderId == null && activeTag == null
   const isStarredActive = activeFilter === 'starred'
 
-  // A11Y-01: role="tablist" + UX-01: hide when sidebar open on desktop
+  // 좁은 화면에서만 보여요(넓은 화면에서는 사이드바가 같은 일을 해요). 키트의 Scrollable 탭이에요.
+  const tab = (selected: boolean) => `mw-tab mw-tab--scrollable mw-tab--${selected ? 'selected' : 'default'}`
   return (
-    <div
-      className="scrollbar-none flex gap-2 overflow-x-auto px-4 py-2 lg:hidden"
-      role="tablist"
-      aria-label="메모 필터"
-    >
-      {/* A11Y-01: role="tab" + aria-selected */}
-      <button
-        onClick={() => setActiveFilter('all')}
-        role="tab"
-        aria-selected={isAllActive}
-        className={clsx(
-          'shrink-0 chip-text chip-text--sm',
-          isAllActive ? 'chip-text--pressed' : 'chip-text--bordered'
-        )}
-      >
-        전체
-      </button>
+    <div className="flex items-center gap-2 lg:hidden">
+      <div className="mw-tab-group mw-tab-group--scrollable min-w-0 flex-1" role="tablist" aria-label="메모 거르기">
+        <button type="button" onClick={() => setActiveFilter('all')} role="tab" aria-selected={isAllActive} className={tab(isAllActive)}>
+          전체
+        </button>
+        <button type="button" onClick={() => setActiveFilter('starred')} role="tab" aria-selected={isStarredActive} className={tab(isStarredActive)}>
+          중요
+        </button>
+        {userFolders.map((folder) => {
+          const isActive = activeFolderId === folder.id
+          return (
+            <button key={folder.id} type="button" onClick={() => setActiveFolderId(folder.id!)} role="tab" aria-selected={isActive} className={tab(isActive)}>
+              {folder.name}
+            </button>
+          )
+        })}
+      </div>
 
-      <button
-        onClick={() => setActiveFilter('starred')}
-        role="tab"
-        aria-selected={isStarredActive}
-        className={clsx(
-          'shrink-0 chip-text chip-text--sm',
-          isStarredActive ? 'chip-text--pressed' : 'chip-text--bordered'
-        )}
-      >
-        중요
-      </button>
-
-      {/* Folder tabs */}
-      {userFolders.map((folder) => {
-        const isActive = activeFolderId === folder.id
-        return (
-          <button
-            key={folder.id}
-            onClick={() => setActiveFolderId(folder.id!)}
-            role="tab"
-            aria-selected={isActive}
-            className={clsx(
-              'shrink-0 chip-text chip-text--sm',
-              isActive ? 'chip-text--pressed' : 'chip-text--bordered'
-            )}
-          >
-            {folder.name}
-          </button>
-        )
-      })}
-
-      {/* Active tag indicator — accent tokens keep white text AA in dark palettes */}
+      {/* 고른 태그: 누르면 풀려요 */}
       {activeTag && (
-        <button
-          onClick={() => setActiveFilter('all')}
-          className="shrink-0 chip-text chip-text--sm bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-hover)]"
-        >
+        <button type="button" onClick={() => setActiveFilter('all')} className="mw-input-chip mw-input-chip--on" aria-label={`태그 ${activeTag} 풀기`}>
           #{activeTag}
+          <span className="mw-input-chip__icon"><IcLineClose size={16} /></span>
         </button>
       )}
 

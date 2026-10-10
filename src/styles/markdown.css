@@ -1,3 +1,29 @@
+/* 코드 강조색: 키트에 없는 값이라 Memo의 토큰으로 둬요 (밝은 테마 · 어두운 테마) */
+:root {
+  --memo-code-comment: #6e7781;
+  --memo-code-keyword: #cf222e;
+  --memo-code-string: #0a3069;
+  --memo-code-number: #0550ae;
+  --memo-code-function: #8250df;
+  --memo-code-variable: #953800;
+  --memo-code-tag: #116329;
+  --memo-code-deletion: #82071e;
+  --memo-code-deletion-bg: color-mix(in srgb, var(--red-300) 12%, transparent);
+  --memo-code-addition-bg: transparent;
+}
+
+[data-theme="dark"] {
+  --memo-code-comment: #8b949e;
+  --memo-code-keyword: #ff7b72;
+  --memo-code-string: #a5d6ff;
+  --memo-code-number: #79c0ff;
+  --memo-code-function: #d2a8ff;
+  --memo-code-variable: #ffa657;
+  --memo-code-tag: #7ee787;
+  --memo-code-deletion: #ffa198;
+  --memo-code-addition-bg: color-mix(in srgb, var(--teal-400) 12%, transparent);
+}
+
 /* ========================================
    Markdown Preview Styles
    Scoped under .memo-markdown-preview
@@ -12,47 +38,47 @@
    Headings
    ---------------------------------------- */
 .memo-markdown-preview h1 {
-  font-size: 1.625rem;
+  font-size: var(--font-size-24);
   line-height: 1.3;
   font-weight: 700;
   letter-spacing: -0.02em;
   text-wrap: balance;
   color: var(--color-zinc-900, #18181b);
-  margin-top: 1.75rem;
-  margin-bottom: 0.75rem;
+  margin-top: var(--memo-space-28);
+  margin-bottom: var(--space-12);
 }
 
 .memo-markdown-preview h2 {
-  font-size: 1.3125rem;
+  font-size: var(--font-size-20);
   line-height: 1.35;
   font-weight: 700;
   letter-spacing: -0.015em;
   text-wrap: balance;
   color: var(--color-zinc-900, #18181b);
-  margin-top: 1.75rem;
-  margin-bottom: 0.625rem;
+  margin-top: var(--memo-space-28);
+  margin-bottom: var(--memo-space-10);
 }
 
 .memo-markdown-preview h3 {
-  font-size: 1.125rem;
+  font-size: var(--font-size-18);
   line-height: 1.4;
   font-weight: 600;
   letter-spacing: -0.01em;
   text-wrap: balance;
   color: var(--color-zinc-900, #18181b);
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
+  margin-top: var(--space-20);
+  margin-bottom: var(--space-8);
 }
 
 .memo-markdown-preview h4,
 .memo-markdown-preview h5,
 .memo-markdown-preview h6 {
-  font-size: 1rem;
-  line-height: 1.5rem;
+  font-size: var(--font-size-16);
+  line-height: 1.5;
   font-weight: 500;
   color: var(--color-zinc-900, #18181b);
-  margin-top: 0.875rem;
-  margin-bottom: 0.375rem;
+  margin-top: var(--memo-space-14);
+  margin-bottom: var(--memo-space-6);
 }
 
 .memo-markdown-preview h1:first-child,
@@ -72,7 +98,7 @@
   line-height: 1.75;
   text-wrap: pretty;
   margin-top: 0;
-  margin-bottom: 0.875rem;
+  margin-bottom: var(--memo-space-14);
 }
 
 .memo-markdown-preview p:last-child {
@@ -106,7 +132,7 @@
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
   text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  transition: color var(--motion-duration-short) var(--mw-ease), text-decoration-color var(--motion-duration-short) var(--mw-ease);
 }
 
 .memo-markdown-preview a:hover {
@@ -119,29 +145,29 @@
    ---------------------------------------- */
 .memo-markdown-preview ul {
   list-style-type: disc;
-  padding-left: 1.5rem;
-  margin-top: 0.25rem;
-  margin-bottom: 0.75rem;
+  padding-left: var(--space-24);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-12);
 }
 
 .memo-markdown-preview ol {
   list-style-type: decimal;
-  padding-left: 1.5rem;
-  margin-top: 0.25rem;
-  margin-bottom: 0.75rem;
+  padding-left: var(--space-24);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-12);
 }
 
 .memo-markdown-preview li {
   color: var(--color-zinc-700, #3f3f46);
   line-height: 1.75;
   text-wrap: pretty;
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-4);
 }
 
 .memo-markdown-preview li > ul,
 .memo-markdown-preview li > ol {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 /* ----------------------------------------
@@ -149,13 +175,13 @@
    ---------------------------------------- */
 .memo-markdown-preview ul.contains-task-list {
   list-style-type: none;
-  padding-left: 0.25rem;
+  padding-left: var(--space-4);
 }
 
 .memo-markdown-preview li.task-list-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: var(--space-8);
 }
 
 .memo-markdown-preview li.task-list-item input[type="checkbox"] {
@@ -165,15 +191,15 @@
   height: 1.125rem;
   min-width: 1.125rem;
   border: 1.5px solid var(--color-text-tertiary);
-  border-radius: 0.25rem;
-  margin-top: 0.3rem;
+  border-radius: var(--radius-4);
+  margin-top: var(--space-4);
   cursor: pointer;
   position: relative;
   background-color: transparent;
   transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    transform 150ms var(--ease-spring);
+    background-color var(--motion-duration-short) var(--mw-ease),
+    border-color var(--motion-duration-short) var(--mw-ease),
+    transform var(--motion-duration-short) var(--ease-spring);
 }
 
 /* Expanded hit area (~42px) without moving layout — checkboxes are tappable in preview */
@@ -191,10 +217,10 @@
   left: 5.5px;
   width: 4.5px;
   height: 9px;
-  border: solid white;
+  border: solid var(--static-white);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg) scale(0);
-  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--motion-duration-short) var(--mw-ease-pop);
 }
 
 .memo-markdown-preview li.task-list-item input[type="checkbox"]:active {
@@ -215,9 +241,9 @@
    ---------------------------------------- */
 .memo-markdown-preview code:not(pre code) {
   background-color: var(--color-zinc-100, #f4f4f5);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+  padding: var(--space-2) var(--memo-space-6);
+  border-radius: var(--radius-4);
+  font-size: var(--font-size-14);
   font-family: var(--font-mono);
   color: var(--color-danger-500, #ef4444);
   word-break: break-word;
@@ -229,8 +255,8 @@
    semantic tokens flip in dark mode automatically.
    ---------------------------------------- */
 .memo-markdown-preview pre {
-  margin-top: 0.5rem;
-  margin-bottom: 0.75rem;
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-12);
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-8, 0.5rem); /* fallback: 토큰이 프루닝돼도 8px 유지 */
@@ -241,9 +267,9 @@
   display: block;
   background: none;
   border: none;
-  padding: 0.75rem 1rem;
+  padding: var(--space-12) var(--space-16);
   overflow-x: auto;
-  font-size: 0.85rem;
+  font-size: var(--font-size-14);
   line-height: 1.625;
   font-family: var(--font-mono);
   font-variant-ligatures: none;
@@ -254,20 +280,20 @@
 /* Syntax highlighting — GitHub Light, scoped (dark overrides below) */
 .memo-markdown-preview .hljs-comment,
 .memo-markdown-preview .hljs-quote {
-  color: #6e7781;
+  color: var(--memo-code-comment);
   font-style: italic;
 }
 
 .memo-markdown-preview .hljs-keyword,
 .memo-markdown-preview .hljs-selector-tag,
 .memo-markdown-preview .hljs-type {
-  color: #cf222e;
+  color: var(--memo-code-keyword);
 }
 
 .memo-markdown-preview .hljs-string,
 .memo-markdown-preview .hljs-regexp,
 .memo-markdown-preview .hljs-addition {
-  color: #0a3069;
+  color: var(--memo-code-string);
 }
 
 .memo-markdown-preview .hljs-number,
@@ -278,36 +304,36 @@
 .memo-markdown-preview .hljs-builtin-name,
 .memo-markdown-preview .hljs-meta,
 .memo-markdown-preview .hljs-operator {
-  color: #0550ae;
+  color: var(--memo-code-number);
 }
 
 .memo-markdown-preview .hljs-function,
 .memo-markdown-preview .hljs-title {
-  color: #8250df;
+  color: var(--memo-code-function);
 }
 
 .memo-markdown-preview .hljs-variable,
 .memo-markdown-preview .hljs-template-variable,
 .memo-markdown-preview .hljs-symbol,
 .memo-markdown-preview .hljs-bullet {
-  color: #953800;
+  color: var(--memo-code-variable);
 }
 
 .memo-markdown-preview .hljs-name,
 .memo-markdown-preview .hljs-tag,
 .memo-markdown-preview .hljs-selector-class,
 .memo-markdown-preview .hljs-selector-id {
-  color: #116329;
+  color: var(--memo-code-tag);
 }
 
 .memo-markdown-preview .hljs-section {
-  color: #0550ae;
+  color: var(--memo-code-number);
   font-weight: 700;
 }
 
 .memo-markdown-preview .hljs-deletion {
-  color: #82071e;
-  background-color: rgba(255, 129, 130, 0.1);
+  color: var(--memo-code-deletion);
+  background-color: var(--memo-code-deletion-bg);
 }
 
 .memo-markdown-preview .hljs-emphasis {
@@ -324,10 +350,10 @@
 .memo-markdown-preview blockquote {
   border-left: 4px solid var(--color-primary-500, #6366f1);
   background-color: var(--color-zinc-50, #fafafa);
-  padding: 0.75rem 1rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.75rem;
-  border-radius: 0 0.375rem 0.375rem 0;
+  padding: var(--space-12) var(--space-16);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-12);
+  border-radius: 0 var(--radius-6) var(--radius-6) 0;
 }
 
 .memo-markdown-preview blockquote p {
@@ -340,7 +366,7 @@
 }
 
 .memo-markdown-preview blockquote blockquote {
-  margin-top: 0.5rem;
+  margin-top: var(--space-8);
   margin-bottom: 0;
   border-left-color: var(--color-primary-300, #a5b4fc);
 }
@@ -351,22 +377,22 @@
 .memo-markdown-preview table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 0.5rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.875rem;
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-12);
+  font-size: var(--font-size-14);
 }
 
 .memo-markdown-preview thead th {
   background-color: var(--color-zinc-50, #fafafa);
   font-weight: 600;
   text-align: left;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-8) var(--space-12);
   border: 1px solid var(--color-zinc-200, #e4e4e7);
   color: var(--color-zinc-900, #18181b);
 }
 
 .memo-markdown-preview tbody td {
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-8) var(--space-12);
   border: 1px solid var(--color-zinc-200, #e4e4e7);
   color: var(--color-zinc-700, #3f3f46);
   font-variant-numeric: tabular-nums; /* 날짜/숫자 컬럼 정렬 안정화 */
@@ -382,7 +408,7 @@
 .memo-markdown-preview hr {
   border: none;
   border-top: 1px solid var(--color-zinc-200, #e4e4e7);
-  margin: 1.5rem 0;
+  margin: var(--space-24) 0;
 }
 
 /* ----------------------------------------
@@ -391,8 +417,8 @@
 .memo-markdown-preview img {
   max-width: 100%;
   height: auto;
-  border-radius: 0.5rem;
-  margin: 0.5rem auto;
+  border-radius: var(--radius-8);
+  margin: var(--space-8) auto;
   display: block;
 }
 
@@ -400,15 +426,15 @@
    Details / Summary
    ---------------------------------------- */
 .memo-markdown-preview details {
-  margin-top: 0.5rem;
-  margin-bottom: 0.75rem;
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-12);
   border: 1px solid var(--color-zinc-200, #e4e4e7);
-  border-radius: 0.375rem;
-  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-6);
+  padding: var(--space-8) var(--space-12);
 }
 
 .memo-markdown-preview details[open] {
-  padding-bottom: 0.75rem;
+  padding-bottom: var(--space-12);
 }
 
 .memo-markdown-preview summary {
@@ -423,7 +449,7 @@
 }
 
 .memo-markdown-preview details[open] summary {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-8);
 }
 
 /* ========================================
@@ -493,90 +519,15 @@
   color: var(--color-zinc-300, #d4d4d8);
 }
 
-[data-theme="dark"] .memo-markdown-preview .hljs-comment,
-[data-theme="dark"] .memo-markdown-preview .hljs-quote {
-  color: #8b949e;
-  font-style: italic;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-keyword,
-[data-theme="dark"] .memo-markdown-preview .hljs-selector-tag,
-[data-theme="dark"] .memo-markdown-preview .hljs-type {
-  color: #ff7b72;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-string,
-[data-theme="dark"] .memo-markdown-preview .hljs-addition {
-  color: #a5d6ff;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-number,
-[data-theme="dark"] .memo-markdown-preview .hljs-literal {
-  color: #79c0ff;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-built_in,
-[data-theme="dark"] .memo-markdown-preview .hljs-builtin-name {
-  color: #ffa657;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-function,
-[data-theme="dark"] .memo-markdown-preview .hljs-title {
-  color: #d2a8ff;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-attr,
-[data-theme="dark"] .memo-markdown-preview .hljs-attribute {
-  color: #79c0ff;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-variable,
-[data-theme="dark"] .memo-markdown-preview .hljs-template-variable {
-  color: #ffa657;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-selector-class,
-[data-theme="dark"] .memo-markdown-preview .hljs-selector-id {
-  color: #7ee787;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-deletion {
-  color: #ffa198;
-  background-color: rgba(255, 129, 130, 0.1);
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-addition {
-  background-color: rgba(63, 185, 80, 0.1);
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-meta {
-  color: #79c0ff;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-regexp {
-  color: #a5d6ff;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-symbol,
-[data-theme="dark"] .memo-markdown-preview .hljs-bullet {
-  color: #ffa657;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-section {
-  color: #79c0ff;
-  font-weight: 700;
-}
-
-[data-theme="dark"] .memo-markdown-preview .hljs-name,
-[data-theme="dark"] .memo-markdown-preview .hljs-tag {
-  color: #7ee787;
+.memo-markdown-preview .hljs-addition {
+  background-color: var(--memo-code-addition-bg);
 }
 
 /* ----------------------------------------
    Dark: Blockquotes
    ---------------------------------------- */
 [data-theme="dark"] .memo-markdown-preview blockquote {
-  background-color: rgba(39, 39, 42, 0.5);
+  background-color: var(--background-secondary);
 }
 
 [data-theme="dark"] .memo-markdown-preview blockquote p {

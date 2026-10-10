@@ -88,7 +88,7 @@ export const SlideRenderer = memo(function SlideRenderer({
       <div
         className="slide-markdown-content flex-1"
         style={{
-          fontSize: `calc(1.125rem * ${fontSize})`,
+          fontSize: `calc(var(--font-size-18) * ${fontSize})`,
           color: 'var(--text-secondary)',
           lineHeight: 1.8,
         }}

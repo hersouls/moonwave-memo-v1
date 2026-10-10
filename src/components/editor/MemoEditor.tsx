@@ -856,28 +856,30 @@ export function MemoEditor() {
       )}
 
       {/* UX-18: maxLength={100} on title + 제목 재생성 버튼([폴더]_요약_YYMMDD) */}
+      <label htmlFor="memo-title" className="mb-1 block text-xs font-semibold text-[var(--text-tertiary)]">제목</label>
       <div className="flex items-start gap-2 mb-3">
         <input
           ref={titleRef}
+          id="memo-title"
           type="text"
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
-          placeholder="제목"
+          placeholder="제목을 적어요"
           maxLength={100}
-          className="w-full text-[1.75rem] lg:text-[2rem] fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none"
+          className="min-h-11 w-full text-3xl lg:text-3xl fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none"
         />
         <button
           type="button"
           onClick={handleRegenerateTitle}
           disabled={isRegeneratingTitle || !body.trim()}
-          className="mt-1.5 shrink-0 flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-[var(--color-accent)] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-zinc-400 dark:text-zinc-500 dark:hover:bg-zinc-800"
-          aria-label="제목 재생성"
-          title="제목 재생성 (본문 요약 + 날짜)"
+          className="mw-icon-button"
+          aria-label="제목 다시 만들기"
+          title="제목 다시 만들기 (내용 요약 + 날짜)"
         >
           {isRegeneratingTitle ? (
-            <IcLineLoading className="h-[18px] w-[18px] animate-spin" />
+            <IcLineLoading size={20} className="animate-spin" />
           ) : (
-            <IcMwSparkles className="h-[18px] w-[18px]" />
+            <IcMwSparkles size={20} />
           )}
         </button>
       </div>
@@ -888,13 +890,15 @@ export function MemoEditor() {
         <>
           <div className={clsx('relative flex-1 flex flex-col min-h-0', isBreathing && 'breathing-active')}>
             {/* UX-03: Apply user font, UX-20: Fills remaining space */}
+            <label htmlFor="memo-body" className="mb-1 block text-xs font-semibold text-[var(--text-tertiary)]">내용</label>
             <textarea
               ref={bodyRef}
+              id="memo-body"
               value={body}
               onChange={handleBodyInput}
               onKeyDown={handleBodyKeyDown}
-              placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
-              className="w-full flex-1 min-h-0 pb-32 text-[1.0625rem] leading-[1.8] tracking-[-0.003em] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none resize-none"
+              placeholder="메모를 적어요. '/' 명령어와 마크다운을 쓸 수 있어요"
+              className="w-full flex-1 min-h-0 pb-32 text-17 leading-[1.8] tracking-[-0.003em] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none resize-none"
                 />
             {/* AI Autocomplete ghost text */}
             {ghostText && (
@@ -922,18 +926,18 @@ export function MemoEditor() {
       {/* AI Tag suggestions (hide when keyboard open to maximize edit area) */}
       {!isKeyboardOpen && aiTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-          <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">AI 태그</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">AI 태그</span>
           {aiTags.map((tag) => (
             <button
               key={tag}
               onClick={() => handleAITagClick(tag)}
-              className="px-2 py-0.5 text-xs rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+              className="px-2 py-0.5 text-xs rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
             >
               #{tag}
             </button>
           ))}
           {aiTagsLoading && (
-            <span className="text-[10px] text-zinc-400 animate-pulse">분석 중...</span>
+            <span className="text-xs text-zinc-400 animate-pulse">분석 중...</span>
           )}
         </div>
       )}
@@ -1109,39 +1113,15 @@ export function MemoEditor() {
                     onFolderChange={handleFolderChange}
                     className=""
                   />
-                  <div className="shrink-0" role="tablist" aria-label="편집기 모드">
-                  <div className="inline-flex items-center gap-0.5 p-0.5 rounded-[10px] bg-zinc-100 dark:bg-zinc-800/80">
-                    <button
-                      role="tab"
-                      aria-selected={activeTab === 'edit'}
-                      id="tab-edit"
-                      aria-controls="panel-edit"
-                      onClick={() => setActiveTab('edit')}
-                      className={clsx(
-                        'px-3.5 py-1.5 text-sm font-medium rounded-[7px] transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50',
-                        activeTab === 'edit'
-                          ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-50 shadow-sm'
-                          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-                      )}
-                    >
-                      편집
-                    </button>
-                    <button
-                      role="tab"
-                      aria-selected={activeTab === 'preview'}
-                      id="tab-preview"
-                      aria-controls="panel-preview"
-                      onClick={() => setActiveTab('preview')}
-                      className={clsx(
-                        'px-3.5 py-1.5 text-sm font-medium rounded-[7px] transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50',
-                        activeTab === 'preview'
-                          ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-50 shadow-sm'
-                          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-                      )}
-                    >
-                      미리보기
-                    </button>
-                  </div>
+                  <div className="shrink-0">
+                    <div className="mw-tab-group mw-tab-group--fixed" role="tablist" aria-label="편집기 모드">
+                      <button type="button" role="tab" aria-selected={activeTab === 'edit'} id="tab-edit" aria-controls="panel-edit" onClick={() => setActiveTab('edit')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'edit' ? 'selected' : 'default'}`}>
+                        편집
+                      </button>
+                      <button type="button" role="tab" aria-selected={activeTab === 'preview'} id="tab-preview" aria-controls="panel-preview" onClick={() => setActiveTab('preview')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'preview' ? 'selected' : 'default'}`}>
+                        미리보기
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1235,7 +1215,7 @@ export function MemoEditor() {
           </button>
         </div>
       ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && (
-        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
           <span>{charCount.toLocaleString()}자</span>
           <span>·</span>
           <span>읽기 약 {readingTime}분</span>

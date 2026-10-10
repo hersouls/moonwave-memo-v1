@@ -75,7 +75,7 @@ export function ContextMenu({ position, items, onClose }: ContextMenuProps) {
       <div
         ref={menuRef}
         role="menu"
-        className="ctx-menu fixed z-[var(--z-context-menu)] animate-in fade-in-0 zoom-in-95 duration-150"
+        className="ctx-menu fixed z-[var(--z-context-menu)] animate-in fade-in-0 zoom-in-95 duration-200"
         style={{ left: coords.x, top: coords.y }}
       >
         {items.map((item, i) =>

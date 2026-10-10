@@ -64,7 +64,7 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
           </button>
         </div>
       </div>
-      <p className="mt-1.5 flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+      <p className="mt-1.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
         <Kbd>Ctrl</Kbd>
         <span aria-hidden="true">+</span>
         <Kbd>Enter</Kbd>

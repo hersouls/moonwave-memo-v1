@@ -131,7 +131,7 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
       className={clsx(
         // Same card species as MemoCard: hairline border + scoped transitions
         'w-full text-left p-3 rounded-xl bg-white dark:bg-zinc-800 border border-[var(--card-hairline)]',
-        'shadow-sm hover:shadow-md transition-[transform,box-shadow,border-color,background-color] duration-150',
+        'shadow-sm hover:shadow-md transition-[transform,box-shadow,border-color,background-color] duration-200',
         'hover:-translate-y-0.5 hover:border-zinc-950/[0.12] dark:hover:border-white/[0.16] active:scale-[0.98]'
       )}
     >
@@ -150,7 +150,7 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
           {memo.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="inline-flex px-1.5 py-0.5 text-[11px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
+              className="inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full bg-primary-50 text-primary-600 "
             >
               #{tag}
             </span>
@@ -158,7 +158,7 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-[11px] tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400">
+      <div className="flex items-center gap-1.5 text-xs tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400">
         {memo.isStarred && (
           <IcMwStar size={12} className="shrink-0 fill-primary-500 text-primary-500" />
         )}

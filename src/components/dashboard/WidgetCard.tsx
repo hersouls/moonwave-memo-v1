@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { IcLineChevronDown } from '@/mw/icons'
+import { IcLineChevronDown, IcLineChevronUp } from '@/mw/icons'
 import type { IconType } from '@/components/ui/iconType'
 
 /* 대시보드 위젯 공용 카드 — 헤더 해부학 단일화
@@ -8,7 +8,7 @@ import type { IconType } from '@/components/ui/iconType'
    액센트 규율: neutral 기본, primary(브랜드/인터랙티브), amber(웜/AI) 2색으로 제한 */
 const TINT_STYLES = {
   neutral: 'bg-zinc-100 text-zinc-500 dark:bg-white/[0.06] dark:text-zinc-400',
-  primary: 'bg-primary-50 text-primary-500 dark:bg-primary-900/20 dark:text-primary-400',
+  primary: 'bg-primary-50 text-primary-500 ',
   amber: 'bg-amber-50 text-amber-500 dark:bg-amber-900/20 dark:text-amber-400',
 } as const
 
@@ -104,27 +104,22 @@ export function WidgetCard({
     <div className={clsx('card overflow-hidden', className)}>
       {/* 액션은 토글 버튼의 형제로 오버레이 — 인터랙티브 요소 중첩 방지 */}
       <div className="relative">
+        {/* 머리는 글자, 접고 펴는 일은 오른쪽 끝의 아이콘 버튼이 해요 */}
+        <div className={clsx('flex w-full items-center gap-2.5 py-3.5 pl-5', action ? 'pr-36' : 'pr-16')}>
+          {headerContent}
+        </div>
         <button
           type="button"
           onClick={() => setIsCollapsed(!isCollapsed)}
           aria-expanded={!isCollapsed}
           aria-controls={bodyId}
-          className={clsx(
-            'flex w-full items-center gap-2.5 py-3.5 pl-5 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.03]',
-            action ? 'pr-24' : 'pr-12'
-          )}
+          aria-label={isCollapsed ? '펼치기' : '접기'}
+          className="mw-icon-button memo-widget__toggle"
         >
-          {headerContent}
-          <IcLineChevronDown size={16}
-            aria-hidden="true"
-            className={clsx(
-              'absolute right-5 top-1/2   -translate-y-1/2 text-zinc-400 transition-transform duration-200 ease-standard motion-reduce:transition-none',
-              !isCollapsed && 'rotate-180'
-            )}
-          />
+          {isCollapsed ? <IcLineChevronDown size={20} /> : <IcLineChevronUp size={20} />}
         </button>
         {action && (
-          <span className="absolute right-11 top-1/2 -translate-y-1/2">{action}</span>
+          <span className="absolute right-14 top-1/2 -translate-y-1/2">{action}</span>
         )}
       </div>
 

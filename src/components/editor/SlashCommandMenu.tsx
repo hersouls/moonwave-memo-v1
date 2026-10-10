@@ -121,12 +121,12 @@ export function SlashCommandMenu({ query, position, onSelect, onClose }: SlashCo
     <div
       ref={menuRef}
       role="menu"
-      className="fixed z-50 w-60 rounded-xl border border-zinc-200 bg-white py-1.5 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 animate-in fade-in slide-in-from-bottom duration-150"
+      className="fixed z-50 w-60 rounded-xl border border-zinc-200 bg-white py-1.5 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 animate-in fade-in slide-in-from-bottom duration-200"
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
     >
       {grouped.map(([category, cmds], catIdx) => (
         <div key={category}>
-          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+          <div className="px-3 pt-2 pb-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
             {CATEGORY_LABELS[category]}
           </div>
           {cmds.map((cmd, itemIdx) => {
@@ -138,7 +138,7 @@ export function SlashCommandMenu({ query, position, onSelect, onClose }: SlashCo
                 onClick={() => handleSelect(cmd)}
                 className={`flex w-full items-center gap-3 px-3 py-2 text-sm transition-colors ${
                   idx === selectedIndex
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                    ? 'bg-primary-50 text-primary-700 '
                     : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 }`}
               >

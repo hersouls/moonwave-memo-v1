@@ -58,7 +58,7 @@ export function FloatingTimer() {
             strokeWidth="2.5"
             strokeDasharray={`${progress * 81.68} 81.68`}
             strokeLinecap="round"
-            className="text-primary-400 dark:text-primary-600"
+            className="text-primary-400 "
           />
         </svg>
 

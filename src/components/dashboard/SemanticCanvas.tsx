@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { useSemanticCanvas, type CanvasNode } from '@/hooks/useSemanticCanvas'
@@ -16,19 +16,6 @@ function SemanticCanvas() {
   const [hoveredNode, setHoveredNode] = useState<CanvasNode | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const lastPinchDistRef = useRef<number | null>(null)
-
-  // Detect dark mode — 테마 토글에 실시간 반응 (documentElement class 관찰)
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return document.documentElement.dataset.theme === 'dark'
-  })
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.dataset.theme === 'dark')
-    })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    return () => observer.disconnect()
-  }, [])
 
   // Node radius based on body length
   const getRadius = useCallback((bodyLength: number) => {
@@ -237,7 +224,7 @@ function SemanticCanvas() {
                     y1={node.y}
                     x2={other.x}
                     y2={other.y}
-                    stroke={isDark ? '#3f3f46' : '#e4e4e7'}
+                    stroke="var(--border-secondary)"
                     strokeWidth={0.5}
                     opacity={Math.max(0.1, 1 - dist / 80)}
                   />
@@ -270,10 +257,7 @@ function SemanticCanvas() {
                   fill={fill}
                   stroke={stroke}
                   strokeWidth={isHovered ? 2.5 : 1.5}
-                  style={{
-                    transition: 'r 0.15s ease, stroke-width 0.15s ease',
-                    filter: isHovered ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : undefined,
-                  }}
+                  style={{ transition: 'r var(--motion-duration-short) var(--mw-ease), stroke-width var(--motion-duration-short) var(--mw-ease)' }}
                 />
                 {/* Title label for hovered node */}
                 {isHovered && (
@@ -284,17 +268,16 @@ function SemanticCanvas() {
                       width={Math.min(node.title.length * 11, 200)}
                       height={22}
                       rx={4}
-                      fill={isDark ? '#27272a' : '#ffffff'}
-                      stroke={isDark ? '#3f3f46' : '#e4e4e7'}
+                      fill="var(--surface-floating)"
+                      stroke="var(--border-secondary)"
                       strokeWidth={1}
                     />
                     <text
                       x={node.x}
                       y={node.y - radius - 15}
                       textAnchor="middle"
-                      fontSize={11}
-                      fill={isDark ? '#e4e4e7' : '#3f3f46'}
-                      fontFamily="'Pretendard', sans-serif"
+                      style={{ fontSize: 'var(--font-size-12)' }}
+                      fill="var(--text-secondary)"
                     >
                       {node.title.length > 18 ? node.title.slice(0, 18) + '...' : node.title}
                     </text>
@@ -315,7 +298,7 @@ function SemanticCanvas() {
           {hoveredNode.tags.length > 0 && (
             <div className="flex gap-1 mt-1">
               {hoveredNode.tags.slice(0, 3).map((tag) => (
-                <span key={tag} className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                <span key={tag} className="text-xs text-zinc-500 dark:text-zinc-400">
                   #{tag}
                 </span>
               ))}

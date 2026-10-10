@@ -51,11 +51,11 @@ export function AppTabbar({ scroller, inert }: { scroller: RefObject<HTMLElement
               else t.run()
             }}
           >
-            <t.icon size={24} />{t.label}
+            <t.icon size={24} /><span>{t.label}</span>
           </Link>
         ))}
         <button type="button" className="mw-app-tabbar__item" aria-expanded={more} aria-current={tab === 'more' ? 'page' : undefined} onClick={() => { haptics.tap(); setMore(true) }}>
-          <IcLineMore size={24} />더보기
+          <IcLineMore size={24} /><span>더보기</span>
         </button>
       </nav>
       <MoreSheet open={more} onClose={() => setMore(false)} />

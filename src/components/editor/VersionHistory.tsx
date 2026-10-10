@@ -128,12 +128,12 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
                     {/* Content */}
                     <div className={`flex-1 pb-3 rounded-lg px-2 py-1.5 -mt-0.5 transition-colors ${
                       selectedIdx === idx
-                        ? 'bg-primary-50 dark:bg-primary-900/20'
+                        ? 'bg-primary-50 '
                         : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
                     }`}>
                       <div className={`text-sm font-medium ${
                         selectedIdx === idx
-                          ? 'text-primary-700 dark:text-primary-300'
+                          ? 'text-primary-700 '
                           : 'text-zinc-600 dark:text-zinc-400'
                       }`}>
                         {formatDateTime(v.createdAt)}
@@ -161,7 +161,7 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
                       onRestore(selected.title, selected.body)
                       requestClose()
                     }}
-                    className="mw-button mw-button--secondary mw-button--small mw-button--icon-left"
+                    className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left"
                   >
                     <IcLineUndo size={16} />
                     이 버전으로 복원

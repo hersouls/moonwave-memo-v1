@@ -40,7 +40,7 @@ function SyncStatusBadge({ status }: { status: SyncStatus }) {
   switch (status) {
     case 'syncing':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 ">
           <IcLineLoading size={12} className="animate-spin" />
           동기화 중...
         </span>
@@ -88,7 +88,7 @@ function InfoBanner({
     <div
       className={clsx(
         'flex items-start gap-2 text-xs p-3 rounded-lg',
-        tone === 'info' && 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/10',
+        tone === 'info' && 'text-primary-700 bg-primary-50 ',
         tone === 'danger' && 'text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/10',
         className
       )}
@@ -143,7 +143,7 @@ function CloudSyncSection() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 text-lg font-bold ring-2 ring-white dark:ring-zinc-800 shadow-sm">
+                  <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-lg font-bold ring-2 ring-white dark:ring-zinc-800 shadow-sm">
                     {user.displayName?.[0] || user.email?.[0] || '?'}
                   </div>
                 )}
@@ -162,7 +162,7 @@ function CloudSyncSection() {
                 type="button"
                 onClick={logout}
                 disabled={isSigningOut}
-                className="mw-button mw-button--secondary mw-button--small"
+                className="mw-button mw-button--secondary mw-button--medium"
               >
                 {isSigningOut ? '동기화 마무리 중...' : '로그아웃'}
               </button>
@@ -187,8 +187,8 @@ function CloudSyncSection() {
           </div>
         ) : (
           <div className="text-center py-6 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mx-auto mb-2">
-              <IcLineCloud size={32} className="text-primary-500 dark:text-primary-400" />
+            <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-2">
+              <IcLineCloud size={32} className="text-primary-500 " />
             </div>
             <div className="space-y-1">
               <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">
@@ -198,24 +198,11 @@ function CloudSyncSection() {
                 Google 계정으로 로그인하여 모든 기기에서 메모를 동기화하세요.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={login}
-              disabled={isSigningIn}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#4285F4] hover:bg-[#3367D6] text-white font-medium transition-[background-color,transform] active:scale-95 disabled:opacity-50 disabled:scale-100 min-w-[200px]"
-            >
-              {isSigningIn ? (
-                <IcLineLoading size={16} className="animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-              )}
-              {isSigningIn ? '로그인 중...' : 'Google로 로그인'}
-            </button>
+            <Button variant="secondary" onClick={login} loading={isSigningIn}>
+              {/* Google의 마크는 Google의 것이라 제 색 그대로, 그림으로 보여요 */}
+              {!isSigningIn && <img src="/icons/google-g.png" alt="" width={20} height={20} />}
+              {isSigningIn ? '로그인하고 있어요' : 'Google로 로그인'}
+            </Button>
             {authError && (
               <InfoBanner tone="danger" icon={<IcLineWarning size={16} />} className="mx-auto max-w-xs text-left">
                 {authError}
@@ -346,7 +333,7 @@ export function SettingsModal() {
   // Folder management state
   const [isAddingFolder, setIsAddingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
-  const [newFolderColor, setNewFolderColor] = useState('#3B82F6')
+  const [newFolderColor, setNewFolderColor] = useState<string>(FOLDER_COLORS[4])
   const [editingFolderId, setEditingFolderId] = useState<number | null>(null)
   const [editFolderName, setEditFolderName] = useState('')
   const [editFolderColor, setEditFolderColor] = useState('')
@@ -624,7 +611,7 @@ export function SettingsModal() {
               className={clsx(
                 'flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-colors duration-200',
                 settings.theme === option.value
-                  ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                  ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
                   : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900'
               )}
             >
@@ -715,7 +702,7 @@ export function SettingsModal() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 text-3xl font-bold ring-4 ring-white dark:ring-zinc-900 shadow-lg">
+                  <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-3xl font-bold ring-4 ring-white dark:ring-zinc-900 shadow-lg">
                     {user.displayName?.[0] || user.email?.[0] || '?'}
                   </div>
                 )}
@@ -875,7 +862,7 @@ export function SettingsModal() {
                   className={clsx(
                     'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left',
                     !settings.memoSettings.defaultFolderId
-                      ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20'
+                      ? 'text-primary-600 font-medium bg-primary-50 '
                       : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'
                   )}
                 >
@@ -889,7 +876,7 @@ export function SettingsModal() {
                     className={clsx(
                       'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left',
                       settings.memoSettings.defaultFolderId === folder.id
-                        ? 'text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20'
+                        ? 'text-primary-600 font-medium bg-primary-50 '
                         : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'
                     )}
                   >
@@ -960,8 +947,8 @@ export function SettingsModal() {
           </h3>
           {!isAddingFolder && (
             <button type="button"
-              onClick={() => { setIsAddingFolder(true); setNewFolderName(''); setNewFolderColor('#3B82F6') }}
-              className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left"
+              onClick={() => { setIsAddingFolder(true); setNewFolderName(''); setNewFolderColor(FOLDER_COLORS[4]) }}
+              className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left"
             >
               <IcLineAdd size={16} />
               새 폴더
@@ -972,7 +959,7 @@ export function SettingsModal() {
         <div className="space-y-2">
           {/* Add folder form */}
           {isAddingFolder && (
-            <div className="p-3 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10 space-y-3">
+            <div className="p-3 rounded-xl border border-primary-200 bg-primary-50/50 space-y-3">
               <input
                 type="text"
                 value={newFolderName}
@@ -1007,7 +994,7 @@ export function SettingsModal() {
               <div className="flex gap-2 justify-end">
                 <button type="button"
                   onClick={() => setIsAddingFolder(false)}
-                  className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
+                  className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
                 >
                   <span>취소</span>
                 </button>
@@ -1020,7 +1007,7 @@ export function SettingsModal() {
                     }
                   }}
                   disabled={!newFolderName.trim()}
-                  className="mw-button mw-button--primary mw-button--small"
+                  className="mw-button mw-button--primary mw-button--medium"
                 >
                   만들기
                 </button>
@@ -1083,13 +1070,13 @@ export function SettingsModal() {
                           setEditingFolderId(null)
                         }
                       }}
-                      className="mw-button mw-button--primary mw-button--small"
+                      className="mw-button mw-button--primary mw-button--medium"
                     >
                       저장
                     </button>
                     <button type="button"
                       onClick={() => setEditingFolderId(null)}
-                      className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
+                      className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
                     >
                       <span>취소</span>
                     </button>
@@ -1230,13 +1217,13 @@ export function SettingsModal() {
     return (
     <div className="space-y-8">
       {/* AI status banner */}
-      <div className="rounded-xl bg-primary-50 dark:bg-primary-900/15 border border-primary-100 dark:border-primary-900/30 p-4 space-y-2">
+      <div className="rounded-xl bg-primary-50 border border-primary-100 p-4 space-y-2">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 기능 활성화됨</span>
         </div>
         {hasAnyKey ? (
-          <p className="text-xs text-primary-600 dark:text-primary-400">내 API 키로 무제한 사용 중</p>
+          <p className="text-xs text-primary-600 ">내 API 키로 무제한 사용 중</p>
         ) : (
           <p className="text-xs text-zinc-600 dark:text-zinc-400">
             오늘 사용: <span className="font-semibold text-zinc-900 dark:text-zinc-100">{aiUsage.count}/50회</span> (서버 키)
@@ -1260,7 +1247,7 @@ export function SettingsModal() {
                   className={clsx(
                     'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-colors text-center',
                     settings.ai?.aiProvider === opt.value
-                      ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
                       : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
                   )}
                 >
@@ -1281,7 +1268,7 @@ export function SettingsModal() {
                   className={clsx(
                     'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-colors text-center',
                     settings.ai?.ocrProvider === opt.value
-                      ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
                       : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
                   )}
                 >
@@ -1302,7 +1289,7 @@ export function SettingsModal() {
                   className={clsx(
                     'px-3 py-2 rounded-xl border-2 text-xs font-medium transition-colors',
                     settings.ai?.language === opt.value
-                      ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
                       : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
                   )}
                 >
@@ -1344,9 +1331,9 @@ export function SettingsModal() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">OpenAI API 키</label>
                 <div className="flex items-center gap-2">
-                  {openAITestResult === 'success' && <span className="text-[10px] text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
-                  {openAITestResult === 'error' && <span className="text-[10px] text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
-                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
+                  {openAITestResult === 'success' && <span className="text-xs text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
+                  {openAITestResult === 'error' && <span className="text-xs text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -1356,7 +1343,7 @@ export function SettingsModal() {
                 </div>
                 <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'openai' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
-              {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
+              {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
 
             {/* Anthropic Key */}
@@ -1364,9 +1351,9 @@ export function SettingsModal() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Anthropic API 키</label>
                 <div className="flex items-center gap-2">
-                  {anthropicTestResult === 'success' && <span className="text-[10px] text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
-                  {anthropicTestResult === 'error' && <span className="text-[10px] text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
-                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
+                  {anthropicTestResult === 'success' && <span className="text-xs text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
+                  {anthropicTestResult === 'error' && <span className="text-xs text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
+                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -1376,7 +1363,7 @@ export function SettingsModal() {
                 </div>
                 <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'anthropic' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
-              {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
+              {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
 
             {/* Gemini Key */}
@@ -1384,9 +1371,9 @@ export function SettingsModal() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Gemini API 키</label>
                 <div className="flex items-center gap-2">
-                  {geminiTestResult === 'success' && <span className="text-[10px] text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
-                  {geminiTestResult === 'error' && <span className="text-[10px] text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
+                  {geminiTestResult === 'success' && <span className="text-xs text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
+                  {geminiTestResult === 'error' && <span className="text-xs text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -1396,7 +1383,7 @@ export function SettingsModal() {
                 </div>
                 <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'gemini' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
-              {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
+              {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
           </div>
         )}
@@ -1637,7 +1624,7 @@ export function SettingsModal() {
                     className={clsx(
                       'flex-shrink-0 min-w-[68px] md:min-w-0 w-auto md:w-full flex flex-col md:flex-row items-center gap-1 md:gap-3 px-2.5 md:px-3.5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-[color,background-color,box-shadow,transform] duration-200 relative',
                       activeTab === tab.id
-                        ? 'bg-white dark:bg-zinc-800 text-primary-600 dark:text-primary-400 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700 md:translate-x-0.5'
+                        ? 'bg-white dark:bg-zinc-800 text-primary-600 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700 md:translate-x-0.5'
                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'
                     )}
                   >

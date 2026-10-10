@@ -124,8 +124,8 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, date }: Sha
                 </div>
               )}
               <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5">
-                <span className="text-[10px] text-zinc-500">{formattedDate}</span>
-                <span className="text-[10px] font-medium text-zinc-400">Memo by Moonwave</span>
+                <span className="text-xs text-zinc-500">{formattedDate}</span>
+                <span className="text-xs font-medium text-zinc-400">Memo by Moonwave</span>
               </div>
             </div>
           </div>

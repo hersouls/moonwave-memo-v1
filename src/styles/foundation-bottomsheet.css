@@ -8,11 +8,10 @@
    1. Container Tokens
    ----------------------------------------- */
 :root {
-  --sheet-radius-top: 20px;
-  --sheet-bg: white;
+  --sheet-radius-top: var(--mw-radius-sheet);
+  --sheet-bg: var(--surface-primary);
   --sheet-max-height: 85dvh;
   --sheet-max-height-fold: 70dvh;
-  --sheet-top-offset: calc(env(safe-area-inset-top, 0px) + 64px);
 }
 
 /* -----------------------------------------
@@ -20,19 +19,7 @@
    ----------------------------------------- */
 :root {
   --sheet-padding-x: 20px;
-  --sheet-padding-top: 20px;
-  --sheet-padding-bottom: 24px;
   --sheet-header-padding-y: 16px;
-}
-
-/* -----------------------------------------
-   3. Close Button Tokens
-   ----------------------------------------- */
-:root {
-  --sheet-close-icon-size: 24px;
-  --sheet-close-tap-target: 44px;
-  --sheet-close-color: var(--color-text-secondary);
-  --sheet-close-hover-bg: var(--color-bg-tertiary);
 }
 
 /* -----------------------------------------
@@ -42,93 +29,15 @@
   --sheet-handle-width: 36px;
   --sheet-handle-height: 5px;
   --sheet-handle-radius: 999px;
-  --sheet-handle-color: #d4d4d8;
+  --sheet-handle-color: var(--border-secondary);
   /* 핸들 단독 히트 영역 ~31px — 헤더 영역까지 드래그 가능해 44px 이상 확보 */
   --sheet-handle-padding-top: 14px;
   --sheet-handle-padding-bottom: 12px;
 }
 
 /* -----------------------------------------
-   5. Home Indicator Tokens
-   ----------------------------------------- */
-:root {
-  --sheet-indicator-width: 36px;
-  --sheet-indicator-height: 5px;
-  --sheet-indicator-radius: 999px;
-  --sheet-indicator-color: #18181b;
-  --sheet-indicator-padding: 8px;
-}
-
-/* -----------------------------------------
-   6. CTA Button Tokens
-   ----------------------------------------- */
-:root {
-  --sheet-cta-height: 48px;
-  --sheet-cta-radius: 12px;
-  --sheet-cta-bg: #18181b;
-  --sheet-cta-color: white;
-  --sheet-cta-disabled-bg: #e4e4e7;
-  --sheet-cta-disabled-color: #a1a1aa;
-  --sheet-cta-font-size: 15px;
-  --sheet-cta-font-weight: 500;
-}
-
-/* -----------------------------------------
-   7. Text Button Tokens
-   ----------------------------------------- */
-:root {
-  --sheet-text-btn-color: #3f3f46;
-  --sheet-text-btn-font-size: 14px;
-  --sheet-text-btn-padding-y: 12px;
-  --sheet-text-btn-font-weight: 400;
-}
-
-/* -----------------------------------------
-   8. List Item Tokens
-   ----------------------------------------- */
-:root {
-  --sheet-list-item-height: 52px;
-  --sheet-list-item-padding-x: 20px;
-  --sheet-list-item-gap: 12px;
-  --sheet-list-item-font-size: 16px;
-  --sheet-list-item-divider-color: var(--color-border-subtle);
-}
-
-/* -----------------------------------------
-   9. Overlay Token
-   ----------------------------------------- */
-:root {
-  --sheet-overlay-bg: rgba(0, 0, 0, 0.4);
-}
-
-/* -----------------------------------------
-   10. Animation
-   시트 전환은 Headless UI transition + 전역 모션 토큰
-   (--duration-slow 입장 / --duration-base 퇴장, --ease-enter/--ease-exit)이 담당.
-   ----------------------------------------- */
-
-/* -----------------------------------------
-   11. Drag Gesture Tokens
-   ----------------------------------------- */
-:root {
-  --sheet-drag-threshold: 100px;
-  --sheet-drag-velocity: 0.5;
-}
-
-/* -----------------------------------------
    12. Dark Mode Overrides
    ----------------------------------------- */
-[data-theme="dark"] {
-  --sheet-bg: #18181b;
-  --sheet-handle-color: #52525b;
-  --sheet-indicator-color: #f4f4f5;
-  --sheet-cta-bg: #f4f4f5;
-  --sheet-cta-color: #18181b;
-  --sheet-cta-disabled-bg: #3f3f46;
-  --sheet-cta-disabled-color: #71717a;
-  --sheet-text-btn-color: #d4d4d8;
-  --sheet-overlay-bg: rgba(0, 0, 0, 0.6);
-}
 
 /* -----------------------------------------
    15. Panel Utilities
@@ -141,12 +50,12 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0);
   overscroll-behavior: contain;
 }
 
 /* Galaxy Fold narrow screen */
-@media (max-width: 320px) {
+@media (max-width: 380px) {
 .sheet-panel {
     max-height: var(--sheet-max-height-fold);
   }
@@ -168,12 +77,12 @@
 }
 
 .sheet-header__title {
-  font-size: 18px;
+  font-size: var(--font-size-18);
   font-weight: 700;
   line-height: 1.4;
   color: var(--color-text-primary);
   flex: 1;
-  padding-right: 8px;
+  padding-right: var(--space-8);
 }
 
 /* -----------------------------------------

@@ -240,7 +240,7 @@ export function SyncFolderSection() {
 
       <div className="p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm space-y-4">
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          메모를 지정한 폴더에 <code className="text-[11px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">.md</code> 파일로 자동 저장합니다.
+          메모를 지정한 폴더에 <code className="text-xs px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">.md</code> 파일로 자동 저장합니다.
           {isElectron()
             ? ' 데스크톱 앱은 상시 접근하며 NAS 네트워크 폴더도 지정할 수 있습니다.'
             : isCapacitor()
@@ -355,7 +355,7 @@ export function SyncFolderSection() {
                 className={[
                   'px-2.5 py-1 rounded-md border transition-colors disabled:opacity-50',
                   format === value
-                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 '
                     : 'border-[var(--color-border-default)] text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800',
                 ].join(' ')}
               >
@@ -487,7 +487,7 @@ function StatusBadge({ status, enabled }: { status: string; enabled: boolean }) 
   switch (status) {
     case 'writing':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 ">
           <IcLineLoading size={12} className="animate-spin" /> 저장 중…
         </span>
       )

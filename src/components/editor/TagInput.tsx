@@ -14,7 +14,7 @@ export function TagInput({ tags, onRemoveTag, onEdit }: TagInputProps) {
       {tags.map((tag) => (
         <span
           key={tag}
-          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 "
         >
           #{tag}
           {onRemoveTag && (
@@ -30,7 +30,7 @@ export function TagInput({ tags, onRemoveTag, onEdit }: TagInputProps) {
       {onEdit && (
         <button type="button"
           onClick={onEdit}
-          className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left"
+          className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left"
           aria-label="태그 편집"
         >
           <IcMwTag size={12} />

@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import clsx from 'clsx'
 import { ContextMenu } from '@/components/ui/ContextMenu'
@@ -53,7 +53,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         part.match ? (
-          <mark key={i} className="bg-primary-500/20 dark:bg-primary-400/25 text-inherit rounded-[3px] -mx-px px-px">
+          <mark key={i} className="bg-primary-500/20 text-inherit rounded-sm -mx-px px-px">
             {part.text}
           </mark>
         ) : (
@@ -192,7 +192,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     } else if (cardRef.current) {
       // Visual bounce fallback for iOS
       const el = cardRef.current
-      el.style.transition = 'transform 0.15s ease, opacity 0.15s ease'
+      el.style.transition = 'transform var(--motion-duration-short) var(--mw-ease), opacity var(--motion-duration-short) var(--mw-ease)'
       el.style.transform = 'scale(0.95)'
       el.style.opacity = '0.7'
       setTimeout(() => { el.style.transform = ''; el.style.opacity = '' }, 150)
@@ -409,12 +409,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             >
               {isTrashView ? (
                 <IcLineUndo
-                  className="text-white transition-transform duration-150 ease-spring"
+                  className="text-white transition-transform duration-200 ease-spring"
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
               ) : (
                 <IcMwStar
-                  className="text-white fill-white transition-transform duration-150 ease-spring"
+                  className="text-white fill-white transition-transform duration-200 ease-spring"
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
               )}
@@ -427,12 +427,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
               )}
               style={{
                 background: swipeX < 0
-                  ? `linear-gradient(270deg, oklch(0.58 0.22 25 / ${swipeProgress * 0.9}), transparent 80%)`
+                  ? `linear-gradient(270deg, color-mix(in srgb, var(--mw-critical) ${Math.round(swipeProgress * 90)}%, transparent), transparent 80%)`
                   : undefined,
               }}
             >
               <IcLineTrash
-                className="text-white transition-transform duration-150 ease-spring"
+                className="text-white transition-transform duration-200 ease-spring"
                 style={{ width: 20, height: 20, transform: `scale(${swipeX < 0 ? iconScale : 1})` }}
               />
             </div>
@@ -471,14 +471,15 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined,
           // Spring snap-back on release (touch only — desktop keeps the class-scoped transition)
           ...(isTouchDevice
-            ? { transition: isSwiping ? 'none' : 'transform 250ms var(--ease-spring)' }
+            ? { transition: isSwiping ? 'none' : 'transform var(--motion-duration-medium) var(--mw-ease-sheet)' }
             : {}),
         }}
       >
         {/* Stretched primary action (sibling of tag/quick-action buttons — no nested interactives) */}
-        <button
-          type="button"
-          onClick={handleClick}
+        <Link
+          to={`/memo/${memo.id}`}
+          onClick={(e) => { e.preventDefault(); handleClick() }}
+          draggable={false}
           aria-label={memo.title || '제목 없음'}
           className="memo-card__link absolute inset-0 z-[1] rounded-2xl fold:rounded-xl focus-visible:outline-offset-[-2px]"
         />
@@ -508,19 +509,14 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                 isSelectionMode ? 'w-7 opacity-100 scale-100 mr-0' : 'w-0 opacity-0 scale-50 -mr-2'
               )}
             >
-              <IcMwCheckCircle size={20}
-                className={clsx(
-                  'mt-0.5   shrink-0 transition-colors',
-                  isSelected
-                    ? 'fill-primary-500 text-primary-500'
-                    : 'text-zinc-300 dark:text-zinc-600'
-                )}
-              />
+              {isSelectionMode && (
+                <IcMwCheckCircle size={20} className={clsx('mt-0.5 shrink-0 transition-colors', isSelected ? 'text-primary-500' : 'text-zinc-300 dark:text-zinc-600')} />
+              )}
             </span>
             {/* A11Y-03: span instead of h3 inside button */}
             <span className={clsx(
               'flex-1 font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100',
-              isGrid ? 'text-[13px] line-clamp-2' : 'text-sm fold:text-xs truncate'
+              isGrid ? 'text-13 line-clamp-2' : 'text-sm fold:text-xs truncate'
             )}>
               <HighlightText text={memo.title || '제목 없음'} query={searchQuery} />
             </span>
@@ -554,13 +550,13 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                     useUIStore.getState().setSearchQuery('')
                     navigate('/memos')
                   }}
-                  className="relative z-[2] inline-flex items-center px-2 py-1 text-[11px] font-medium rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800/50 transition-colors cursor-pointer after:absolute after:-inset-y-2 after:-inset-x-1.5 after:content-['']"
+                  className="relative z-[2] inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors cursor-pointer after:absolute after:-inset-y-2 after:-inset-x-1.5 after:content-['']"
                 >
                   #{tag}
                 </button>
               ))}
               {memo.tags.length > (isGrid ? 2 : 3) && (
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
                   +{memo.tags.length - (isGrid ? 2 : 3)}
                 </span>
               )}
@@ -569,7 +565,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
 
           {/* Footer */}
           <div className={clsx(
-            'flex items-center gap-1.5 text-[11px] tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400',
+            'flex items-center gap-1.5 text-xs tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400',
             isGrid && 'mt-auto pt-1'
           )}>
             {folder && (
@@ -595,7 +591,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             className={clsx(
               'absolute right-2 top-2 z-[2] flex items-center gap-0.5 rounded-lg border border-[var(--card-hairline)] bg-[var(--color-bg-elevated)]/95 p-0.5 shadow-sm',
               // pointer-events gated with visibility so the hidden cluster never blocks the card link
-              'pointer-events-none opacity-0 transition-opacity duration-150',
+              'pointer-events-none opacity-0 transition-opacity duration-200',
               'group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100'
             )}
           >

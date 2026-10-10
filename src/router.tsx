@@ -20,7 +20,7 @@ function DelayedSpinnerFallback() {
   return (
     <div
       className="flex items-center justify-center min-h-[50dvh] opacity-0"
-      style={{ animation: 'fadeIn 200ms ease-out 300ms forwards' }}
+      style={{ animation: 'fadeIn var(--motion-duration-medium) var(--motion-easing-ease-out) var(--motion-duration-long) forwards' }}
     >
       <Spinner size="lg" className="text-primary-500" />
     </div>
@@ -33,7 +33,7 @@ function MemosSkeletonFallback() {
     <div
       aria-hidden="true"
       className="max-w-3xl mx-auto p-4 space-y-4 opacity-0"
-      style={{ animation: 'fadeIn 200ms ease-out 150ms forwards' }}
+      style={{ animation: 'fadeIn var(--motion-duration-medium) var(--motion-easing-ease-out) var(--motion-duration-short) forwards' }}
     >
       <div className="flex gap-2">
         {[1, 2, 3, 4].map((i) => (
@@ -59,7 +59,7 @@ function MemoEditorRoute() {
   return (
     <SuspenseRoute>
       {/* 분할 뷰에서 메모 전환 시 에디터 패널만 150ms 페이드로 교체 (섹션 리마운트 없음) */}
-      <div key={id || 'new'} className="flex flex-col flex-1 min-h-0 animate-in fade-in duration-150">
+      <div key={id || 'new'} className="flex flex-col flex-1 min-h-0 animate-in fade-in duration-200">
         <MemoEditor />
       </div>
     </SuspenseRoute>

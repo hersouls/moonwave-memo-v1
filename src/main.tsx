@@ -25,6 +25,8 @@ if ('serviceWorker' in navigator && !window.electronBridge && !Capacitor.isNativ
     window.addEventListener('load', async () => {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js')
+        // 서비스 워커를 막아 둔 브라우저에서는 등록 객체가 없어요. 오프라인 캐시 없이 그대로 써요.
+        if (!registration) return
 
         if (registration.waiting) {
           usePwaUpdateStore.getState().showUpdate(registration.waiting)

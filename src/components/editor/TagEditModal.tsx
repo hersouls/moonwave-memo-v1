@@ -101,7 +101,7 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
           {draft.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 "
             >
               #{tag}
               <button type="button"
@@ -147,7 +147,7 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
           <button
             onClick={handleSuggest}
             disabled={isSuggesting || body.trim().length < 20}
-            className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 disabled:opacity-40 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 disabled:opacity-40 transition-colors"
           >
             {isSuggesting ? <Spinner size="sm" label="" className="h-3.5 w-3.5" /> : <IcMwSparkles size={16} />}
             AI 태그 제안
@@ -161,7 +161,7 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
                     addTag(tag)
                     setSuggestions((prev) => prev.filter((t) => t !== tag))
                   }}
-                  className="px-2.5 py-1 text-xs rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400 dark:hover:bg-primary-900/30 transition-colors"
+                  className="px-2.5 py-1 text-xs rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
                 >
                   + #{tag}
                 </button>

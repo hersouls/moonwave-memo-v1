@@ -171,7 +171,7 @@ export function Tooltip({ content, children, placement = 'top', className }: Too
               'fixed z-[var(--z-tooltip)] max-w-xs px-2.5 py-1.5 text-xs font-medium rounded-lg shadow-lg text-pretty pointer-events-none',
               'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900',
               'border border-zinc-700 dark:border-zinc-300',
-              phase === 'open' && 'animate-in fade-in-0 zoom-in-95 duration-150',
+              phase === 'open' && 'animate-in fade-in-0 zoom-in-95 duration-200',
               phase === 'leaving' && 'animate-out fade-out-0 zoom-out-95 duration-100',
               className
             )}

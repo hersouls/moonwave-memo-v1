@@ -102,7 +102,7 @@ export function OrphanBackupsSection() {
               type="button"
               onClick={() => handleDownload(b)}
               disabled={busyId === b.id}
-              className="mw-button mw-button--secondary mw-button--small mw-button--icon-left"
+              className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left"
             >
               <IcLineDownload size={16} aria-hidden="true" />
               내려받기

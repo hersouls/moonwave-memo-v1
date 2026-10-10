@@ -67,7 +67,7 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
         <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
           <IcMwList size={16} />
           목차
-          <span className="ml-1 text-[10px] font-normal text-zinc-500 dark:text-zinc-400">
+          <span className="ml-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">
             {headings.length}
           </span>
         </div>
