@@ -124,7 +124,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         {!isDesktop && (
           <button
             onClick={onBack}
-            className="mw-icon-button -ml-2"
+            className="mw-icon-button"
             aria-label="뒤로가기"
           >
             <IcLineChevronLeft size={20} />

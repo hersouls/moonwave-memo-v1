@@ -118,7 +118,7 @@
 
 .memo-markdown-preview del {
   text-decoration: line-through;
-  color: var(--color-zinc-400, #a1a1aa);
+  color: var(--text-tertiary);
 }
 
 /* ----------------------------------------
@@ -240,12 +240,12 @@
    Inline Code
    ---------------------------------------- */
 .memo-markdown-preview code:not(pre code) {
-  background-color: var(--color-zinc-100, #f4f4f5);
+  background-color: var(--background-secondary);
   padding: var(--space-2) var(--memo-space-6);
   border-radius: var(--radius-4);
   font-size: var(--font-size-14);
   font-family: var(--font-mono);
-  color: var(--color-danger-500, #ef4444);
+  color: var(--text-primary);
   word-break: break-word;
 }
 
@@ -455,10 +455,6 @@
 /* ----------------------------------------
    Dark: Strikethrough
    ---------------------------------------- */
-[data-theme="dark"] .memo-markdown-preview del {
-  color: var(--color-zinc-500, #71717a);
-}
-
 /* ----------------------------------------
    Dark: Links
    ---------------------------------------- */
@@ -475,11 +471,6 @@
 /* ----------------------------------------
    Dark: Inline Code
    ---------------------------------------- */
-[data-theme="dark"] .memo-markdown-preview code:not(pre code) {
-  background-color: var(--color-zinc-800, #27272a);
-  color: var(--color-danger-400, #f87171);
-}
-
 /* ----------------------------------------
    Dark: Code Blocks — surface colors flip via semantic tokens on pre;
    only the base text color needs an override

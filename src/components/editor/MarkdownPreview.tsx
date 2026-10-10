@@ -9,6 +9,7 @@ import { sanitizeSchema } from '@/lib/markdownHtml'
 import { getMemoImage } from '@/services/database'
 import { useMemoStore } from '@/stores/memoStore'
 import '@/styles/markdown.css'
+import { Checkbox } from '@/mw/Checkbox'
 
 // Module-level cache to avoid re-fetching images (capped to prevent memory leaks)
 const IMAGE_CACHE_MAX = 50
@@ -105,7 +106,7 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
       )}
       <button type="button"
         onClick={handleCopy}
-        className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default absolute top-1 right-1 opacity-0 group-hover:opacity-100"
+        className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default absolute top-1 right-1 opacity-0 group-hover:opacity-100"
         aria-label="코드 복사"
       >
         <span>{copied ? '복사됨' : '복사'}</span>
@@ -159,20 +160,27 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
           code: ({ className, children, ...props }) => (
             <CodeBlock className={className} {...props}>{children}</CodeBlock>
           ),
+          // 할 일 줄은 키트의 체크박스 항목이에요: 줄 전체(높이 44px)가 눌려요
+          li: ({ className, children, ...props }) => (
+            String(className ?? '').includes('task-list-item')
+              ? <li className={className} {...props}><label className="mw-checkbox-item">{children}</label></li>
+              : <li className={className} {...props}>{children}</li>
+          ),
           // 표는 키트의 Table이에요 (줄 높이와 칸의 여백은 키트가 정해요)
           table: ({ children }) => (
-            <div className="mw-table" role="region" aria-label="표" tabIndex={0}>
+            <div className="mw-table" role="group" aria-label="표" tabIndex={0}>
               <table className="mw-table__table">{children}</table>
             </div>
           ),
           th: ({ children }) => <th scope="col" className="mw-table__header">{children}</th>,
           td: ({ children }) => <td className="mw-table__cell">{children}</td>,
-          input: ({ type, checked, ...props }) => {
+          input: ({ type, checked, value: _value, ...props }) => {
             if (type === 'checkbox') {
               return (
-                <input
-                  type="checkbox"
-                  checked={checked}
+                <Checkbox
+                  value="task"
+                  aria-label={checked ? '마친 일' : '할 일'}
+                  checked={!!checked}
                   onChange={() => {
                     if (!onCheckboxToggle) return
                     // Find the nth checkbox occurrence to determine the line index
@@ -207,7 +215,6 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
                     }
                     onCheckboxToggle(idx, !checked)
                   }}
-                  className="cursor-pointer accent-primary-500"
                   {...props}
                 />
               )

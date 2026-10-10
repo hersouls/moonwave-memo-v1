@@ -588,24 +588,11 @@ summary {
 /* ─── Checklist Styles ──────────── */
 .memo-markdown-preview .task-list-item {
   list-style: none;
-  margin-left: -1.5em;
-}
-
-.memo-markdown-preview .task-list-item input[type="checkbox"] {
-  margin-right: 0.5em;
-  cursor: pointer;
-  accent-color: var(--color-primary-500);
-  width: 1em;
-  height: 1em;
-}
-
-.memo-markdown-preview .task-list-item input[type="checkbox"]:hover {
-  transform: scale(1.15);
 }
 
 .memo-markdown-preview .task-list-item:has(input:checked) {
   text-decoration: line-through;
-  opacity: 0.6;
+  color: var(--text-tertiary);
 }
 
 /* ─── High Contrast Mode (WCAG AAA) ──────────── */
