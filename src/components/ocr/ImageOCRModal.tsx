@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useImageOCR } from '@/hooks/useImageOCR'
-import { IcLineCamera, IcLineClose, IcLineGallery, IcLineLoading, IcMwUpload } from '@/mw/icons'
+import { IcLineCamera, IcLineClose, IcLineGallery, IcLineLoading } from '@/mw/icons'
 
 type ModalStep = 1 | 2 | 3
 type InputTab = 'upload' | 'camera'
@@ -88,29 +88,11 @@ function StepImageSelect({
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-[var(--color-border-subtle)]">
-        <button
-          onClick={() => setActiveTab('upload')}
-          className={clsx(
-            'flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-            activeTab === 'upload'
-              ? 'border-primary-500 text-primary-600 '
-              : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-          )}
-        >
-          <IcMwUpload size={16} />
+      <div className="mw-tab-group mw-tab-group--fixed" role="tablist" aria-label="넣는 방법">
+        <button type="button" role="tab" aria-selected={activeTab === 'upload'} onClick={() => setActiveTab('upload')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'upload' ? 'selected' : 'default'}`}>
           이미지 업로드
         </button>
-        <button
-          onClick={() => setActiveTab('camera')}
-          className={clsx(
-            'flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-            activeTab === 'camera'
-              ? 'border-primary-500 text-primary-600 '
-              : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-          )}
-        >
-          <IcLineCamera size={16} />
+        <button type="button" role="tab" aria-selected={activeTab === 'camera'} onClick={() => setActiveTab('camera')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'camera' ? 'selected' : 'default'}`}>
           카메라 촬영
         </button>
       </div>
@@ -119,19 +101,12 @@ function StepImageSelect({
         <div className="space-y-3">
           {/* Drop zone */}
           <div
-            role="button"
-            tabIndex={0}
+            role="group"
             aria-label="이미지 파일 선택"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                fileInputRef.current?.click()
-              }
-            }}
             className={clsx(
               'flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-[border-color,background-color]',
               dragOver
@@ -144,11 +119,14 @@ function StepImageSelect({
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                이미지를 여기에 놓거나 클릭하세요
+                사진을 여기에 놓아요
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 JPG, PNG, GIF, WebP (최대 20MB)
               </p>
+              <button type="button" className="mw-button mw-button--secondary mw-button--medium mt-3" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}>
+                파일 고르기
+              </button>
             </div>
           </div>
           <input

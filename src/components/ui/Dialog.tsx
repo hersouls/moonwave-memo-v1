@@ -1,13 +1,5 @@
-import {
-  Description,
-  DialogBackdrop,
-  DialogPanel,
-  DialogTitle,
-  Dialog as HeadlessDialog,
-} from '@headlessui/react'
-import { useDrag } from '@use-gesture/react'
-import { clsx } from 'clsx'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Description, DialogBackdrop, DialogPanel, DialogTitle, Dialog as HeadlessDialog } from '@headlessui/react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import { IcLineClose } from '@/mw/icons'
 
 interface DialogProps {
@@ -18,113 +10,20 @@ interface DialogProps {
   noPadding?: boolean
 }
 
-const sizeStyles = {
-  xs: 'sm:max-w-xs',
-  sm: 'sm:max-w-sm',
-  md: 'sm:max-w-md',
-  lg: 'sm:max-w-lg',
-  xl: 'sm:max-w-xl',
-  '2xl': 'sm:max-w-2xl',
-  '3xl': 'sm:max-w-3xl',
-  '4xl': 'sm:max-w-4xl',
-  '5xl': 'sm:max-w-5xl',
-}
+// 내용이 많은 대화상자는 넓게 열어요. 600px 이하에서는 키트가 화면 아래에 붙여요.
+const WIDTH = { xs: 'memo-dialog--sm', sm: 'memo-dialog--sm', md: 'memo-dialog--md', lg: 'memo-dialog--md', xl: 'memo-dialog--lg', '2xl': 'memo-dialog--lg', '3xl': 'memo-dialog--xl', '4xl': 'memo-dialog--xl', '5xl': 'memo-dialog--xl' } as const
 
+/**
+ * 대화상자예요. 모양은 키트의 Popup(가림막 mw-popup__dim, 자리 mw-popup__container, 카드 mw-popup--center)이고,
+ * 포커스를 안에 가두고 Esc와 바깥 누르기로 닫는 일은 Headless UI가 맡아요.
+ */
 export function Dialog({ open, onClose, children, size = 'lg', noPadding = false }: DialogProps) {
-  const [dragY, setDragY] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  // 드래그 중단 후 스냅백 — 스프링 이징 250ms 동안만 인라인 transition 적용
-  const [isSnapping, setIsSnapping] = useState(false)
-  const snapTimer = useRef<number | null>(null)
-
-  useEffect(
-    () => () => {
-      if (snapTimer.current !== null) window.clearTimeout(snapTimer.current)
-    },
-    []
-  )
-
-  const bind = useDrag(
-    ({ active, movement: [, my], velocity: [, vy] }) => {
-      if (my < 0) {
-        setDragY(0)
-        return
-      }
-      setIsDragging(active)
-      if (active) {
-        setDragY(Math.max(0, my))
-      } else {
-        if (my > 100 || vy > 0.5) {
-          onClose()
-        } else {
-          setIsSnapping(true)
-          if (snapTimer.current !== null) window.clearTimeout(snapTimer.current)
-          snapTimer.current = window.setTimeout(() => setIsSnapping(false), 250)
-        }
-        setDragY(0)
-      }
-    },
-    { axis: 'y', filterTaps: true, pointer: { touch: true } }
-  )
-
-  // Headless UI Dialog handles body scroll lock internally (including iOS)
-  // Do NOT add useBodyScrollLock here — it would conflict with Headless UI's own scroll lock
-
-  const progress = Math.min(dragY / 200, 1)
-
   return (
-    <HeadlessDialog
-      open={open}
-      onClose={onClose}
-      className="relative z-[var(--z-modal)]"
-      onTransitionEnd={() => { if (!open) { setDragY(0); setIsDragging(false); setIsSnapping(false) } }}
-    >
-      <DialogBackdrop
-        transition
-        className={clsx(
-          'fixed inset-0',
-          'transition data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in'
-        )}
-        style={{
-          background: 'var(--overlay-bg)',
-          opacity: dragY > 0 ? 1 - progress * 0.5 : undefined,
-        }}
-      />
-
-      <div className="fixed inset-0 overflow-y-auto pt-6 sm:pt-0" style={{ overscrollBehavior: 'contain' }}>
-        <div className="grid min-h-full grid-rows-[1fr_auto] justify-items-center sm:grid-rows-[1fr_auto_3fr] sm:p-4">
-          <DialogPanel
-            transition
-            className={clsx(
-              'row-start-2 w-full min-w-0 rounded-t-2xl',
-              noPadding
-                ? 'pb-[env(safe-area-inset-bottom,0px)]'
-                : 'p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:p-8 sm:pb-8',
-              'sm:mb-auto sm:rounded-xl',
-              sizeStyles[size],
-              'transition duration-300 data-[closed]:translate-y-12 data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:ease-in',
-              'sm:data-[closed]:translate-y-0 sm:data-[closed]:scale-95 sm:data-[closed]:data-[enter]:duration-300 sm:data-[closed]:data-[leave]:duration-200'
-            )}
-            style={{
-              background: 'var(--dialog-bg)',
-              boxShadow: 'var(--dialog-shadow)',
-              overscrollBehavior: 'contain',
-              transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
-              transition: isDragging
-                ? 'none'
-                : isSnapping
-                  ? 'transform var(--motion-duration-medium) var(--mw-ease-sheet)'
-                  : undefined,
-            }}
-          >
-            {/* Mobile drag handle */}
-            <div {...bind()} className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing sm:hidden touch-none">
-              <div className="w-9 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-            </div>
-            {children}
-          </DialogPanel>
-        </div>
-      </div>
+    <HeadlessDialog open={open} onClose={onClose} className="mw-popup__container">
+      <DialogBackdrop className="mw-popup__dim" data-state="open" />
+      <DialogPanel className={['mw-popup mw-popup--center memo-dialog', WIDTH[size], noPadding && 'memo-dialog--flush'].filter(Boolean).join(' ')} data-state="open">
+        {children}
+      </DialogPanel>
     </HeadlessDialog>
   )
 }
@@ -137,37 +36,27 @@ interface DialogHeaderProps {
 
 export function DialogHeader({ title, description, onClose }: DialogHeaderProps) {
   return (
-    <div className="relative">
-      <DialogTitle className="dialog__title text-balance sm:text-base/6">
-        {title}
-      </DialogTitle>
-      {description && (
-        <Description className="dialog__body mt-2 text-pretty text-sm/6 mb-0">
-          {description}
-        </Description>
-      )}
+    <div className="memo-dialog__head">
+      <div className="min-w-0 flex-1">
+        <DialogTitle className="mw-popup__title">{title}</DialogTitle>
+        {description && <Description className="mw-popup__body">{description}</Description>}
+      </div>
       {onClose && (
-        <div className="absolute right-0 top-0">
-          <button type="button"
-            onClick={onClose}
-            className="mw-icon-button"
-            aria-label="닫기"
-          >
-            <IcLineClose size={20} />
-          </button>
-        </div>
+        <button type="button" onClick={onClose} className="mw-icon-button" aria-label="닫기">
+          <IcLineClose size={20} />
+        </button>
       )}
     </div>
   )
 }
 
-interface DialogBodyProps {
+interface DialogBodyProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
   className?: string
 }
 
-export function DialogBody({ children, className }: DialogBodyProps) {
-  return <div className={clsx('mt-6', className)}>{children}</div>
+export function DialogBody({ children, className, ...props }: DialogBodyProps) {
+  return <div className={['memo-dialog__body', className].filter(Boolean).join(' ')} {...props}>{children}</div>
 }
 
 interface DialogFooterProps {
@@ -176,14 +65,5 @@ interface DialogFooterProps {
 }
 
 export function DialogFooter({ children, className }: DialogFooterProps) {
-  return (
-    <div
-      className={clsx(
-        'mt-6 flex flex-col-reverse items-center justify-end gap-3 *:w-full sm:flex-row sm:*:w-auto',
-        className
-      )}
-    >
-      {children}
-    </div>
-  )
+  return <div className={['mw-popup__button-group', className].filter(Boolean).join(' ')}>{children}</div>
 }

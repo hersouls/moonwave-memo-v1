@@ -42,15 +42,15 @@ export function MemoContextMenu() {
 
   const menuItems = (
     <>
-      <button type="button"
+      <button type="button" role="menuitem"
         onClick={handleSelectMode}
-        className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left"
+        className="ctx-menu__item"
       >
         <IcMwCheckCircle className="ctx-menu__item-icon" />
         메모 선택
       </button>
 
-      <button
+      <button type="button" role="menuitem"
         onClick={handleToggleView}
         className="ctx-menu__item"
       >
@@ -65,7 +65,7 @@ export function MemoContextMenu() {
         </span>
       </button>
 
-      <button
+      <button type="button" role="menuitem"
         onClick={handleCycleSort}
         className="ctx-menu__item"
       >
@@ -85,7 +85,7 @@ export function MemoContextMenu() {
       <>
         <div className="fixed inset-0 z-20" onClick={closeContextMenu} />
         <div className="ctx-menu absolute right-2 top-12 z-30 min-w-[200px] origin-top-right animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex flex-col">{menuItems}</div>
+          <div className="flex flex-col" role="menu" aria-label="메모 목록 메뉴">{menuItems}</div>
         </div>
       </>
     )
@@ -94,7 +94,7 @@ export function MemoContextMenu() {
   // Mobile: BottomSheet
   return (
     <BottomSheet isOpen={isContextMenuOpen} onClose={closeContextMenu}>
-      <div className="flex flex-col -mx-5 -my-4">{menuItems}</div>
+      <div className="flex flex-col -mx-5 -my-4" role="menu" aria-label="메모 목록 메뉴">{menuItems}</div>
     </BottomSheet>
   )
 }

@@ -1,4 +1,10 @@
-@import "tailwindcss";
+/* Tailwind를 조각으로 들여요. 유틸리티만 레이어 밖에 둬요: 키트(/kit/moonwave.css)는 레이어가 없어서,
+   유틸리티가 레이어 안에 있으면 키트의 초기화 규칙(:where(.mw-root) button { color: inherit } 같은 것)이
+   text-* · m-* 유틸리티를 모두 이겨 버려요. 키트 부품의 모양은 키트 클래스가, 자리(여백 · 너비)는 유틸리티가 정해요. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
 /* Composable enter/exit animation utilities (animate-in/out, fade-in-0, zoom-in-95, slide-in-from-*) */
 @import "tw-animate-css";
 

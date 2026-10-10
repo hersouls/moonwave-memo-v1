@@ -224,17 +224,9 @@ export function SyncFolderSection() {
           aria-label="동기화 폴더 켜기/끄기"
           disabled={busy}
           onClick={handleToggle}
-          className={[
-            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50',
-            enabled ? 'bg-primary-500' : 'bg-zinc-300 dark:bg-zinc-700',
-          ].join(' ')}
+          className={`mw-switch mw-switch--medium${enabled ? ' mw-switch--checked' : ''}`}
         >
-          <span
-            className={[
-              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-              enabled ? 'translate-x-6' : 'translate-x-1',
-            ].join(' ')}
-          />
+          <div className="mw-switch__container"><div className="mw-switch__handle" /></div>
         </button>
       </div>
 

@@ -94,11 +94,9 @@ export function TemplateSelectModal() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setIsManageMode(!isManageMode)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isManageMode
-                      ? 'bg-primary-100 text-primary-600 '
-                      : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700'
-                  }`}
+                  type="button"
+                  aria-pressed={isManageMode}
+                  className={isManageMode ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'}
                   aria-label="관리"
                   title="템플릿 관리"
                 >
@@ -119,17 +117,16 @@ export function TemplateSelectModal() {
                     <button
                       onClick={() => handleSelect(template.id)}
                       disabled={isManageMode}
-                      className={`w-full flex flex-col items-center gap-2 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 transition-colors ${
-                        isManageMode
-                          ? 'cursor-default opacity-80'
-                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-700/50'
-                      }`}
+                      type="button"
+                      className="mw-surface mw-surface--link w-full"
                     >
+                      <span className="flex flex-col items-center gap-2">
                       <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--background-secondary)] text-[var(--text-secondary)]">
-                        <Icon className="w-5 h-5" />
+                        <Icon size={20} />
                       </div>
                       <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         {template.name}
+                      </span>
                       </span>
                     </button>
 

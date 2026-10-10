@@ -159,6 +159,14 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
           code: ({ className, children, ...props }) => (
             <CodeBlock className={className} {...props}>{children}</CodeBlock>
           ),
+          // 표는 키트의 Table이에요 (줄 높이와 칸의 여백은 키트가 정해요)
+          table: ({ children }) => (
+            <div className="mw-table" role="region" aria-label="표" tabIndex={0}>
+              <table className="mw-table__table">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => <th scope="col" className="mw-table__header">{children}</th>,
+          td: ({ children }) => <td className="mw-table__cell">{children}</td>,
           input: ({ type, checked, ...props }) => {
             if (type === 'checkbox') {
               return (

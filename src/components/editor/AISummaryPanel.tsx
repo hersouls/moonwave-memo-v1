@@ -32,7 +32,8 @@ export function AISummaryPanel({ content }: AISummaryPanelProps) {
     <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
       <button
         onClick={summary ? () => setIsOpen(!isOpen) : handleGenerate}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+        type="button"
+        className="mw-button mw-button--tertiary-subtle mw-button--large w-full justify-start"
       >
         {isLoading ? (
           <IcLineLoading size={16} className="animate-spin text-primary-500" />

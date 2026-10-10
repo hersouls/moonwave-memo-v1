@@ -192,19 +192,19 @@ export function FAQModal() {
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="lg">
-      <DialogHeader title="도움말 (FAQ)" onClose={onClose} />
-      <DialogBody className="max-h-[70dvh] fold:max-h-[60dvh] overflow-y-auto">
+      <DialogHeader title="도움말" onClose={onClose} />
+      <DialogBody className="max-h-[70dvh] overflow-y-auto">
         {/* Search */}
-        <div className="relative mb-4">
-          <IcLineSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+        <label className="mw-searchbar mb-4">
+          <IcLineSearch size={20} />
           <input
-            type="text"
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="질문 검색..."
-            className="w-full pl-9 pr-4 py-2.5 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="궁금한 것을 적어요"
+            aria-label="도움말에서 찾기"
           />
-        </div>
+        </label>
 
         {/* FAQ Categories */}
         {filteredData.length === 0 ? (
@@ -226,7 +226,8 @@ export function FAQModal() {
                 >
                   <button
                     onClick={() => toggleCategory(originalIndex)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    type="button"
+                    className="mw-button mw-button--tertiary-subtle mw-button--large w-full justify-between"
                   >
                     <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                       {category.title}

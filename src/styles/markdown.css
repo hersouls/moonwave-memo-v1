@@ -372,37 +372,6 @@
 }
 
 /* ----------------------------------------
-   Tables (GFM)
-   ---------------------------------------- */
-.memo-markdown-preview table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: var(--space-8);
-  margin-bottom: var(--space-12);
-  font-size: var(--font-size-14);
-}
-
-.memo-markdown-preview thead th {
-  background-color: var(--color-zinc-50, #fafafa);
-  font-weight: 600;
-  text-align: left;
-  padding: var(--space-8) var(--space-12);
-  border: 1px solid var(--color-zinc-200, #e4e4e7);
-  color: var(--color-zinc-900, #18181b);
-}
-
-.memo-markdown-preview tbody td {
-  padding: var(--space-8) var(--space-12);
-  border: 1px solid var(--color-zinc-200, #e4e4e7);
-  color: var(--color-zinc-700, #3f3f46);
-  font-variant-numeric: tabular-nums; /* 날짜/숫자 컬럼 정렬 안정화 */
-}
-
-.memo-markdown-preview tbody tr:nth-child(even) {
-  background-color: var(--color-zinc-50, #fafafa);
-}
-
-/* ----------------------------------------
    Horizontal Rules
    ---------------------------------------- */
 .memo-markdown-preview hr {
@@ -536,24 +505,6 @@
 
 [data-theme="dark"] .memo-markdown-preview blockquote blockquote {
   border-left-color: var(--color-primary-600, #4f46e5);
-}
-
-/* ----------------------------------------
-   Dark: Tables
-   ---------------------------------------- */
-[data-theme="dark"] .memo-markdown-preview thead th {
-  background-color: var(--color-zinc-800, #27272a);
-  border-color: var(--color-zinc-700, #3f3f46);
-  color: var(--color-zinc-100, #f4f4f5);
-}
-
-[data-theme="dark"] .memo-markdown-preview tbody td {
-  border-color: var(--color-zinc-700, #3f3f46);
-  color: var(--color-zinc-300, #d4d4d8);
-}
-
-[data-theme="dark"] .memo-markdown-preview tbody tr:nth-child(even) {
-  background-color: var(--color-zinc-900, #18181b);
 }
 
 /* ----------------------------------------

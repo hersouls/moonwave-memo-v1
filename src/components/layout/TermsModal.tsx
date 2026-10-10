@@ -9,7 +9,7 @@ export function TermsModal() {
   return (
     <Dialog open={isOpen} onClose={onClose} size="lg">
       <DialogHeader title="서비스 이용약관" onClose={onClose} />
-      <DialogBody className="max-h-[70dvh] fold:max-h-[60dvh] overflow-y-auto">
+      <DialogBody className="max-h-[70dvh] overflow-y-auto" tabIndex={0} aria-label="약관 내용">
         <div className="prose prose-sm dark:prose-invert max-w-none space-y-8 pr-2">
           {/* ─── 이용약관 ──────────────────────────────── */}
           <section>

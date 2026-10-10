@@ -26,13 +26,13 @@ import { SyncFolderSection } from './SyncFolderSection'
 import { OrphanBackupsSection } from './OrphanBackupsSection'
 import { DesktopDownloadSection } from './DesktopDownloadSection'
 import { AndroidDownloadSection } from './AndroidDownloadSection'
-import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDesktop, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineEyeHidden, IcLineFolder, IcLineLoading, IcLineMic, IcLineMoblie, IcLineMy, IcLineSetting, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwDrive, IcMwMoon, IcMwNote, IcMwSparkles, IcMwSun, IcMwUpload } from '@/mw/icons'
+import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDesktop, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineEyeHidden, IcLineFolder, IcLineLoading, IcLineMoblie, IcLineMy, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwMoon, IcMwNote, IcMwSun, IcMwUpload } from '@/mw/icons'
 
 // ─── Theme Options ──────────────────────────────────
 const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-  { value: 'light', label: '라이트', icon: <IcMwSun size={16} /> },
-  { value: 'dark', label: '다크', icon: <IcMwMoon size={16} /> },
-  { value: 'system', label: '시스템', icon: <IcLineDesktop size={16} /> },
+  { value: 'system', label: '시스템 설정 따르기', icon: <IcLineDesktop size={16} /> },
+  { value: 'light', label: '밝게', icon: <IcMwSun size={16} /> },
+  { value: 'dark', label: '어둡게', icon: <IcMwMoon size={16} /> },
 ]
 
 // ─── Sync Status Badge ──────────────────────────────
@@ -255,20 +255,11 @@ function ToggleItem({
         type="button"
         role="switch"
         aria-checked={enabled}
+        aria-label={label}
         onClick={onChange}
-        className={clsx(
-          // 포커스 링은 전역 :focus-visible 아웃라인 토큰에 위임 (다크 halo 방지)
-          'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-          enabled ? 'bg-[var(--color-accent)]' : 'bg-zinc-200 dark:bg-zinc-700'
-        )}
+        className={`mw-switch mw-switch--medium shrink-0${enabled ? ' mw-switch--checked' : ''}`}
       >
-        <span
-          aria-hidden="true"
-          className={clsx(
-            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-            enabled ? 'translate-x-5' : 'translate-x-0'
-          )}
-        />
+        <div className="mw-switch__container"><div className="mw-switch__handle" /></div>
       </button>
     </div>
   )
@@ -602,26 +593,17 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           화면 테마
         </h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div role="group" aria-label="화면 테마" className="flex flex-wrap gap-2">
           {themeOptions.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => handleThemeSelect(option.value)}
-              className={clsx(
-                'flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-colors duration-200',
-                settings.theme === option.value
-                  ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
-                  : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900'
-              )}
+              aria-pressed={settings.theme === option.value}
+              className={`mw-select-chip mw-select-chip--${settings.theme === option.value ? 'on' : 'off'}`}
             >
-              <div className={clsx(
-                'w-10 h-10 rounded-full flex items-center justify-center transition-colors',
-                settings.theme === option.value ? 'bg-white dark:bg-zinc-800 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800'
-              )}>
-                {option.icon}
-              </div>
-              <span className="text-sm font-medium">{option.label}</span>
+              {option.icon}
+              {option.label}
             </button>
           ))}
         </div>
@@ -636,25 +618,18 @@ export function SettingsModal() {
         </h3>
         <div className="space-y-4">
           {/* Font Size */}
-          <div className="flex items-center gap-3 p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 shrink-0 font-medium">크기</span>
-            <div className="flex-1 flex gap-1.5">
-              {FONT_SIZES.map((size) => (
-                <button
-                  key={size.id}
-                  onClick={() => setFontSize(size.id)}
-                  className={clsx(
-                    'flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                    settings.fontSize === size.id
-                      ? 'bg-[var(--color-accent)] text-[var(--color-on-accent)]'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                  )}
-                  title={size.label}
-                >
-                  {size.label.replace('매우 ', '')}
-                </button>
-              ))}
-            </div>
+          <div role="group" aria-label="글자 크기" className="flex flex-wrap gap-2">
+            {FONT_SIZES.map((size) => (
+              <button
+                key={size.id}
+                type="button"
+                onClick={() => setFontSize(size.id)}
+                aria-pressed={settings.fontSize === size.id}
+                className={`mw-select-chip mw-select-chip--${settings.fontSize === size.id ? 'on' : 'off'}`}
+              >
+                {size.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -839,7 +814,7 @@ export function SettingsModal() {
         <div className="relative">
           <button
             onClick={() => setShowFolderDropdown(!showFolderDropdown)}
-            className="w-full flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
+            className="mw-button mw-button--tertiary-subtle mw-button--large w-full justify-between"
           >
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">새 메모 기본 폴더</span>
             <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
@@ -904,7 +879,7 @@ export function SettingsModal() {
               settings.memoSettings.inputStartPosition === 'title' ? 'body' : 'title'
             )
           }}
-          className="w-full flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/80 transition-colors"
+          className="mw-button mw-button--tertiary-subtle mw-button--large w-full justify-between"
         >
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">새 메모 커서 위치</span>
           <div className="flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -1239,17 +1214,14 @@ export function SettingsModal() {
           {/* AI Provider */}
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">AI 프로바이더</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div role="group" aria-label="AI 제공자" className="flex flex-wrap gap-2">
               {providerOptions.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => useSettingsStore.getState().setAIProvider(opt.value)}
-                  className={clsx(
-                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-colors text-center',
-                    settings.ai?.aiProvider === opt.value
-                      ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
-                      : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
-                  )}
+                  aria-pressed={settings.ai?.aiProvider === opt.value}
+                  className={`mw-select-chip mw-select-chip--${settings.ai?.aiProvider === opt.value ? 'on' : 'off'}`}
                 >
                   {opt.label}
                 </button>
@@ -1260,17 +1232,14 @@ export function SettingsModal() {
           {/* OCR Provider */}
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">OCR 프로바이더</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div role="group" aria-label="글자 인식 제공자" className="flex flex-wrap gap-2">
               {ocrProviderOptions.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => useSettingsStore.getState().setOCRProvider(opt.value)}
-                  className={clsx(
-                    'px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-colors text-center',
-                    settings.ai?.ocrProvider === opt.value
-                      ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
-                      : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
-                  )}
+                  aria-pressed={settings.ai?.ocrProvider === opt.value}
+                  className={`mw-select-chip mw-select-chip--${settings.ai?.ocrProvider === opt.value ? 'on' : 'off'}`}
                 >
                   {opt.label}
                 </button>
@@ -1281,17 +1250,14 @@ export function SettingsModal() {
           {/* STT Language */}
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">음성 인식 언어</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div role="group" aria-label="음성 인식 언어" className="flex flex-wrap gap-2">
               {languageOptions.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => setSTTLanguage(opt.value)}
-                  className={clsx(
-                    'px-3 py-2 rounded-xl border-2 text-xs font-medium transition-colors',
-                    settings.ai?.language === opt.value
-                      ? 'border-primary-500 bg-primary-50/50 text-primary-700 '
-                      : 'border-[var(--color-border-default)] text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
-                  )}
+                  aria-pressed={settings.ai?.language === opt.value}
+                  className={`mw-select-chip mw-select-chip--${settings.ai?.language === opt.value ? 'on' : 'off'}`}
                 >
                   {opt.label}
                 </button>
@@ -1565,14 +1531,14 @@ export function SettingsModal() {
   }
 
   // ─── Tab Definitions ──────────────────────────────
-  const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'general', label: '일반', icon: <IcLineSetting size={16} /> },
-    { id: 'account', label: '계정', icon: <IcLineMy size={16} /> },
-    { id: 'data', label: '데이터', icon: <IcMwDrive size={16} /> },
-    { id: 'memo', label: '메모', icon: <IcMwNote size={16} /> },
-    { id: 'ai', label: 'AI 서비스', icon: <IcLineMic size={16} /> },
-    { id: 'workspace', label: '워크스페이스', icon: <IcMwSparkles size={16} /> },
-    { id: 'system', label: '시스템', icon: <IcLineShield size={16} /> },
+  const tabs: { id: SettingsTab; label: string }[] = [
+    { id: 'general', label: '일반' },
+    { id: 'account', label: '계정' },
+    { id: 'data', label: '데이터' },
+    { id: 'memo', label: '메모' },
+    { id: 'ai', label: 'AI 서비스' },
+    { id: 'workspace', label: '작업 공간' },
+    { id: 'system', label: '시스템' },
   ]
 
   // Keyboard navigation for tabs
@@ -1604,42 +1570,24 @@ export function SettingsModal() {
           </div>
 
           {/* Body: Sidebar Tabs + Content */}
-          <DialogBody className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col md:flex-row">
-            {/* Sidebar Tabs */}
-            <div className="relative md:contents">
-              <aside
-                role="tablist"
-                aria-label="설정 탭"
-                className="w-full md:w-56 bg-zinc-50/80 dark:bg-zinc-950/40 border-b md:border-b-0 md:border-r border-[var(--color-border-subtle)] p-2 md:p-4 gap-1 md:gap-1.5 overflow-x-auto md:overflow-y-auto flex-shrink-0 flex md:flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-              >
-                {tabs.map((tab, index) => (
-                  <button
-                    key={tab.id}
-                    ref={(el) => { tabRefs.current[index] = el }}
-                    role="tab"
-                    aria-selected={activeTab === tab.id}
-                    tabIndex={activeTab === tab.id ? 0 : -1}
-                    onClick={() => setActiveTab(tab.id)}
-                    onKeyDown={(e) => handleTabKeyDown(e, index)}
-                    className={clsx(
-                      'flex-shrink-0 min-w-[68px] md:min-w-0 w-auto md:w-full flex flex-col md:flex-row items-center gap-1 md:gap-3 px-2.5 md:px-3.5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-[color,background-color,box-shadow,transform] duration-200 relative',
-                      activeTab === tab.id
-                        ? 'bg-white dark:bg-zinc-800 text-primary-600 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700 md:translate-x-0.5'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'
-                    )}
-                  >
-                    <span className={clsx('transition-colors', activeTab === tab.id ? 'text-primary-500' : 'text-zinc-500 dark:text-zinc-400')}>
-                      {tab.icon}
-                    </span>
-                    <span className="truncate">{tab.label}</span>
-                    {activeTab === tab.id && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-primary-500 md:hidden" />
-                    )}
-                  </button>
-                ))}
-              </aside>
-              {/* Scroll hint gradient - mobile only */}
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-zinc-50/80 dark:from-zinc-950/40 pointer-events-none md:hidden" aria-hidden="true" />
+          <DialogBody className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+            {/* 탭: 키트의 Scrollable 탭이에요 */}
+            <div className="mw-tab-group mw-tab-group--scrollable px-4 sm:px-6" role="tablist" aria-label="설정 탭">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  ref={(el) => { tabRefs.current[index] = el }}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
+                  tabIndex={activeTab === tab.id ? 0 : -1}
+                  onClick={() => setActiveTab(tab.id)}
+                  onKeyDown={(e) => handleTabKeyDown(e, index)}
+                  className={`mw-tab mw-tab--scrollable mw-tab--${activeTab === tab.id ? 'selected' : 'default'}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             {/* Content Area — 패널(--dialog-bg) 표면을 그대로 사용해 헤더와 이음새 없이 연결 */}

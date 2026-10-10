@@ -74,3 +74,16 @@
 
 /* 달력: 메모가 있는 날의 점. 날짜 버튼(키트의 mw-date-picker__day) 안에서 숫자 오른쪽 위에 찍어요 */
 .memo-cal__mark { position: absolute; top: var(--space-8); left: calc(50% + var(--space-12)); width: var(--memo-space-6); height: var(--memo-space-6); border-radius: var(--radius-circle); background: var(--mw-accent); }
+
+/* 대화상자: 키트의 Popup 카드 위에서 Memo가 정하는 것은 너비와, 긴 내용이 카드 안에서 스크롤되게 하는 일뿐이에요 */
+.mw-popup.memo-dialog { max-width: calc(100vw - var(--space-32)); max-height: calc(100dvh - var(--space-32)); overflow-y: auto; overscroll-behavior: contain; justify-content: flex-start; }
+.mw-popup.memo-dialog--sm { width: 400px; }
+.mw-popup.memo-dialog--md { width: 520px; }
+.mw-popup.memo-dialog--lg { width: 680px; }
+.mw-popup.memo-dialog--xl { width: 920px; }
+.mw-popup.memo-dialog--flush { padding: 0; }
+.memo-dialog__head { display: flex; align-items: flex-start; gap: var(--space-12); text-align: left; }
+.memo-dialog__body { min-width: 0; }
+@media (max-width: 600px) {
+  .mw-popup.memo-dialog { width: 100%; max-height: calc(100dvh - var(--space-48)); }
+}

@@ -7,7 +7,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useVoiceTranscription } from '@/hooks/useVoiceTranscription'
 import { useAudioRecorder } from '@/hooks/useAudioRecorder'
-import { IcFillPause, IcFillPlay, IcLineClose, IcLineLoading, IcLineMic, IcLinePause, IcMwUpload, IcMwWaveform } from '@/mw/icons'
+import { IcFillPause, IcFillPlay, IcLineClose, IcLineLoading, IcLineMic, IcLinePause, IcMwWaveform } from '@/mw/icons'
 
 type ModalStep = 1 | 2 | 3
 type InputTab = 'upload' | 'record'
@@ -118,29 +118,11 @@ function StepFileSelect({
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-[var(--color-border-subtle)]">
-        <button
-          onClick={() => setActiveTab('upload')}
-          className={clsx(
-            'flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-            activeTab === 'upload'
-              ? 'border-primary-500 text-primary-600 '
-              : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-          )}
-        >
-          <IcMwUpload size={16} />
+      <div className="mw-tab-group mw-tab-group--fixed" role="tablist" aria-label="넣는 방법">
+        <button type="button" role="tab" aria-selected={activeTab === 'upload'} onClick={() => setActiveTab('upload')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'upload' ? 'selected' : 'default'}`}>
           파일 업로드
         </button>
-        <button
-          onClick={() => setActiveTab('record')}
-          className={clsx(
-            'flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
-            activeTab === 'record'
-              ? 'border-primary-500 text-primary-600 '
-              : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-          )}
-        >
-          <IcLineMic size={16} />
+        <button type="button" role="tab" aria-selected={activeTab === 'record'} onClick={() => setActiveTab('record')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'record' ? 'selected' : 'default'}`}>
           직접 녹음
         </button>
       </div>
@@ -149,19 +131,12 @@ function StepFileSelect({
         <div className="space-y-3">
           {/* Drop zone */}
           <div
-            role="button"
-            tabIndex={0}
+            role="group"
             aria-label="음성 파일 선택"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                fileInputRef.current?.click()
-              }
-            }}
             className={clsx(
               'flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-[border-color,background-color]',
               dragOver
@@ -174,11 +149,14 @@ function StepFileSelect({
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                음성 파일을 여기에 놓거나 클릭하세요
+                음성 파일을 여기에 놓아요
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 MP3, WAV, M4A, WebM, OGG (최대 25MB)
               </p>
+              <button type="button" className="mw-button mw-button--secondary mw-button--medium mt-3" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}>
+                파일 고르기
+              </button>
             </div>
           </div>
           <input
