@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { normalizeAITags } from '@/lib/tagParser'
 import { suggestTags } from '@/services/aiFeatures'
 import { IcLineAdd, IcLineClose, IcMwSparkles, IcMwTag } from '@/mw/icons'
+import { TextField } from '@/mw/TextField'
 
 interface TagEditModalProps {
   open: boolean
@@ -120,7 +121,8 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
 
         {/* 태그 추가 입력 */}
         <div className="flex items-center gap-2">
-          <input
+          <TextField
+            label="태그 (적고 Enter)"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -129,8 +131,8 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
                 handleInputAdd()
               }
             }}
-            placeholder="태그 입력 후 Enter"
-            className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            showClearButton={false}
+            containerClassName="min-w-0 flex-1"
           />
           <button type="button"
             onClick={handleInputAdd}

@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toastStore'
 import { buildRuleTitle } from '@/utils/memoTitle'
 import { Kbd } from '@/components/ui/Kbd'
 import { IcLineClose, IcMwSend } from '@/mw/icons'
+import { TextArea } from '@/mw/TextArea'
 
 interface QuickMemoInputProps {
   onClose: () => void
@@ -33,18 +34,18 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
   return (
     <div className="mx-4 mb-3 rounded-2xl bg-white dark:bg-zinc-800 shadow-md border border-[var(--card-hairline)] p-3 animate-in slide-in-from-bottom duration-200">
       <div className="flex items-start gap-2">
-        <textarea
-          ref={inputRef}
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit()
-            if (e.key === 'Escape') onClose()
-          }}
-          placeholder="빠른 메모..."
-          rows={2}
-          className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none resize-none"
-        />
+        <div className="min-w-0 flex-1">
+          <TextArea
+            label="빠른 메모"
+            ref={inputRef}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit()
+              if (e.key === 'Escape') onClose()
+            }}
+          />
+        </div>
         {/* 44px touch targets — quick capture is a high-frequency mobile flow */}
         <div className="flex flex-col gap-1 shrink-0">
           <button type="button"

@@ -27,7 +27,8 @@ import { SyncFolderSection } from './SyncFolderSection'
 import { OrphanBackupsSection } from './OrphanBackupsSection'
 import { DesktopDownloadSection } from './DesktopDownloadSection'
 import { AndroidDownloadSection } from './AndroidDownloadSection'
-import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDesktop, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineEyeHidden, IcLineFolder, IcLineLoading, IcLineMoblie, IcLineMy, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwMoon, IcMwNote, IcMwSun, IcMwUpload } from '@/mw/icons'
+import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDesktop, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineFolder, IcLineLoading, IcLineMoblie, IcLineMy, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwMoon, IcMwNote, IcMwSun, IcMwUpload } from '@/mw/icons'
+import { TextField } from '@/mw/TextField'
 
 // ─── Theme Options ──────────────────────────────────
 const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
@@ -334,9 +335,6 @@ export function SettingsModal() {
   const [showFolderDropdown, setShowFolderDropdown] = useState(false)
 
   // AI service states
-  const [showOpenAIKey, setShowOpenAIKey] = useState(false)
-  const [showAnthropicKey, setShowAnthropicKey] = useState(false)
-  const [showGeminiKey, setShowGeminiKey] = useState(false)
   const [localOpenAIKey, setLocalOpenAIKey] = useState(settings.ai?.openaiApiKey || '')
   const [localAnthropicKey, setLocalAnthropicKey] = useState(settings.ai?.anthropicApiKey || '')
   const [localGeminiKey, setLocalGeminiKey] = useState(settings.ai?.geminiApiKey || '')
@@ -926,12 +924,10 @@ export function SettingsModal() {
           {/* Add folder form */}
           {isAddingFolder && (
             <div className="p-3 rounded-xl border border-primary-200 bg-primary-50/50 space-y-3">
-              <input
-                type="text"
+              <TextField
+                label="폴더 이름"
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                placeholder="폴더 이름"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border-default)] bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newFolderName.trim()) {
@@ -941,6 +937,7 @@ export function SettingsModal() {
                   }
                   if (e.key === 'Escape') setIsAddingFolder(false)
                 }}
+                showClearButton={false}
               />
               <div className="flex items-center gap-1.5">
                 <ColorSwatchPicker value={newFolderColor} onChange={setNewFolderColor} />
@@ -986,11 +983,10 @@ export function SettingsModal() {
               {editingFolderId === folder.id ? (
                 <>
                   <div className="flex-1 space-y-2">
-                    <input
-                      type="text"
+                    <TextField
+                      label="폴더 이름"
                       value={editFolderName}
                       onChange={(e) => setEditFolderName(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm rounded-lg border border-[var(--color-border-default)] bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && editFolderName.trim()) {
@@ -999,6 +995,7 @@ export function SettingsModal() {
                         }
                         if (e.key === 'Escape') setEditingFolderId(null)
                       }}
+                      showClearButton={false}
                     />
                     <div className="flex items-center gap-1.5">
                       <ColorSwatchPicker value={editFolderColor} onChange={setEditFolderColor} />
@@ -1261,19 +1258,15 @@ export function SettingsModal() {
           <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 space-y-5">
             {/* OpenAI Key */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">OpenAI API 키</label>
+              <div className="flex items-center justify-end mb-2">
                 <div className="flex items-center gap-2">
                   {openAITestResult === 'success' && <span className="text-xs text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
                   {openAITestResult === 'error' && <span className="text-xs text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
                   <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input type={showOpenAIKey ? 'text' : 'password'} value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} placeholder="sk-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showOpenAIKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
-                </div>
+              <div className="flex items-center gap-2">
+                <TextField label="OpenAI API 키" inputType="password" value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} autoComplete="off" showClearButton={false} containerClassName="min-w-0 flex-1" />
                 <button type="button" onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="mw-button mw-button--tertiary-subtle mw-button--medium">{testingProvider === 'openai' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
               {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
@@ -1281,19 +1274,15 @@ export function SettingsModal() {
 
             {/* Anthropic Key */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Anthropic API 키</label>
+              <div className="flex items-center justify-end mb-2">
                 <div className="flex items-center gap-2">
                   {anthropicTestResult === 'success' && <span className="text-xs text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
                   {anthropicTestResult === 'error' && <span className="text-xs text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
                   <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input type={showAnthropicKey ? 'text' : 'password'} value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} placeholder="sk-ant-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showAnthropicKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
-                </div>
+              <div className="flex items-center gap-2">
+                <TextField label="Anthropic API 키" inputType="password" value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} autoComplete="off" showClearButton={false} containerClassName="min-w-0 flex-1" />
                 <button type="button" onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="mw-button mw-button--tertiary-subtle mw-button--medium">{testingProvider === 'anthropic' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
               {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
@@ -1301,19 +1290,15 @@ export function SettingsModal() {
 
             {/* Gemini Key */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Gemini API 키</label>
+              <div className="flex items-center justify-end mb-2">
                 <div className="flex items-center gap-2">
                   {geminiTestResult === 'success' && <span className="text-xs text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
                   {geminiTestResult === 'error' && <span className="text-xs text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
                   <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input type={showGeminiKey ? 'text' : 'password'} value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} placeholder="AIza..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} aria-label={showGeminiKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showGeminiKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
-                </div>
+              <div className="flex items-center gap-2">
+                <TextField label="Gemini API 키" inputType="password" value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} autoComplete="off" showClearButton={false} containerClassName="min-w-0 flex-1" />
                 <button type="button" onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="mw-button mw-button--tertiary-subtle mw-button--medium">{testingProvider === 'gemini' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
               {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}

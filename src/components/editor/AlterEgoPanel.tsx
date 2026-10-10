@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import { useAlterEgo } from '@/hooks/useAlterEgo'
 import { useUIStore } from '@/stores/uiStore'
 import { IcLineClose, IcLineRefresh, IcLineSetting, IcMwSend, IcMwSpark } from '@/mw/icons'
+import { TextField } from '@/mw/TextField'
 
 interface AlterEgoPanelProps {
   body: string
@@ -167,15 +168,15 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
       {/* Input */}
       <div className="border-t border-zinc-200 dark:border-zinc-700 px-3 py-2 shrink-0">
         <div className="flex items-center gap-2">
-          <input
+          <TextField
+            label={exchangeCount >= maxExchanges ? '대화 횟수를 다 썼어요' : '생각을 적어요'}
             ref={inputRef}
-            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={exchangeCount >= maxExchanges ? '대화 횟수 초과' : '생각을 나눠보세요...'}
             disabled={exchangeCount >= maxExchanges || isLoading}
-            className="flex-1 text-sm px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-primary-400 disabled:opacity-50"
+            showClearButton={false}
+            containerClassName="min-w-0 flex-1"
           />
           <button type="button"
             onClick={handleSend}

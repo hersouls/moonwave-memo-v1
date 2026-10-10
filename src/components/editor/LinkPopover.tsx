@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { IcLineCheck } from '@/mw/icons'
+import { TextField } from '@/mw/TextField'
 
 interface LinkPopoverProps {
   /** 뷰포트 기준 앵커 좌표 — 팝오버 상단 중앙이 이 지점에 붙는다 */
@@ -72,17 +73,17 @@ export function LinkPopover({ position, initialUrl = '', onUnlink, onSubmit, onC
         }}
       >
         <div className="flex items-center gap-1">
-          <input
+          <TextField
+            label="링크 주소"
             ref={inputRef}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://…"
-            className="flex-1 min-w-0 bg-transparent px-2.5 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none"
-            aria-label="링크 URL"
             inputMode="url"
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
+            showClearButton={false}
+            containerClassName="min-w-0 flex-1"
           />
           <button type="button"
             onClick={submit}

@@ -296,22 +296,22 @@ export function KnowledgeGraphModal({
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
-            <div className="relative hidden sm:block">
-              <IcLineSearch size={16} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <label className="mw-searchbar hidden sm:flex w-56 flex-none">
+              <IcLineSearch size={20} />
               <input
                 value={query}
                 onChange={(e) => handleQueryChange(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                aria-label="메모 검색"
-                placeholder="메모 검색 (Enter로 이동)"
-                className="h-9 w-48 rounded-lg border border-zinc-200 bg-white pl-8 pr-9 text-sm text-zinc-800 placeholder:text-zinc-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-100"
+                aria-label="메모 찾기"
+                placeholder="메모 찾기"
+                enterKeyHint="search"
               />
               {query.trim() && (
-                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs tabular-nums text-zinc-400">
+                <span className="pr-2 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                   {matches.length}
                 </span>
               )}
-            </div>
+            </label>
 
             <button aria-pressed={is3D}
               type="button"
@@ -435,18 +435,18 @@ export function KnowledgeGraphModal({
           )}
 
           {/* 모바일 검색 */}
-          <div className="absolute left-3 right-3 top-3 sm:hidden">
-            <div className="relative">
-              <IcLineSearch size={16} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <div className="absolute left-3 right-3 top-3 flex sm:hidden">
+            <label className="mw-searchbar">
+              <IcLineSearch size={20} />
               <input
                 value={query}
                 onChange={(e) => handleQueryChange(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                aria-label="메모 검색"
-                placeholder="메모 검색 (Enter로 이동)"
-                className="h-9 w-full rounded-lg border border-zinc-200 bg-white/90 pl-8 pr-2.5 text-sm text-zinc-800 shadow-sm backdrop-blur placeholder:text-zinc-400 focus:border-primary-400 focus:outline-none dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-100"
+                aria-label="메모 찾기"
+                placeholder="메모 찾기"
+                enterKeyHint="search"
               />
-            </div>
+            </label>
           </div>
 
           {/* 링크가 하나도 없을 때 안내 */}

@@ -8,6 +8,7 @@ import { useToastStore } from '@/stores/toastStore'
 import { useVoiceTranscription } from '@/hooks/useVoiceTranscription'
 import { useAudioRecorder } from '@/hooks/useAudioRecorder'
 import { IcFillPause, IcFillPlay, IcLineClose, IcLineLoading, IcLineMic, IcLinePause, IcMwWaveform } from '@/mw/icons'
+import { TextArea } from '@/mw/TextArea'
 
 type ModalStep = 1 | 2 | 3
 type InputTab = 'upload' | 'record'
@@ -373,10 +374,10 @@ function StepResult({
 }) {
   return (
     <div className="space-y-4">
-      <textarea
+      <TextArea
+        label="받아 적은 글"
         value={text}
         onChange={(e) => onTextChange(e.target.value)}
-        className="w-full min-h-[200px] max-h-60 p-3 rounded-xl border border-[var(--color-border-default)] bg-white dark:bg-zinc-900/50 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed font-mono resize-none outline-none focus:ring-2 focus:ring-primary-500 overflow-y-auto"
       />
 
       <div className="flex items-center justify-between px-1">

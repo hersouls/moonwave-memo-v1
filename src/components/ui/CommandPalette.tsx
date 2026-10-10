@@ -13,6 +13,7 @@ import { useViewTransition } from '@/hooks/useViewTransition'
 import { Kbd } from './Kbd'
 import { Spinner } from './Spinner'
 import { IcLineAdd, IcLineDocument, IcLineFolder, IcLineSearch, IcLineSetting, IcMwMoon, IcMwSparkles, IcMwStar, IcMwSun, IcMwTag } from '@/mw/icons'
+import { TextArea } from '@/mw/TextArea'
 
 const itemClass =
   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-700 cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-700 dark:text-zinc-300 dark:data-[selected=true]:bg-primary-900/20 dark:data-[selected=true]:text-primary-300'
@@ -190,7 +191,8 @@ export function CommandPalette() {
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">AI가 폴더와 태그를 자동 분류합니다</span>
               </div>
               <div className="p-4">
-                <textarea
+                <TextArea
+                  label="적어 둘 내용"
                   value={smartText}
                   onChange={(e) => setSmartText(e.target.value)}
                   onKeyDown={(e) => {
@@ -202,8 +204,6 @@ export function CommandPalette() {
                       setSmartMode(false)
                     }
                   }}
-                  placeholder="떠오르는 생각을 자유롭게 입력하세요..."
-                  className="w-full h-24 resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                   autoFocus
                   disabled={isClassifying}
                 />
@@ -242,14 +242,16 @@ export function CommandPalette() {
             </>
           ) : (
             <Command label="커맨드 팔레트" shouldFilter={true}>
-              <div className="flex items-center gap-2 border-b border-zinc-200 px-4 dark:border-zinc-700">
-                <IcLineSearch size={16} className="shrink-0 text-zinc-400" />
-                <Command.Input
-                  value={query}
-                  onValueChange={setQuery}
-                  placeholder="메모 검색, 액션 실행..."
-                  className="flex-1 bg-transparent py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
-                />
+              <div className="flex border-b border-zinc-200 p-3 dark:border-zinc-700">
+                <label className="mw-searchbar">
+                  <IcLineSearch size={20} />
+                  <Command.Input
+                    value={query}
+                    onValueChange={setQuery}
+                    placeholder="메모나 할 일을 찾아요"
+                    aria-label="메모나 할 일 찾기"
+                  />
+                </label>
               </div>
 
               <Command.List className="max-h-80 overflow-y-auto p-2">

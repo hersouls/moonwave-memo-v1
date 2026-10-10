@@ -153,19 +153,20 @@ export function MemoSearchBar() {
   return (
     <div className="px-4 lg:px-0" ref={containerRef}>
       <div className="relative">
-        <div className="flex items-center gap-2.5 rounded-xl bg-zinc-100 px-4 py-2.5 fold:py-2 dark:bg-zinc-800 ring-1 ring-inset ring-zinc-950/[0.04] dark:ring-white/[0.06] transition-shadow focus-within:ring-2 focus-within:ring-primary-500/40">
-          <IcLineSearch size={16} className="shrink-0 text-zinc-500 dark:text-zinc-400" />
+        <div className="mw-searchbar" role="search">
+          <IcLineSearch size={20} />
           <input
             ref={inputRef}
             type="text"
             inputMode="search"
+            enterKeyHint="search"
             value={localQuery}
             onChange={(e) => handleQueryChange(e.target.value)}
             onFocus={() => setShowRecent(true)}
             onBlur={handleBlur}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
-            placeholder="메모 검색"
-            className="flex-1 bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            placeholder="제목, 내용, 태그로 찾기"
+            aria-label="메모 찾기"
           />
           <button type="button" aria-pressed={showFilters}
             onClick={() => setShowFilters(!showFilters)}
@@ -185,10 +186,10 @@ export function MemoSearchBar() {
           {searchQuery && (
             <button type="button"
               onClick={handleClear}
-              className="mw-icon-button -my-2 shrink-0"
+              className="mw-icon-button"
               aria-label="검색어 지우기"
             >
-              <IcLineClose size={16} className="text-zinc-400" />
+              <IcLineClose size={16} />
             </button>
           )}
         </div>

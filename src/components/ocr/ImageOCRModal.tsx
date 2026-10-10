@@ -7,6 +7,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useImageOCR } from '@/hooks/useImageOCR'
 import { IcLineCamera, IcLineClose, IcLineGallery, IcLineLoading } from '@/mw/icons'
+import { TextArea } from '@/mw/TextArea'
 
 type ModalStep = 1 | 2 | 3
 type InputTab = 'upload' | 'camera'
@@ -316,11 +317,10 @@ function StepResult({
         </div>
       )}
 
-      <textarea
+      <TextArea
+        label={isEmptyResult ? '직접 적어도 돼요' : '읽어 낸 글'}
         value={text}
         onChange={(e) => onTextChange(e.target.value)}
-        placeholder={isEmptyResult ? '직접 텍스트를 입력할 수도 있습니다' : undefined}
-        className="w-full min-h-[200px] max-h-60 p-3 rounded-xl border border-[var(--color-border-default)] bg-white dark:bg-zinc-900/50 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed resize-none outline-none focus:ring-2 focus:ring-primary-500 overflow-y-auto"
       />
 
       <div className="flex items-center justify-between px-1">

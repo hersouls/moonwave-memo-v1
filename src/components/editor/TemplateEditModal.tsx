@@ -4,18 +4,21 @@ import { useTemplateStore } from '@/stores/templateStore'
 import type { MemoColor } from '@/lib/types'
 import type { MemoTemplate } from '@/utils/memoTemplates'
 import { IcLineBook, IcLineBulb, IcLineCalendar, IcLineDocument, IcLineHeart, IcLineUsers, IcMwCheckSquare, IcMwCode, IcMwStar, IcMwTarget } from '@/mw/icons'
+import { TextArea } from '@/mw/TextArea'
+import { TextField } from '@/mw/TextField'
 
+// name은 저장해 온 이름이라 그대로 두고, 화면에는 label을 읽어 줘요.
 const AVAILABLE_ICONS = [
-  { name: 'Users', component: IcLineUsers },
-  { name: 'BookOpen', component: IcLineBook },
-  { name: 'CheckSquare', component: IcMwCheckSquare },
-  { name: 'Lightbulb', component: IcLineBulb },
-  { name: 'Calendar', component: IcLineCalendar },
-  { name: 'FileText', component: IcLineDocument },
-  { name: 'Star', component: IcMwStar },
-  { name: 'Heart', component: IcLineHeart },
-  { name: 'Target', component: IcMwTarget },
-  { name: 'Code', component: IcMwCode },
+  { name: 'Users', label: '사람들', component: IcLineUsers },
+  { name: 'BookOpen', label: '책', component: IcLineBook },
+  { name: 'CheckSquare', label: '할 일', component: IcMwCheckSquare },
+  { name: 'Lightbulb', label: '아이디어', component: IcLineBulb },
+  { name: 'Calendar', label: '달력', component: IcLineCalendar },
+  { name: 'FileText', label: '문서', component: IcLineDocument },
+  { name: 'Star', label: '별', component: IcMwStar },
+  { name: 'Heart', label: '하트', component: IcLineHeart },
+  { name: 'Target', label: '목표', component: IcMwTarget },
+  { name: 'Code', label: '코드', component: IcMwCode },
 ]
 
 interface TemplateEditModalProps {
@@ -104,59 +107,44 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
                 {isEditing ? '템플릿 편집' : '새 템플릿'}
               </DialogTitle>
 
-              {/* Name */}
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                이름 <span className="text-danger-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="템플릿 이름"
-                className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 mb-4"
-                autoFocus
-              />
+              <div className="flex flex-col gap-4 mb-4">
+                <TextField
+                  label="템플릿 이름"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                />
 
-              {/* Icon */}
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                아이콘
-              </label>
-              <div className="grid grid-cols-6 gap-2 mb-4">
-                {AVAILABLE_ICONS.map(({ name: iconName, component: IconComp }) => (
-                  <button type="button" aria-pressed={icon === iconName}
-                    key={iconName}
-                    onClick={() => setIcon(iconName)}
-                    className={icon === iconName ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'}
-                    title={iconName}
-                  >
-                    <IconComp className="w-5 h-5" />
-                  </button>
-                ))}
+                <div role="group" aria-labelledby="template-icon-caption">
+                  <p id="template-icon-caption" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    아이콘
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {AVAILABLE_ICONS.map(({ name: iconName, label: iconLabel, component: IconComp }) => (
+                      <button type="button" aria-pressed={icon === iconName}
+                        key={iconName}
+                        onClick={() => setIcon(iconName)}
+                        className={icon === iconName ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'}
+                        aria-label={iconLabel}
+                      >
+                        <IconComp size={20} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <TextField
+                  label="자동으로 채울 제목 (비워 둬도 돼요)"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+
+                <TextArea
+                  label="내용 틀 (마크다운, 비워 둬도 돼요)"
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                />
               </div>
-
-              {/* Title preset */}
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                제목 프리셋
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="자동으로 채워질 제목 (선택)"
-                className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 mb-4"
-              />
-
-              {/* Body preset */}
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                본문 프리셋
-              </label>
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="마크다운 형식으로 본문 템플릿 작성 (선택)"
-                rows={6}
-                className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 mb-6 resize-none font-mono text-sm"
-              />
 
               {/* Actions */}
               <div className="flex gap-2 justify-end">

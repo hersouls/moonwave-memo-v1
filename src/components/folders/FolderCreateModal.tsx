@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { useFolderStore } from '@/stores/folderStore'
 import { FOLDER_COLORS } from '@/utils/constants'
+import { TextField } from '@/mw/TextField'
 
 interface FolderCreateModalProps {
   isOpen: boolean
@@ -39,12 +40,10 @@ export function FolderCreateModal({ isOpen, onClose, onCreated }: FolderCreateMo
       <DialogHeader title="새 폴더" onClose={onClose} />
 
       <DialogBody>
-        <input
-          type="text"
+        <TextField
+          label="폴더 이름"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="폴더 이름"
-          className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 mb-4"
           autoFocus
           data-autofocus
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
