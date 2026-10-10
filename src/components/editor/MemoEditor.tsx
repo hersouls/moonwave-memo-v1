@@ -903,7 +903,7 @@ export function MemoEditor() {
             />
             {/* AI Autocomplete ghost text */}
             {ghostText && (
-              <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-zinc-400 dark:text-zinc-600 italic truncate max-w-full px-1">
+              <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-[var(--text-secondary)] italic truncate max-w-full px-1">
                 Tab을 눌러 수락: <span className="text-zinc-500 dark:text-zinc-500">{ghostText.slice(0, 80)}{ghostText.length > 80 ? '...' : ''}</span>
               </div>
             )}

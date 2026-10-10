@@ -100,7 +100,7 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
   return (
     <div className="relative group">
       {language && (
-        <div className="absolute top-0 left-0 px-2 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-800 dark:bg-zinc-900 rounded-br-md rounded-tl-md uppercase">
+        <div className="absolute top-0 left-0 px-2 py-0.5 text-xs font-mono text-[var(--text-secondary)] bg-[var(--background-secondary)] rounded-br-md rounded-tl-md uppercase">
           {language}
         </div>
       )}
