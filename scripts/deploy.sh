@@ -3,7 +3,7 @@
 #
 #   ./scripts/deploy.sh "fix(ux): 커밋 제목" ["본문 문단" …]   commit everything in the working tree, then deploy
 #   ./scripts/deploy.sh                                        nothing to commit: push what is committed, or just verify live
-#   ./scripts/deploy.sh --check                                checks only (lint, types, tests, audit, build); no commit, no push
+#   ./scripts/deploy.sh --check                                checks only (lint, types, tests, phone screens, audit, build); no commit, no push
 #
 # This is "the deploy command of this project": people use it, and so do the Moonwave UX fix sessions (uxctl), which
 # are allowed to run exactly this one command. Memo is the one Moonwave service not served from the Mac: Vercel builds
@@ -41,6 +41,8 @@ step "타입 (src)"          npx tsc -b --noEmit
 step "타입 (electron)"     npm run typecheck:electron
 step "타입 (api)"          npm run typecheck:api
 step "테스트"              npm run test:run
+# the screens as the owner uses them: phone widths, memos with tags, tables, tasks and a long body (see the script's head)
+step "메모가 든 폰 화면"    node scripts/check-screens.mjs
 step "운영 의존성 취약점"  npm audit --omit=dev --audit-level=high
 step "빌드"                npm run build
 git checkout -q -- tsconfig.tsbuildinfo 2>/dev/null   # tracked build artefact; never part of a change
