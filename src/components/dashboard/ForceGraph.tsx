@@ -871,7 +871,7 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
       exportPNG: async () => {
         const target = exportRef.current
         if (!target) return
-        const isDark = document.documentElement.classList.contains('dark')
+        const isDark = document.documentElement.dataset.theme === 'dark'
         const dataUrl = await toPng(target, {
           pixelRatio: 2,
           cacheBust: true,

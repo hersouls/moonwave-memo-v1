@@ -7,8 +7,8 @@ import {
 } from '@headlessui/react'
 import { useDrag } from '@use-gesture/react'
 import { clsx } from 'clsx'
-import { X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { IcLineClose } from '@/mw/icons'
 
 interface DialogProps {
   open: boolean
@@ -148,12 +148,12 @@ export function DialogHeader({ title, description, onClose }: DialogHeaderProps)
       )}
       {onClose && (
         <div className="absolute right-0 top-0">
-          <button
+          <button type="button"
             onClick={onClose}
-            className="p-3 rounded-lg text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="mw-icon-button"
             aria-label="닫기"
           >
-            <X className="w-5 h-5" />
+            <IcLineClose size={20} />
           </button>
         </div>
       )}

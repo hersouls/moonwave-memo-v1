@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Hash, Plus, Sparkles, X } from 'lucide-react'
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { normalizeAITags } from '@/lib/tagParser'
 import { suggestTags } from '@/services/aiFeatures'
+import { IcLineAdd, IcLineClose, IcMwSparkles, IcMwTag } from '@/mw/icons'
 
 interface TagEditModalProps {
   open: boolean
@@ -94,7 +94,7 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
               title="본문 해시태그 — 본문에서 삭제할 수 있습니다"
               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
             >
-              <Hash className="w-3 h-3" />
+              <IcMwTag size={12} />
               {tag}
             </span>
           ))}
@@ -104,12 +104,12 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 dark:bg-primary-900 dark:text-primary-300"
             >
               #{tag}
-              <button
+              <button type="button"
                 onClick={() => setDraft((prev) => prev.filter((t) => t !== tag))}
-                className="hover:text-primary-900 dark:hover:text-primary-100"
+                className="mw-icon-button"
                 aria-label={`${tag} 태그 삭제`}
               >
-                <X className="w-3 h-3" />
+                <IcLineClose size={12} />
               </button>
             </span>
           ))}
@@ -132,13 +132,13 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
             placeholder="태그 입력 후 Enter"
             className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
-          <button
+          <button type="button"
             onClick={handleInputAdd}
             disabled={!input.trim()}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-colors"
+            className="mw-icon-button"
             aria-label="태그 추가"
           >
-            <Plus className="w-4 h-4" />
+            <IcLineAdd size={16} />
           </button>
         </div>
 
@@ -149,7 +149,7 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
             disabled={isSuggesting || body.trim().length < 20}
             className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 disabled:opacity-40 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
           >
-            {isSuggesting ? <Spinner size="sm" label="" className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {isSuggesting ? <Spinner size="sm" label="" className="h-3.5 w-3.5" /> : <IcMwSparkles size={16} />}
             AI 태그 제안
           </button>
           {suggestions.length > 0 && (

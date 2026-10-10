@@ -1,5 +1,5 @@
-import { Sun, CloudRain, Snowflake, Cloud, X } from 'lucide-react'
 import type { ContextSnapshot, WeatherCondition } from '@/lib/types'
+import { IcLineClose, IcLineCloud, IcMwRain, IcMwSnow, IcMwSun } from '@/mw/icons'
 
 interface TimeMachineBannerProps {
   snapshot: ContextSnapshot
@@ -10,13 +10,13 @@ function WeatherIcon({ weather }: { weather: WeatherCondition | null }) {
   const className = 'h-4 w-4'
   switch (weather) {
     case 'clear':
-      return <Sun className={className} />
+      return <IcMwSun className={className} />
     case 'rain':
-      return <CloudRain className={className} />
+      return <IcMwRain className={className} />
     case 'snow':
-      return <Snowflake className={className} />
+      return <IcMwSnow className={className} />
     case 'overcast':
-      return <Cloud className={className} />
+      return <IcLineCloud className={className} />
     default:
       return null
   }
@@ -30,7 +30,7 @@ export function TimeMachineBanner({ snapshot, onDismiss }: TimeMachineBannerProp
         className="absolute top-1.5 right-1.5 p-1 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
         aria-label="닫기"
       >
-        <X className="h-3.5 w-3.5" />
+        <IcLineClose size={16} />
       </button>
 
       <div className="flex items-center gap-2 pr-6 text-sm text-amber-700 dark:text-amber-300">

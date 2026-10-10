@@ -9,13 +9,15 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180.png" />
   <link rel="apple-touch-icon" href="/moonwave-original-192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-  <meta name="theme-color" content="#18181b" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#232425" media="(prefers-color-scheme: dark)" />
   <meta name="color-scheme" content="light dark" />
   <meta name="format-detection" content="telephone=no" />
-  <meta name="description" content="Memo - AI 음성 인식 메모 앱" />
+  <meta name="application-name" content="Moonwave Memo" />
+  <meta name="description" content="말하고 적은 것을 한곳에 모아 둬요" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Moonwave Memo" />
   <link rel="manifest" href="/manifest.json" />
   <!-- iOS Splash Screens -->
@@ -35,42 +37,14 @@
   <link rel="apple-touch-startup-image" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2)" href="/splash/ipad-9-1620x2160.png" />
   <link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" href="/splash/ipad-pro-11-1668x2388.png" />
   <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" href="/splash/ipad-pro-129-2048x2732.png" />
-  <title>Memo | Moonwave</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-  <!-- Pretendard (default font) is self-hosted/bundled via src/lib/loadFonts.ts (§4.8);
-       the remaining Korean display fonts stay CDN-loaded (non-blocking, graceful fallback). -->
-  <!-- P-03: Non-blocking font loading -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" media="print" onload="this.media='all'" />
-  <!-- B-10: Add missing font CDN links -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumBarunpen/NanumBarunpen.css" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/MaruBuri/MaruBuri.css" media="print" onload="this.media='all'" />
-  <noscript>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareNeo@1.0/nanumsquareneo.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/innks/NanumSquareRound@master/nanumsquareround.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/NanumBarunpen/NanumBarunpen.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/MaruBuri/MaruBuri.css" />
-  </noscript>
-  <!-- Speculation Rules API: prerender/prefetch for faster navigation -->
-  <script type="speculationrules">
-  {
-    "prerender": [{
-      "where": { "href_matches": ["/memos", "/calendar", "/memo/*"] },
-      "eagerness": "moderate"
-    }],
-    "prefetch": [{
-      "where": { "href_matches": ["/memos", "/calendar"] },
-      "eagerness": "eager"
-    }]
-  }
-  </script>
+  <title>Memo · Moonwave</title>
+  <!-- Moonwave UX 키트와 글꼴은 이 서비스가 직접 내려요. 바깥 주소를 부르지 않아요. -->
+  <link rel="preload" href="/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/kit/moonwave.css" />
+  <script src="/theme-init.js"></script>
 </head>
 
-<body>
-  <a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
+<body class="mw-root">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

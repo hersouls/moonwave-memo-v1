@@ -1,9 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
-import { Star, CheckCircle, Trash2, Pin, Flame, RotateCcw, MonitorPlay } from 'lucide-react'
 import clsx from 'clsx'
 import { ContextMenu } from '@/components/ui/ContextMenu'
-import type { Memo, MemoColor } from '@/lib/types'
+import type { Memo } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
@@ -15,15 +14,7 @@ import { useToastStore } from '@/stores/toastStore'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { useMemoryDecay } from '@/hooks/useMemoryDecay'
 import { MemoHoverPreview } from './MemoHoverPreview'
-
-const MEMO_CARD_BG: Record<MemoColor, string> = {
-  white: 'bg-white dark:bg-zinc-800',
-  yellow: 'bg-amber-50 dark:bg-amber-950/30',
-  green: 'bg-emerald-50 dark:bg-emerald-950/30',
-  blue: 'bg-blue-50 dark:bg-blue-950/30',
-  pink: 'bg-pink-50 dark:bg-pink-950/30',
-  purple: 'bg-purple-50 dark:bg-purple-950/30',
-}
+import { IcFillPlay, IcLinePin, IcLineTrash, IcLineUndo, IcMwCheckCircle, IcMwFlame, IcMwStar } from '@/mw/icons'
 
 // F-06: Dynamic swipe threshold for fold screens
 function getSwipeThreshold() {
@@ -95,7 +86,6 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
   const toggleMemoSelection = useUIStore((s) => s.toggleMemoSelection)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setActiveTag = useUIStore((s) => s.setActiveTag)
-  const defaultColor = useSettingsStore((s) => s.settings.memoSettings.defaultColor)
   const digitalGardenEnabled = useSettingsStore((s) => s.settings.livingWorkspace.digitalGardenEnabled)
   const toggleStar = useMemoStore((s) => s.toggleStar)
   const softDelete = useMemoStore((s) => s.softDelete)
@@ -418,12 +408,12 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
               }}
             >
               {isTrashView ? (
-                <RotateCcw
+                <IcLineUndo
                   className="text-white transition-transform duration-150 ease-spring"
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
               ) : (
-                <Star
+                <IcMwStar
                   className="text-white fill-white transition-transform duration-150 ease-spring"
                   style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
                 />
@@ -441,7 +431,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                   : undefined,
               }}
             >
-              <Trash2
+              <IcLineTrash
                 className="text-white transition-transform duration-150 ease-spring"
                 style={{ width: 20, height: 20, transform: `scale(${swipeX < 0 ? iconScale : 1})` }}
               />
@@ -458,8 +448,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         className={clsx(
           // Scoped transition list — never transition-all on list items (layout reflows must not animate)
           'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left border border-[var(--card-hairline)] shadow-sm transition-[transform,box-shadow,border-color,background-color,filter] duration-200',
-          MEMO_CARD_BG[memo.color] || MEMO_CARD_BG[defaultColor] || 'bg-white dark:bg-zinc-800',
-          // Selection-mode hover darkens in place so the memo's color identity survives
+          'bg-[var(--surface-primary)]',
           isSelectionMode && 'hover:brightness-[0.97] dark:hover:brightness-110',
           // Hover stays neutral (shadow + hairline darkening) — accent is reserved for selected/active/starred
           !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 hover:border-zinc-950/[0.12] dark:hover:border-white/[0.16] active:scale-[0.98]',
@@ -519,9 +508,9 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                 isSelectionMode ? 'w-7 opacity-100 scale-100 mr-0' : 'w-0 opacity-0 scale-50 -mr-2'
               )}
             >
-              <CheckCircle
+              <IcMwCheckCircle size={20}
                 className={clsx(
-                  'mt-0.5 h-5 w-5 shrink-0 transition-colors',
+                  'mt-0.5   shrink-0 transition-colors',
                   isSelected
                     ? 'fill-primary-500 text-primary-500'
                     : 'text-zinc-300 dark:text-zinc-600'
@@ -536,10 +525,10 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
               <HighlightText text={memo.title || '제목 없음'} query={searchQuery} />
             </span>
             {memo.isPinned && (
-              <Pin className="h-3.5 w-3.5 shrink-0 text-primary-500 rotate-[-30deg]" />
+              <IcLinePin size={16} className="shrink-0 text-primary-500 rotate-[-30deg]" />
             )}
             {memo.isStarred && (
-              <Star className={clsx('h-4 w-4 shrink-0 fill-primary-500 text-primary-500', starPulse && 'animate-star-pulse')} />
+              <IcMwStar size={16} className={clsx('  shrink-0 fill-primary-500 text-primary-500', starPulse && 'animate-star-pulse')} />
             )}
           </div>
 
@@ -590,9 +579,9 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
               </>
             )}
             <span className="shrink-0 inline-flex items-center gap-1">
-              {memo.ephemeralExpiresAt && <Flame className="h-3 w-3 text-amber-500" />}
+              {memo.ephemeralExpiresAt && <IcMwFlame size={12} className="text-amber-500" />}
               {isTrashView && memo.deletedAt ? (
-                <><Trash2 className="h-3 w-3" />{formatMemoDate(memo.deletedAt)}</>
+                <><IcLineTrash size={12} />{formatMemoDate(memo.deletedAt)}</>
               ) : (
                 formatMemoDate(memo.updatedAt)
               )}
@@ -616,17 +605,17 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                   type="button"
                   onClick={runRestore}
                   aria-label="복원"
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                  className="mw-icon-button"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <IcLineUndo size={16} />
                 </button>
                 <button
                   type="button"
                   onClick={runPermanentDelete}
                   aria-label="영구 삭제"
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:text-zinc-400 dark:hover:bg-danger-900/30 dark:hover:text-danger-400"
+                  className="mw-icon-button"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <IcLineTrash size={16} />
                 </button>
               </>
             ) : (
@@ -635,17 +624,17 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                   type="button"
                   onClick={() => toggleStar(memo.id!)}
                   aria-label={memo.isStarred ? '중요 해제' : '중요 표시'}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                  className="mw-icon-button"
                 >
-                  <Star className={clsx('h-4 w-4', memo.isStarred && 'fill-primary-500 text-primary-500')} />
+                  <IcMwStar size={16} className={clsx(' ', memo.isStarred && 'fill-primary-500 text-primary-500')} />
                 </button>
                 <button
                   type="button"
                   onClick={runSoftDelete}
                   aria-label="삭제"
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:text-zinc-400 dark:hover:bg-danger-900/30 dark:hover:text-danger-400"
+                  className="mw-icon-button"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <IcLineTrash size={16} />
                 </button>
               </>
             )}
@@ -663,7 +652,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           items={[
             {
               label: '슬라이드로 보기',
-              icon: MonitorPlay,
+              icon: IcFillPlay,
               onSelect: () => openSlideView(memo.id!),
             },
           ]}

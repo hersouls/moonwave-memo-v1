@@ -1,0 +1,61 @@
+/* 뼈대 안에서 Memo에만 있는 조각이에요. 뼈대 자체(mw-app …)는 키트의 것이고 여기서 덮어쓰지 않아요. */
+
+/* 사이드바: 폴더 줄은 항목 버튼과 관리 버튼을 한 줄에 겹쳐 둬요 */
+.memo-nav__row { position: relative; flex: none; display: grid; border-radius: var(--radius-8); }
+.memo-nav__row--drop { outline: var(--border-width-2) solid var(--mw-accent); background: var(--mw-accent-soft); }
+.memo-nav__row > .mw-icon-button { position: absolute; right: var(--space-4); top: var(--space-2); opacity: 0; }
+.memo-nav__row:hover > .mw-icon-button,
+.memo-nav__row:focus-within > .mw-icon-button { opacity: 1; }
+.memo-nav__row:hover .memo-nav__count,
+.memo-nav__row:focus-within .memo-nav__count { visibility: hidden; }
+.memo-nav__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memo-nav__count { margin-left: auto; font-size: var(--font-size-12); font-weight: var(--font-weight-medium); font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.memo-nav__dot { width: var(--space-12); height: var(--space-12); margin: var(--space-4); flex: none; border-radius: var(--radius-circle); }
+.memo-nav__chevron { margin-left: var(--space-4); transition: transform var(--motion-duration-medium) var(--mw-ease); }
+.memo-nav__chevron[data-open='true'] { transform: rotate(180deg); }
+.memo-nav__foot-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* 상단 바 */
+.memo-top__avatar { width: var(--space-32); height: var(--space-32); border-radius: var(--radius-circle); object-fit: cover; }
+.memo-top__initial { width: var(--space-32); height: var(--space-32); display: grid; place-items: center; border-radius: var(--radius-circle); background: var(--mw-accent-soft); color: var(--text-accent-primary); font-size: var(--font-size-14); font-weight: var(--font-weight-bold); }
+.memo-top__menu { position: absolute; right: 0; top: calc(100% + var(--space-8)); z-index: 80; width: 232px; padding: var(--space-4); border-radius: var(--radius-12); background: var(--surface-floating); border: var(--border-width-1) solid var(--border-secondary); box-shadow: var(--shadow-2); }
+.memo-top__who { padding: var(--space-12); border-bottom: var(--border-width-1) solid var(--border-secondary); margin-bottom: var(--space-4); }
+.memo-top__who b { display: block; font-size: var(--font-size-14); font-weight: var(--font-weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memo-top__who small { display: block; font-size: var(--font-size-12); color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memo-top__state { display: flex; align-items: center; gap: var(--space-8); padding: var(--space-8) var(--space-12); font-size: var(--font-size-12); color: var(--text-tertiary); }
+.memo-top__menu-actions { display: grid; justify-items: start; }
+.memo-top__profile { position: relative; display: grid; }
+
+/* 오프라인 알림 줄: 뼈대 안쪽, 상단 바 아래에 더해요 */
+.memo-offline { flex: none; justify-content: center; border-radius: 0; }
+
+/* 더보기 시트의 구역 이름과 개수 */
+.memo-sheet__section { padding: var(--space-12) var(--space-12) var(--space-4); font-size: var(--font-size-12); font-weight: var(--font-weight-semibold); color: var(--text-tertiary); }
+.memo-sheet__count { margin-left: auto; font-size: var(--font-size-13); font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.memo-sheet__dot { width: var(--space-12); height: var(--space-12); border-radius: var(--radius-circle); }
+
+/* 주 행동 자리의 보조 행동(음성 · 사진 · 템플릿): FAB 위로 세로로 쌓아요 */
+.memo-actions { display: grid; justify-items: end; gap: var(--space-12); }
+.memo-actions--wide { position: absolute; right: var(--space-32); bottom: var(--space-32); z-index: 55; }
+
+/* 집중 모드: 뼈대의 막대를 감춰요 */
+.memo-focus .mw-app-nav,
+.memo-focus .mw-app-top,
+.memo-focus .mw-app-tabbar,
+.memo-focus .mw-app-action,
+.memo-focus .memo-actions--wide { display: none; }
+.memo-focus.mw-app { grid-template-columns: minmax(0, 1fr); }
+.memo-focus .mw-app-content { padding-bottom: 0; }
+
+/* 메모 화면은 내용 영역의 높이를 모두 써요(목록과 편집기가 저마다 스크롤해요) */
+.memo-fill { height: 100%; min-height: 0; }
+
+/* 알림(키트의 Toast · Snackbar)의 자리: 좁은 화면에서는 하단 탭 위로 올려요. 모양은 키트 그대로예요. */
+@media (max-width: 900px) {
+  .memo-toast { bottom: calc(var(--mw-tabbar-h) + var(--space-32) + env(safe-area-inset-bottom)); }
+}
+
+/* 서식 글자(B · I · S · H): 아이콘 자리에 놓는 글자예요 */
+.memo-glyph { display: inline-grid; place-items: center; min-width: var(--space-20); font-size: var(--font-size-15); font-weight: var(--font-weight-bold); line-height: 1; }
+.memo-glyph--italic { font-style: italic; }
+.memo-glyph--strike { text-decoration: line-through; }

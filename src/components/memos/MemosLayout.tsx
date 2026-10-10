@@ -1,13 +1,10 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import clsx from 'clsx'
-import { Keyboard, StickyNote } from 'lucide-react'
 import { MemoList } from './MemoList'
 import { MemoEditorModal } from '../editor/MemoEditorModal'
-import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
-import { MEMO_PAGE_BG } from '@/utils/constants'
+import { IcLineKeyboard, IcMwNote } from '@/mw/icons'
 
 const LIST_MIN_W = 280
 const LIST_MAX_W = 600
@@ -93,7 +90,6 @@ function ResizeHandle({ onResize }: { onResize: (deltaX: number) => void }) {
 export function MemosLayout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const defaultColor = useSettingsStore((s) => s.settings.memoSettings.defaultColor)
   const isDesktop = useUIStore((s) => s.isDesktop)
   const isWideDesktop = useUIStore((s) => s.isWideDesktop)
 
@@ -138,9 +134,8 @@ export function MemosLayout() {
   // Wide desktop (xl: 1280px+): Master-detail split view with resizable panels
   if (isWideDesktop) {
     return (
-      // 뷰포트 기반 높이(h-full은 flex 파생 부모에서 콘텐츠 높이로 붕괴). 에디터 화면에서는
-      // 글로벌 헤더가 숨겨지므로 4rem을 빼지 않고 전체 높이를 쓴다 — 헤더 몫만큼의 하단 여백 제거.
-      <div className={clsx(isOnMemoRoute ? 'h-[100dvh]' : 'h-[calc(100dvh-4rem)]', 'flex flex-row transition-colors duration-300', MEMO_PAGE_BG[defaultColor])}>
+      // 내용 영역(mw-app-content)의 높이를 모두 써요. 목록과 편집기가 저마다 스크롤해요.
+      <div className="h-full flex flex-row">
         {/* Left: MemoList panel (resizable, independent scroll) */}
         <div
           className="shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-y-auto overscroll-contain"
@@ -161,13 +156,13 @@ export function MemosLayout() {
           ) : (
             <div className="flex items-center justify-center h-full text-zinc-500 dark:text-zinc-400">
               <div className="text-center">
-                <StickyNote className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <IcMwNote size={48} className="mx-auto mb-3 opacity-30" />
                 <p className="text-sm">메모를 선택하세요</p>
                 <p className="text-xs mt-1 text-zinc-300 dark:text-zinc-600">
                   또는 Alt+N으로 새 메모 작성
                 </p>
                 <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-zinc-300 dark:text-zinc-600">
-                  <Keyboard className="w-3.5 h-3.5" />
+                  <IcLineKeyboard size={16} />
                   <span>Ctrl+[ / ] 으로 메모 탐색</span>
                 </div>
               </div>
@@ -181,7 +176,7 @@ export function MemosLayout() {
   // Standard desktop (lg: 1024-1279px): Modal overlay
   if (isDesktop) {
     return (
-      <div className={clsx('h-full flex flex-col transition-colors duration-300', MEMO_PAGE_BG[defaultColor])}>
+      <div className="h-full flex flex-col">
         <div className="flex-1 overflow-y-auto">
           <MemoList />
         </div>
@@ -196,10 +191,8 @@ export function MemosLayout() {
 
   // Mobile: Standard outlet-based navigation with slide transition
   return (
-    <div className={clsx('flex-1 transition-colors duration-300', MEMO_PAGE_BG[defaultColor])}>
-      <div className={isOnMemoRoute ? 'animate-slide-in-right' : ''}>
-        <Outlet />
-      </div>
+    <div className={isOnMemoRoute ? 'h-full flex flex-col animate-slide-in-right' : undefined}>
+      <Outlet />
     </div>
   )
 }

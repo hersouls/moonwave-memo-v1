@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
-import { Bold, Italic, Code, Link2, List, ListTree, Heading2, Mic, Camera, Undo2, Redo2, Wand2, Loader2, Brain, MonitorPlay, ChevronDown, Command } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -9,6 +8,8 @@ import { ImageInsertButton } from './ImageInsertButton'
 import { LinkPopover } from './LinkPopover'
 import { enhanceReadability } from '@/services/aiFeatures'
 import type { Editor } from '@tiptap/react'
+import { IcFillPlay, IcLineCamera, IcLineChevronDown, IcLineLoading, IcLineMic, IcLineRedo, IcLineRewrite, IcLineUndo, IcMwCode, IcMwLink, IcMwList, IcMwSpark } from '@/mw/icons'
+import { FormatGlyph } from '@/components/editor/FormatGlyph'
 
 interface EditorToolbarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -210,10 +211,10 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
   // UX-02: shortcut hints in tooltips (kbd)
   const e = tiptapEditor
   const tools = [
-    { icon: <Bold className={toolIcon} />, label: '굵게', kbd: 'Ctrl+B', formatKey: 'bold', action: () => e ? e.chain().focus().toggleBold().run() : insertAtCursor('**', '**') },
-    { icon: <Italic className={toolIcon} />, label: '기울임', kbd: 'Ctrl+I', formatKey: 'italic', action: () => e ? e.chain().focus().toggleItalic().run() : insertAtCursor('*', '*') },
-    { icon: <Code className={toolIcon} />, label: '인라인 코드', kbd: 'Ctrl+E', formatKey: 'code', action: () => e ? e.chain().focus().toggleCode().run() : insertAtCursor('`', '`') },
-    { icon: <Link2 className={toolIcon} />, label: '링크', kbd: 'Ctrl+K', formatKey: 'link', action: () => {
+    { icon: <FormatGlyph kind="bold" />, label: '굵게', kbd: 'Ctrl+B', formatKey: 'bold', action: () => e ? e.chain().focus().toggleBold().run() : insertAtCursor('**', '**') },
+    { icon: <FormatGlyph kind="italic" />, label: '기울임', kbd: 'Ctrl+I', formatKey: 'italic', action: () => e ? e.chain().focus().toggleItalic().run() : insertAtCursor('*', '*') },
+    { icon: <IcMwCode className={toolIcon} />, label: '인라인 코드', kbd: 'Ctrl+E', formatKey: 'code', action: () => e ? e.chain().focus().toggleCode().run() : insertAtCursor('`', '`') },
+    { icon: <IcMwLink className={toolIcon} />, label: '링크', kbd: 'Ctrl+K', formatKey: 'link', action: () => {
       if (e) {
         // 선택 영역(버블 메뉴 위치)에 앵커드 팝오버 — 기존 링크면 href 프리필 + 해제 행
         const coords = e.view.coordsAtPos(e.state.selection.from)
@@ -227,8 +228,8 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
         insertAtCursor('[', '](url)')
       }
     } },
-    { icon: <List className={toolIcon} />, label: '목록', kbd: undefined, formatKey: 'list', action: () => e ? e.chain().focus().toggleBulletList().run() : insertAtCursor('- ') },
-    { icon: <Heading2 className={toolIcon} />, label: '제목', kbd: undefined, formatKey: 'heading', action: () => e ? e.chain().focus().toggleHeading({ level: 2 }).run() : insertAtCursor('## ') },
+    { icon: <IcMwList className={toolIcon} />, label: '목록', kbd: undefined, formatKey: 'list', action: () => e ? e.chain().focus().toggleBulletList().run() : insertAtCursor('- ') },
+    { icon: <FormatGlyph kind="heading" />, label: '제목', kbd: undefined, formatKey: 'heading', action: () => e ? e.chain().focus().toggleHeading({ level: 2 }).run() : insertAtCursor('## ') },
   ]
 
   const linkPopoverEl = linkState && e && (
@@ -267,8 +268,8 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
       >
         {onUndo && (
           <>
-            <button onClick={onUndo} disabled={!canUndo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="실행취소"><Undo2 className={toolIcon} /></button>
-            <button onClick={onRedo} disabled={!canRedo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="다시실행"><Redo2 className={toolIcon} /></button>
+            <button onClick={onUndo} disabled={!canUndo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="실행취소"><IcLineUndo className={toolIcon} /></button>
+            <button onClick={onRedo} disabled={!canRedo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="다시실행"><IcLineRedo className={toolIcon} /></button>
             <div className={toolSep} />
           </>
         )}
@@ -293,7 +294,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
             className={clsx(toolBtnBase, toolBtnDefault)}
             aria-label="키보드 닫기"
           >
-            <ChevronDown className={toolIcon} />
+            <IcLineChevronDown className={toolIcon} />
           </button>
         )}
         {linkPopoverEl}
@@ -318,7 +319,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
                 className={clsx(toolBtnBase, toolBtnDefault)}
                 aria-label="실행취소"
               >
-                <Undo2 className={toolIcon} />
+                <IcLineUndo className={toolIcon} />
               </button>
             </Tooltip>
             <Tooltip content={tip('다시실행', 'Ctrl+Shift+Z')}>
@@ -328,7 +329,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
                 className={clsx(toolBtnBase, toolBtnDefault)}
                 aria-label="다시실행"
               >
-                <Redo2 className={toolIcon} />
+                <IcLineRedo className={toolIcon} />
               </button>
             </Tooltip>
             <div className={toolSep} />
@@ -380,9 +381,9 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
             aria-label="AI 가독성 편집"
           >
             {isEnhancing ? (
-              <Loader2 className={clsx(toolIcon, 'animate-spin')} />
+              <IcLineLoading className={clsx(toolIcon, 'animate-spin')} />
             ) : (
-              <Wand2 className={toolIcon} />
+              <IcLineRewrite className={toolIcon} />
             )}
           </button>
         </Tooltip>
@@ -392,7 +393,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
             className={clsx(toolBtnBase, toolBtnAccent)}
             aria-label="음성 입력"
           >
-            <Mic className={toolIcon} />
+            <IcLineMic className={toolIcon} />
           </button>
         </Tooltip>
         <Tooltip content="이미지 OCR">
@@ -401,7 +402,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
             className={clsx(toolBtnBase, toolBtnAccent)}
             aria-label="이미지 OCR"
           >
-            <Camera className={toolIcon} />
+            <IcLineCamera className={toolIcon} />
           </button>
         </Tooltip>
 
@@ -414,7 +415,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
               className={clsx(toolBtnBase, toolBtnDefault)}
               aria-label="명령 팔레트"
             >
-              <Command className={toolIcon} />
+              <span className="memo-glyph" aria-hidden="true">⌘</span>
             </button>
           </Tooltip>
         )}
@@ -425,7 +426,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
               className={clsx(toolBtnBase, toolBtnDefault)}
               aria-label="슬라이드 보기"
             >
-              <MonitorPlay className={toolIcon} />
+              <IcFillPlay className={toolIcon} />
             </button>
           </Tooltip>
         )}
@@ -436,7 +437,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
               className={clsx(toolBtnBase, toolBtnDefault)}
               aria-label="목차"
             >
-              <ListTree className={toolIcon} />
+              <IcMwList className={toolIcon} />
             </button>
           </Tooltip>
         )}
@@ -447,7 +448,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
               className={clsx(toolBtnBase, 'text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 dark:text-purple-400')}
               aria-label="데미안"
             >
-              <Brain className={toolIcon} />
+              <IcMwSpark className={toolIcon} />
             </button>
           </Tooltip>
         )}

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Send, RefreshCw, Brain, Settings } from 'lucide-react'
 import clsx from 'clsx'
 import { useAlterEgo } from '@/hooks/useAlterEgo'
 import { useUIStore } from '@/stores/uiStore'
+import { IcLineClose, IcLineRefresh, IcLineSetting, IcMwSend, IcMwSpark } from '@/mw/icons'
 
 interface AlterEgoPanelProps {
   body: string
@@ -55,23 +55,23 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
       <div className="flex flex-col h-full bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
           <div className="flex items-center gap-2">
-            <Brain className="w-4 h-4 text-purple-500" />
+            <IcMwSpark size={16} className="text-purple-500" />
             <span className="font-medium text-sm text-zinc-800 dark:text-zinc-200">데미안</span>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            <X className="w-4 h-4 text-zinc-500" />
+          <button type="button" onClick={onClose} className="mw-icon-button">
+            <IcLineClose size={16} className="text-zinc-500" />
           </button>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
-          <Brain className="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
+          <IcMwSpark size={48} className="text-zinc-300 dark:text-zinc-600" />
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             AI 서비스를 사용하려면 API 키가 필요합니다
           </p>
-          <button
+          <button type="button"
             onClick={() => useUIStore.getState().openSettingsModal()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+            className="mw-button mw-button--primary mw-button--small mw-button--icon-left"
           >
-            <Settings className="w-3.5 h-3.5" />
+            <IcLineSetting size={16} />
             설정 열기
           </button>
         </div>
@@ -84,27 +84,27 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
         <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 text-purple-500" />
+          <IcMwSpark size={16} className="text-purple-500" />
           <span className="font-medium text-sm text-zinc-800 dark:text-zinc-200">데미안</span>
           <span className="text-[10px] text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
             {exchangeCount}/{maxExchanges}
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button
+          <button type="button"
             onClick={reset}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+            className="mw-icon-button"
             title="대화 초기화"
             aria-label="대화 초기화"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <IcLineRefresh size={16} />
           </button>
-          <button
+          <button type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+            className="mw-icon-button"
             aria-label="닫기"
           >
-            <X className="w-3.5 h-3.5" />
+            <IcLineClose size={16} />
           </button>
         </div>
       </div>
@@ -113,7 +113,7 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-2 px-4">
-            <Brain className="w-8 h-8 text-zinc-200 dark:text-zinc-700" />
+            <IcMwSpark size={32} className="text-zinc-200 dark:text-zinc-700" />
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               데미안은 당신의 또 다른 자아입니다.
               <br />
@@ -177,13 +177,13 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
             disabled={exchangeCount >= maxExchanges || isLoading}
             className="flex-1 text-sm px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-primary-400 disabled:opacity-50"
           />
-          <button
+          <button type="button"
             onClick={handleSend}
             disabled={!input.trim() || isLoading || exchangeCount >= maxExchanges}
-            className="p-2 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            className="mw-icon-button shrink-0"
             aria-label="보내기"
           >
-            <Send className="w-4 h-4" />
+            <IcMwSend size={16} />
           </button>
         </div>
       </div>

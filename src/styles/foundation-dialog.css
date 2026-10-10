@@ -1,3 +1,4 @@
+
 /* ============================================
    Foundation Dialog — Design Token & Utility
    06_Dialog 디자인 시스템
@@ -118,7 +119,7 @@
 /* -----------------------------------------
    6. Dark Mode Overrides
    ----------------------------------------- */
-.dark {
+[data-theme="dark"] {
   /* Alert Dialog — hairline ring keeps the panel edge visible against the dark scrim */
   --dialog-bg: #18181b;
   --dialog-overlay-bg: rgba(0, 0, 0, 0.6);
@@ -197,119 +198,6 @@
   line-height: var(--dialog-body-line-height);
   color: var(--dialog-body-color);
   margin-bottom: var(--dialog-body-margin-bottom);
-}
-
-.dialog__actions {
-  display: flex;
-  gap: var(--dialog-button-gap);
-  padding-top: var(--dialog-button-area-padding-top);
-}
-
-.dialog__actions--stacked {
-  flex-direction: column;
-}
-
-/* -----------------------------------------
-   8. Dialog Button Utilities
-   ----------------------------------------- */
-.dialog-btn {
-  height: var(--dialog-btn-height);
-  border-radius: var(--dialog-btn-radius);
-  font-size: var(--dialog-btn-font-size);
-  font-weight: var(--dialog-btn-font-weight);
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.dialog-btn--full {
-  width: 100%;
-  flex: 1;
-}
-
-.dialog-btn--accent {
-  background: var(--dialog-btn-accent-bg);
-  color: var(--dialog-btn-accent-color);
-}
-
-.dialog-btn--accent:hover {
-  background: var(--dialog-btn-accent-hover-bg);
-}
-
-.dialog-btn--accent:active {
-  background: var(--dialog-btn-accent-pressed-bg);
-}
-
-.dialog-btn--primary {
-  background: var(--dialog-btn-primary-bg);
-  color: var(--dialog-btn-primary-color);
-}
-
-.dialog-btn--primary:hover {
-  background: var(--dialog-btn-primary-hover-bg);
-}
-
-.dialog-btn--primary:active {
-  background: var(--dialog-btn-primary-pressed-bg);
-}
-
-.dialog-btn--secondary {
-  background: var(--dialog-btn-secondary-bg);
-  color: var(--dialog-btn-secondary-color);
-}
-
-.dialog-btn--secondary:hover {
-  background: var(--dialog-btn-secondary-hover-bg);
-}
-
-.dialog-btn--secondary:active {
-  background: var(--dialog-btn-secondary-pressed-bg);
-}
-
-.dialog-btn--tertiary {
-  background: var(--dialog-btn-tertiary-bg);
-  color: var(--dialog-btn-tertiary-color);
-}
-
-.dialog-btn--tertiary:hover {
-  background: var(--dialog-btn-tertiary-hover-bg);
-}
-
-.dialog-btn--tertiary:active {
-  background: var(--dialog-btn-tertiary-pressed-bg);
-}
-
-.dialog-btn--danger {
-  background: var(--dialog-btn-danger-bg);
-  color: var(--dialog-btn-danger-color);
-}
-
-.dialog-btn:disabled {
-  cursor: not-allowed;
-  opacity: 1;
-}
-
-.dialog-btn--accent:disabled {
-  background: var(--dialog-btn-accent-disabled-bg);
-  color: var(--dialog-btn-accent-disabled-color);
-}
-
-.dialog-btn--primary:disabled {
-  background: var(--dialog-btn-primary-disabled-bg);
-  color: var(--dialog-btn-primary-disabled-color);
-}
-
-.dialog-btn--secondary:disabled {
-  background: var(--dialog-btn-secondary-disabled-bg);
-  color: var(--dialog-btn-secondary-disabled-color);
-}
-
-.dialog-btn--tertiary:disabled {
-  background: transparent;
-  color: var(--dialog-btn-tertiary-disabled-color);
 }
 
 /* -----------------------------------------

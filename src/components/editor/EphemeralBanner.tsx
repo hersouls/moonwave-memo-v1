@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Flame } from 'lucide-react'
 import clsx from 'clsx'
+import { IcMwFlame } from '@/mw/icons'
 
 interface EphemeralBannerProps {
   expiresAt: string
@@ -35,18 +35,18 @@ export function EphemeralBanner({ expiresAt, onSave }: EphemeralBannerProps) {
             : 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
       )}
     >
-      <Flame
+      <IcMwFlame size={16}
         className={clsx(
-          'h-4 w-4 shrink-0',
+          '  shrink-0',
           isUrgent && !isExpired && 'animate-pulse'
         )}
       />
       <span className="flex-1">
         {isExpired ? '만료됨' : `남은 시간 ${display}`}
       </span>
-      <button
+      <button type="button"
         onClick={onSave}
-        className="shrink-0 px-3 py-1 text-xs font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 transition-colors"
+        className="mw-button mw-button--primary mw-button--small shrink-0"
       >
         영구 저장
       </button>

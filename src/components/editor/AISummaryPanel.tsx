@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { summarizeMemo } from '@/services/aiFeatures'
+import { IcLineChevronDown, IcLineChevronUp, IcLineLoading, IcMwSparkles } from '@/mw/icons'
 
 interface AISummaryPanelProps {
   content: string
@@ -35,13 +35,13 @@ export function AISummaryPanel({ content }: AISummaryPanelProps) {
         className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
+          <IcLineLoading size={16} className="animate-spin text-primary-500" />
         ) : (
-          <Sparkles className="h-4 w-4 text-primary-500" />
+          <IcMwSparkles size={16} className="text-primary-500" />
         )}
         <span className="flex-1 text-left">AI 요약</span>
         {summary && (
-          isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+          isOpen ? <IcLineChevronUp size={16} /> : <IcLineChevronDown size={16} />
         )}
       </button>
 
@@ -54,11 +54,11 @@ export function AISummaryPanel({ content }: AISummaryPanelProps) {
               {summary}
             </p>
           )}
-          <button
+          <button type="button"
             onClick={handleGenerate}
-            className="mt-2 text-xs text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default mt-2"
           >
-            다시 생성
+            <span>다시 생성</span>
           </button>
         </div>
       )}

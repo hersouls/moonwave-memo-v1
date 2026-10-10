@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, Clock, Sparkles } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
 import { findTimeCapsuleMemo, type TimeCapsuleResult } from '@/services/timeCapsule'
+import { IcLineClose, IcLineTime, IcMwSparkles } from '@/mw/icons'
 
 export function TimeCapsuleBanner() {
   const [capsule, setCapsule] = useState<TimeCapsuleResult | null>(null)
@@ -49,16 +49,16 @@ export function TimeCapsuleBanner() {
         className="absolute top-2 right-2 p-1 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
         aria-label="닫기"
       >
-        <X className="h-4 w-4" />
+        <IcLineClose size={16} />
       </button>
 
       <div className="flex items-start gap-3 pr-6">
         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
-          <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <IcMwSparkles size={16} className="text-amber-600 dark:text-amber-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-            <Clock className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+            <IcLineTime size={16} className="inline mr-1 -mt-0.5" />
             {capsule.yearsAgo}년 전 오늘, 당신이 깊게 몰입했던 기록입니다
           </p>
           <button

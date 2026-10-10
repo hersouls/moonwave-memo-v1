@@ -5,15 +5,10 @@ import { Capacitor } from '@capacitor/core'
 import { router } from './router'
 import { usePwaUpdateStore } from './stores/pwaUpdateStore'
 import { initSentry } from './lib/sentry'
-import { loadBundledFonts } from './lib/loadFonts'
 import './index.css'
 
 // Initialize Sentry error monitoring (no-op if DSN not configured)
 initSentry()
-
-// Register the self-hosted default font so the app (esp. packaged Electron) works
-// offline without the Pretendard CDN (§4.8).
-loadBundledFonts()
 
 // Service Worker for PWA — skipped in the packaged shells (§4.8): Electron and
 // Capacitor serve the bundle locally, so the offline SW adds nothing there and

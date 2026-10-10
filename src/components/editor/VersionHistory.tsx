@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { DialogBackdrop, DialogPanel, DialogTitle, Dialog as HeadlessDialog } from '@headlessui/react'
-import { History, RotateCcw, X } from 'lucide-react'
 import { diffWords } from 'diff'
 import type { MemoVersion } from '@/lib/types'
 import { getVersionsByMemoId } from '@/services/database'
+import { IcLineClose, IcLineUndo, IcMwHistory } from '@/mw/icons'
 
 interface VersionHistoryProps {
   memoId: number
@@ -88,14 +88,14 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
         >
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
-          <History className="h-5 w-5 text-primary-500" />
+          <IcMwHistory size={20} className="text-primary-500" />
           <DialogTitle as="h2" className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex-1">버전 기록</DialogTitle>
-          <button
+          <button type="button"
             onClick={requestClose}
-            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="mw-icon-button"
             aria-label="닫기"
           >
-            <X className="h-5 w-5 text-zinc-500" />
+            <IcLineClose size={20} className="text-zinc-500" />
           </button>
         </div>
 
@@ -156,14 +156,14 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
                   <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                     {formatDateTime(selected.createdAt)} 버전과 현재 비교
                   </h3>
-                  <button
+                  <button type="button"
                     onClick={() => {
                       onRestore(selected.title, selected.body)
                       requestClose()
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                    className="mw-button mw-button--secondary mw-button--small mw-button--icon-left"
                   >
-                    <RotateCcw className="h-3.5 w-3.5" />
+                    <IcLineUndo size={16} />
                     이 버전으로 복원
                   </button>
                 </div>

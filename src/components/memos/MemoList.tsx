@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MoreVertical, Trash2, RefreshCw, Pin } from 'lucide-react'
 import clsx from 'clsx'
 import type { Memo } from '@/lib/types'
 import { MemoCard } from './MemoCard'
@@ -15,12 +14,13 @@ import { QuickMemoInput } from './QuickMemoInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { useMemoFilters } from '@/hooks/useMemoFilters'
-import { usePullToRefresh } from '@/hooks/usePullToRefresh'
-import { useSpeculationRules } from '@/hooks/useSpeculationRules'
+import { CreateActions, PageHead } from '@/components/layout/PageHead'
+import { Button } from '@/mw/Button'
 import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
+import { IcLineMore, IcLinePin, IcLineTrash } from '@/mw/icons'
 
 // PERF-01: initial visible count
 const INITIAL_VISIBLE = 30
@@ -69,6 +69,7 @@ export function MemoList() {
   const isNarrowFold = useUIStore((s) => s.isNarrowFold)
   const openContextMenu = useUIStore((s) => s.openContextMenu)
   const activeFolderId = useUIStore((s) => s.activeFolderId)
+  const folders = useFolderStore((s) => s.folders)
   const activeFilter = useUIStore((s) => s.activeFilter)
   const activeTag = useUIStore((s) => s.activeTag)
   const searchQuery = useUIStore((s) => s.searchQuery)
@@ -148,17 +149,9 @@ export function MemoList() {
   const unpinnedMemos = visibleMemos.filter((m) => !m.isPinned)
   const showPinnedSections = pinnedMemos.length > 0 && unpinnedMemos.length > 0
 
-  // Speculation Rules: prerender top visible memo pages
-  const visibleMemoIds = visibleMemos.slice(0, 10).map((m) => m.id).filter((id): id is number => Boolean(id))
-  useSpeculationRules(visibleMemoIds)
-
   const handleLoadMore = useCallback(() => {
     setVisibleCount((c) => c + LOAD_MORE_COUNT)
   }, [])
-
-  const { bind: bindPull, pullDistance, isRefreshing } = usePullToRefresh(async () => {
-    setShowQuickMemo(true)
-  })
 
   // Swipe onboarding hint
   const [showSwipeHint] = useState(() => {
@@ -171,22 +164,28 @@ export function MemoList() {
   const trashFolder = getTrashFolder()
   const isTrashView = trashFolder != null && activeFolderId === trashFolder.id
 
+  // 지금 보고 있는 목록의 이름이 이 화면의 제목이에요
+  const pageTitle = isTrashView ? '휴지통'
+    : activeFolderId != null ? (folders.find((f) => f.id === activeFolderId)?.name ?? '메모')
+    : activeTag ? `#${activeTag}`
+    : activeFilter === 'starred' ? '중요' : '메모'
+
   const handleEmptyTrash = async () => {
     await emptyTrash()
     setIsEmptyTrashOpen(false)
   }
 
   return (
-    <div {...bindPull()} className="mx-auto w-full max-w-4xl lg:max-w-none lg:px-6">
-      {/* Pull-to-refresh indicator */}
-      {(pullDistance > 0 || isRefreshing) && (
-        <div className="flex justify-center overflow-hidden" style={{ height: Math.min(pullDistance, 60) }}>
-          <RefreshCw
-            className={clsx('w-5 h-5 text-primary-500 mt-2', isRefreshing && 'animate-spin')}
-            style={!isRefreshing ? { transform: `rotate(${Math.min(pullDistance * 4, 360)}deg)` } : undefined}
-          />
-        </div>
-      )}
+    <div className="mw-page">
+      <PageHead
+        title={pageTitle}
+        actions={
+          <>
+            <Button variant="tertiary-subtle" size="medium" onClick={() => setShowQuickMemo(true)}>빠른 메모</Button>
+            <CreateActions />
+          </>
+        }
+      />
       {/* Quick memo input */}
       {showQuickMemo && (
         <QuickMemoInput onClose={() => setShowQuickMemo(false)} />
@@ -197,21 +196,21 @@ export function MemoList() {
           <MemoFilterTabs />
         </div>
         {isTrashView && filteredMemos.length > 0 && (
-          <button
+          <button type="button"
             onClick={() => setIsEmptyTrashOpen(true)}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-danger-500 hover:bg-danger-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left shrink-0"
             aria-label="휴지통 비우기"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <IcLineTrash size={16} />
             비우기
           </button>
         )}
         <button
           onClick={openContextMenu}
-          className="f-icon-btn shrink-0 mr-4 lg:mr-0"
+          className="mw-icon-button shrink-0 mr-4 lg:mr-0"
           aria-label="더보기 메뉴"
         >
-          <MoreVertical className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+          <IcLineMore size={20} className="text-zinc-500 dark:text-zinc-400" />
         </button>
       </div>
 
@@ -286,7 +285,7 @@ export function MemoList() {
             {showPinnedSections ? (
               <>
                 <div className={sectionHeaderClass}>
-                  <Pin className="h-3 w-3 rotate-[-30deg]" />
+                  <IcLinePin size={12} className="rotate-[-30deg]" />
                   고정됨
                 </div>
                 {pinnedMemos.map((memo, index) => renderMemoItem(memo, index))}

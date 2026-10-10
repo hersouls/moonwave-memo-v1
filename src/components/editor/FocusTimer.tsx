@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Play, Pause, RotateCcw } from 'lucide-react'
 import { useFocusTimerStore } from '@/hooks/useFocusTimer'
+import { IcFillPlay, IcLinePause, IcLineUndo } from '@/mw/icons'
 
 export function FocusTimer() {
   const seconds = useFocusTimerStore((s) => s.seconds)
@@ -35,14 +35,14 @@ export function FocusTimer() {
         className="rounded p-0.5 transition-colors hover:bg-white/20"
         aria-label={isRunning ? '일시정지' : '시작'}
       >
-        {isRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+        {isRunning ? <IcLinePause size={12} /> : <IcFillPlay size={12} />}
       </button>
-      <button
+      <button type="button"
         onClick={reset}
-        className="rounded p-0.5 transition-colors hover:bg-white/20"
+        className="mw-icon-button"
         aria-label="초기화"
       >
-        <RotateCcw className="h-3 w-3" />
+        <IcLineUndo size={12} />
       </button>
     </div>
   )

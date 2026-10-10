@@ -1,10 +1,10 @@
 import { useMemo, useEffect, useRef, memo } from 'react'
-import { Activity } from 'lucide-react'
 import clsx from 'clsx'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUIStore } from '@/stores/uiStore'
 import { generateHeatmapData } from '@/services/gamification'
 import { WidgetCard } from './WidgetCard'
+import { IcMwPulse } from '@/mw/icons'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -58,7 +58,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap() {
 
   return (
     <WidgetCard
-      icon={Activity}
+      icon={IcMwPulse}
       title="활동 히트맵"
       meta={`최근 ${weekCount}주 · ${totalCount}개 메모`}
     >

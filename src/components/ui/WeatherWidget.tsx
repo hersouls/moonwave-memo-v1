@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { Cloud, CloudRain, Snowflake, Sun } from 'lucide-react'
 import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { IcLineCloud, IcMwRain, IcMwSnow, IcMwSun } from '@/mw/icons'
 
 export function WeatherWidget() {
   const environmentThemeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.environmentThemeEnabled)
@@ -13,24 +13,24 @@ export function WeatherWidget() {
   const widgetContent = useMemo(() => {
     if (!weather) return null
 
-    let Icon = Cloud
+    let Icon = IcLineCloud
     let conditionName = '알 수 없음'
 
     switch (weather) {
       case 'clear':
-        Icon = Sun
+        Icon = IcMwSun
         conditionName = '맑음'
         break
       case 'rain':
-        Icon = CloudRain
+        Icon = IcMwRain
         conditionName = '비'
         break
       case 'snow':
-        Icon = Snowflake
+        Icon = IcMwSnow
         conditionName = '눈'
         break
       case 'overcast':
-        Icon = Cloud
+        Icon = IcLineCloud
         conditionName = '흐림'
         break
     }

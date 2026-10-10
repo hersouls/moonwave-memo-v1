@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Folder as FolderIcon, Inbox, Star } from 'lucide-react'
 import clsx from 'clsx'
 import type { Memo } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
 import { formatMemoDate } from '@/utils/format'
+import { IcLineFolder, IcLineInbox, IcMwStar } from '@/mw/icons'
 
 interface KanbanViewProps {
   memos: Memo[]
@@ -84,7 +84,7 @@ export function KanbanView({ memos }: KanbanViewProps) {
                 style={{ backgroundColor: column.color }}
               />
             ) : (
-              <Inbox className="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
+              <IcLineInbox size={16} className="text-zinc-500 dark:text-zinc-400 shrink-0" />
             )}
             <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
               {column.name}
@@ -98,7 +98,7 @@ export function KanbanView({ memos }: KanbanViewProps) {
           <div className="flex flex-col gap-2 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 p-2 flex-1 overflow-y-auto max-h-[calc(100dvh-220px)]">
             {column.memos.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-zinc-300 dark:text-zinc-600">
-                <FolderIcon className="w-8 h-8" />
+                <IcLineFolder size={32} />
               </div>
             ) : (
               column.memos.map((memo) => (
@@ -160,7 +160,7 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
 
       <div className="flex items-center gap-1.5 text-[11px] tracking-[0.01em] tabular-nums text-zinc-500 dark:text-zinc-400">
         {memo.isStarred && (
-          <Star className="h-3 w-3 shrink-0 fill-primary-500 text-primary-500" />
+          <IcMwStar size={12} className="shrink-0 fill-primary-500 text-primary-500" />
         )}
         <span>{formatMemoDate(memo.updatedAt)}</span>
       </div>

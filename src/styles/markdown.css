@@ -1,7 +1,7 @@
 /* ========================================
    Markdown Preview Styles
    Scoped under .memo-markdown-preview
-   Supports light and dark mode (.dark class)
+   Supports light and dark mode ([data-theme="dark"] class)
    ======================================== */
 
 /* Syntax highlighting is scoped under .memo-markdown-preview (see Code Blocks
@@ -433,45 +433,45 @@
 /* ----------------------------------------
    Dark: Headings
    ---------------------------------------- */
-.dark .memo-markdown-preview h1,
-.dark .memo-markdown-preview h2,
-.dark .memo-markdown-preview h3,
-.dark .memo-markdown-preview h4,
-.dark .memo-markdown-preview h5,
-.dark .memo-markdown-preview h6 {
+[data-theme="dark"] .memo-markdown-preview h1,
+[data-theme="dark"] .memo-markdown-preview h2,
+[data-theme="dark"] .memo-markdown-preview h3,
+[data-theme="dark"] .memo-markdown-preview h4,
+[data-theme="dark"] .memo-markdown-preview h5,
+[data-theme="dark"] .memo-markdown-preview h6 {
   color: var(--color-zinc-100, #f4f4f5);
 }
 
-.dark .memo-markdown-preview h2 {
+[data-theme="dark"] .memo-markdown-preview h2 {
   border-bottom-color: var(--color-zinc-700, #3f3f46);
 }
 
 /* ----------------------------------------
    Dark: Paragraphs & Body Text
    ---------------------------------------- */
-.dark .memo-markdown-preview p {
+[data-theme="dark"] .memo-markdown-preview p {
   color: var(--color-zinc-300, #d4d4d8);
 }
 
-.dark .memo-markdown-preview li {
+[data-theme="dark"] .memo-markdown-preview li {
   color: var(--color-zinc-300, #d4d4d8);
 }
 
 /* ----------------------------------------
    Dark: Strikethrough
    ---------------------------------------- */
-.dark .memo-markdown-preview del {
+[data-theme="dark"] .memo-markdown-preview del {
   color: var(--color-zinc-500, #71717a);
 }
 
 /* ----------------------------------------
    Dark: Links
    ---------------------------------------- */
-.dark .memo-markdown-preview a {
+[data-theme="dark"] .memo-markdown-preview a {
   color: var(--color-primary-400, #818cf8);
 }
 
-.dark .memo-markdown-preview a:hover {
+[data-theme="dark"] .memo-markdown-preview a:hover {
   color: var(--color-primary-300, #a5b4fc);
 }
 
@@ -480,7 +480,7 @@
 /* ----------------------------------------
    Dark: Inline Code
    ---------------------------------------- */
-.dark .memo-markdown-preview code:not(pre code) {
+[data-theme="dark"] .memo-markdown-preview code:not(pre code) {
   background-color: var(--color-zinc-800, #27272a);
   color: var(--color-danger-400, #f87171);
 }
@@ -489,140 +489,140 @@
    Dark: Code Blocks — surface colors flip via semantic tokens on pre;
    only the base text color needs an override
    ---------------------------------------- */
-.dark .memo-markdown-preview pre code {
+[data-theme="dark"] .memo-markdown-preview pre code {
   color: var(--color-zinc-300, #d4d4d8);
 }
 
-.dark .memo-markdown-preview .hljs-comment,
-.dark .memo-markdown-preview .hljs-quote {
+[data-theme="dark"] .memo-markdown-preview .hljs-comment,
+[data-theme="dark"] .memo-markdown-preview .hljs-quote {
   color: #8b949e;
   font-style: italic;
 }
 
-.dark .memo-markdown-preview .hljs-keyword,
-.dark .memo-markdown-preview .hljs-selector-tag,
-.dark .memo-markdown-preview .hljs-type {
+[data-theme="dark"] .memo-markdown-preview .hljs-keyword,
+[data-theme="dark"] .memo-markdown-preview .hljs-selector-tag,
+[data-theme="dark"] .memo-markdown-preview .hljs-type {
   color: #ff7b72;
 }
 
-.dark .memo-markdown-preview .hljs-string,
-.dark .memo-markdown-preview .hljs-addition {
+[data-theme="dark"] .memo-markdown-preview .hljs-string,
+[data-theme="dark"] .memo-markdown-preview .hljs-addition {
   color: #a5d6ff;
 }
 
-.dark .memo-markdown-preview .hljs-number,
-.dark .memo-markdown-preview .hljs-literal {
+[data-theme="dark"] .memo-markdown-preview .hljs-number,
+[data-theme="dark"] .memo-markdown-preview .hljs-literal {
   color: #79c0ff;
 }
 
-.dark .memo-markdown-preview .hljs-built_in,
-.dark .memo-markdown-preview .hljs-builtin-name {
+[data-theme="dark"] .memo-markdown-preview .hljs-built_in,
+[data-theme="dark"] .memo-markdown-preview .hljs-builtin-name {
   color: #ffa657;
 }
 
-.dark .memo-markdown-preview .hljs-function,
-.dark .memo-markdown-preview .hljs-title {
+[data-theme="dark"] .memo-markdown-preview .hljs-function,
+[data-theme="dark"] .memo-markdown-preview .hljs-title {
   color: #d2a8ff;
 }
 
-.dark .memo-markdown-preview .hljs-attr,
-.dark .memo-markdown-preview .hljs-attribute {
+[data-theme="dark"] .memo-markdown-preview .hljs-attr,
+[data-theme="dark"] .memo-markdown-preview .hljs-attribute {
   color: #79c0ff;
 }
 
-.dark .memo-markdown-preview .hljs-variable,
-.dark .memo-markdown-preview .hljs-template-variable {
+[data-theme="dark"] .memo-markdown-preview .hljs-variable,
+[data-theme="dark"] .memo-markdown-preview .hljs-template-variable {
   color: #ffa657;
 }
 
-.dark .memo-markdown-preview .hljs-selector-class,
-.dark .memo-markdown-preview .hljs-selector-id {
+[data-theme="dark"] .memo-markdown-preview .hljs-selector-class,
+[data-theme="dark"] .memo-markdown-preview .hljs-selector-id {
   color: #7ee787;
 }
 
-.dark .memo-markdown-preview .hljs-deletion {
+[data-theme="dark"] .memo-markdown-preview .hljs-deletion {
   color: #ffa198;
   background-color: rgba(255, 129, 130, 0.1);
 }
 
-.dark .memo-markdown-preview .hljs-addition {
+[data-theme="dark"] .memo-markdown-preview .hljs-addition {
   background-color: rgba(63, 185, 80, 0.1);
 }
 
-.dark .memo-markdown-preview .hljs-meta {
+[data-theme="dark"] .memo-markdown-preview .hljs-meta {
   color: #79c0ff;
 }
 
-.dark .memo-markdown-preview .hljs-regexp {
+[data-theme="dark"] .memo-markdown-preview .hljs-regexp {
   color: #a5d6ff;
 }
 
-.dark .memo-markdown-preview .hljs-symbol,
-.dark .memo-markdown-preview .hljs-bullet {
+[data-theme="dark"] .memo-markdown-preview .hljs-symbol,
+[data-theme="dark"] .memo-markdown-preview .hljs-bullet {
   color: #ffa657;
 }
 
-.dark .memo-markdown-preview .hljs-section {
+[data-theme="dark"] .memo-markdown-preview .hljs-section {
   color: #79c0ff;
   font-weight: 700;
 }
 
-.dark .memo-markdown-preview .hljs-name,
-.dark .memo-markdown-preview .hljs-tag {
+[data-theme="dark"] .memo-markdown-preview .hljs-name,
+[data-theme="dark"] .memo-markdown-preview .hljs-tag {
   color: #7ee787;
 }
 
 /* ----------------------------------------
    Dark: Blockquotes
    ---------------------------------------- */
-.dark .memo-markdown-preview blockquote {
+[data-theme="dark"] .memo-markdown-preview blockquote {
   background-color: rgba(39, 39, 42, 0.5);
 }
 
-.dark .memo-markdown-preview blockquote p {
+[data-theme="dark"] .memo-markdown-preview blockquote p {
   color: var(--color-zinc-400, #a1a1aa);
 }
 
-.dark .memo-markdown-preview blockquote blockquote {
+[data-theme="dark"] .memo-markdown-preview blockquote blockquote {
   border-left-color: var(--color-primary-600, #4f46e5);
 }
 
 /* ----------------------------------------
    Dark: Tables
    ---------------------------------------- */
-.dark .memo-markdown-preview thead th {
+[data-theme="dark"] .memo-markdown-preview thead th {
   background-color: var(--color-zinc-800, #27272a);
   border-color: var(--color-zinc-700, #3f3f46);
   color: var(--color-zinc-100, #f4f4f5);
 }
 
-.dark .memo-markdown-preview tbody td {
+[data-theme="dark"] .memo-markdown-preview tbody td {
   border-color: var(--color-zinc-700, #3f3f46);
   color: var(--color-zinc-300, #d4d4d8);
 }
 
-.dark .memo-markdown-preview tbody tr:nth-child(even) {
+[data-theme="dark"] .memo-markdown-preview tbody tr:nth-child(even) {
   background-color: var(--color-zinc-900, #18181b);
 }
 
 /* ----------------------------------------
    Dark: Horizontal Rules
    ---------------------------------------- */
-.dark .memo-markdown-preview hr {
+[data-theme="dark"] .memo-markdown-preview hr {
   border-top-color: var(--color-zinc-700, #3f3f46);
 }
 
 /* ----------------------------------------
    Dark: Details / Summary
    ---------------------------------------- */
-.dark .memo-markdown-preview details {
+[data-theme="dark"] .memo-markdown-preview details {
   border-color: var(--color-zinc-700, #3f3f46);
 }
 
-.dark .memo-markdown-preview summary {
+[data-theme="dark"] .memo-markdown-preview summary {
   color: var(--color-zinc-100, #f4f4f5);
 }
 
-.dark .memo-markdown-preview summary:hover {
+[data-theme="dark"] .memo-markdown-preview summary:hover {
   color: var(--color-primary-400, #818cf8);
 }

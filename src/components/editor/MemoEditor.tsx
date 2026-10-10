@@ -25,27 +25,26 @@ import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
 import { useTypingSounds } from '@/hooks/useTypingSounds'
 import { useBreathingTypography } from '@/hooks/useBreathingTypography'
 import { useTimeMachine } from '@/hooks/useTimeMachine'
-import { useOrganicAura } from '@/hooks/useOrganicAura'
 import { useAmbientSoundscape } from '@/hooks/useAmbientSoundscape'
 import { TiptapEditorContent } from './TiptapEditorContent'
 import { useTiptapEditor } from '@/hooks/useTiptapEditor'
 import { AlterEgoPanel } from './AlterEgoPanel'
 import { EditorOutline } from './EditorOutline'
 import { analyzeSentiment } from '@/services/sentimentAnalysis'
-import { X, Heading2, List, CheckSquare, Code2, Quote, Minus, ListTree, Brain, Maximize2, MonitorPlay, History, Wand2, Download, Sparkles, Loader2 } from 'lucide-react'
 import { TimeMachineBanner } from './TimeMachineBanner'
 import { EphemeralBanner } from './EphemeralBanner'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
-import { FONT_FAMILIES } from '@/utils/constants'
 import { setLastViewedMemo } from '@/components/ui/ContinueBanner'
 import { useToastStore } from '@/stores/toastStore'
 import { toggleChecklistItem, getChecklistStats } from '@/utils/checklistParser'
 import { getAllTemplates } from '@/utils/memoTemplates'
 import { buildRuleTitle, composeTitle, getCategoryLabel, resolveTitleDate } from '@/utils/memoTitle'
 import { isAIAvailable, summarizeTitleKeyword } from '@/services/aiFeatures'
+import { IcFillPlay, IcLineClose, IcLineDownload, IcLineExpand, IcLineLoading, IcLineMinus, IcLineRewrite, IcMwCheckSquare, IcMwCode, IcMwHistory, IcMwList, IcMwQuote, IcMwSpark, IcMwSparkles } from '@/mw/icons'
+import { FormatGlyph } from '@/components/editor/FormatGlyph'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 type EditorTab = 'edit' | 'preview'
@@ -62,14 +61,12 @@ export function MemoEditor() {
   const defaultFolderId = useSettingsStore((s) => s.settings.memoSettings.defaultFolderId)
   const inputStartPosition = useSettingsStore((s) => s.settings.memoSettings.inputStartPosition)
   const editorMode = useSettingsStore((s) => s.settings.memoSettings.editorMode)
-  const fontFamilyId = useSettingsStore((s) => s.settings.fontFamily)
   const folders = useFolderStore((s) => s.folders)
   const getDefaultFolder = useFolderStore((s) => s.getDefaultFolder)
   const isFocusMode = useUIStore((s) => s.isFocusMode)
   const breathingTypographyEnabled = useSettingsStore((s) => s.settings.livingWorkspace.breathingTypographyEnabled)
   const ephemeralBrainDumpEnabled = useSettingsStore((s) => s.settings.livingWorkspace.ephemeralBrainDumpEnabled)
   const timeMachineEnabled = useSettingsStore((s) => s.settings.livingWorkspace.timeMachineEnabled)
-  const organicAuraEnabled = useSettingsStore((s) => s.settings.livingWorkspace.organicAuraEnabled)
   const ambientSoundscapeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.ambientSoundscapeEnabled)
   const alterEgoEnabled = useSettingsStore((s) => s.settings.livingWorkspace.alterEgoEnabled)
   // 키보드 상태는 App.tsx의 앱-생애주기 트래커(uiStore)를 단일 소스로 사용한다.
@@ -109,7 +106,7 @@ export function MemoEditor() {
   const [body, setBody] = useState(memo?.body || template?.body || '')
   const [folderId, setFolderId] = useState<number | null>(initialFolderId)
   const [isStarred, setIsStarred] = useState(memo?.isStarred || false)
-  const [memoColor, setMemoColor] = useState<import('@/lib/types').MemoColor>(memo?.color || template?.color || 'white')
+  const [memoColor] = useState<import('@/lib/types').MemoColor>(memo?.color || template?.color || 'white')
   const [memoId, setMemoId] = useState<number | undefined>(memo?.id)
   const [activeTab, setActiveTab] = useState<EditorTab>('edit')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -139,10 +136,9 @@ export function MemoEditor() {
 
   // Split view
   const isLg = useUIStore((s) => s.isDesktop)
-  const isTablet = useUIStore((s) => s.isTablet)
   // Tablet & desktop get the richer editor (outline, side panels, WYSIWYG).
   // Split view stays desktop-only (isLg) since it needs two readable columns.
-  const isMdUp = isTablet || isLg
+  const isMdUp = isLg
   const isTiptap = editorMode === 'tiptap'
   const isTiptapRef = useRef(isTiptap)
   isTiptapRef.current = isTiptap
@@ -220,9 +216,6 @@ export function MemoEditor() {
   const { tags: aiTags, isLoading: aiTagsLoading } = useAITagSuggestions(body)
   const { ghostText, acceptSuggestion, dismissSuggestion } = useAIAutocomplete(body, bodyRef)
 
-  // UX-03: Compute font family from settings
-  const fontDef = FONT_FAMILIES.find((f) => f.id === fontFamilyId)
-  const editorFontFamily = fontDef?.fontFamily || "'Pretendard', sans-serif"
 
   // UX-06: 표시 태그 = 저장된 필드 태그(AI/수동) + 본문 해시태그 병합 — 저장 결과와 항상 일치
   const currentTags = useMemo(() => (
@@ -240,7 +233,6 @@ export function MemoEditor() {
   )
 
   // Beyond UX: Organic Aura — subtle color overlay based on sentiment
-  useOrganicAura(body, organicAuraEnabled)
 
   // Beyond UX: Ambient Soundscape — generative audio while writing
   const sentimentForSound = useMemo(() => analyzeSentiment(body), [body])
@@ -850,7 +842,6 @@ export function MemoEditor() {
   const tiptapBodyContent = (
     <TiptapEditorContent
       editor={tiptapEditor}
-      fontFamily={editorFontFamily}
       isBreathing={isBreathing}
     />
   )
@@ -874,7 +865,6 @@ export function MemoEditor() {
           placeholder="제목"
           maxLength={100}
           className="w-full text-[1.75rem] lg:text-[2rem] fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none"
-          style={{ fontFamily: editorFontFamily }}
         />
         <button
           type="button"
@@ -885,9 +875,9 @@ export function MemoEditor() {
           title="제목 재생성 (본문 요약 + 날짜)"
         >
           {isRegeneratingTitle ? (
-            <Loader2 className="h-[18px] w-[18px] animate-spin" />
+            <IcLineLoading className="h-[18px] w-[18px] animate-spin" />
           ) : (
-            <Sparkles className="h-[18px] w-[18px]" />
+            <IcMwSparkles className="h-[18px] w-[18px]" />
           )}
         </button>
       </div>
@@ -905,8 +895,7 @@ export function MemoEditor() {
               onKeyDown={handleBodyKeyDown}
               placeholder="메모를 입력하세요. '/' 명령어와 마크다운을 사용할 수 있습니다."
               className="w-full flex-1 min-h-0 pb-32 text-[1.0625rem] leading-[1.8] tracking-[-0.003em] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none resize-none"
-              style={{ fontFamily: editorFontFamily }}
-            />
+                />
             {/* AI Autocomplete ghost text */}
             {ghostText && (
               <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-zinc-400 dark:text-zinc-600 italic truncate max-w-full px-1">
@@ -1004,37 +993,28 @@ export function MemoEditor() {
   }
 
   const paletteCommands: EditorCommand[] = [
-    { id: 'heading', group: '삽입', label: '제목', icon: <Heading2 className="w-4 h-4" />, run: () => insertSnippet('## ') },
-    { id: 'list', group: '삽입', label: '목록', icon: <List className="w-4 h-4" />, run: () => insertSnippet('- ') },
-    { id: 'checklist', group: '삽입', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" />, run: () => insertSnippet('- [ ] ') },
-    { id: 'codeblock', group: '삽입', label: '코드 블록', icon: <Code2 className="w-4 h-4" />, run: () => insertSnippet('```\n\n```') },
-    { id: 'quote', group: '삽입', label: '인용', icon: <Quote className="w-4 h-4" />, run: () => insertSnippet('> ') },
-    { id: 'divider', group: '삽입', label: '구분선', icon: <Minus className="w-4 h-4" />, run: () => insertSnippet('\n---\n') },
-    ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '아웃라인 토글', icon: <ListTree className="w-4 h-4" />, run: () => setShowOutline((p) => !p) }] : []),
-    ...(alterEgoEnabled ? [{ id: 'alterego', group: '보기 · 도구', label: '데미안(AI 대화) 토글', icon: <Brain className="w-4 h-4" />, run: () => setShowAlterEgo((p) => !p) }] : []),
-    { id: 'focus', group: '보기 · 도구', label: '집중 모드', icon: <Maximize2 className="w-4 h-4" />, run: () => useUIStore.getState().toggleFocusMode() },
-    ...(memoId ? [{ id: 'slide', group: '보기 · 도구', label: '슬라이드 보기', icon: <MonitorPlay className="w-4 h-4" />, shortcut: 'F5', run: () => useUIStore.getState().openSlideView(memoId) }] : []),
-    ...(memoId ? [{ id: 'versions', group: '보기 · 도구', label: '버전 기록', icon: <History className="w-4 h-4" />, run: () => setShowVersionHistory(true) }] : []),
-    { id: 'ai-enhance', group: 'AI · 내보내기', label: 'AI 가독성 편집', icon: <Wand2 className="w-4 h-4" />, run: runAIEnhanceFromPalette },
-    { id: 'export-md', group: 'AI · 내보내기', label: '마크다운 내보내기', icon: <Download className="w-4 h-4" />, run: exportMarkdownFromPalette },
+    { id: 'heading', group: '삽입', label: '제목', icon: <FormatGlyph kind="heading" />, run: () => insertSnippet('## ') },
+    { id: 'list', group: '삽입', label: '목록', icon: <IcMwList size={16} />, run: () => insertSnippet('- ') },
+    { id: 'checklist', group: '삽입', label: '체크리스트', icon: <IcMwCheckSquare size={16} />, run: () => insertSnippet('- [ ] ') },
+    { id: 'codeblock', group: '삽입', label: '코드 블록', icon: <IcMwCode size={16} />, run: () => insertSnippet('```\n\n```') },
+    { id: 'quote', group: '삽입', label: '인용', icon: <IcMwQuote size={16} />, run: () => insertSnippet('> ') },
+    { id: 'divider', group: '삽입', label: '구분선', icon: <IcLineMinus size={16} />, run: () => insertSnippet('\n---\n') },
+    ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '아웃라인 토글', icon: <IcMwList size={16} />, run: () => setShowOutline((p) => !p) }] : []),
+    ...(alterEgoEnabled ? [{ id: 'alterego', group: '보기 · 도구', label: '데미안(AI 대화) 토글', icon: <IcMwSpark size={16} />, run: () => setShowAlterEgo((p) => !p) }] : []),
+    { id: 'focus', group: '보기 · 도구', label: '집중 모드', icon: <IcLineExpand size={16} />, run: () => useUIStore.getState().toggleFocusMode() },
+    ...(memoId ? [{ id: 'slide', group: '보기 · 도구', label: '슬라이드 보기', icon: <IcFillPlay size={16} />, shortcut: 'F5', run: () => useUIStore.getState().openSlideView(memoId) }] : []),
+    ...(memoId ? [{ id: 'versions', group: '보기 · 도구', label: '버전 기록', icon: <IcMwHistory size={16} />, run: () => setShowVersionHistory(true) }] : []),
+    { id: 'ai-enhance', group: 'AI · 내보내기', label: 'AI 가독성 편집', icon: <IcLineRewrite size={16} />, run: runAIEnhanceFromPalette },
+    { id: 'export-md', group: 'AI · 내보내기', label: '마크다운 내보내기', icon: <IcLineDownload size={16} />, run: exportMarkdownFromPalette },
   ]
 
   return (
     <div
-      className={clsx(
-        // 에디터 화면에서는 글로벌 헤더가 숨겨지므로(Header.tsx) 헤더 몫 4rem을 빼지 않는다.
-        // 하단 내비(5rem)만 확보 — 이전엔 사라진 헤더 자리만큼 하단에 빈 공간이 생겼다.
-        'flex flex-col lg:h-full min-h-0',
-        !isKeyboardOpen && 'h-[calc(var(--stable-vh,100svh)-5rem)]',
-        isFocusMode && '!h-[var(--stable-vh,100svh)]',
-        // 키보드가 뜨면 실제 가시영역(--vvh, visualViewport 높이)에 컨테이너를 고정한다.
-        // 앱 셸이 모바일에서 스크롤 가능(min-h-screen)해, 예전엔 컨테이너가 키보드로 줄어든
-        // 화면보다 커져 페이지가 스크롤되며 헤더·툴바가 본문 중간으로 밀렸다.
-        // left는 --content-left(사이드바 폭)만큼 띄워 태블릿/데스크톱 사이드바를 덮지 않게 한다.
-        isKeyboardOpen && !isFocusMode && 'fixed right-0 z-40 bg-[var(--color-bg-secondary)]'
-      )}
-      style={isKeyboardOpen && !isFocusMode ? { height: 'var(--vvh, 100svh)', top: 'var(--vv-top, 0px)', left: 'var(--content-left, 0px)' } : undefined}
+      // 내용 영역(mw-app-content)의 높이를 모두 써요. 키보드가 올라오면 화면이 줄고(interactive-widget=resizes-content)
+      // 키트가 하단 탭을 비켜 주므로, 따로 고정하지 않아요.
+      className="flex flex-col h-full min-h-0"
     >
+      <h1 className="mw-sr-only">{memoId ? '메모 고치기' : '새 메모 쓰기'}</h1>
       {!isFocusMode && !isKeyboardOpen && (
         <EditorHeader
           isStarred={isStarred}
@@ -1047,11 +1027,6 @@ export function MemoEditor() {
           body={body}
           tags={currentTags}
           isPinned={memo?.isPinned ?? false}
-          memoColor={memoColor}
-          onColorChange={(color) => {
-            setMemoColor(color)
-            if (memoId) updateMemo(memoId, { color })
-          }}
         />
       )}
 
@@ -1239,7 +1214,7 @@ export function MemoEditor() {
           className="fixed top-4 right-4 z-50 p-2.5 rounded-full bg-zinc-900/30 dark:bg-zinc-100/30 text-zinc-600 dark:text-zinc-300 backdrop-blur-sm opacity-50 hover:opacity-90 active:opacity-100 transition-opacity"
           aria-label="포커스 모드 나가기"
         >
-          <X className="w-5 h-5" />
+          <IcLineClose size={20} />
         </button>
       )}
 
@@ -1252,11 +1227,11 @@ export function MemoEditor() {
           <span>·</span>
           <span>읽기 약 {readingTime}분</span>
           <span>·</span>
-          <button
+          <button type="button"
             onClick={() => useUIStore.getState().toggleFocusMode()}
-            className="text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 transition-colors"
+            className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
           >
-            나가기
+            <span>나가기</span>
           </button>
         </div>
       ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && (

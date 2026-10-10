@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { CalendarGrid } from './CalendarGrid'
 import { CalendarMemoList } from './CalendarMemoList'
 import { useCalendarMemos } from '@/hooks/useCalendarMemos'
-import { FAB } from '@/components/ui/FAB'
+import { CreateActions, PageHead } from '@/components/layout/PageHead'
 
 export function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
@@ -15,10 +15,11 @@ export function CalendarPage() {
   const selectedMemos = selectedDate ? getMemosForDate(selectedDate) : []
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-3xl lg:max-w-7xl lg:px-6 lg:py-6 xl:px-8 fold:px-3">
+    <div className="mw-page">
+      <PageHead title="캘린더" description="날짜를 누르면 그날 쓴 메모를 볼 수 있어요." actions={<CreateActions />} />
       {/* 데스크톱 면적 역전: 캘린더 = flex-1 주인공, 선택 날짜 패널 = 우측 고정폭 인스펙터 */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
-        <div className="w-full lg:min-w-0 lg:flex-1">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-6">
+        <div className="w-full xl:min-w-0 xl:flex-1">
           <CalendarGrid
             currentMonth={currentMonth}
             onMonthChange={setCurrentMonth}
@@ -28,14 +29,13 @@ export function CalendarPage() {
             getMemosForDate={getMemosForDate}
           />
         </div>
-        <div className="w-full lg:sticky lg:top-20 lg:w-[320px] lg:shrink-0 xl:w-[360px]">
+        <div className="w-full xl:sticky xl:top-0 xl:w-[360px] xl:shrink-0">
           <CalendarMemoList
             memos={selectedMemos}
             selectedDate={selectedDate}
           />
         </div>
       </div>
-      <FAB />
     </div>
   )
 }

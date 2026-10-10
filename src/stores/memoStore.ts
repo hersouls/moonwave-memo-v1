@@ -131,18 +131,12 @@ export const useMemoStore = create<MemoState>()(
             const gamification = settings.settings.gamification
             const streakUpdated = calculateStreak(gamification)
             const totalMemos = get().memos.filter((m) => !m.deletedAt).length
-            const { updatedState, newBadges } = checkMilestones(
+            const { updatedState } = checkMilestones(
               { ...streakUpdated, totalMemosCreated: totalMemos },
               totalMemos
             )
             settings.updateGamification(updatedState)
 
-            // Trigger confetti for new badges (JS 캔버스 애니메이션 — reduced-motion 존중)
-            if (newBadges.length > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-              import('canvas-confetti').then((mod) => {
-                mod.default({ particleCount: 80, spread: 70, origin: { y: 0.6 } })
-              }).catch(() => {})
-            }
           } catch { /* gamification is non-critical */ }
 
           return id

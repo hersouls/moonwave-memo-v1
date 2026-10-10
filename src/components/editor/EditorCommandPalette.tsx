@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { DialogBackdrop, DialogPanel, Dialog as HeadlessDialog } from '@headlessui/react'
-import { Search } from 'lucide-react'
 import { Kbd } from '@/components/ui/Kbd'
+import { IcLineSearch } from '@/mw/icons'
 
 export interface EditorCommand {
   id: string
@@ -121,7 +121,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
           className="w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 transition duration-200 data-[closed]:-translate-y-2 data-[closed]:scale-[0.98] data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:duration-150 data-[leave]:ease-in"
         >
           <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-            <Search className="h-4 w-4 shrink-0 text-zinc-400" />
+            <IcLineSearch size={16} className="shrink-0 text-zinc-400" />
             <input
               ref={inputRef}
               value={query}

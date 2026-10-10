@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useDrag } from '@use-gesture/react'
-import {
-  X, ChevronLeft, ChevronRight, Play, Pause,
-  Sun, Moon, Minus, Plus,
-  GalleryHorizontal, GalleryVertical,
-} from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
@@ -13,6 +8,7 @@ import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useSlideParser } from './useSlideParser'
 import { SlideRenderer } from './SlideRenderer'
+import { IcFillPlay, IcLineAdd, IcLineChevronLeft, IcLineChevronRight, IcLineClose, IcLineMinus, IcLinePause, IcMwColumns, IcMwList, IcMwMoon, IcMwSun } from '@/mw/icons'
 
 const AUTO_PLAY_INTERVALS = [5, 10, 30] as const
 
@@ -65,7 +61,7 @@ export function SlideView() {
     setViewMode('scroll')
     setIsClosing(false)
 
-    const isDark = document.documentElement.classList.contains('dark')
+    const isDark = document.documentElement.dataset.theme === 'dark'
     setSlideTheme(isDark ? 'dark' : 'light')
   }, [slideViewMemoId])
 
@@ -272,7 +268,6 @@ export function SlideView() {
           >
             <SlideRenderer
               slide={currentSlide}
-              memoColor={memo.color}
               fontSize={fontSize}
               isDarkTheme={isDark}
               createdAt={memo.createdAt}
@@ -287,8 +282,7 @@ export function SlideView() {
             <div key={i} className="slide-scroll-item">
               <SlideRenderer
                 slide={slide}
-                memoColor={memo.color}
-                fontSize={fontSize}
+                  fontSize={fontSize}
                 isDarkTheme={isDark}
                 createdAt={memo.createdAt}
                 folderName={folderName}
@@ -326,7 +320,7 @@ export function SlideView() {
             title={isSlideMode ? '스크롤 보기' : '슬라이드 보기'}
             aria-label={isSlideMode ? '스크롤 보기' : '슬라이드 보기'}
           >
-            {isSlideMode ? <GalleryVertical className="w-4.5 h-4.5" /> : <GalleryHorizontal className="w-4.5 h-4.5" />}
+            {isSlideMode ? <IcMwList size={20} /> : <IcMwColumns size={20} />}
           </button>
           {/* Theme toggle */}
           <button
@@ -335,36 +329,36 @@ export function SlideView() {
             title={isDark ? '라이트 테마' : '다크 테마'}
             aria-label={isDark ? '라이트 테마' : '다크 테마'}
           >
-            {isDark ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+            {isDark ? <IcMwSun size={20} /> : <IcMwMoon size={20} />}
           </button>
           {/* Font size */}
-          <button
+          <button type="button"
             onClick={() => adjustFontSize(-0.1)}
-            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            className="mw-icon-button"
             title="글자 크기 줄이기"
             aria-label="글자 크기 줄이기"
             disabled={fontSize <= 0.8}
           >
-            <Minus className="w-4 h-4" />
+            <IcLineMinus size={16} />
           </button>
           <span className="text-white/60 text-xs w-8 text-center tabular-nums">{Math.round(fontSize * 100)}%</span>
-          <button
+          <button type="button"
             onClick={() => adjustFontSize(0.1)}
-            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            className="mw-icon-button"
             title="글자 크기 키우기"
             aria-label="글자 크기 키우기"
             disabled={fontSize >= 1.5}
           >
-            <Plus className="w-4 h-4" />
+            <IcLineAdd size={16} />
           </button>
           {/* Close */}
-          <button
+          <button type="button"
             onClick={requestClose}
-            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors ml-1"
+            className="mw-icon-button ml-1"
             title="닫기 (Esc)"
             aria-label="닫기"
           >
-            <X className="w-5 h-5" />
+            <IcLineClose size={20} />
           </button>
         </div>
       </div>
@@ -405,7 +399,7 @@ export function SlideView() {
                   title={isAutoPlaying ? '일시 정지' : '자동 재생'}
                   aria-label={isAutoPlaying ? '일시 정지' : '자동 재생'}
                 >
-                  {isAutoPlaying ? <Pause className="w-4.5 h-4.5" /> : <Play className="w-4.5 h-4.5" />}
+                  {isAutoPlaying ? <IcLinePause size={20} /> : <IcFillPlay size={20} />}
                 </button>
               </div>
             </div>
@@ -430,7 +424,7 @@ export function SlideView() {
               title="이전 슬라이드"
               aria-label="이전 슬라이드"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <IcLineChevronLeft size={24} />
             </button>
           )}
           {currentIndex < totalSlides - 1 && (
@@ -440,7 +434,7 @@ export function SlideView() {
               title="다음 슬라이드"
               aria-label="다음 슬라이드"
             >
-              <ChevronRight className="w-6 h-6" />
+              <IcLineChevronRight size={24} />
             </button>
           )}
         </>

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { List, X } from 'lucide-react'
 import clsx from 'clsx'
+import { IcLineClose, IcMwList } from '@/mw/icons'
 
 interface Heading {
   level: number
@@ -39,15 +39,15 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
       <div className="h-full flex flex-col border-l border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-200 dark:border-zinc-700">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-            <List className="w-3.5 h-3.5" />
+            <IcMwList size={16} />
             목차
           </div>
-          <button
+          <button type="button"
             onClick={onClose}
-            className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
+            className="mw-icon-button"
             aria-label="목차 닫기"
           >
-            <X className="w-3.5 h-3.5" />
+            <IcLineClose size={16} />
           </button>
         </div>
         <div className="flex-1 flex items-center justify-center px-4 text-center">
@@ -65,18 +65,18 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
     <div className="h-full flex flex-col border-l border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-          <List className="w-3.5 h-3.5" />
+          <IcMwList size={16} />
           목차
           <span className="ml-1 text-[10px] font-normal text-zinc-500 dark:text-zinc-400">
             {headings.length}
           </span>
         </div>
-        <button
+        <button type="button"
           onClick={onClose}
-          className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
+          className="mw-icon-button"
           aria-label="목차 닫기"
         >
-          <X className="w-3.5 h-3.5" />
+          <IcLineClose size={16} />
         </button>
       </div>
 

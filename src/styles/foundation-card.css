@@ -1,3 +1,4 @@
+
 /* ========================================
    Foundation Card Design Tokens & Utilities
    05_Card Design System
@@ -204,7 +205,7 @@
 }
 
 /* ── Dark Mode ───────────────────────── */
-.dark {
+[data-theme="dark"] {
   /* Card 공통 — dark elevation: deeper black shadow + hairline light ring
      (hover was previously undefined here, leaving black-on-black = invisible) */
   --card-bg-default: #27272a;
@@ -275,22 +276,6 @@
   transition: var(--card-transition);
 }
 
-.card--elevated {
-  background: var(--card-bg-elevated);
-  box-shadow: var(--card-shadow-md);
-}
-
-.card--outlined {
-  background: var(--card-bg-default);
-  border: var(--card-border-outlined);
-  box-shadow: none;
-}
-
-.card--muted {
-  background: var(--card-bg-muted);
-  box-shadow: none;
-}
-
 .card--interactive:hover {
   box-shadow: var(--card-shadow-hover);
   transform: translateY(var(--card-hover-translate));
@@ -299,7 +284,7 @@
 
 /* 다크 엘리베이션: 표면 밝힘 = 높이 (Linear/Arc 패턴) —
    검정 그림자만으로는 #09090b 배경에서 hover 상승이 보이지 않음 */
-.dark .card--interactive:hover {
+[data-theme="dark"] .card--interactive:hover {
   background: color-mix(in oklch, var(--card-bg-default), white 4%);
 }
 
@@ -323,202 +308,16 @@
 
 /* 전정계 안전: 카드 리프트/축소·차트 성장 애니메이션 비활성화 */
 @media (prefers-reduced-motion: reduce) {
-  .card,
-  .card--interactive:hover,
-  .card--interactive:active {
+.card,
+.card--interactive:hover,
+.card--interactive:active {
     transition: none;
     transform: none;
   }
 
-  .chart-bar {
+.chart-bar {
     animation: none;
   }
-}
-
-.card--selected {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: -2px;
-}
-
-/* ========================================
-   Image + Text Card
-   ======================================== */
-
-.imgcard {
-  border-radius: var(--card-radius-lg);
-  background: var(--card-bg-default);
-  box-shadow: var(--card-shadow-sm);
-  overflow: hidden;
-}
-
-.imgcard__image {
-  width: 100%;
-  aspect-ratio: var(--imgcard-image-aspect-ratio);
-  object-fit: cover;
-}
-
-.imgcard__content {
-  padding: var(--imgcard-text-padding);
-}
-
-.imgcard__category {
-  font-size: var(--imgcard-category-size);
-  color: var(--imgcard-category-color);
-  margin-bottom: var(--imgcard-category-margin-bottom);
-}
-
-.imgcard__title {
-  font-size: var(--imgcard-title-size);
-  font-weight: var(--imgcard-title-weight);
-  color: var(--imgcard-title-color);
-}
-
-/* ========================================
-   Full Image Card
-   ======================================== */
-
-.fullimg-card {
-  position: relative;
-  border-radius: var(--fullimg-radius);
-  overflow: hidden;
-}
-
-.fullimg-card__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.fullimg-card__overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--fullimg-overlay-gradient);
-  padding: var(--fullimg-text-padding);
-}
-
-.fullimg-card__title {
-  font-size: var(--fullimg-title-size);
-  font-weight: var(--fullimg-title-weight);
-  color: var(--fullimg-text-color);
-}
-
-.fullimg-card__subtitle {
-  font-size: var(--fullimg-subtitle-size);
-  color: var(--fullimg-text-color);
-  opacity: 0.8;
-}
-
-/* ========================================
-   Product Card
-   ======================================== */
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--product-grid-columns), 1fr);
-  gap: var(--product-grid-gap);
-}
-
-.product-card__image-wrap {
-  position: relative;
-  background: var(--product-image-bg);
-  border-radius: var(--product-image-radius);
-  overflow: hidden;
-  aspect-ratio: var(--product-image-aspect);
-}
-
-.product-card__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.product-card__heart {
-  position: absolute;
-  bottom: var(--product-heart-offset);
-  right: var(--product-heart-offset);
-  width: var(--product-heart-size);
-  height: var(--product-heart-size);
-  color: var(--product-heart-color-default);
-  cursor: pointer;
-}
-
-.product-card__heart--active {
-  color: var(--product-heart-color-active);
-}
-
-.product-card__info {
-  padding-top: var(--card-gap-sm);
-}
-
-.product-card__category {
-  font-size: var(--product-category-size);
-  color: var(--product-category-color);
-}
-
-.product-card__name {
-  font-size: var(--product-name-size);
-  font-weight: var(--product-name-weight);
-  color: var(--product-name-color);
-}
-
-.product-card__price {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.product-card__discount {
-  font-size: var(--product-price-size);
-  font-weight: var(--product-discount-weight);
-  color: var(--product-discount-color);
-}
-
-.product-card__original {
-  font-size: var(--product-category-size);
-  color: var(--product-original-color);
-  text-decoration: var(--product-original-decoration);
-}
-
-.product-card__final {
-  font-size: var(--product-price-size);
-  font-weight: var(--product-price-weight);
-  color: var(--product-price-color);
-}
-
-/* ========================================
-   Logo Card
-   ======================================== */
-
-.logo-card {
-  display: flex;
-  align-items: center;
-  gap: var(--logo-card-gap);
-  padding: var(--logo-card-padding);
-  border-radius: var(--logo-card-radius);
-  background: var(--card-bg-default);
-}
-
-.logo-card__avatar {
-  width: var(--logo-card-avatar-size);
-  height: var(--logo-card-avatar-size);
-  border-radius: var(--logo-card-avatar-radius);
-  background: var(--logo-card-avatar-bg);
-  flex-shrink: 0;
-  object-fit: cover;
-}
-
-.logo-card__brand {
-  font-size: var(--logo-card-brand-size);
-  color: var(--logo-card-brand-color);
-}
-
-.logo-card__text {
-  font-size: var(--logo-card-text-size);
-  font-weight: var(--logo-card-text-weight);
-  color: var(--logo-card-text-color);
 }
 
 /* ========================================
@@ -533,355 +332,25 @@
   padding: var(--list-item-padding-y) var(--list-item-padding-x);
 }
 
-.list-item__headline {
-  font-size: var(--list-item-headline-size);
-  font-weight: var(--list-item-headline-weight);
-  color: var(--list-item-headline-color);
-}
-
-.list-item__value {
-  font-size: var(--list-item-value-size);
-  font-weight: var(--list-item-value-weight);
-  color: var(--list-item-value-color);
-}
-
 /* Text + Button */
 .list-item--button {
   cursor: pointer;
   transition: background-color 150ms ease;
   border-radius: var(--card-radius-md);
 }
+
 .list-item--button:hover {
   background: #fafafa;
 }
+
 .list-item--button:active {
   background: #f4f4f5;
 }
-.dark .list-item--button:hover {
+
+[data-theme="dark"] .list-item--button:hover {
   background: #3f3f46;
 }
-.dark .list-item--button:active {
+
+[data-theme="dark"] .list-item--button:active {
   background: #52525b;
-}
-
-.list-item--button .list-item__action {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.list-item__chevron {
-  width: var(--list-chevron-size);
-  height: var(--list-chevron-size);
-  color: var(--list-chevron-color);
-}
-
-/* Text + Switch */
-.list-item--switch .list-item__toggle {
-  flex-shrink: 0;
-}
-
-/* Radio */
-.list-item--radio {
-  gap: var(--list-radio-gap);
-  justify-content: flex-start;
-}
-
-.list-item__radio {
-  width: var(--list-radio-size);
-  height: var(--list-radio-size);
-  border-radius: 50%;
-  border: 2px solid var(--list-radio-color-default);
-  flex-shrink: 0;
-}
-
-.list-item--selected .list-item__radio {
-  border-color: var(--list-radio-color-selected);
-  background: var(--list-radio-color-selected);
-}
-
-/* Section Title */
-.list-section-title {
-  font-size: var(--list-section-title-size);
-  font-weight: var(--list-section-title-weight);
-  color: var(--list-section-title-color);
-  padding: var(--list-section-title-padding);
-}
-
-/* Divider */
-.list-divider {
-  border: none;
-  border-top: var(--list-divider);
-  margin: var(--list-divider-margin);
-}
-
-/* ========================================
-   File Output Card
-   ======================================== */
-
-.file-card {
-  display: flex;
-  align-items: center;
-  gap: var(--file-card-gap);
-  padding: var(--file-card-padding);
-  border-radius: var(--file-card-radius);
-  background: var(--file-card-bg);
-  box-shadow: var(--file-card-shadow);
-}
-
-.file-card__icon {
-  width: calc(var(--file-card-icon-size) + var(--file-card-icon-padding) * 2);
-  height: calc(var(--file-card-icon-size) + var(--file-card-icon-padding) * 2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--file-card-icon-bg);
-  border-radius: var(--file-card-icon-radius);
-  flex-shrink: 0;
-}
-
-.file-card__icon svg {
-  width: var(--file-card-icon-size);
-  height: var(--file-card-icon-size);
-  color: var(--file-card-icon-color);
-}
-
-.file-card__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.file-card__name {
-  font-size: var(--file-card-name-size);
-  font-weight: var(--file-card-name-weight);
-  color: var(--file-card-name-color);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.file-card__meta {
-  font-size: var(--file-card-meta-size);
-  color: var(--file-card-meta-color);
-}
-
-.file-card__download {
-  width: var(--file-card-download-touch-target);
-  height: var(--file-card-download-touch-target);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.file-card__download svg {
-  width: var(--file-card-download-size);
-  height: var(--file-card-download-size);
-  color: var(--file-card-download-color);
-}
-
-/* ========================================
-   Image List
-   ======================================== */
-
-.imglist-item {
-  display: flex;
-  align-items: center;
-  gap: var(--imglist-item-gap);
-  min-height: var(--imglist-item-height);
-  padding: var(--imglist-item-padding);
-}
-
-.imglist-item__avatar {
-  width: var(--imglist-avatar-size);
-  height: var(--imglist-avatar-size);
-  border-radius: var(--imglist-avatar-radius);
-  background: var(--imglist-avatar-bg);
-  flex-shrink: 0;
-  object-fit: cover;
-}
-
-.imglist-item__avatar--lg {
-  width: var(--imglist-avatar-size-lg);
-  height: var(--imglist-avatar-size-lg);
-}
-
-.imglist-item__content {
-  flex: 1;
-  min-width: 0;
-}
-
-.imglist-item__brand {
-  font-size: var(--imglist-brand-size);
-  color: var(--imglist-brand-color);
-}
-
-.imglist-item__desc {
-  font-size: var(--imglist-desc-size);
-  font-weight: var(--imglist-desc-weight);
-  color: var(--imglist-desc-color);
-}
-
-/* ========================================
-   Event / Banner Card
-   ======================================== */
-
-.event-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: var(--event-card-min-height);
-  padding: var(--event-card-padding);
-  border-radius: var(--event-card-radius);
-  overflow: hidden;
-}
-
-.event-card__content {
-  flex: 1;
-  min-width: 0;
-}
-
-.event-card__title {
-  font-size: var(--event-card-title-size);
-  font-weight: var(--event-card-title-weight);
-  color: var(--event-card-title-color);
-}
-
-.event-card__date {
-  font-size: var(--event-card-date-size);
-  color: var(--event-card-date-color);
-  margin-top: 4px;
-}
-
-.event-card__image {
-  width: var(--event-card-image-width);
-  height: auto;
-  flex-shrink: 0;
-  object-fit: contain;
-}
-
-/* Benefit Grid (2-col) */
-.benefit-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--benefit-card-grid-columns), 1fr);
-  gap: var(--benefit-card-grid-gap);
-}
-
-.benefit-card {
-  padding: var(--benefit-card-padding);
-  border-radius: var(--benefit-card-radius);
-  aspect-ratio: var(--benefit-card-aspect);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Badge */
-.card-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--card-badge-padding);
-  border-radius: var(--card-badge-radius);
-  font-size: var(--card-badge-font-size);
-  font-weight: var(--card-badge-font-weight);
-  background: var(--card-badge-bg);
-  color: var(--card-badge-color);
-}
-
-/* ========================================
-   Range Slider
-   ======================================== */
-
-.range-slider {
-  position: relative;
-  width: 100%;
-  padding: 12px 0;
-}
-
-.range-slider__track {
-  width: 100%;
-  height: var(--slider-track-height);
-  background: var(--slider-track-inactive-color);
-  border-radius: var(--slider-track-radius);
-  position: relative;
-}
-
-.range-slider__track-active {
-  height: 100%;
-  background: var(--slider-track-active-color);
-  border-radius: var(--slider-track-radius);
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-.range-slider__thumb {
-  width: var(--slider-thumb-size);
-  height: var(--slider-thumb-size);
-  background: var(--slider-thumb-bg);
-  border-radius: 50%;
-  box-shadow: var(--slider-thumb-shadow);
-  border: var(--slider-thumb-border);
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  cursor: grab;
-}
-
-.range-slider__thumb:active {
-  cursor: grabbing;
-}
-
-.range-slider__label {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--slider-label-margin-top);
-  font-size: var(--slider-label-size);
-  color: var(--slider-label-color);
-}
-
-/* Popover */
-.range-slider__popover {
-  position: absolute;
-  bottom: calc(100% + var(--slider-popover-offset));
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--slider-popover-bg);
-  color: var(--slider-popover-color);
-  border-radius: var(--slider-popover-radius);
-  padding: var(--slider-popover-padding);
-  font-size: var(--slider-popover-font-size);
-  font-weight: var(--slider-popover-font-weight);
-  white-space: nowrap;
-}
-
-.range-slider__popover::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: var(--slider-popover-arrow-size) solid transparent;
-  border-right: var(--slider-popover-arrow-size) solid transparent;
-  border-top: var(--slider-popover-arrow-size) solid var(--slider-popover-bg);
-}
-
-/* ========================================
-   Search Autocomplete Highlight
-   ======================================== */
-
-.search-item {
-  display: flex;
-  align-items: center;
-  min-height: var(--search-item-height);
-  padding: var(--search-item-padding);
-}
-
-.search-item__text {
-  font-weight: var(--search-normal-weight);
-  color: var(--search-normal-color);
-}
-
-.search-highlight {
-  font-weight: var(--search-highlight-weight);
-  color: var(--search-highlight-color);
 }

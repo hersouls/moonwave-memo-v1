@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react'
 import { format, parseISO, isToday } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, CalendarPlus, Pencil } from 'lucide-react'
 import { MemoCard } from '@/components/memos/MemoCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { Memo } from '@/lib/types'
+import { IcLineCalendar, IcLineEdit } from '@/mw/icons'
 
 interface CalendarMemoListProps {
   memos: Memo[]
@@ -26,7 +26,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
       <div className="card p-4">
         <EmptyState
           size="sm"
-          icon={<CalendarDays className="h-6 w-6 text-zinc-300 dark:text-zinc-600" />}
+          icon={<IcLineCalendar size={24} className="text-zinc-300 dark:text-zinc-600" />}
           title="날짜를 선택하세요"
           description="날짜를 선택하면 해당 날짜의 메모를 볼 수 있습니다."
         />
@@ -78,7 +78,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
         {memos.length === 0 ? (
           <EmptyState
             size="sm"
-            icon={<CalendarPlus className="h-6 w-6 text-zinc-300 dark:text-zinc-600" />}
+            icon={<IcLineCalendar size={24} className="text-zinc-300 dark:text-zinc-600" />}
             title="이 날짜에는 메모가 없어요"
             description={
               isSelectedToday
@@ -87,11 +87,11 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
             }
             action={
               isSelectedToday ? (
-                <button
+                <button type="button"
                   onClick={() => navigate('/memo/new')}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-3"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <IcLineEdit size={16} />
                   메모 작성
                 </button>
               ) : undefined

@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckSquare } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { parseChecklist } from '@/utils/checklistParser'
 import { WidgetCard } from './WidgetCard'
+import { IcMwCheckSquare } from '@/mw/icons'
 
 interface TodoItem {
   text: string
@@ -40,7 +40,7 @@ export function TodoWidget() {
   if (uncheckedTodos.length === 0) return null
 
   return (
-    <WidgetCard icon={CheckSquare} tint="primary" title={`${uncheckedTodos.length}개의 할 일`}>
+    <WidgetCard icon={IcMwCheckSquare} tint="primary" title={`${uncheckedTodos.length}개의 할 일`}>
       <ul className="space-y-2">
         {uncheckedTodos.map((todo, index) => (
           <li key={`${todo.memoId}-${index}`}>

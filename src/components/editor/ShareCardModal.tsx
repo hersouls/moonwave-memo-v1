@@ -1,19 +1,9 @@
 import { useState, useRef } from 'react'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { Download, Share2, X } from 'lucide-react'
 import { toBlob } from 'html-to-image'
 import { useToastStore } from '@/stores/toastStore'
 import { shareAsImage } from '@/utils/share'
-import type { MemoColor } from '@/lib/types'
-
-const CARD_BG: Record<MemoColor, string> = {
-  white: 'from-zinc-50 to-zinc-100',
-  yellow: 'from-amber-50 to-amber-100',
-  green: 'from-emerald-50 to-emerald-100',
-  blue: 'from-blue-50 to-blue-100',
-  pink: 'from-pink-50 to-rose-100',
-  purple: 'from-purple-50 to-violet-100',
-}
+import { IcLineClose, IcLineDownload, IcLineShare } from '@/mw/icons'
 
 interface ShareCardModalProps {
   isOpen: boolean
@@ -21,11 +11,10 @@ interface ShareCardModalProps {
   title: string
   body: string
   tags: string[]
-  color: MemoColor
   date: string
 }
 
-export function ShareCardModal({ isOpen, onClose, title, body, tags, color, date }: ShareCardModalProps) {
+export function ShareCardModal({ isOpen, onClose, title, body, tags, date }: ShareCardModalProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [exporting, setExporting] = useState(false)
 
@@ -103,8 +92,8 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, color, date
             <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               공유 카드
             </DialogTitle>
-            <button onClick={onClose} className="f-icon-btn" aria-label="닫기">
-              <X className="w-5 h-5 text-zinc-400" />
+            <button onClick={onClose} className="mw-icon-button" aria-label="닫기">
+              <IcLineClose size={20} className="text-zinc-400" />
             </button>
           </div>
 
@@ -112,7 +101,7 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, color, date
           <div className="flex justify-center mb-4">
             <div
               ref={cardRef}
-              className={`w-[360px] min-h-[200px] bg-gradient-to-br ${CARD_BG[color]} rounded-2xl p-6 flex flex-col`}
+              className={`w-[360px] min-h-[200px] bg-[var(--background-secondary)] rounded-2xl p-6 flex flex-col`}
               style={{ fontFamily: "'Pretendard', sans-serif" }}
             >
               {title && (
@@ -143,20 +132,20 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, color, date
 
           {/* Action buttons */}
           <div className="flex gap-3">
-            <button
+            <button type="button"
               onClick={handleExport}
               disabled={exporting}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600 transition-colors text-sm font-medium disabled:opacity-50"
+              className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left flex-1"
             >
-              <Download className="w-4 h-4" />
+              <IcLineDownload size={16} />
               이미지 저장
             </button>
-            <button
+            <button type="button"
               onClick={handleShare}
               disabled={exporting}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] transition-colors text-sm font-medium disabled:opacity-50"
+              className="mw-button mw-button--primary mw-button--medium mw-button--icon-left flex-1"
             >
-              <Share2 className="w-4 h-4" />
+              <IcLineShare size={16} />
               공유
             </button>
           </div>

@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Search, X, Clock, SlidersHorizontal, Sparkles } from 'lucide-react'
 import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { parseNaturalQuery } from '@/services/aiSearch'
 import { SearchFilters } from './SearchFilters'
+import { IcLineClose, IcLineSearch, IcLineTime, IcMwSliders, IcMwSparkles } from '@/mw/icons'
 
 // F-08: Limit recent searches on narrow fold
 const FOLD_MAX_RECENT_DISPLAY = 5
@@ -140,11 +140,11 @@ export function MemoSearchBar() {
   if (!isExpanded) {
     return (
       <div className="px-4 lg:px-0">
-        <button
+        <button type="button"
           onClick={handleExpand}
-          className="flex w-full items-center gap-2.5 rounded-xl bg-zinc-100 px-4 py-2.5 text-sm text-zinc-400 ring-1 ring-inset ring-zinc-950/[0.04] dark:ring-white/[0.06] transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-500 dark:hover:bg-zinc-700"
+          className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left w-full"
         >
-          <Search className="h-4 w-4" />
+          <IcLineSearch size={16} />
           메모 검색
         </button>
       </div>
@@ -155,7 +155,7 @@ export function MemoSearchBar() {
     <div className="px-4 lg:px-0" ref={containerRef}>
       <div className="relative">
         <div className="flex items-center gap-2.5 rounded-xl bg-zinc-100 px-4 py-2.5 fold:py-2 dark:bg-zinc-800 ring-1 ring-inset ring-zinc-950/[0.04] dark:ring-white/[0.06] transition-shadow focus-within:ring-2 focus-within:ring-primary-500/40">
-          <Search className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
+          <IcLineSearch size={16} className="shrink-0 text-zinc-500 dark:text-zinc-400" />
           <input
             ref={inputRef}
             type="text"
@@ -178,7 +178,7 @@ export function MemoSearchBar() {
             )}
             aria-label="필터"
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <IcMwSliders size={16} />
           </button>
           <button
             onClick={() => setAiMode(!aiMode)}
@@ -191,15 +191,15 @@ export function MemoSearchBar() {
             aria-label="\uC2A4\uB9C8\uD2B8 \uAC80\uC0C9"
             title="\uC790\uC5F0\uC5B4 \uAC80\uC0C9"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <IcMwSparkles size={16} />
           </button>
           {searchQuery && (
-            <button
+            <button type="button"
               onClick={handleClear}
-              className="-my-2 flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              className="mw-icon-button -my-2 shrink-0"
               aria-label="검색어 지우기"
             >
-              <X className="h-3.5 w-3.5 text-zinc-400" />
+              <IcLineClose size={16} className="text-zinc-400" />
             </button>
           )}
         </div>
@@ -221,7 +221,7 @@ export function MemoSearchBar() {
                   onClick={() => handleSelectRecent(query)}
                   className="flex min-w-0 flex-1 items-center gap-2.5 py-2 pl-3 pr-1 text-left text-sm text-zinc-700 dark:text-zinc-300"
                 >
-                  <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                  <IcLineTime size={16} className="text-zinc-400 shrink-0" />
                   <span className="flex-1 truncate">{query}</span>
                 </button>
                 <button
@@ -230,7 +230,7 @@ export function MemoSearchBar() {
                   className="relative mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 after:absolute after:-inset-1 after:content-['']"
                   aria-label={`"${query}" 최근 검색 삭제`}
                 >
-                  <X className="h-3 w-3" />
+                  <IcLineClose size={12} />
                 </button>
               </div>
             ))}

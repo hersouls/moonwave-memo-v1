@@ -16,7 +16,9 @@ const CORE_ASSETS = [
   '/favicon.png',
   '/icons/icon-192.png',
   '/icons/apple-touch-icon-180.png',
-  'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css',
+  '/kit/moonwave.css',
+  '/fonts/PretendardVariable.woff2',
+  '/theme-init.js',
 ]
 
 // ── Helpers ──────────────────────────────────
@@ -86,11 +88,8 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET
   if (request.method !== 'GET') return
 
-  // Skip non-same-origin except CDN
-  if (
-    url.origin !== location.origin &&
-    !url.hostname.includes('cdn.jsdelivr.net')
-  ) return
+  // Same-origin only: the kit, the font and the app are all served from here
+  if (url.origin !== location.origin) return
 
   // Skip API / Firebase requests (network-only)
   if (

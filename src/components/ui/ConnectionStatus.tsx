@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Wifi, WifiOff, Cloud, CloudOff, RefreshCw } from 'lucide-react'
 import clsx from 'clsx'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
+import { IcLineCloud, IcLineRefresh, IcLineWarning, IcLineWifi } from '@/mw/icons'
 
 // Every autosave now passes through a brief 'syncing' phase (the status waits for the
 // server to confirm the write), so the pill only appears when syncing actually lingers.
@@ -72,7 +72,7 @@ export function ConnectionStatus() {
   if (!isOnline) {
     return (
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 text-xs font-medium animate-in fade-in duration-200">
-        <WifiOff className="h-3.5 w-3.5" />
+        <IcLineWifi size={16} />
         <span>오프라인</span>
       </div>
     )
@@ -81,7 +81,7 @@ export function ConnectionStatus() {
   if (syncStatus === 'syncing' && showSyncing) {
     return (
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-xs font-medium animate-in fade-in duration-200">
-        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+        <IcLineRefresh size={16} className="animate-spin" />
         <span>동기화 중</span>
       </div>
     )
@@ -90,7 +90,7 @@ export function ConnectionStatus() {
   if (syncStatus === 'error') {
     return (
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400 text-xs font-medium animate-in fade-in duration-200">
-        <CloudOff className="h-3.5 w-3.5" />
+        <IcLineWarning size={16} />
         <span>동기화 오류</span>
       </div>
     )
@@ -99,7 +99,7 @@ export function ConnectionStatus() {
   if (showSynced && syncStatus === 'synced') {
     return (
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400 text-xs font-medium animate-save-fadeout">
-        <Cloud className="h-3.5 w-3.5" />
+        <IcLineCloud size={16} />
         <span>동기화 완료</span>
       </div>
     )
@@ -124,13 +124,13 @@ export function ConnectionStatusIcon() {
       }
     >
       {offline ? (
-        <WifiOff className="h-4 w-4 text-warning-500" />
+        <IcLineWifi size={16} className="text-warning-500" />
       ) : syncStatus === 'syncing' ? (
-        <RefreshCw className={clsx('h-4 w-4 text-primary-500 animate-spin')} />
+        <IcLineRefresh size={16} className={clsx('  text-primary-500 animate-spin')} />
       ) : syncStatus === 'error' ? (
-        <CloudOff className="h-4 w-4 text-danger-500" />
+        <IcLineWarning size={16} className="text-danger-500" />
       ) : (
-        <Wifi className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+        <IcLineWifi size={16} className="text-zinc-500 dark:text-zinc-400" />
       )}
     </div>
   )

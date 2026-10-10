@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom'
-import { Clock, ChevronRight } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { formatMemoDate } from '@/utils/format'
 import { stripMarkdown } from '@/utils/textUtils'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
+import { IcLineChevronRight, IcLineTime } from '@/mw/icons'
 
 export function RecentWorkWidget() {
   const navigate = useNavigate()
@@ -20,7 +20,7 @@ export function RecentWorkWidget() {
 
   return (
     <WidgetCard
-      icon={Clock}
+      icon={IcLineTime}
       tint="primary"
       title="최근 작업"
       action={
@@ -30,7 +30,7 @@ export function RecentWorkWidget() {
           className="flex items-center gap-0.5 rounded-md px-2 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
         >
           전체보기
-          <ChevronRight className="h-3 w-3" />
+          <IcLineChevronRight size={12} />
         </button>
       }
       bodyClassName="p-0"

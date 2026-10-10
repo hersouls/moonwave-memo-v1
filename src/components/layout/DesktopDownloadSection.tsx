@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Monitor, Download, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { apiUrl } from '@/lib/apiBase'
 import { isCapacitor, isElectron } from '@/services/syncFolder'
+import { IcLineDesktop, IcLineDownload, IcLineLoading } from '@/mw/icons'
 
 interface ReleaseInfo {
   version: string
@@ -64,7 +64,7 @@ export function DesktopDownloadSection() {
       <div className="p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex items-start gap-3">
-            <Monitor className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <IcLineDesktop size={20} className="text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm text-zinc-600 dark:text-zinc-300">
               {isElectronApp ? (
                 installedVersion ? (
@@ -96,9 +96,9 @@ export function DesktopDownloadSection() {
             onClick={() => window.location.assign(apiUrl('/api/download-desktop?platform=win'))}
           >
             {state === 'loading' ? (
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+              <IcLineLoading size={16} className="mr-1.5 animate-spin" />
             ) : (
-              <Download className="w-4 h-4 mr-1.5" />
+              <IcLineDownload size={16} className="mr-1.5" />
             )}
             {isElectronApp && hasUpdate ? '업데이트 내려받기' : '다운로드'}
           </Button>

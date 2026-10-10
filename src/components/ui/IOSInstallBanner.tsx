@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Share, Plus, X } from 'lucide-react'
 import { isIOSSafari, isPWAStandalone } from '@/utils/platform'
+import { IcLineAdd, IcLineClose, IcLineShare } from '@/mw/icons'
 
 const DISMISSED_KEY = 'memo-ios-install-dismissed'
 const DISMISS_EXPIRY_DAYS = 14
@@ -61,12 +61,12 @@ export function IOSInstallBanner() {
               </p>
             </div>
           </div>
-          <button
+          <button type="button"
             onClick={handleDismiss}
-            className="p-1.5 rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+            className="mw-icon-button"
             aria-label="닫기"
           >
-            <X className="w-4 h-4" />
+            <IcLineClose size={16} />
           </button>
         </div>
 
@@ -79,7 +79,7 @@ export function IOSInstallBanner() {
             <p className="text-sm text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
               하단의 공유
               <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-primary-500 text-white">
-                <Share className="w-3.5 h-3.5" />
+                <IcLineShare size={16} />
               </span>
               버튼을 탭하세요
             </p>
@@ -90,7 +90,7 @@ export function IOSInstallBanner() {
             </div>
             <p className="text-sm text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
               <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-200">
-                <Plus className="w-3.5 h-3.5" />
+                <IcLineAdd size={16} />
               </span>
               홈 화면에 추가를 선택하세요
             </p>
@@ -99,11 +99,11 @@ export function IOSInstallBanner() {
 
         {/* Bottom bar */}
         <div className="px-4 pb-3 flex justify-end">
-          <button
+          <button type="button"
             onClick={handleDismiss}
-            className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
           >
-            다시 보지 않기
+            <span>다시 보지 않기</span>
           </button>
         </div>
 

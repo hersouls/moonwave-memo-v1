@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { Loader2 } from 'lucide-react'
+import { IcLineLoading } from '@/mw/icons'
 
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg'
@@ -18,7 +18,7 @@ const spinnerSizes = {
 export function Spinner({ size = 'md', className, label = '로딩 중' }: SpinnerProps) {
   return (
     <span role={label ? 'status' : undefined} className="inline-flex items-center justify-center">
-      <Loader2 aria-hidden className={clsx('animate-spin', spinnerSizes[size], className)} />
+      <IcLineLoading aria-hidden className={clsx('animate-spin', spinnerSizes[size], className)} />
       {label && <span className="sr-only">{label}</span>}
     </span>
   )

@@ -1,5 +1,5 @@
-import { StickyNote } from 'lucide-react'
 import { SkeletonCard, SkeletonLine } from './Skeleton'
+import { IcMwNote } from '@/mw/icons'
 
 export function AppLoadingScreen() {
   return (
@@ -7,7 +7,7 @@ export function AppLoadingScreen() {
       {/* Sidebar skeleton (desktop) */}
       <div className="hidden lg:flex w-16 flex-col items-center gap-4 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pt-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500">
-          <StickyNote className="h-5 w-5 text-white" />
+          <IcMwNote size={20} className="text-white" />
         </div>
         <div className="flex flex-col gap-3 mt-4">
           <SkeletonLine className="h-8 w-8 rounded-lg" />

@@ -1,3 +1,4 @@
+
 /* ============================================
    Foundation Toast — Design Token & Utility
    08_Toast_Snackbar 디자인 시스템
@@ -73,7 +74,7 @@
 /* -----------------------------------------
    5. Dark Mode Overrides
    ----------------------------------------- */
-.dark {
+[data-theme="dark"] {
   --snackbar-bg: #f4f4f5;
   --snackbar-text-color: #18181b;
   --snackbar-action-color: #18181b;
@@ -124,8 +125,9 @@
   gap: 8px;
   pointer-events: none;
 }
+
 @media (min-width: 768px) {
-  .snackbar-container {
+.snackbar-container {
     bottom: var(--snackbar-bottom-desktop);
   }
 }
@@ -149,46 +151,11 @@
   position: relative;
 }
 
-.snackbar--text-only {
-  justify-content: center;
-  padding: var(--snackbar-padding-y) var(--snackbar-padding-text);
-  text-align: center;
-}
-
-.snackbar--with-icon {
-  padding-left: var(--snackbar-padding-left-icon);
-  padding-right: var(--snackbar-padding-text);
-  padding-top: var(--snackbar-padding-y);
-  padding-bottom: var(--snackbar-padding-y);
-}
-
 .snackbar--with-action {
   padding-left: var(--snackbar-padding-left-icon);
   padding-right: var(--snackbar-padding-right-action);
   padding-top: var(--snackbar-padding-y);
   padding-bottom: var(--snackbar-padding-y);
-}
-
-/* -----------------------------------------
-   9. Snackbar Icon Utilities
-   ----------------------------------------- */
-.snackbar__icon {
-  width: var(--snackbar-icon-size);
-  height: var(--snackbar-icon-size);
-  flex-shrink: 0;
-  margin-right: var(--snackbar-icon-gap);
-}
-
-.snackbar__icon--success {
-  color: var(--snackbar-icon-success);
-}
-
-.snackbar__icon--info {
-  color: var(--snackbar-icon-info);
-}
-
-.snackbar__icon--critical {
-  color: var(--snackbar-icon-critical);
 }
 
 /* -----------------------------------------
@@ -200,13 +167,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.snackbar__text--multiline {
-  white-space: normal;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .snackbar__action {
@@ -222,6 +182,7 @@
   white-space: nowrap;
   transition: opacity 150ms ease;
 }
+
 .snackbar__action:hover {
   opacity: 0.7;
 }
@@ -247,100 +208,25 @@
   animation: snackbar-progress var(--snackbar-auto-dismiss) linear both;
 }
 
-.dark .snackbar__progress {
+[data-theme="dark"] .snackbar__progress {
   /* 다크 모드의 스낵바 표면은 밝은 색 — 진행 바는 어두운 색으로 반전 */
   background: var(--snackbar-progress-color, rgba(0, 0, 0, 0.25));
 }
 
 /* Responsive: minimum width for very small screens */
 @media (max-width: 359px) {
-  .snackbar {
+.snackbar {
     min-width: var(--snackbar-min-width-xs);
   }
 }
 
 /* Desktop: 전체 폭 대신 콘텐츠 폭의 컴팩트한 필로 표시 */
 @media (min-width: 768px) {
-  .snackbar {
+.snackbar {
     width: auto;
     min-width: var(--snackbar-min-width-xs);
     max-width: 480px;
   }
-}
-
-/* -----------------------------------------
-   12. Prompt Text Utilities
-   ----------------------------------------- */
-.prompt-bubble {
-  display: inline-block;
-  padding: var(--prompt-padding);
-  background: var(--prompt-bg);
-  border-radius: var(--prompt-radius);
-  font-size: var(--prompt-font-size);
-  line-height: 1.5;
-  color: var(--color-text-primary);
-}
-
-.prompt-bubble--collapsed {
-  display: -webkit-box;
-  -webkit-line-clamp: var(--prompt-collapsed-lines);
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.prompt-bubble--expanded {
-  display: block;
-}
-
-/* -----------------------------------------
-   13. Prompt Toggle Utilities
-   ----------------------------------------- */
-.prompt-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  margin-top: 8px;
-  font-size: var(--prompt-toggle-font-size);
-  color: var(--prompt-toggle-color);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px 0;
-  transition: opacity 150ms ease;
-}
-.prompt-toggle:hover {
-  opacity: 0.7;
-}
-.prompt-toggle svg {
-  width: 14px;
-  height: 14px;
-  transition: transform 200ms ease;
-}
-.prompt-toggle--expanded svg {
-  transform: rotate(180deg);
-}
-
-/* -----------------------------------------
-   14. App Bar Scroll Modifier
-   ----------------------------------------- */
-.appbar--scrolled {
-  border-bottom: 1px solid var(--color-border-default);
-}
-
-/* -----------------------------------------
-   15. AI Image Output Utility
-   ----------------------------------------- */
-.ai-image-output {
-  width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--color-bg-tertiary);
-}
-.ai-image-output img {
-  width: 100%;
-  height: auto;
-  display: block;
 }
 
 /* -----------------------------------------
@@ -351,10 +237,12 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-.dark .hun-toast {
+
+[data-theme="dark"] .hun-toast {
   background: rgba(244, 244, 245, 0.95);
 }
-.dark .hun-toast span:last-of-type {
+
+[data-theme="dark"] .hun-toast span:last-of-type {
   color: #18181b;
 }
 
@@ -368,7 +256,8 @@
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
 }
-.dark .ios-banner-toast {
+
+[data-theme="dark"] .ios-banner-toast {
   background: rgba(39, 39, 42, 0.82);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.05);
 }

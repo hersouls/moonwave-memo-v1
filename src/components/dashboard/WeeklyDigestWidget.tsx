@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { FileBarChart, Sparkles, TrendingUp, ArrowRight } from 'lucide-react'
 import { startOfWeek, isWithinInterval, parseISO } from 'date-fns'
 import { useMemoStore } from '@/stores/memoStore'
 import { useAIDigest } from '@/hooks/useAIDigest'
 import { WidgetCard } from './WidgetCard'
+import { IcMwArrowRight, IcMwChart, IcMwSparkles, IcMwTrendUp } from '@/mw/icons'
 
 export function WeeklyDigestWidget() {
   const memos = useMemoStore((s) => s.memos)
@@ -55,9 +55,9 @@ export function WeeklyDigestWidget() {
 
   return (
     <WidgetCard
-      icon={FileBarChart}
+      icon={IcMwChart}
       title="이번 주 요약"
-      titleAdornment={aiDigest && <Sparkles className="h-3 w-3 shrink-0 text-amber-400" />}
+      titleAdornment={aiDigest && <IcMwSparkles size={12} className="shrink-0 text-amber-400" />}
     >
       <div className="space-y-3">
         {/* AI Summary */}
@@ -99,7 +99,7 @@ export function WeeklyDigestWidget() {
         {/* AI Mood Trend */}
         {aiDigest?.moodTrend && (
           <div className="flex items-start gap-2">
-            <TrendingUp className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <IcMwTrendUp size={16} className="text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
               {aiDigest.moodTrend}
             </p>
@@ -128,7 +128,7 @@ export function WeeklyDigestWidget() {
         {/* AI Next Week Suggestion */}
         {aiDigest?.nextWeekSuggestion && (
           <div className="flex items-start gap-2 pt-1">
-            <ArrowRight className="w-3.5 h-3.5 text-primary-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <IcMwArrowRight size={16} className="text-primary-400 shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-xs text-primary-600 dark:text-primary-400 italic leading-relaxed">
               {aiDigest.nextWeekSuggestion}
             </p>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Heading2, List, CheckSquare, Code2, Quote, Minus, Mic, Camera } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
+import { IcLineCamera, IcLineMic, IcLineMinus, IcMwCheckSquare, IcMwCode, IcMwList, IcMwQuote } from '@/mw/icons'
+import { FormatGlyph } from '@/components/editor/FormatGlyph'
 
 type CommandCategory = 'format' | 'insert' | 'ai'
 
@@ -28,14 +29,14 @@ const CATEGORY_LABELS: Record<CommandCategory, string> = {
 }
 
 const commands: SlashCommand[] = [
-  { id: 'heading', label: '제목', icon: <Heading2 className="w-4 h-4" />, category: 'format', insert: '## ' },
-  { id: 'list', label: '목록', icon: <List className="w-4 h-4" />, category: 'format', insert: '- ' },
-  { id: 'checklist', label: '체크리스트', icon: <CheckSquare className="w-4 h-4" />, category: 'format', insert: '- [ ] ' },
-  { id: 'code', label: '코드 블록', icon: <Code2 className="w-4 h-4" />, category: 'insert', insert: '```\n\n```' },
-  { id: 'quote', label: '인용', icon: <Quote className="w-4 h-4" />, category: 'insert', insert: '> ' },
-  { id: 'divider', label: '구분선', icon: <Minus className="w-4 h-4" />, category: 'insert', insert: '\n---\n' },
-  { id: 'voice', label: '음성 입력', icon: <Mic className="w-4 h-4" />, category: 'ai' },
-  { id: 'image', label: '이미지 OCR', icon: <Camera className="w-4 h-4" />, category: 'ai' },
+  { id: 'heading', label: '제목', icon: <FormatGlyph kind="heading" />, category: 'format', insert: '## ' },
+  { id: 'list', label: '목록', icon: <IcMwList size={16} />, category: 'format', insert: '- ' },
+  { id: 'checklist', label: '체크리스트', icon: <IcMwCheckSquare size={16} />, category: 'format', insert: '- [ ] ' },
+  { id: 'code', label: '코드 블록', icon: <IcMwCode size={16} />, category: 'insert', insert: '```\n\n```' },
+  { id: 'quote', label: '인용', icon: <IcMwQuote size={16} />, category: 'insert', insert: '> ' },
+  { id: 'divider', label: '구분선', icon: <IcLineMinus size={16} />, category: 'insert', insert: '\n---\n' },
+  { id: 'voice', label: '음성 입력', icon: <IcLineMic size={16} />, category: 'ai' },
+  { id: 'image', label: '이미지 OCR', icon: <IcLineCamera size={16} />, category: 'ai' },
 ]
 
 function groupBy<T>(arr: T[], key: (item: T) => string): Record<string, T[]> {

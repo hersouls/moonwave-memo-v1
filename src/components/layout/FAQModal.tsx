@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { useUIStore } from '@/stores/uiStore'
-import { ChevronDown, Search } from 'lucide-react'
 import { clsx } from 'clsx'
+import { IcLineChevronDown, IcLineSearch } from '@/mw/icons'
 
 interface FAQItem {
   q: string
@@ -196,7 +196,7 @@ export function FAQModal() {
       <DialogBody className="max-h-[70dvh] fold:max-h-[60dvh] overflow-y-auto">
         {/* Search */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <IcLineSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             type="text"
             value={searchQuery}
@@ -231,9 +231,9 @@ export function FAQModal() {
                     <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                       {category.title}
                     </span>
-                    <ChevronDown
+                    <IcLineChevronDown size={16}
                       className={clsx(
-                        'w-4 h-4 text-zinc-400 transition-transform duration-200',
+                        '  text-zinc-400 transition-transform duration-200',
                         isExpanded && 'rotate-180'
                       )}
                     />

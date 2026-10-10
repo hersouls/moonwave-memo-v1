@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { ThemeSource, WeatherCondition } from '@/lib/types'
-import { useSettingsStore, applyTheme, applyColorPalette } from './settingsStore'
+import { useSettingsStore } from './settingsStore'
 
 type ExtendedPalette =
   | 'default' | 'ocean' | 'rose' | 'purple' | 'forest'
@@ -89,7 +89,6 @@ export const useThemeOrchestrator = create<ThemeOrchestratorState>()((set, get) 
   resolve: () => {
     const { signals } = get()
     const lw = useSettingsStore.getState().settings.livingWorkspace
-    const settings = useSettingsStore.getState().settings
 
     let source: ThemeSource = 'default'
     let palette: ExtendedPalette | null = null
@@ -120,20 +119,7 @@ export const useThemeOrchestrator = create<ThemeOrchestratorState>()((set, get) 
       palette = null
     }
 
+    // 신호만 기록해요. 색 팔레트와 테마는 바꾸지 않아요: 색은 키트의 토큰, 테마는 설정의 data-theme 하나예요.
     set({ activeSource: source, activePalette: palette })
-
-    // Apply palette (null = use user's default from settingsStore)
-    if (palette) {
-      applyColorPalette(palette as never)
-    } else {
-      applyColorPalette(settings.colorPalette)
-    }
-
-    // Apply solar dark mode if environment is active and no higher priority overrides theme mode
-    if (source === 'environment' && signals.environment.solarMode && lw.environmentThemeEnabled) {
-      applyTheme(signals.environment.solarMode)
-    } else if (source === 'default') {
-      applyTheme(settings.theme)
-    }
   },
 }))

@@ -1,48 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { clsx } from 'clsx'
-import {
-  Check,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  Clock,
-  Cloud,
-  CloudOff,
-  Download,
-  Eye,
-  EyeOff,
-  FolderOpen,
-  HardDrive,
-  Loader2,
-  Mic,
-  Monitor,
-  Moon,
-  Pencil,
-  Plus,
-  Settings,
-  Shield,
-  Smartphone,
-  Sun,
-  StickyNote,
-  Trash2,
-  Upload,
-  User,
-  AlertTriangle,
-  Sparkles,
-  ExternalLink,
-  XCircle,
-  CheckCircle,
-} from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useMemoStore } from '@/stores/memoStore'
-import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
 import { useUIStore } from '@/stores/uiStore'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { COLOR_PALETTES, FOLDER_COLORS, FONT_FAMILIES, FONT_SIZES, MEMO_COLORS } from '@/utils/constants'
+import { FOLDER_COLORS, FONT_SIZES } from '@/utils/constants'
 import {
   createBackup,
   downloadBackup,
@@ -54,18 +20,19 @@ import {
 } from '@/services/backup'
 import { stopSync } from '@/services/firestoreSync'
 import { useToastStore } from '@/stores/toastStore'
-import type { ThemeMode, ColorPalette, MemoColor, InputStartPosition, STTLanguage } from '@/lib/types'
+import type { ThemeMode, InputStartPosition, STTLanguage } from '@/lib/types'
 import type { SyncStatus } from '@/lib/types'
 import { SyncFolderSection } from './SyncFolderSection'
 import { OrphanBackupsSection } from './OrphanBackupsSection'
 import { DesktopDownloadSection } from './DesktopDownloadSection'
 import { AndroidDownloadSection } from './AndroidDownloadSection'
+import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDesktop, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineEyeHidden, IcLineFolder, IcLineLoading, IcLineMic, IcLineMoblie, IcLineMy, IcLineSetting, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwDrive, IcMwMoon, IcMwNote, IcMwSparkles, IcMwSun, IcMwUpload } from '@/mw/icons'
 
 // ─── Theme Options ──────────────────────────────────
 const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-  { value: 'light', label: '라이트', icon: <Sun className="w-4 h-4" /> },
-  { value: 'dark', label: '다크', icon: <Moon className="w-4 h-4" /> },
-  { value: 'system', label: '시스템', icon: <Monitor className="w-4 h-4" /> },
+  { value: 'light', label: '라이트', icon: <IcMwSun size={16} /> },
+  { value: 'dark', label: '다크', icon: <IcMwMoon size={16} /> },
+  { value: 'system', label: '시스템', icon: <IcLineDesktop size={16} /> },
 ]
 
 // ─── Sync Status Badge ──────────────────────────────
@@ -74,28 +41,28 @@ function SyncStatusBadge({ status }: { status: SyncStatus }) {
     case 'syncing':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
-          <Loader2 className="w-3 h-3 animate-spin" />
+          <IcLineLoading size={12} className="animate-spin" />
           동기화 중...
         </span>
       )
     case 'synced':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300">
-          <Cloud className="w-3 h-3" />
+          <IcLineCloud size={12} />
           동기화됨
         </span>
       )
     case 'error':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300">
-          <CloudOff className="w-3 h-3" />
+          <IcLineWarning size={12} />
           동기화 오류
         </span>
       )
     case 'offline':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300">
-          <CloudOff className="w-3 h-3" />
+          <IcLineWarning size={12} />
           오프라인 — 연결되면 동기화
         </span>
       )
@@ -195,7 +162,7 @@ function CloudSyncSection() {
                 type="button"
                 onClick={logout}
                 disabled={isSigningOut}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-danger-600 bg-zinc-50 hover:bg-danger-50 dark:bg-zinc-800 dark:hover:bg-danger-900/20 transition-colors border border-[var(--color-border-default)] hover:border-danger-200 dark:hover:border-danger-800 disabled:opacity-60 disabled:cursor-wait"
+                className="mw-button mw-button--secondary mw-button--small"
               >
                 {isSigningOut ? '동기화 마무리 중...' : '로그아웃'}
               </button>
@@ -208,20 +175,20 @@ function CloudSyncSection() {
               </div>
               {lastSyncTime && (
                 <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
+                  <IcLineTime size={12} />
                   {formatSyncTime(lastSyncTime)}
                 </span>
               )}
             </div>
 
-            <InfoBanner icon={<Cloud className="w-4 h-4" />}>
+            <InfoBanner icon={<IcLineCloud size={16} />}>
               다른 기기에서 같은 계정으로 로그인하면 자동으로 동기화됩니다.
             </InfoBanner>
           </div>
         ) : (
           <div className="text-center py-6 space-y-4">
             <div className="w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mx-auto mb-2">
-              <Cloud className="w-8 h-8 text-primary-500 dark:text-primary-400" />
+              <IcLineCloud size={32} className="text-primary-500 dark:text-primary-400" />
             </div>
             <div className="space-y-1">
               <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">
@@ -238,7 +205,7 @@ function CloudSyncSection() {
               className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#4285F4] hover:bg-[#3367D6] text-white font-medium transition-[background-color,transform] active:scale-95 disabled:opacity-50 disabled:scale-100 min-w-[200px]"
             >
               {isSigningIn ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <IcLineLoading size={16} className="animate-spin" />
               ) : (
                 <svg className="w-4 h-4 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -250,7 +217,7 @@ function CloudSyncSection() {
               {isSigningIn ? '로그인 중...' : 'Google로 로그인'}
             </button>
             {authError && (
-              <InfoBanner tone="danger" icon={<CloudOff className="w-4 h-4" />} className="mx-auto max-w-xs text-left">
+              <InfoBanner tone="danger" icon={<IcLineWarning size={16} />} className="mx-auto max-w-xs text-left">
                 {authError}
               </InfoBanner>
             )}
@@ -320,55 +287,6 @@ function ToggleItem({
   )
 }
 
-// ─── Theme Status Banner ────────────────────────────
-function ThemeStatusBanner() {
-  const activeSource = useThemeOrchestrator((s) => s.activeSource)
-  const signals = useThemeOrchestrator((s) => s.signals)
-
-  if (activeSource === 'default' || activeSource === 'manual-override') return null
-
-  let message = ''
-  let description = ''
-  let bgClass = 'bg-primary-50 dark:bg-primary-900/20'
-  let borderClass = 'border-primary-200 dark:border-primary-800'
-  let textClass = 'text-primary-800 dark:text-primary-200'
-  let icon = <Sparkles className="w-5 h-5" />
-
-  if (activeSource === 'survival') {
-    message = '서바이벌 모드 동작 중'
-    description = '인지 부하를 줄이기 위해 흑백 테마가 강제 적용 중입니다.'
-    bgClass = 'bg-zinc-100 dark:bg-zinc-800'
-    borderClass = 'border-zinc-300 dark:border-zinc-700'
-    textClass = 'text-zinc-800 dark:text-zinc-200'
-    icon = <Shield className="w-5 h-5" />
-  } else if (activeSource === 'special-event') {
-    message = '타임캡슐 모드 동작 중'
-    description = '과거의 뜻깊은 기록을 발견하여 특별 테마가 적용 중입니다.'
-    bgClass = 'bg-amber-50 dark:bg-amber-900/20'
-    borderClass = 'border-amber-200 dark:border-amber-800'
-    textClass = 'text-amber-800 dark:text-amber-200'
-    icon = <Clock className="w-5 h-5" />
-  } else if (activeSource === 'environment') {
-    message = '환경 동기화 테마 적용 중'
-    const conditionMap: Record<string, string> = { clear: '맑음', rain: '비', snow: '눈', overcast: '흐림' }
-    const condition = signals.environment.weather ? conditionMap[signals.environment.weather] || '알 수 없음' : ''
-    const solar = signals.environment.solarMode === 'light' ? '낮' : '밤'
-    description = `현재 날씨(${condition}) 및 시간(${solar})에 맞춰 테마가 자동 적용되었습니다.`
-    // 기본값(primary 토큰)을 그대로 사용 — 사용자 팔레트를 따른다
-    icon = <Cloud className="w-5 h-5" />
-  }
-
-  return (
-    <div className={clsx('flex items-start gap-3 p-4 mb-6 rounded-xl border', bgClass, borderClass, textClass)}>
-      <div className="mt-0.5">{icon}</div>
-      <div>
-        <h4 className="text-sm font-semibold">{message}</h4>
-        <p className="text-xs opacity-80 mt-1">{description}</p>
-      </div>
-    </div>
-  )
-}
-
 // ─── Settings Tabs ──────────────────────────────────
 type SettingsTab = 'general' | 'account' | 'data' | 'memo' | 'ai' | 'workspace' | 'system'
 
@@ -378,10 +296,7 @@ export function SettingsModal() {
 
   const settings = useSettingsStore((s) => s.settings)
   const setTheme = useSettingsStore((s) => s.setTheme)
-  const setColorPalette = useSettingsStore((s) => s.setColorPalette)
-  const setFontFamily = useSettingsStore((s) => s.setFontFamily)
   const setFontSize = useSettingsStore((s) => s.setFontSize)
-  const setDefaultColor = useSettingsStore((s) => s.setDefaultColor)
   const setDefaultFolder = useSettingsStore((s) => s.setDefaultFolder)
   const setInputStartPosition = useSettingsStore((s) => s.setInputStartPosition)
   const toggleHashtagToTag = useSettingsStore((s) => s.toggleHashtagToTag)
@@ -410,7 +325,6 @@ export function SettingsModal() {
     return counts
   }, [memos])
 
-  const activeSource = useThemeOrchestrator((s) => s.activeSource)
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
 
@@ -557,16 +471,9 @@ export function SettingsModal() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localGeminiKey])
 
-  // 테마/팔레트는 선택 즉시 커밋 (instant-apply) — 환경/이벤트 테마가 활성인 경우
-  // 오케스트레이터가 우선권을 되찾도록 즉시 재해석한다.
+  // 테마는 고르는 즉시 적용해요
   const handleThemeSelect = (theme: ThemeMode) => {
     setTheme(theme)
-    useThemeOrchestrator.getState().resolve()
-  }
-
-  const handlePaletteSelect = (palette: ColorPalette) => {
-    setColorPalette(palette)
-    useThemeOrchestrator.getState().resolve()
   }
 
   const handleInstallPWA = async () => {
@@ -700,10 +607,8 @@ export function SettingsModal() {
 
   // ─── Tab Content: General ─────────────────────────
   const renderGeneralSettings = () => {
-    const isThemeOverridden = activeSource !== 'default' && activeSource !== 'manual-override'
     return (
     <div className="space-y-8">
-      {isThemeOverridden && <ThemeStatusBanner />}
 
       {/* Theme Selection */}
       <section>
@@ -737,94 +642,12 @@ export function SettingsModal() {
 
       <div className="border-t border-[var(--color-border-subtle)]" />
 
-      {/* Color Palette Selection */}
-      <section>
-        <div className="flex items-center justify-between mb-4 px-1">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            강조 색상
-          </h3>
-          {isThemeOverridden ? (
-            <span className="text-xs text-primary-500 dark:text-primary-400">
-              상단 알림 참조 (테마 제어 중)
-            </span>
-          ) : settings.theme === 'dark' ? (
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              다크 모드에서는 색상이 자동 조정됩니다
-            </span>
-          ) : null}
-        </div>
-        <div className={clsx(
-          'grid grid-cols-3 sm:grid-cols-5 gap-3',
-          isThemeOverridden && 'opacity-40 pointer-events-none'
-        )}>
-          {Object.values(COLOR_PALETTES).map((palette) => (
-            <button
-              key={palette.id}
-              type="button"
-              onClick={() => handlePaletteSelect(palette.id)}
-              disabled={isThemeOverridden}
-              className={clsx(
-                'group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-[transform,border-color,background-color] duration-200 hover:scale-105',
-                settings.colorPalette === palette.id
-                  ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
-                  : 'border-[var(--color-border-default)] hover:border-zinc-300 dark:hover:border-zinc-600'
-              )}
-            >
-              <div className="relative flex gap-1">
-                <div
-                  className="w-6 h-6 rounded-full shadow-sm ring-1 ring-black/5"
-                  style={{ backgroundColor: palette.colors.primary }}
-                />
-                <div
-                  className="w-6 h-6 rounded-full shadow-sm ring-1 ring-black/5 -ml-2"
-                  style={{ backgroundColor: palette.colors.secondary }}
-                />
-                {settings.colorPalette === palette.id && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-5 h-5 rounded-full bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-primary-600 dark:text-primary-400" />
-                    </div>
-                  </div>
-                )}
-              </div>
-              <span className={clsx(
-                'text-xs font-medium transition-colors',
-                settings.colorPalette === palette.id ? 'text-primary-700 dark:text-primary-300' : 'text-zinc-600 dark:text-zinc-400'
-              )}>
-                {palette.nameKo}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <div className="border-t border-[var(--color-border-subtle)]" />
-
       {/* Font Settings */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           글자 설정
         </h3>
         <div className="space-y-4">
-          {/* Font Family */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {FONT_FAMILIES.map((font) => (
-              <button
-                key={font.id}
-                onClick={() => setFontFamily(font.id)}
-                className={clsx(
-                  'px-3 py-3 rounded-xl border-2 text-sm transition-colors text-center',
-                  settings.fontFamily === font.id
-                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'border-[var(--color-border-default)] text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600'
-                )}
-                style={{ fontFamily: font.fontFamily }}
-              >
-                {font.name}
-              </button>
-            ))}
-          </div>
-
           {/* Font Size */}
           <div className="flex items-center gap-3 p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50">
             <span className="text-xs text-zinc-500 dark:text-zinc-400 shrink-0 font-medium">크기</span>
@@ -862,11 +685,11 @@ export function SettingsModal() {
             <span className="font-medium text-zinc-900 dark:text-zinc-100">1.0.0</span>
           </div>
           <div className="border-t border-[var(--color-border-subtle)] my-3" />
-          <button
+          <button type="button"
             onClick={() => { closeModal(); setTimeout(() => openTermsModal(), 200) }}
-            className="text-sm text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
+            className="mw-text-button mw-text-button--underline mw-text-button--medium mw-text-button--default"
           >
-            서비스 약관 · 개인정보처리방침
+            <span>서비스 약관 · 개인정보처리방침</span>
           </button>
         </div>
       </section>
@@ -907,14 +730,14 @@ export function SettingsModal() {
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400 text-xs font-medium">
-                  <Check className="w-3 h-3" />
+                  <IcLineCheck size={12} />
                   Google 계정 연동됨
                 </div>
               </div>
             </>
           ) : (
             <div className="w-full text-center py-4">
-              <User className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
+              <IcLineMy size={48} className="mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Google 로그인 시 프로필이 자동으로 표시됩니다.
               </p>
@@ -966,7 +789,7 @@ export function SettingsModal() {
               onClick={handleBackup}
               disabled={isBackingUp}
             >
-              <Download className="w-4 h-4 mr-1.5" />
+              <IcLineDownload size={16} className="mr-1.5" />
               {isBackingUp ? '백업 중...' : '백업'}
             </Button>
           </div>
@@ -988,7 +811,7 @@ export function SettingsModal() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isRestoring}
               >
-                <Upload className="w-4 h-4 mr-1.5" />
+                <IcMwUpload size={16} className="mr-1.5" />
                 {isRestoring ? '복원 중...' : '복원'}
               </Button>
               <input
@@ -1005,7 +828,7 @@ export function SettingsModal() {
           {restoreError && (
             <div className="p-4 rounded-xl bg-danger-50 dark:bg-danger-900/30 border border-danger-200 dark:border-danger-800">
               <div className="flex items-center gap-2 text-danger-700 dark:text-danger-300 mb-1">
-                <AlertTriangle className="w-4 h-4" />
+                <IcLineWarning size={16} />
                 <span className="text-sm font-semibold">복원 오류</span>
               </div>
               <p className="text-xs text-danger-600 dark:text-danger-400 whitespace-pre-line pl-6">
@@ -1021,34 +844,6 @@ export function SettingsModal() {
   // ─── Tab Content: Memo ────────────────────────────
   const renderMemoSettings = () => (
     <div className="space-y-8">
-      {/* Default Color */}
-      <section>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
-          메모장 배경색
-        </h3>
-        <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50">
-          <div className="flex items-center gap-3">
-            {(Object.keys(MEMO_COLORS) as MemoColor[]).map((c) => (
-              <button
-                key={c}
-                onClick={() => setDefaultColor(c)}
-                aria-label={`배경색 ${c}`}
-                aria-pressed={settings.memoSettings.defaultColor === c}
-                className={clsx(
-                  'w-8 h-8 rounded-full border-2 transition-[transform,border-color]',
-                  settings.memoSettings.defaultColor === c
-                    ? 'border-primary-500 scale-110'
-                    : 'border-[var(--color-border-default)]'
-                )}
-                style={{ backgroundColor: MEMO_COLORS[c] }}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="border-t border-[var(--color-border-subtle)]" />
-
       {/* Default Folder */}
       <section>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
@@ -1068,7 +863,7 @@ export function SettingsModal() {
                 />
               )}
               <span>{defaultFolder?.name || '전체 메모'}</span>
-              <ChevronRight className={clsx('w-4 h-4 transition-transform', showFolderDropdown && 'rotate-90')} />
+              <IcLineChevronRight size={16} className={clsx('  transition-transform', showFolderDropdown && 'rotate-90')} />
             </div>
           </button>
           {showFolderDropdown && (
@@ -1085,7 +880,7 @@ export function SettingsModal() {
                   )}
                 >
                   <span>전체 메모</span>
-                  {!settings.memoSettings.defaultFolderId && <Check className="w-4 h-4 ml-auto" />}
+                  {!settings.memoSettings.defaultFolderId && <IcLineCheck size={16} className="ml-auto" />}
                 </button>
                 {folders.map((folder) => (
                   <button
@@ -1100,7 +895,7 @@ export function SettingsModal() {
                   >
                     <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: folder.color }} />
                     <span>{folder.name}</span>
-                    {settings.memoSettings.defaultFolderId === folder.id && <Check className="w-4 h-4 ml-auto" />}
+                    {settings.memoSettings.defaultFolderId === folder.id && <IcLineCheck size={16} className="ml-auto" />}
                   </button>
                 ))}
               </div>
@@ -1127,7 +922,7 @@ export function SettingsModal() {
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">새 메모 커서 위치</span>
           <div className="flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
             <span>{positionLabel[settings.memoSettings.inputStartPosition]}</span>
-            <ChevronRight className="w-4 h-4" />
+            <IcLineChevronRight size={16} />
           </div>
         </button>
       </section>
@@ -1164,11 +959,11 @@ export function SettingsModal() {
             폴더 관리
           </h3>
           {!isAddingFolder && (
-            <button
+            <button type="button"
               onClick={() => { setIsAddingFolder(true); setNewFolderName(''); setNewFolderColor('#3B82F6') }}
-              className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600 transition-colors"
+              className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <IcLineAdd size={16} />
               새 폴더
             </button>
           )}
@@ -1210,13 +1005,13 @@ export function SettingsModal() {
                 ))}
               </div>
               <div className="flex gap-2 justify-end">
-                <button
+                <button type="button"
                   onClick={() => setIsAddingFolder(false)}
-                  className="px-3 py-1.5 text-xs font-medium text-zinc-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
                 >
-                  취소
+                  <span>취소</span>
                 </button>
-                <button
+                <button type="button"
                   onClick={() => {
                     if (newFolderName.trim()) {
                       addFolder(newFolderName.trim(), newFolderColor)
@@ -1225,7 +1020,7 @@ export function SettingsModal() {
                     }
                   }}
                   disabled={!newFolderName.trim()}
-                  className="px-3 py-1.5 text-xs font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 disabled:opacity-50"
+                  className="mw-button mw-button--primary mw-button--small"
                 >
                   만들기
                 </button>
@@ -1236,7 +1031,7 @@ export function SettingsModal() {
           {/* Folder list */}
           {folders.length === 0 && !isAddingFolder && (
             <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 text-center">
-              <FolderOpen className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
+              <IcLineFolder size={32} className="mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
               <p className="text-sm text-zinc-500 dark:text-zinc-400">폴더가 없습니다</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">새 폴더를 추가하여 메모를 정리하세요</p>
             </div>
@@ -1281,22 +1076,22 @@ export function SettingsModal() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <button
+                    <button type="button"
                       onClick={() => {
                         if (editFolderName.trim()) {
                           updateFolder(folder.id!, { name: editFolderName.trim(), color: editFolderColor })
                           setEditingFolderId(null)
                         }
                       }}
-                      className="px-2 py-1 text-xs font-medium text-white bg-primary-500 rounded hover:bg-primary-600"
+                      className="mw-button mw-button--primary mw-button--small"
                     >
                       저장
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => setEditingFolderId(null)}
-                      className="px-2 py-1 text-xs font-medium text-zinc-500 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                      className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
                     >
-                      취소
+                      <span>취소</span>
                     </button>
                   </div>
                 </>
@@ -1313,51 +1108,51 @@ export function SettingsModal() {
                     className="flex-shrink-0 inline-flex items-center gap-1 text-xs tabular-nums text-zinc-500 dark:text-zinc-400"
                     aria-label={`메모 ${folderMemoCounts.get(folder.id!) ?? 0}개`}
                   >
-                    <StickyNote className="w-3 h-3" />
+                    <IcMwNote size={12} />
                     {folderMemoCounts.get(folder.id!) ?? 0}
                   </span>
                   {!folder.isSystem && (
                     <div className="flex items-center gap-1">
                       {/* 순서 변경 ▲▼ — 인접 폴더와 스왑 (경계에서 비활성) */}
                       <div className="flex flex-col -my-2">
-                        <button
+                        <button type="button"
                           onClick={() => moveFolder(index, -1)}
                           disabled={index === 0}
-                          className="flex items-center justify-center w-7 h-5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                          className="mw-icon-button"
                           aria-label={`${folder.name} 위로 이동`}
                         >
-                          <ChevronUp className="w-3.5 h-3.5" />
+                          <IcLineChevronUp size={16} />
                         </button>
-                        <button
+                        <button type="button"
                           onClick={() => moveFolder(index, 1)}
                           disabled={index === folders.length - 1}
-                          className="flex items-center justify-center w-7 h-5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                          className="mw-icon-button"
                           aria-label={`${folder.name} 아래로 이동`}
                         >
-                          <ChevronDown className="w-3.5 h-3.5" />
+                          <IcLineChevronDown size={16} />
                         </button>
                       </div>
                       {/* 40px 최소 터치 타깃 확보 (-m으로 레이아웃 밀도 유지) */}
-                      <button
+                      <button type="button"
                         onClick={() => {
                           setEditingFolderId(folder.id!)
                           setEditFolderName(folder.name)
                           setEditFolderColor(folder.color)
                         }}
-                        className="flex items-center justify-center min-w-10 min-h-10 -my-2 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="mw-icon-button -my-2"
                         aria-label={`${folder.name} 편집`}
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <IcLineEdit size={16} />
                       </button>
-                      <button
+                      <button type="button"
                         onClick={() => {
                           setPendingDeleteFolder({ id: folder.id!, name: folder.name })
                           setShowDeleteFolderConfirm(true)
                         }}
-                        className="flex items-center justify-center min-w-10 min-h-10 -my-2 rounded-lg text-zinc-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                        className="mw-icon-button -my-2"
                         aria-label={`${folder.name} 삭제`}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <IcLineTrash size={16} />
                       </button>
                     </div>
                   )}
@@ -1531,11 +1326,11 @@ export function SettingsModal() {
 
       {/* Advanced: Custom API Keys */}
       <section>
-        <button
+        <button type="button"
           onClick={() => setShowAdvancedKeys(!showAdvancedKeys)}
-          className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 px-1 w-full"
+          className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left w-full"
         >
-          <ChevronDown className={clsx('w-4 h-4 transition-transform', showAdvancedKeys && 'rotate-180')} />
+          <IcLineChevronDown size={16} className={clsx('  transition-transform', showAdvancedKeys && 'rotate-180')} />
           고급: 내 API 키 등록 (무제한)
         </button>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 px-1 mb-4">
@@ -1549,19 +1344,19 @@ export function SettingsModal() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">OpenAI API 키</label>
                 <div className="flex items-center gap-2">
-                  {openAITestResult === 'success' && <span className="text-[10px] text-success-600"><CheckCircle className="w-3 h-3 inline" /> 연결됨</span>}
-                  {openAITestResult === 'error' && <span className="text-[10px] text-danger-500"><XCircle className="w-3 h-3 inline" /> 실패</span>}
-                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><ExternalLink className="w-3 h-3 inline" /> 발급</a>
+                  {openAITestResult === 'success' && <span className="text-[10px] text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
+                  {openAITestResult === 'error' && <span className="text-[10px] text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input type={showOpenAIKey ? 'text' : 'password'} value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} placeholder="sk-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showOpenAIKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showOpenAIKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'openai' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+                <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'openai' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
-              {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
+              {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
 
             {/* Anthropic Key */}
@@ -1569,19 +1364,19 @@ export function SettingsModal() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Anthropic API 키</label>
                 <div className="flex items-center gap-2">
-                  {anthropicTestResult === 'success' && <span className="text-[10px] text-success-600"><CheckCircle className="w-3 h-3 inline" /> 연결됨</span>}
-                  {anthropicTestResult === 'error' && <span className="text-[10px] text-danger-500"><XCircle className="w-3 h-3 inline" /> 실패</span>}
-                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><ExternalLink className="w-3 h-3 inline" /> 발급</a>
+                  {anthropicTestResult === 'success' && <span className="text-[10px] text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
+                  {anthropicTestResult === 'error' && <span className="text-[10px] text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
+                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input type={showAnthropicKey ? 'text' : 'password'} value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} placeholder="sk-ant-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showAnthropicKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showAnthropicKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'anthropic' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+                <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'anthropic' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
-              {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
+              {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
 
             {/* Gemini Key */}
@@ -1589,19 +1384,19 @@ export function SettingsModal() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Gemini API 키</label>
                 <div className="flex items-center gap-2">
-                  {geminiTestResult === 'success' && <span className="text-[10px] text-success-600"><CheckCircle className="w-3 h-3 inline" /> 연결됨</span>}
-                  {geminiTestResult === 'error' && <span className="text-[10px] text-danger-500"><XCircle className="w-3 h-3 inline" /> 실패</span>}
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><ExternalLink className="w-3 h-3 inline" /> 발급</a>
+                  {geminiTestResult === 'success' && <span className="text-[10px] text-success-600"><IcMwCheckCircle size={12} className="inline" /> 연결됨</span>}
+                  {geminiTestResult === 'error' && <span className="text-[10px] text-danger-500"><IcFillDelete size={12} className="inline" /> 실패</span>}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-500 hover:text-primary-600"><IcLineExternalLink size={12} className="inline" /> 발급</a>
                 </div>
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input type={showGeminiKey ? 'text' : 'password'} value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} placeholder="AIza..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} aria-label={showGeminiKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showGeminiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} aria-label={showGeminiKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showGeminiKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'gemini' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '테스트'}</button>
+                <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'gemini' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
-              {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><Check className="w-3 h-3" /> 저장됨</p>}
+              {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-[10px] text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
           </div>
         )}
@@ -1609,7 +1404,7 @@ export function SettingsModal() {
 
       {/* Info */}
       <section>
-        <InfoBanner icon={<Shield className="w-4 h-4" />}>
+        <InfoBanner icon={<IcLineShield size={16} />}>
           API 키를 등록하지 않아도 하루 50회까지 무료로 AI 기능을 사용할 수 있습니다. 등록된 키는 이 기기에만 저장됩니다.
         </InfoBanner>
       </section>
@@ -1628,7 +1423,7 @@ export function SettingsModal() {
           {isInstalled ? (
             <div className="flex items-center gap-3 p-3 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-400 rounded-lg">
               <div className="w-8 h-8 rounded-full bg-success-100 dark:bg-success-900/40 flex items-center justify-center">
-                <Smartphone className="w-4 h-4" />
+                <IcLineMoblie size={16} />
               </div>
               <span className="text-sm font-medium">앱이 이미 설치되어 있습니다</span>
             </div>
@@ -1647,7 +1442,7 @@ export function SettingsModal() {
                 size="sm"
                 onClick={handleInstallPWA}
               >
-                <Download className="w-4 h-4 mr-1.5" />
+                <IcLineDownload size={16} className="mr-1.5" />
                 설치하기
               </Button>
             </div>
@@ -1674,7 +1469,7 @@ export function SettingsModal() {
           접근성
         </h3>
         <ToggleItem
-          icon={<Eye className="w-4 h-4" />}
+          icon={<IcLineEye size={16} />}
           label="고대비 모드"
           description="텍스트와 UI 요소의 대비를 높여 가독성을 개선합니다"
           enabled={settings.highContrastMode ?? false}
@@ -1703,7 +1498,7 @@ export function SettingsModal() {
             size="sm"
             onClick={() => setShowClearConfirm(true)}
           >
-            <Trash2 className="w-4 h-4 mr-1.5" />
+            <IcLineTrash size={16} className="mr-1.5" />
             삭제
           </Button>
         </div>
@@ -1718,12 +1513,8 @@ export function SettingsModal() {
       useSettingsStore.getState().updateLivingWorkspace({ [key]: !lw[key] })
     }
 
-    const isThemeOverridden = activeSource !== 'default' && activeSource !== 'manual-override'
-
     return (
       <div className="space-y-8">
-        {isThemeOverridden && <ThemeStatusBanner />}
-        
         <section>
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 px-1">
             Living Workspace
@@ -1733,13 +1524,9 @@ export function SettingsModal() {
           </p>
 
           <div className="space-y-3">
-            <ToggleItem label="환경 동기화 테마" description="날씨/시간에 따라 테마 자동 변경" enabled={lw.environmentThemeEnabled} onChange={() => handleToggle('environmentThemeEnabled')} />
-            <ToggleItem label="서바이벌 모드" description="인지 부하 시 모노크롬 미니멀 모드 자동 진입" enabled={lw.survivalModeEnabled} onChange={() => handleToggle('survivalModeEnabled')} />
-            <ToggleItem label="완료 카타르시스" description="긴 메모 완성 시 시각 효과 표시" enabled={lw.completionEffectsEnabled} onChange={() => handleToggle('completionEffectsEnabled')} />
-            <ToggleItem label="타임캡슐" description="과거 같은 날 기록을 발견하면 특별 테마 적용" enabled={lw.timeCapsuleEnabled} onChange={() => handleToggle('timeCapsuleEnabled')} />
+            <ToggleItem label="날씨와 위치 맥락" description="메모에 쓴 때의 날씨와 낮밤을 함께 적고, 상단 바에 날씨를 보여 줘요" enabled={lw.environmentThemeEnabled} onChange={() => handleToggle('environmentThemeEnabled')} />
+            <ToggleItem label="타임캡슐" description="지난해 같은 날에 쓴 메모를 알려 줘요" enabled={lw.timeCapsuleEnabled} onChange={() => handleToggle('timeCapsuleEnabled')} />
             <ToggleItem label="사운드 동기화" description="테마에 맞는 인터랙션 사운드 재생" enabled={lw.soundSyncEnabled} onChange={() => handleToggle('soundSyncEnabled')} />
-            <ToggleItem label="AI 감성 배경 이미지" description="계절/날씨에 맞는 AI 배경 이미지 자동 생성 (OpenAI 키 필요)" enabled={lw.ambientImagesEnabled} onChange={() => handleToggle('ambientImagesEnabled')} />
-            <ToggleItem label="지식의 숲 (World Building)" description="작성량과 태그 기반 배경 일러스트 자동 건축 (OpenAI 키 필요)" enabled={lw.worldBuildingEnabled} onChange={() => handleToggle('worldBuildingEnabled')} />
           </div>
         </section>
 
@@ -1756,7 +1543,6 @@ export function SettingsModal() {
             <ToggleItem label="호흡 타이포그래피" description="빠른 타이핑 시 자간이 심호흡 리듬으로 맥동" enabled={lw.breathingTypographyEnabled} onChange={() => handleToggle('breathingTypographyEnabled')} />
             <ToggleItem label="소멸의 공간 (브레인 덤프)" description="1시간 후 자동 소멸되는 임시 메모 모드" enabled={lw.ephemeralBrainDumpEnabled} onChange={() => handleToggle('ephemeralBrainDumpEnabled')} />
             <ToggleItem label="앰비언트 사운드스케이프" description="타이핑이 앰비언트 음악을 생성" enabled={lw.ambientSoundscapeEnabled} onChange={() => handleToggle('ambientSoundscapeEnabled')} />
-            <ToggleItem label="유기적 UI 아우라" description="글쓰기 감정에 따라 UI 색상 미세 변화" enabled={lw.organicAuraEnabled} onChange={() => handleToggle('organicAuraEnabled')} />
           </div>
         </section>
 
@@ -1793,13 +1579,13 @@ export function SettingsModal() {
 
   // ─── Tab Definitions ──────────────────────────────
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'general', label: '일반', icon: <Settings className="w-4 h-4" /> },
-    { id: 'account', label: '계정', icon: <User className="w-4 h-4" /> },
-    { id: 'data', label: '데이터', icon: <HardDrive className="w-4 h-4" /> },
-    { id: 'memo', label: '메모', icon: <StickyNote className="w-4 h-4" /> },
-    { id: 'ai', label: 'AI 서비스', icon: <Mic className="w-4 h-4" /> },
-    { id: 'workspace', label: '워크스페이스', icon: <Sparkles className="w-4 h-4" /> },
-    { id: 'system', label: '시스템', icon: <Shield className="w-4 h-4" /> },
+    { id: 'general', label: '일반', icon: <IcLineSetting size={16} /> },
+    { id: 'account', label: '계정', icon: <IcLineMy size={16} /> },
+    { id: 'data', label: '데이터', icon: <IcMwDrive size={16} /> },
+    { id: 'memo', label: '메모', icon: <IcMwNote size={16} /> },
+    { id: 'ai', label: 'AI 서비스', icon: <IcLineMic size={16} /> },
+    { id: 'workspace', label: '워크스페이스', icon: <IcMwSparkles size={16} /> },
+    { id: 'system', label: '시스템', icon: <IcLineShield size={16} /> },
   ]
 
   // Keyboard navigation for tabs

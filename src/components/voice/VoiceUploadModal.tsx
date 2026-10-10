@@ -1,16 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo as reactMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {
-  Mic,
-  MicOff,
-  Upload,
-  X,
-  FileAudio,
-  Pause,
-  Play,
-  Square,
-  Loader2,
-} from 'lucide-react'
 import clsx from 'clsx'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +7,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useVoiceTranscription } from '@/hooks/useVoiceTranscription'
 import { useAudioRecorder } from '@/hooks/useAudioRecorder'
+import { IcFillPause, IcFillPlay, IcLineClose, IcLineLoading, IcLineMic, IcLinePause, IcMwUpload, IcMwWaveform } from '@/mw/icons'
 
 type ModalStep = 1 | 2 | 3
 type InputTab = 'upload' | 'record'
@@ -138,7 +128,7 @@ function StepFileSelect({
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
-          <Upload className="w-4 h-4" />
+          <IcMwUpload size={16} />
           파일 업로드
         </button>
         <button
@@ -150,7 +140,7 @@ function StepFileSelect({
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
-          <Mic className="w-4 h-4" />
+          <IcLineMic size={16} />
           직접 녹음
         </button>
       </div>
@@ -180,7 +170,7 @@ function StepFileSelect({
             )}
           >
             <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-              <FileAudio className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
+              <IcMwWaveform size={24} className="text-zinc-500 dark:text-zinc-400" />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -211,19 +201,19 @@ function StepFileSelect({
           {/* Selected file */}
           {selectedFile && !fileError && (
             <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-[var(--color-border-subtle)]">
-              <FileAudio className="w-5 h-5 text-primary-500 shrink-0" />
+              <IcMwWaveform size={20} className="text-primary-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                   {selectedFile.name}
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{formatFileSize(selectedFile.size)}</p>
               </div>
-              <button
+              <button type="button"
                 onClick={(e) => { e.stopPropagation(); setSelectedFile(null) }}
                 aria-label="선택한 파일 제거"
-                className="shrink-0 flex items-center justify-center min-w-11 min-h-11 -m-2 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                className="mw-icon-button shrink-0 -m-2"
               >
-                <X className="w-4 h-4" />
+                <IcLineClose size={16} />
               </button>
             </div>
           )}
@@ -242,7 +232,7 @@ function StepFileSelect({
         /* Record tab — 마이크 사용 불가 전용 상태 */
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <div className="w-16 h-16 rounded-full bg-danger-50 dark:bg-danger-900/20 flex items-center justify-center">
-            <MicOff className="w-7 h-7 text-danger-500 dark:text-danger-400" aria-hidden="true" />
+            <IcLineMic size={32} className="text-danger-500 dark:text-danger-400" aria-hidden="true" />
           </div>
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
             마이크를 사용할 수 없습니다
@@ -301,7 +291,7 @@ function StepFileSelect({
                 )}
                 aria-label="녹음 시작"
               >
-                <Mic className="w-7 h-7" />
+                <IcLineMic size={32} />
               </button>
             ) : (
               <>
@@ -312,19 +302,19 @@ function StepFileSelect({
                   aria-label={recorder.status === 'paused' ? '재개' : '일시정지'}
                 >
                   {recorder.status === 'paused' ? (
-                    <Play className="w-5 h-5 ml-0.5" />
+                    <IcFillPlay size={20} className="ml-0.5" />
                   ) : (
-                    <Pause className="w-5 h-5" />
+                    <IcLinePause size={20} />
                   )}
                 </button>
 
                 {/* Stop */}
-                <button
+                <button type="button"
                   onClick={handleRecordStop}
-                  className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-[var(--shadow-2)] transition-[transform,background-color] hover:scale-105 active:scale-95"
+                  className="mw-icon-button"
                   aria-label="녹음 중지"
                 >
-                  <Square className="w-6 h-6 fill-current" />
+                  <IcFillPause size={24} className="fill-current" />
                 </button>
               </>
             )}
@@ -438,7 +428,7 @@ function StepResult({
           onClick={onSaveNew}
           disabled={!text.trim() || isSaving}
         >
-          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+          {isSaving ? <IcLineLoading size={16} className="animate-spin mr-1.5" /> : null}
           새 메모로 저장
         </Button>
         {canAppend && (

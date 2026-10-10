@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, X } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
 import { useToastStore } from '@/stores/toastStore'
 import { buildRuleTitle } from '@/utils/memoTitle'
 import { Kbd } from '@/components/ui/Kbd'
+import { IcLineClose, IcMwSend } from '@/mw/icons'
 
 interface QuickMemoInputProps {
   onClose: () => void
@@ -47,20 +47,20 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
         />
         {/* 44px touch targets — quick capture is a high-frequency mobile flow */}
         <div className="flex flex-col gap-1 shrink-0">
-          <button
+          <button type="button"
             onClick={handleSubmit}
             disabled={!body.trim()}
-            className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-accent)] text-[var(--color-on-accent)] disabled:opacity-40 hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] transition-colors"
+            className="mw-icon-button"
             aria-label="저장"
           >
-            <Send className="w-4 h-4" />
+            <IcMwSend size={16} />
           </button>
-          <button
+          <button type="button"
             onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+            className="mw-icon-button"
             aria-label="닫기"
           >
-            <X className="w-4 h-4" />
+            <IcLineClose size={16} />
           </button>
         </div>
       </div>

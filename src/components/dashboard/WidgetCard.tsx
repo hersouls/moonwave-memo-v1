@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { ChevronDown, type LucideIcon } from 'lucide-react'
+import { IcLineChevronDown } from '@/mw/icons'
+import type { IconType } from '@/components/ui/iconType'
 
 /* 대시보드 위젯 공용 카드 — 헤더 해부학 단일화
    (아이콘 칩 h-8 w-8 rounded-lg + px-5 py-3.5 헤더 + border-t 본문)
@@ -14,7 +15,7 @@ const TINT_STYLES = {
 export type WidgetTint = keyof typeof TINT_STYLES
 
 interface WidgetCardProps {
-  icon: LucideIcon
+  icon: IconType
   title: ReactNode
   /** 아이콘 칩 색조 (기본 neutral) */
   tint?: WidgetTint
@@ -114,10 +115,10 @@ export function WidgetCard({
           )}
         >
           {headerContent}
-          <ChevronDown
+          <IcLineChevronDown size={16}
             aria-hidden="true"
             className={clsx(
-              'absolute right-5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 transition-transform duration-200 ease-standard motion-reduce:transition-none',
+              'absolute right-5 top-1/2   -translate-y-1/2 text-zinc-400 transition-transform duration-200 ease-standard motion-reduce:transition-none',
               !isCollapsed && 'rotate-180'
             )}
           />

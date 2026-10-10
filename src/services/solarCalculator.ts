@@ -2,6 +2,7 @@
 // Based on NOAA solar calculator equations
 
 import { BREAKPOINTS } from '@/utils/breakpoints'
+import { fetchContext } from './contextApi'
 
 const LOCATION_CACHE_KEY = 'memo-geolocation'
 
@@ -96,51 +97,11 @@ function isDesktop(): boolean {
   return noTouch && wideScreen
 }
 
-// IP-based geolocation with multiple provider fallback chain
+// 화면은 바깥 주소에 위치를 묻지 않아요. 서비스 자신의 API(/api/context)가 요청의 지역 정보로 답해요.
 async function getPositionByIP(): Promise<GeoPosition | null> {
-  const providers = [
-    // Provider 1: geojs.io (no key, CORS-friendly)
-    async (): Promise<GeoPosition | null> => {
-      const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(4000) })
-      if (!res.ok) return null
-      const data = await res.json()
-      const lat = parseFloat(data.latitude)
-      const lon = parseFloat(data.longitude)
-      if (isNaN(lat) || isNaN(lon)) return null
-      return { latitude: lat, longitude: lon, cachedAt: Date.now() }
-    },
-    // Provider 2: ipapi.co (no key, HTTPS, CORS-friendly)
-    async (): Promise<GeoPosition | null> => {
-      const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(4000) })
-      if (!res.ok) return null
-      const data = await res.json()
-      const lat = parseFloat(data.latitude)
-      const lon = parseFloat(data.longitude)
-      if (isNaN(lat) || isNaN(lon)) return null
-      return { latitude: lat, longitude: lon, cachedAt: Date.now() }
-    },
-    // Provider 3: ipwho.is (no key, HTTPS, CORS-friendly)
-    async (): Promise<GeoPosition | null> => {
-      const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(4000) })
-      if (!res.ok) return null
-      const data = await res.json()
-      if (!data.success) return null
-      const lat = parseFloat(data.latitude)
-      const lon = parseFloat(data.longitude)
-      if (isNaN(lat) || isNaN(lon)) return null
-      return { latitude: lat, longitude: lon, cachedAt: Date.now() }
-    },
-  ]
-
-  for (const provider of providers) {
-    try {
-      const pos = await provider()
-      if (pos) return pos
-    } catch {
-      continue
-    }
-  }
-  return null
+  const context = await fetchContext()
+  if (!context?.position) return null
+  return { latitude: context.position.latitude, longitude: context.position.longitude, cachedAt: Date.now() }
 }
 
 // The web deploy sends `Permissions-Policy: geolocation=()` (vercel.json) so the app never

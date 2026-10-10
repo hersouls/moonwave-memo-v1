@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { FolderInput, Trash2, Star, Pin, X, Share2, RotateCcw, Sparkles, Tags, Loader2 } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
 import { useToastStore } from '@/stores/toastStore'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { IcLineClose, IcLineFolder, IcLineLoading, IcLinePin, IcLineShare, IcLineTrash, IcLineUndo, IcMwSparkles, IcMwStar, IcMwTag } from '@/mw/icons'
 
 interface BatchActionBarProps {
   isTrashView?: boolean
@@ -157,7 +157,7 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
         {isTrashView ? (
           <>
             <button onClick={handleRestore} className={btnClass} aria-label="복원">
-              <RotateCcw className="h-4 w-4" />
+              <IcLineUndo size={16} />
               <span className="hidden sm:inline">복원</span>
             </button>
 
@@ -166,29 +166,29 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
               className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-900/30 hover:text-red-300 dark:text-red-500 dark:hover:bg-red-100 dark:hover:text-red-700"
               aria-label="영구 삭제"
             >
-              <Trash2 className="h-4 w-4" />
+              <IcLineTrash size={16} />
               <span className="hidden sm:inline">영구 삭제</span>
             </button>
           </>
         ) : (
           <>
             <button onClick={handleMove} className={btnClass} aria-label="이동">
-              <FolderInput className="h-4 w-4" />
+              <IcLineFolder size={16} />
               <span className="hidden sm:inline">이동</span>
             </button>
 
             <button onClick={handleDelete} className={btnClass} aria-label="삭제">
-              <Trash2 className="h-4 w-4" />
+              <IcLineTrash size={16} />
               <span className="hidden sm:inline">삭제</span>
             </button>
 
             <button onClick={handleStar} className={btnClass} aria-label="중요">
-              <Star className="h-4 w-4" />
+              <IcMwStar size={16} />
               <span className="hidden sm:inline">중요</span>
             </button>
 
             <button onClick={handlePin} className={btnClass} aria-label="고정">
-              <Pin className="h-4 w-4" />
+              <IcLinePin size={16} />
               <span className="hidden sm:inline">고정</span>
             </button>
 
@@ -199,9 +199,9 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
               aria-label="제목 재생성"
             >
               {isRegenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <IcLineLoading size={16} className="animate-spin" />
               ) : (
-                <Sparkles className="h-4 w-4" />
+                <IcMwSparkles size={16} />
               )}
               <span className="hidden sm:inline">제목 재생성</span>
             </button>
@@ -213,16 +213,16 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
               aria-label="태그 생성"
             >
               {isTagging ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <IcLineLoading size={16} className="animate-spin" />
               ) : (
-                <Tags className="h-4 w-4" />
+                <IcMwTag size={16} />
               )}
               <span className="hidden sm:inline">태그 생성</span>
             </button>
 
             {count === 1 && (
               <button onClick={handleShare} className={btnClass} aria-label="공유">
-                <Share2 className="h-4 w-4" />
+                <IcLineShare size={16} />
                 <span className="hidden sm:inline">공유</span>
               </button>
             )}
@@ -236,7 +236,7 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
           className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-2.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white dark:text-zinc-500 dark:hover:bg-zinc-200 dark:hover:text-zinc-900"
           aria-label="취소"
         >
-          <X className="h-4 w-4" />
+          <IcLineClose size={16} />
           <span className="hidden sm:inline">취소</span>
         </button>
       </div>

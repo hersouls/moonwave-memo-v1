@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PenLine } from 'lucide-react'
+import { CreateActions, PageHead } from '@/components/layout/PageHead'
 import clsx from 'clsx'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -11,6 +11,7 @@ import { StreakCounter } from './StreakCounter'
 import { RecentWorkWidget } from './RecentWorkWidget'
 // 카드 시스템 스타일 — 대시보드 청크에서 로드 (index.css 임포트 목록에서 제외되어 있음)
 import '@/styles/foundation-card.css'
+import { IcLineWrite } from '@/mw/icons'
 
 // PERF: Lazy-load heavier dashboard widgets
 const BriefingWidget = lazy(() => import('./BriefingWidget').then((m) => ({ default: m.BriefingWidget })))
@@ -82,14 +83,9 @@ export function DashboardPage() {
   })
 
   return (
-    <div className="@container mx-auto w-full max-w-5xl xl:max-w-7xl 2xl:max-w-[1600px] px-4 py-4 lg:px-8 lg:py-6">
-      {/* 페이지 헤더 — 인사 + 날짜 앵커 */}
-      <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
-          {getTimeGreeting()}, {displayName}님
-        </h1>
-        <p className="mt-1 text-sm tabular-nums text-zinc-500 dark:text-zinc-400">{todayStr}</p>
-      </header>
+    <div className="mw-page @container">
+      {/* 페이지 머리: 인사와 오늘 날짜, 오른쪽에 주 행동 */}
+      <PageHead title={`${getTimeGreeting()}, ${displayName}님`} description={todayStr} actions={<CreateActions />} />
 
       {isEmpty ? (
         /* 첫 실행 상태 — 첫 메모 작성 CTA 히어로 */
@@ -97,7 +93,7 @@ export function DashboardPage() {
           <ProfileCard />
           <div className="card flex flex-col items-center gap-3 px-6 py-12 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-500 dark:bg-primary-900/20 dark:text-primary-400">
-              <PenLine className="h-6 w-6" />
+              <IcLineWrite size={24} />
             </div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               첫 메모를 시작해 보세요
@@ -108,9 +104,9 @@ export function DashboardPage() {
             <button
               type="button"
               onClick={() => navigate('/memo/new')}
-              className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[var(--color-accent)] px-5 text-sm font-medium text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)]"
+              className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-2"
             >
-              <PenLine className="h-4 w-4" />
+              <IcLineWrite size={16} />
               새 메모 작성
             </button>
           </div>

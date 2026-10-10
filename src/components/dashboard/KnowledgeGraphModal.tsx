@@ -11,23 +11,6 @@ import {
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Download,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Folder as FolderIcon,
-  Frame,
-  Loader2,
-  Rotate3d,
-  Search,
-  Share2,
-  Sparkles,
-  Tag,
-  X,
-  ZoomIn,
-  ZoomOut,
-} from 'lucide-react'
 import { clsx } from 'clsx'
 import { DialogTitle } from '@headlessui/react'
 import { Dialog } from '@/components/ui/Dialog'
@@ -35,6 +18,7 @@ import { useToastStore } from '@/stores/toastStore'
 import type { GraphLink, GraphNode } from '@/hooks/useGraphData'
 import { useSemanticLinks } from '@/hooks/useSemanticLinks'
 import { ForceGraph, type ForceGraphHandle, type LabelMode } from './ForceGraph'
+import { IcLineClose, IcLineDownload, IcLineExpand, IcLineExternalLink, IcLineEye, IcLineEyeHidden, IcLineFolder, IcLineLoading, IcLineSearch, IcLineShare, IcMwRotate, IcMwSparkles, IcMwTag, IcMwZoomIn, IcMwZoomOut } from '@/mw/icons'
 
 // 3D 뷰(Three.js) — 토글을 켤 때만 내려받는 지연 청크 (초기 로딩·모바일 부담 0).
 // React.lazy는 로드 실패를 영구 캐시하므로 재시도 시 새 lazy 컴포넌트를 만들어 우회한다.
@@ -61,7 +45,7 @@ class Graph3DBoundary extends Component<
               this.setState({ failed: false })
               this.props.onRetry()
             }}
-            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
+            className="mw-button mw-button--tertiary-subtle mw-button--small"
           >
             다시 시도
           </button>
@@ -295,7 +279,7 @@ export function KnowledgeGraphModal({
         {/* ── 헤더 / 툴바 ── */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-zinc-100 px-4 py-3 dark:border-white/[0.06] sm:px-5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 dark:bg-primary-900/20 dark:text-primary-400">
-            <Share2 className="h-4 w-4" />
+            <IcLineShare size={16} />
           </span>
           <div className="min-w-0">
             <DialogTitle as="h2" className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -313,7 +297,7 @@ export function KnowledgeGraphModal({
 
           <div className="ml-auto flex items-center gap-1.5">
             <div className="relative hidden sm:block">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+              <IcLineSearch size={16} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 value={query}
                 onChange={(e) => handleQueryChange(e.target.value)}
@@ -340,7 +324,7 @@ export function KnowledgeGraphModal({
                   : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
               )}
             >
-              <Rotate3d className="h-3.5 w-3.5" />
+              <IcMwRotate size={16} />
               <span className="hidden md:inline">{is3D ? '2D' : '3D'}</span>
             </button>
 
@@ -359,7 +343,7 @@ export function KnowledgeGraphModal({
                   : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
               )}
             >
-              <Sparkles className={clsx('h-3.5 w-3.5', sem.computing && 'animate-pulse')} />
+              <IcMwSparkles size={16} className={clsx(' ', sem.computing && 'animate-pulse')} />
               <span className="hidden md:inline">
                 {sem.computing ? `AI 연결 ${sem.progress}%` : 'AI 연결'}
               </span>
@@ -377,7 +361,7 @@ export function KnowledgeGraphModal({
                     : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
                 )}
               >
-                {hideOrphans ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                {hideOrphans ? <IcLineEye size={16} /> : <IcLineEyeHidden size={16} />}
                 <span className="hidden md:inline">{hideOrphans ? '전체' : `고아 ${orphanCount}`}</span>
               </button>
             )}
@@ -391,7 +375,7 @@ export function KnowledgeGraphModal({
                   title="라벨 표시 방식 전환"
                   className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
                 >
-                  <Tag className="h-3.5 w-3.5" />
+                  <IcMwTag size={16} />
                   <span className="hidden md:inline">{LABEL_TEXT[labelMode]}</span>
                 </button>
 
@@ -400,9 +384,9 @@ export function KnowledgeGraphModal({
                   onClick={handleExport}
                   title="이미지로 저장 (PNG)"
                   aria-label="이미지로 저장"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
+                  className="mw-icon-button"
                 >
-                  <Download className="h-4 w-4" />
+                  <IcLineDownload size={16} />
                 </button>
               </>
             )}
@@ -411,9 +395,9 @@ export function KnowledgeGraphModal({
               type="button"
               onClick={onClose}
               aria-label="닫기"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+              className="mw-icon-button"
             >
-              <X className="h-5 w-5" />
+              <IcLineClose size={20} />
             </button>
           </div>
         </div>
@@ -444,7 +428,7 @@ export function KnowledgeGraphModal({
               <Suspense
                 fallback={
                   <div className="flex h-full items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <IcLineLoading size={16} className="animate-spin" />
                     3D 엔진 로딩 중…
                   </div>
                 }
@@ -468,7 +452,7 @@ export function KnowledgeGraphModal({
           {/* 모바일 검색 */}
           <div className="absolute left-3 right-3 top-3 sm:hidden">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+              <IcLineSearch size={16} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 value={query}
                 onChange={(e) => handleQueryChange(e.target.value)}
@@ -504,7 +488,7 @@ export function KnowledgeGraphModal({
                     {selected.label}
                   </p>
                   <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    <FolderIcon className="h-3 w-3" />
+                    <IcLineFolder size={12} />
                     <span className="truncate">{folderName(selected.group)}</span>
                     <span className="text-zinc-300 dark:text-zinc-600">·</span>
                     <span>연결 {selected.degree}</span>
@@ -514,18 +498,18 @@ export function KnowledgeGraphModal({
                   type="button"
                   onClick={() => setSelectedId(null)}
                   aria-label="선택 해제"
-                  className="-mr-1 -mt-1 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10"
+                  className="mw-icon-button -mr-1 -mt-1"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <IcLineClose size={16} />
                 </button>
               </div>
 
               <button
                 type="button"
                 onClick={() => handleActivate(selected.id)}
-                className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600"
+                className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-3 w-full"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
+                <IcLineExternalLink size={16} />
                 메모 열기
               </button>
             </div>
@@ -563,27 +547,27 @@ export function KnowledgeGraphModal({
               type="button"
               onClick={() => graphRef.current?.zoomOut()}
               aria-label="축소"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10"
+              className="mw-icon-button"
             >
-              <ZoomOut className="h-4 w-4" />
+              <IcMwZoomOut size={16} />
             </button>
             <span className="w-11 text-center text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{zoomPct}%</span>
             <button
               type="button"
               onClick={() => graphRef.current?.zoomIn()}
               aria-label="확대"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10"
+              className="mw-icon-button"
             >
-              <ZoomIn className="h-4 w-4" />
+              <IcMwZoomIn size={16} />
             </button>
             <button
               type="button"
               onClick={() => graphRef.current?.reset()}
               aria-label="전체 보기"
               title="전체 보기"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10"
+              className="mw-icon-button"
             >
-              <Frame className="h-4 w-4" />
+              <IcLineExpand size={16} />
             </button>
           </div>
           )}

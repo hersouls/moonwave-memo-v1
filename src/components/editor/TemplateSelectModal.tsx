@@ -1,39 +1,26 @@
 import { useState } from 'react'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Users, BookOpen, CheckSquare, Lightbulb, Calendar,
-  FileText, Star, Heart, Zap, Target, Briefcase, Code,
-  X, Plus, Pencil, Trash2, Lock, Settings2,
-} from 'lucide-react'
 import { getAllTemplates, isBuiltinTemplate } from '@/utils/memoTemplates'
 import type { MemoTemplate } from '@/utils/memoTemplates'
 import { useUIStore } from '@/stores/uiStore'
 import { useTemplateStore } from '@/stores/templateStore'
 import { TemplateEditModal } from './TemplateEditModal'
+import { IcLineAdd, IcLineBook, IcLineBulb, IcLineCalendar, IcLineClose, IcLineDocument, IcLineEdit, IcLineHeart, IcLineLock, IcLineSetting, IcLineTrash, IcLineUsers, IcMwCheckSquare, IcMwCode, IcMwStar, IcMwTarget } from '@/mw/icons'
+import type { IconType } from '@/components/ui/iconType'
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  Users,
-  BookOpen,
-  CheckSquare,
-  Lightbulb,
-  Calendar,
-  FileText,
-  Star,
-  Heart,
-  Zap,
-  Target,
-  Briefcase,
-  Code,
-}
-
-const COLOR_MAP: Record<string, string> = {
-  blue: 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
-  yellow: 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-  green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-  purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400',
-  pink: 'bg-pink-50 text-pink-600 dark:bg-pink-950/30 dark:text-pink-400',
-  white: 'bg-zinc-50 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+// 템플릿에 저장된 아이콘 이름 → 같은 뜻의 키트 아이콘. 키트에 없는 뜻(번개, 서류 가방)은 문서 아이콘으로 보여요.
+const ICON_MAP: Record<string, IconType> = {
+  Users: IcLineUsers,
+  BookOpen: IcLineBook,
+  CheckSquare: IcMwCheckSquare,
+  Lightbulb: IcLineBulb,
+  Calendar: IcLineCalendar,
+  FileText: IcLineDocument,
+  Star: IcMwStar,
+  Heart: IcLineHeart,
+  Target: IcMwTarget,
+  Code: IcMwCode,
 }
 
 export function TemplateSelectModal() {
@@ -115,17 +102,17 @@ export function TemplateSelectModal() {
                   aria-label="관리"
                   title="템플릿 관리"
                 >
-                  <Settings2 className="w-5 h-5" />
+                  <IcLineSetting size={20} />
                 </button>
-                <button onClick={handleClose} className="f-icon-btn" aria-label="닫기">
-                  <X className="w-5 h-5 text-zinc-400" />
+                <button onClick={handleClose} className="mw-icon-button" aria-label="닫기">
+                  <IcLineClose size={20} className="text-zinc-400" />
                 </button>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-3">
               {templates.map((template) => {
-                const Icon = ICON_MAP[template.icon] || BookOpen
+                const Icon = ICON_MAP[template.icon] || IcLineBook
                 const isBuiltin = isBuiltinTemplate(template.id)
                 return (
                   <div key={template.id} className="relative group">
@@ -138,7 +125,7 @@ export function TemplateSelectModal() {
                           : 'hover:bg-zinc-50 dark:hover:bg-zinc-700/50'
                       }`}
                     >
-                      <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${COLOR_MAP[template.color] || COLOR_MAP.white}`}>
+                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--background-secondary)] text-[var(--text-secondary)]">
                         <Icon className="w-5 h-5" />
                       </div>
                       <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -151,23 +138,23 @@ export function TemplateSelectModal() {
                       <div className="absolute top-1.5 right-1.5 flex gap-0.5">
                         {isBuiltin ? (
                           <span className="p-1 text-zinc-300 dark:text-zinc-600" title="기본 템플릿">
-                            <Lock className="w-3.5 h-3.5" />
+                            <IcLineLock size={16} />
                           </span>
                         ) : (
                           <>
-                            <button
+                            <button type="button"
                               onClick={() => handleEdit(template)}
-                              className="p-1 rounded text-zinc-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                              className="mw-icon-button"
                               title="편집"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <IcLineEdit size={16} />
                             </button>
-                            <button
+                            <button type="button"
                               onClick={() => handleDeleteClick(template.id)}
-                              className="p-1 rounded text-zinc-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                              className="mw-icon-button"
                               title="삭제"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <IcLineTrash size={16} />
                             </button>
                           </>
                         )}
@@ -183,17 +170,17 @@ export function TemplateSelectModal() {
                   onClick={handleAddNew}
                   className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 hover:border-primary-400 hover:text-primary-500 dark:hover:border-primary-500 dark:hover:text-primary-400 transition-colors"
                 >
-                  <Plus className="w-6 h-6" />
+                  <IcLineAdd size={24} />
                   <span className="text-sm font-medium">새 템플릿</span>
                 </button>
               )}
             </div>
 
-            <button
+            <button type="button"
               onClick={handleBlank}
-              className="w-full py-2.5 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
+              className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default w-full"
             >
-              빈 메모로 시작
+              <span>빈 메모로 시작</span>
             </button>
           </DialogPanel>
         </div>
@@ -212,15 +199,15 @@ export function TemplateSelectModal() {
                 이 템플릿을 삭제하시겠습니까?
               </p>
               <div className="flex justify-end gap-2">
-                <button
+                <button type="button"
                   onClick={() => setDeleteConfirm(null)}
-                  className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
                 >
-                  취소
+                  <span>취소</span>
                 </button>
-                <button
+                <button type="button"
                   onClick={confirmDelete}
-                  className="px-4 py-2 text-sm font-medium text-white bg-danger-500 rounded-lg hover:bg-danger-600"
+                  className="mw-button mw-button--primary mw-button--medium"
                 >
                   삭제
                 </button>

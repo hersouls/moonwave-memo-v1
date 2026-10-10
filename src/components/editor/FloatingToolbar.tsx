@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, type MutableRefObject } from 'react'
 import { createPortal } from 'react-dom'
-import { Bold, Italic, Code, Link2 } from 'lucide-react'
 import { isIOS } from '@/utils/platform'
+import { IcMwCode, IcMwLink } from '@/mw/icons'
+import { FormatGlyph } from '@/components/editor/FormatGlyph'
 
 interface FloatingToolbarProps {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -108,10 +109,10 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
   if (!visible) return null
 
   const tools = [
-    { icon: <Bold className="w-4 h-4" />, label: '굵게', action: () => onInsert('**', '**') },
-    { icon: <Italic className="w-4 h-4" />, label: '기울임', action: () => onInsert('*', '*') },
-    { icon: <Code className="w-4 h-4" />, label: '코드', action: () => onInsert('`', '`') },
-    { icon: <Link2 className="w-4 h-4" />, label: '링크', action: () => onInsert('[', '](url)') },
+    { icon: <FormatGlyph kind="bold" />, label: '굵게', action: () => onInsert('**', '**') },
+    { icon: <FormatGlyph kind="italic" />, label: '기울임', action: () => onInsert('*', '*') },
+    { icon: <IcMwCode size={16} />, label: '코드', action: () => onInsert('`', '`') },
+    { icon: <IcMwLink size={16} />, label: '링크', action: () => onInsert('[', '](url)') },
   ]
 
   return createPortal(
@@ -125,16 +126,16 @@ export function FloatingToolbar({ textareaRef, onInsert }: FloatingToolbarProps)
       }}
     >
       {tools.map((tool) => (
-        <button
+        <button type="button"
           key={tool.label}
           onMouseDown={(e) => {
             e.preventDefault()
             tool.action()
           }}
-          className="p-1.5 rounded-lg text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 dark:focus-visible:ring-primary-500"
+          className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
           aria-label={tool.label}
         >
-          {tool.icon}
+          <span>{tool.icon}</span>
         </button>
       ))}
       {/* 선택 영역을 가리키는 앵커 노치 */}

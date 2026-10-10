@@ -5,11 +5,9 @@ import type { SortBy, ViewMode, SearchFilters } from '@/lib/types'
 export type CurrentView = 'dashboard' | 'memos' | 'calendar' | 'settings'
 
 interface UIState {
-  isSidebarOpen: boolean
   // 사이드바 태그 섹션 — 태그가 많아지면 목록이 길어지므로 기본 접힘
   isTagsSectionOpen: boolean
   currentView: CurrentView
-  isMobileMenuOpen: boolean
 
   // Filter
   activeFolderId: number | null
@@ -35,9 +33,7 @@ interface UIState {
   isFocusMode: boolean
   isNarrowFold: boolean
   isMobile: boolean
-  isTablet: boolean
   // Tablet sidebar starts collapsed (rail); independent of the persisted desktop state.
-  tabletSidebarOpen: boolean
   isDesktop: boolean
   isWideDesktop: boolean
   isKeyboardOpen: boolean
@@ -49,14 +45,8 @@ interface UIState {
   selectedMemoIds: number[]
 
   // Actions
-  toggleSidebar: () => void
-  setSidebarOpen: (open: boolean) => void
   toggleTagsSection: () => void
-  setTagsSectionOpen: (open: boolean) => void
-  toggleTabletSidebar: () => void
   setCurrentView: (view: CurrentView) => void
-  openMobileMenu: () => void
-  closeMobileMenu: () => void
 
   setActiveFolderId: (id: number | null) => void
   setActiveFilter: (filter: 'all' | 'starred') => void
@@ -103,10 +93,8 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      isSidebarOpen: true,
       isTagsSectionOpen: false,
       currentView: 'dashboard',
-      isMobileMenuOpen: false,
 
       activeFolderId: null,
       activeFilter: 'all',
@@ -130,8 +118,6 @@ export const useUIStore = create<UIState>()(
       isFocusMode: false,
       isNarrowFold: false,
       isMobile: false,
-      isTablet: false,
-      tabletSidebarOpen: false,
       isDesktop: false,
       isWideDesktop: false,
       isKeyboardOpen: false,
@@ -141,14 +127,8 @@ export const useUIStore = create<UIState>()(
       isSelectionMode: false,
       selectedMemoIds: [],
 
-      toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
-      setSidebarOpen: (open) => set({ isSidebarOpen: open }),
       toggleTagsSection: () => set((s) => ({ isTagsSectionOpen: !s.isTagsSectionOpen })),
-      setTagsSectionOpen: (open) => set({ isTagsSectionOpen: open }),
-      toggleTabletSidebar: () => set((s) => ({ tabletSidebarOpen: !s.tabletSidebarOpen })),
       setCurrentView: (view) => set({ currentView: view, isSelectionMode: false, selectedMemoIds: [] }),
-      openMobileMenu: () => set({ isMobileMenuOpen: true }),
-      closeMobileMenu: () => set({ isMobileMenuOpen: false }),
 
       setActiveFolderId: (id) => set({ activeFolderId: id, activeFilter: 'all', activeTag: null, isSelectionMode: false, selectedMemoIds: [] }),
       setActiveFilter: (filter) => set({ activeFilter: filter, activeFolderId: null, activeTag: null, isSelectionMode: false, selectedMemoIds: [] }),
@@ -205,7 +185,6 @@ export const useUIStore = create<UIState>()(
       name: 'memo-ui',
       // UX-16: persist filter state across sessions
       partialize: (state) => ({
-        isSidebarOpen: state.isSidebarOpen,
         isTagsSectionOpen: state.isTagsSectionOpen,
         viewMode: state.viewMode,
         sortBy: state.sortBy,

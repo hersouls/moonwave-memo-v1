@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Unlink } from 'lucide-react'
+import { IcLineCheck } from '@/mw/icons'
 
 interface LinkPopoverProps {
   /** 뷰포트 기준 앵커 좌표 — 팝오버 상단 중앙이 이 지점에 붙는다 */
@@ -84,21 +84,20 @@ export function LinkPopover({ position, initialUrl = '', onUnlink, onSubmit, onC
             autoCorrect="off"
             spellCheck={false}
           />
-          <button
+          <button type="button"
             onClick={submit}
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+            className="mw-icon-button shrink-0"
             aria-label="링크 적용"
           >
-            <Check className="w-4 h-4" />
+            <IcLineCheck size={16} />
           </button>
         </div>
         {onUnlink && (
-          <button
+          <button type="button"
             onClick={onUnlink}
-            className="mt-0.5 flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default mt-0.5 w-full"
           >
-            <Unlink className="w-3.5 h-3.5" />
-            링크 해제
+            <span>링크 끊기</span>
           </button>
         )}
       </div>

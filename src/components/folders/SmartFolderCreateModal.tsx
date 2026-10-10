@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Star, CheckSquare, Sparkles, Check } from 'lucide-react'
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog'
 import { PRESET_SMART_FOLDERS, type SmartFolder } from '@/lib/smartFolderEngine'
+import { IcLineCheck, IcMwCheckSquare, IcMwSparkles, IcMwStar } from '@/mw/icons'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  Star: <Star className="w-5 h-5 text-amber-500" />,
-  CheckSquare: <CheckSquare className="w-5 h-5 text-emerald-500" />,
-  Sparkles: <Sparkles className="w-5 h-5 text-violet-500" />,
+  Star: <IcMwStar size={20} className="text-amber-500" />,
+  CheckSquare: <IcMwCheckSquare size={20} className="text-emerald-500" />,
+  Sparkles: <IcMwSparkles size={20} className="text-violet-500" />,
 }
 
 const STORAGE_KEY = 'smart-folders-active'
@@ -115,7 +115,7 @@ export function SmartFolderCreateModal({ isOpen, onClose }: SmartFolderCreateMod
                 }`}
               >
                 <div className="shrink-0">
-                  {ICON_MAP[folder.icon] || <Sparkles className="w-5 h-5 text-zinc-400" />}
+                  {ICON_MAP[folder.icon] || <IcMwSparkles size={20} className="text-zinc-400" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -126,7 +126,7 @@ export function SmartFolderCreateModal({ isOpen, onClose }: SmartFolderCreateMod
                   </p>
                 </div>
                 {isSelected && (
-                  <Check className="w-5 h-5 text-primary-500 shrink-0" />
+                  <IcLineCheck size={20} className="text-primary-500 shrink-0" />
                 )}
               </button>
             )
@@ -135,15 +135,15 @@ export function SmartFolderCreateModal({ isOpen, onClose }: SmartFolderCreateMod
       </DialogBody>
 
       <DialogFooter>
-        <button
+        <button type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+          className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
         >
-          {'\uCDE8\uC18C'}
+          <span>{'\uCDE8\uC18C'}</span>
         </button>
-        <button
+        <button type="button"
           onClick={handleSave}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-colors"
+          className="mw-button mw-button--primary mw-button--medium"
         >
           {'\uC800\uC7A5'}
         </button>

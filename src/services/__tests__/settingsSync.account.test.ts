@@ -51,7 +51,9 @@ describe('settingsSync across accounts', () => {
     const profile = push!.data.userProfile as { name: string }
     expect(profile.name).not.toBe('이전 계정')
     expect((push!.data.memoSettings as { defaultFolderId: unknown }).defaultFolderId).toBeNull()
-    expect(push!.data.theme).toBe('dark')
+    // 테마는 기기마다 기억해요(localStorage의 memo-theme): 올리지 않고, 계정을 바꿔도 이 기기의 값이 남아요
+    expect(push!.data.theme).toBeUndefined()
+    expect(useSettingsStore.getState().settings.theme).toBe('dark')
     expect(useSettingsStore.getState().settings.userProfile.name).not.toBe('이전 계정')
   })
 

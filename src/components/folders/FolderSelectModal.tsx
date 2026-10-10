@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Check, Plus } from 'lucide-react'
 import clsx from 'clsx'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
 import { useFolderStore } from '@/stores/folderStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUIStore } from '@/stores/uiStore'
 import { FolderCreateModal } from './FolderCreateModal'
+import { IcLineAdd, IcLineCheck } from '@/mw/icons'
 
 export function FolderSelectModal() {
   const isOpen = useUIStore((s) => s.isFolderSelectOpen)
@@ -53,7 +53,7 @@ export function FolderSelectModal() {
                 <span className="text-zinc-800 dark:text-zinc-200 font-medium truncate">
                   {folder.name}
                 </span>
-                {isCurrent && <Check className="w-5 h-5 ml-auto shrink-0 text-primary-500" />}
+                {isCurrent && <IcLineCheck size={20} className="ml-auto shrink-0 text-primary-500" />}
               </button>
             )
           })}
@@ -67,7 +67,7 @@ export function FolderSelectModal() {
               'focus:outline-none focus-visible:bg-zinc-50 dark:focus-visible:bg-zinc-800'
             )}
           >
-            <Plus className="w-4 h-4 flex-shrink-0" />
+            <IcLineAdd size={16} className="flex-shrink-0" />
             <span>새 폴더</span>
           </button>
         </DialogBody>

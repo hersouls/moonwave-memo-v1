@@ -12,11 +12,11 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
 import { CalendarDayCell } from './CalendarDayCell'
 import { useFolderStore } from '@/stores/folderStore'
 import type { Memo } from '@/lib/types'
+import { IcLineChevronLeft, IcLineChevronRight } from '@/mw/icons'
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -246,9 +246,9 @@ export function CalendarGrid({
             type="button"
             onClick={() => changeMonth(subMonths(currentMonth, 1))}
             aria-label="이전 달"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors duration-150 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-active)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset dark:text-zinc-400"
+            className="mw-icon-button"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <IcLineChevronLeft size={16} />
           </button>
           <button
             type="button"
@@ -257,17 +257,17 @@ export function CalendarGrid({
               onDateSelect(todayStr)
             }}
             disabled={isTodaySelected}
-            className="h-8 rounded-md px-2.5 text-xs font-medium text-zinc-600 transition-colors duration-150 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-active)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-40 dark:text-zinc-300 fold:px-2"
+            className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
           >
-            오늘
+            <span>오늘</span>
           </button>
           <button
             type="button"
             onClick={() => changeMonth(addMonths(currentMonth, 1))}
             aria-label="다음 달"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors duration-150 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-active)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset dark:text-zinc-400"
+            className="mw-icon-button"
           >
-            <ChevronRight className="h-4 w-4" />
+            <IcLineChevronRight size={16} />
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
-import { FileText } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { IcLineDocument } from '@/mw/icons'
 
 function EditorIllustration() {
   return (
@@ -17,7 +17,7 @@ function EditorIllustration() {
 export function EditorEmptyState() {
   return (
     <EmptyState
-      icon={<FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+      icon={<IcLineDocument size={32} className="text-zinc-300 dark:text-zinc-600" />}
       illustration={<EditorIllustration />}
       title="메모를 선택하세요"
       description="왼쪽 목록에서 메모를 선택하거나 새 메모를 작성하세요"

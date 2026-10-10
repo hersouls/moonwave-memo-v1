@@ -1,6 +1,6 @@
-import { Smartphone, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { isCapacitor, isElectron } from '@/services/syncFolder'
+import { IcLineDownload, IcLineMoblie } from '@/mw/icons'
 
 /** The rolling GitHub release that scripts/build-android.sh replaces with every build. */
 export const ANDROID_APK_URL =
@@ -22,7 +22,7 @@ export function AndroidDownloadSection() {
       <div className="p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex items-start gap-3">
-            <Smartphone className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <IcLineMoblie size={20} className="text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm text-zinc-600 dark:text-zinc-300">
               휴대폰에 설치하는 앱이에요. 휴대폰에서 이 화면을 열고 내려받아요.
               <div className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">
@@ -34,7 +34,7 @@ export function AndroidDownloadSection() {
             </div>
           </div>
           <Button variant="secondary" size="sm" onClick={() => window.location.assign(ANDROID_APK_URL)}>
-            <Download className="w-4 h-4 mr-1.5" />
+            <IcLineDownload size={16} className="mr-1.5" />
             내려받기
           </Button>
         </div>

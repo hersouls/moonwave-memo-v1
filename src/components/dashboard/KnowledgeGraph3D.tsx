@@ -50,7 +50,7 @@ export default function KnowledgeGraph3D({
   const fgRef = useRef<ForceGraphMethods<FGNode, FGLink> | undefined>(undefined)
   const didFitRef = useRef(false)
   // 테마는 마운트 시점 기준 (모달 안에서 테마 전환은 드묾 — 재열면 반영)
-  const [isDark] = useState(() => document.documentElement.classList.contains('dark'))
+  const [isDark] = useState(() => document.documentElement.dataset.theme === 'dark')
 
   // 라이브러리가 x/y/z를 주입하며 객체를 변형하므로 복사본 전달.
   // 직전 복사본(라이브러리가 좌표를 기록해 둔 객체)에서 x/y/z/속도를 이어받아

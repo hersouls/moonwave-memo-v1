@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react'
-import { Flame } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { IcMwFlame } from '@/mw/icons'
 
 function useCountUp(target: number, duration = 800) {
   const [current, setCurrent] = useState(0)
@@ -36,7 +36,7 @@ export const StreakCounter = memo(function StreakCounter() {
   return (
     <div className="flex items-center gap-3 p-4 card">
       <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-warning-50 dark:bg-warning-900/20">
-        <Flame className={`w-6 h-6 ${currentStreak > 0 ? 'text-warning-500' : 'text-zinc-300 dark:text-zinc-600'}`} />
+        <IcMwFlame size={24} className={`  ${currentStreak > 0 ? 'text-warning-500' : 'text-zinc-300 dark:text-zinc-600'}`} />
       </div>
       <div>
         <div className="flex items-baseline gap-1.5">

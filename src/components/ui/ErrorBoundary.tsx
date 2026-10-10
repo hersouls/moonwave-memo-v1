@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { AlertTriangle, RotateCcw } from 'lucide-react'
+import { IcLineUndo, IcLineWarning } from '@/mw/icons'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-900">
           <div className="w-full max-w-sm text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-danger-50 dark:bg-danger-500/10">
-              <AlertTriangle className="h-8 w-8 text-danger-500" />
+              <IcLineWarning size={32} className="text-danger-500" />
             </div>
 
             <h2 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -58,11 +58,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </p>
             )}
 
-            <button
+            <button type="button"
               onClick={this.handleRetry}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-600 active:bg-primary-700"
+              className="mw-button mw-button--primary mw-button--medium mw-button--icon-left"
             >
-              <RotateCcw className="h-4 w-4" />
+              <IcLineUndo size={16} />
               다시 시도
             </button>
           </div>

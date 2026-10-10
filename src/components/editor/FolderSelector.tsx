@@ -1,8 +1,8 @@
-import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
 import clsx from 'clsx'
 import { useFolderStore } from '@/stores/folderStore'
 import type { Folder } from '@/lib/types'
+import { IcLineCheck, IcLineChevronDown, IcLineChevronUp } from '@/mw/icons'
 
 interface FolderSelectorProps {
   currentFolder?: Folder
@@ -67,9 +67,9 @@ export function FolderSelector({ currentFolder, onFolderChange, className = 'mb-
         />
         <span>{currentFolder?.name || '내 메모'}</span>
         {isOpen ? (
-          <ChevronUp className="w-3.5 h-3.5" />
+          <IcLineChevronUp size={16} />
         ) : (
-          <ChevronDown className="w-3.5 h-3.5" />
+          <IcLineChevronDown size={16} />
         )}
       </button>
 
@@ -103,7 +103,7 @@ export function FolderSelector({ currentFolder, onFolderChange, className = 'mb-
                 />
                 <span className="ctx-menu__item-label truncate">{folder.name}</span>
                 {folder.id === currentFolder?.id && (
-                  <Check className="w-4 h-4 shrink-0 text-primary-500" aria-hidden="true" />
+                  <IcLineCheck size={16} className="shrink-0 text-primary-500" aria-hidden="true" />
                 )}
               </button>
             ))}

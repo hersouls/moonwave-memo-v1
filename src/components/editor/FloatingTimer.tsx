@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Play, Pause, RotateCcw, X } from 'lucide-react'
 import { useFocusTimerStore, FOCUS_TIMER_DEFAULT_SECONDS, acquireWakeLock } from '@/hooks/useFocusTimer'
+import { IcFillPlay, IcLineClose, IcLinePause, IcLineUndo } from '@/mw/icons'
 
 export function FloatingTimer() {
   const seconds = useFocusTimerStore((s) => s.seconds)
@@ -71,7 +71,7 @@ export function FloatingTimer() {
           className="rounded-lg p-1 text-zinc-300 hover:text-white dark:text-zinc-600 dark:hover:text-zinc-900 transition-colors"
           aria-label={isRunning ? '일시정지' : '시작'}
         >
-          {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          {isRunning ? <IcLinePause size={16} /> : <IcFillPlay size={16} />}
         </button>
 
         <button
@@ -79,7 +79,7 @@ export function FloatingTimer() {
           className="rounded-lg p-1 text-zinc-300 hover:text-white dark:text-zinc-600 dark:hover:text-zinc-900 transition-colors"
           aria-label="초기화"
         >
-          {seconds === 0 ? <X className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
+          {seconds === 0 ? <IcLineClose size={16} /> : <IcLineUndo size={16} />}
         </button>
       </div>
     </div>

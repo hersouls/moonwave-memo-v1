@@ -1,19 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {
-  ImagePlus,
-  Camera,
-  Upload,
-  X,
-  Loader2,
-  ScanText,
-} from 'lucide-react'
 import clsx from 'clsx'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { useUIStore } from '@/stores/uiStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useImageOCR } from '@/hooks/useImageOCR'
+import { IcLineCamera, IcLineClose, IcLineGallery, IcLineLoading, IcMwUpload } from '@/mw/icons'
 
 type ModalStep = 1 | 2 | 3
 type InputTab = 'upload' | 'camera'
@@ -35,7 +28,7 @@ function ScanAnimation() {
           animation: 'scanLine 2s ease-in-out infinite',
         }}
       />
-      <ScanText className="absolute inset-0 m-auto w-8 h-8 text-primary-500/60" />
+      <IcLineCamera size={32} className="absolute inset-0 m-auto text-primary-500/60" />
     </div>
   )
 }
@@ -105,7 +98,7 @@ function StepImageSelect({
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
-          <Upload className="w-4 h-4" />
+          <IcMwUpload size={16} />
           이미지 업로드
         </button>
         <button
@@ -117,7 +110,7 @@ function StepImageSelect({
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
-          <Camera className="w-4 h-4" />
+          <IcLineCamera size={16} />
           카메라 촬영
         </button>
       </div>
@@ -147,7 +140,7 @@ function StepImageSelect({
             )}
           >
             <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-              <ImagePlus className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
+              <IcLineGallery size={24} className="text-zinc-500 dark:text-zinc-400" />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -174,7 +167,7 @@ function StepImageSelect({
         /* Camera tab */
         <div className="flex flex-col items-center gap-4 py-4">
           <div className="w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
-            <Camera className="w-8 h-8 text-primary-500" />
+            <IcLineCamera size={32} className="text-primary-500" />
           </div>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center">
             카메라로 사진을 촬영하여<br />텍스트를 추출합니다
@@ -183,7 +176,7 @@ function StepImageSelect({
             variant="primary"
             onClick={() => cameraInputRef.current?.click()}
           >
-            <Camera className="w-4 h-4 mr-1.5" />
+            <IcLineCamera size={16} className="mr-1.5" />
             사진 촬영
           </Button>
           <input
@@ -221,7 +214,7 @@ function StepImageSelect({
               className="absolute top-2 right-2 flex items-center justify-center w-10 h-10 -m-1 rounded-full text-white transition-colors group/clear"
             >
               <span className="flex items-center justify-center w-7 h-7 rounded-full bg-black/50 group-hover/clear:bg-black/70 transition-colors">
-                <X className="w-4 h-4" />
+                <IcLineClose size={16} />
               </span>
             </button>
           </div>
@@ -236,7 +229,7 @@ function StepImageSelect({
             className="w-full"
             onClick={() => onImageSelect(selectedFile)}
           >
-            <ScanText className="w-4 h-4 mr-1.5" />
+            <IcLineCamera size={16} className="mr-1.5" />
             OCR 시작
           </Button>
         </div>
@@ -334,7 +327,7 @@ function StepResult({
       {isEmptyResult && (
         <div className="flex flex-col items-center gap-3 py-4 text-center">
           <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-            <ScanText className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
+            <IcLineCamera size={24} className="text-zinc-500 dark:text-zinc-400" />
           </div>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             이미지에서 텍스트를 찾지 못했습니다
@@ -363,7 +356,7 @@ function StepResult({
           onClick={onSaveNew}
           disabled={!text.trim() || isSaving}
         >
-          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+          {isSaving ? <IcLineLoading size={16} className="animate-spin mr-1.5" /> : null}
           새 메모로 저장
         </Button>
         {canAppend && (

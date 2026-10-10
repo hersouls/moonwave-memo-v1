@@ -1,7 +1,7 @@
-import { LogIn } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useViewTransition } from '@/hooks/useViewTransition'
+import { IcMwDoor } from '@/mw/icons'
 
 export function ProfileCard() {
   const user = useAuthStore((s) => s.user)
@@ -24,12 +24,12 @@ export function ProfileCard() {
             로그인하면 메모를 동기화할 수 있습니다
           </p>
         </div>
-        <button
+        <button type="button"
           onClick={login}
           disabled={isSigningIn}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3.5 py-2 text-sm font-medium text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] disabled:opacity-50"
+          className="mw-button mw-button--primary mw-button--medium mw-button--icon-left"
         >
-          <LogIn className="h-4 w-4" />
+          <IcMwDoor size={16} />
           로그인
         </button>
       </div>

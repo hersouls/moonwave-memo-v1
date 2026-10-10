@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Link2, ChevronDown, ChevronUp } from 'lucide-react'
 import Fuse from 'fuse.js'
 import { useMemoStore } from '@/stores/memoStore'
 import type { Memo } from '@/lib/types'
+import { IcLineChevronDown, IcLineChevronUp, IcMwLink } from '@/mw/icons'
 
 interface RelatedMemosPanelProps {
   memoId?: number
@@ -76,7 +76,7 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors"
       >
-        <Link2 className="w-4 h-4 text-primary-500 shrink-0" />
+        <IcMwLink size={16} className="text-primary-500 shrink-0" />
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex-1">
           연관 메모
         </span>
@@ -84,9 +84,9 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
           {relatedMemos.length}
         </span>
         {isExpanded ? (
-          <ChevronUp className="w-4 h-4 text-zinc-400" />
+          <IcLineChevronUp size={16} className="text-zinc-400" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-zinc-400" />
+          <IcLineChevronDown size={16} className="text-zinc-400" />
         )}
       </button>
 

@@ -3,9 +3,6 @@ import { firestore } from '@/lib/firebase'
 import type { Settings } from '@/lib/types'
 import {
   useSettingsStore,
-  applyTheme,
-  applyColorPalette,
-  applyFontFamily,
   applyFontSize,
 } from '@/stores/settingsStore'
 
@@ -17,15 +14,16 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null
 // silently dropped genuine changes (local and remote) that landed inside the window.
 let lastSyncedJson = ''
 
-// Fields safe to sync (exclude API keys and device-specific data)
+// Fields safe to sync (exclude API keys and device-specific data).
+// 테마는 기기마다 기억해요(localStorage의 memo-theme): 동기화하지 않아요. colorPalette · fontFamily는 저장된 값만
+// 그대로 실어 나르고 화면에는 적용하지 않아요 (개인화 기능을 없앴어요).
 type SyncableSettings = Pick<
   Settings,
-  'theme' | 'colorPalette' | 'fontFamily' | 'fontSize' | 'memoSettings' | 'highContrastMode' | 'userProfile'
+  'colorPalette' | 'fontFamily' | 'fontSize' | 'memoSettings' | 'highContrastMode' | 'userProfile'
 >
 
 function pickSyncableFields(settings: Settings): SyncableSettings {
   return {
-    theme: settings.theme,
     colorPalette: settings.colorPalette,
     fontFamily: settings.fontFamily,
     fontSize: settings.fontSize,
@@ -36,9 +34,6 @@ function pickSyncableFields(settings: Settings): SyncableSettings {
 }
 
 function applyVisualSettings(settings: Partial<Settings>) {
-  if (settings.theme) applyTheme(settings.theme)
-  if (settings.colorPalette) applyColorPalette(settings.colorPalette)
-  if (settings.fontFamily) applyFontFamily(settings.fontFamily)
   if (settings.fontSize) applyFontSize(settings.fontSize)
   if (settings.highContrastMode !== undefined) {
     document.documentElement.toggleAttribute('data-high-contrast', settings.highContrastMode)
@@ -78,7 +73,6 @@ async function pullAndMergeSettings(uid: string) {
 
     // Merge: remote wins for syncable fields
     const merged: Partial<Settings> = {}
-    if (remote.theme && remote.theme !== local.theme) merged.theme = remote.theme
     if (remote.colorPalette && remote.colorPalette !== local.colorPalette) merged.colorPalette = remote.colorPalette
     if (remote.fontFamily && remote.fontFamily !== local.fontFamily) merged.fontFamily = remote.fontFamily
     if (remote.fontSize && remote.fontSize !== local.fontSize) merged.fontSize = remote.fontSize
@@ -125,7 +119,6 @@ function startSettingsListener(uid: string) {
     const local = useSettingsStore.getState().settings
 
     const merged: Partial<Settings> = {}
-    if (remote.theme && remote.theme !== local.theme) merged.theme = remote.theme
     if (remote.colorPalette && remote.colorPalette !== local.colorPalette) merged.colorPalette = remote.colorPalette
     if (remote.fontFamily && remote.fontFamily !== local.fontFamily) merged.fontFamily = remote.fontFamily
     if (remote.fontSize && remote.fontSize !== local.fontSize) merged.fontSize = remote.fontSize

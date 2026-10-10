@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Archive, Download, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -10,6 +9,7 @@ import {
   listOrphanBackups,
   type OrphanBackupSummary,
 } from '@/services/localOwner'
+import { IcLineDownload, IcLineTrash, IcMwArchive } from '@/mw/icons'
 
 function formatDate(iso: string): string {
   try {
@@ -73,7 +73,7 @@ export function OrphanBackupsSection() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 px-1">
-        <Archive className="w-4 h-4 text-zinc-500 dark:text-zinc-400" aria-hidden="true" />
+        <IcMwArchive size={16} className="text-zinc-500 dark:text-zinc-400" aria-hidden="true" />
         <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">이전 계정 로컬 백업</h4>
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400 px-1">
@@ -102,18 +102,18 @@ export function OrphanBackupsSection() {
               type="button"
               onClick={() => handleDownload(b)}
               disabled={busyId === b.id}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 disabled:opacity-60"
+              className="mw-button mw-button--secondary mw-button--small mw-button--icon-left"
             >
-              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              <IcLineDownload size={16} aria-hidden="true" />
               내려받기
             </button>
             <button
               type="button"
               onClick={() => setPendingDelete(b)}
               aria-label={`${b.ownerEmail || '이전 계정'} 백업 삭제`}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
+              className="mw-icon-button"
             >
-              <Trash2 className="w-4 h-4" aria-hidden="true" />
+              <IcLineTrash size={16} aria-hidden="true" />
             </button>
           </li>
         ))}

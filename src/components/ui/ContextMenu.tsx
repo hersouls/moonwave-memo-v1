@@ -1,11 +1,11 @@
 import { clsx } from 'clsx'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { LucideIcon } from 'lucide-react'
+import type { IconType } from '@/components/ui/iconType'
 
 export interface ContextMenuItem {
   label: string
-  icon?: LucideIcon
+  icon?: IconType
   danger?: boolean
   disabled?: boolean
   onSelect: () => void

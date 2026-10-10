@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lightbulb, ArrowRight } from 'lucide-react'
 import { WidgetCard } from './WidgetCard'
+import { IcLineBulb, IcMwArrowRight } from '@/mw/icons'
 
 const PROMPTS = [
   '오늘 가장 기억에 남는 순간은?',
@@ -75,7 +75,7 @@ export function WritingPromptWidget() {
   }, [])
 
   return (
-    <WidgetCard icon={Lightbulb} tint="amber" title="오늘의 글감">
+    <WidgetCard icon={IcLineBulb} tint="amber" title="오늘의 글감">
       <p className="mb-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
         {prompt}
       </p>
@@ -86,7 +86,7 @@ export function WritingPromptWidget() {
         className="inline-flex min-h-11 items-center gap-1 -mx-2 -my-1 rounded-lg px-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-100/60 dark:text-amber-400 dark:hover:bg-amber-900/20"
       >
         이 주제로 작성하기
-        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        <IcMwArrowRight size={16} aria-hidden="true" />
       </button>
     </WidgetCard>
   )

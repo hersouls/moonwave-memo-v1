@@ -1,29 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Loader2, Settings, ZoomIn, ZoomOut } from 'lucide-react'
 import clsx from 'clsx'
 import { useSemanticCanvas, type CanvasNode } from '@/hooks/useSemanticCanvas'
 import { useUIStore } from '@/stores/uiStore'
-import type { MemoColor } from '@/lib/types'
-
-// SVG fill colors for memo colors (matching MEMO_CARD_BG palette)
-const MEMO_SVG_FILLS: Record<MemoColor, { light: string; dark: string }> = {
-  white: { light: '#f4f4f5', dark: '#3f3f46' },
-  yellow: { light: '#fef3c7', dark: '#78350f' },
-  green: { light: '#d1fae5', dark: '#064e3b' },
-  blue: { light: '#dbeafe', dark: '#1e3a5f' },
-  pink: { light: '#fce7f3', dark: '#831843' },
-  purple: { light: '#ede9fe', dark: '#4c1d95' },
-}
-
-const MEMO_STROKE_COLORS: Record<MemoColor, string> = {
-  white: '#a1a1aa',
-  yellow: '#f59e0b',
-  green: '#10b981',
-  blue: '#3b82f6',
-  pink: '#ec4899',
-  purple: '#8b5cf6',
-}
+import { IcLineChevronLeft, IcLineLoading, IcLineSetting, IcMwZoomIn, IcMwZoomOut } from '@/mw/icons'
 
 function SemanticCanvas() {
   const navigate = useNavigate()
@@ -40,13 +20,13 @@ function SemanticCanvas() {
   // Detect dark mode — 테마 토글에 실시간 반응 (documentElement class 관찰)
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
-    return document.documentElement.classList.contains('dark')
+    return document.documentElement.dataset.theme === 'dark'
   })
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'))
+      setIsDark(document.documentElement.dataset.theme === 'dark')
     })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [])
 
@@ -155,18 +135,18 @@ function SemanticCanvas() {
             설정에서 API 키를 입력해 주세요.
           </p>
         </div>
-        <button
+        <button type="button"
           onClick={() => useUIStore.getState().openSettingsModal()}
-          className="flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)]"
+          className="mw-button mw-button--primary mw-button--medium mw-button--icon-left"
         >
-          <Settings className="w-4 h-4" />
+          <IcLineSetting size={16} />
           설정 열기
         </button>
-        <button
+        <button type="button"
           onClick={() => navigate('/')}
-          className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+          className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <IcLineChevronLeft size={16} />
           대시보드로 돌아가기
         </button>
       </div>
@@ -178,12 +158,12 @@ function SemanticCanvas() {
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center gap-3">
-          <button
+          <button type="button"
             onClick={() => navigate('/')}
-            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="mw-icon-button"
             aria-label="뒤로가기"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <IcLineChevronLeft size={20} />
           </button>
           <h1 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
             시맨틱 캔버스
@@ -195,22 +175,22 @@ function SemanticCanvas() {
 
         {/* Zoom controls */}
         <div className="flex items-center gap-1">
-          <button
+          <button type="button"
             onClick={handleZoomOut}
-            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="mw-icon-button"
             aria-label="축소"
           >
-            <ZoomOut className="w-4 h-4" />
+            <IcMwZoomOut size={16} />
           </button>
           <span className="w-10 text-center text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
             {Math.round(transform.scale * 100)}%
           </span>
-          <button
+          <button type="button"
             onClick={handleZoomIn}
-            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="mw-icon-button"
             aria-label="확대"
           >
-            <ZoomIn className="w-4 h-4" />
+            <IcMwZoomIn size={16} />
           </button>
         </div>
       </div>
@@ -219,7 +199,7 @@ function SemanticCanvas() {
       {isComputing && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+            <IcLineLoading size={32} className="text-primary-500 animate-spin" />
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
               임베딩 계산 중...
             </span>
@@ -271,8 +251,8 @@ function SemanticCanvas() {
           {nodes.map((node) => {
             const radius = getRadius(node.bodyLength)
             const isHovered = hoveredNode?.id === node.id
-            const fill = isDark ? MEMO_SVG_FILLS[node.color].dark : MEMO_SVG_FILLS[node.color].light
-            const stroke = MEMO_STROKE_COLORS[node.color]
+            const fill = 'var(--background-secondary)'
+            const stroke = 'var(--border-primary)'
 
             return (
               <g

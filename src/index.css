@@ -2,128 +2,268 @@
 /* Composable enter/exit animation utilities (animate-in/out, fade-in-0, zoom-in-95, slide-in-from-*) */
 @import "tw-animate-css";
 
+/* Moonwave UX: 값은 키트(/kit/moonwave.css, index.html에서 먼저 불러요)의 토큰이에요.
+   이 파일에는 Memo에만 있는 것만 둬요. 서비스의 값은 --memo-* 로 이름 붙여요. */
+
 /* Foundation CSS — @layer for priority control */
 @layer foundation {
   @import "./styles/foundation-tokens.css";
   @import "./styles/foundation-card.css";
   @import "./styles/foundation-dialog.css";
   @import "./styles/foundation-bottomsheet.css";
-  @import "./styles/foundation-toast.css";
   @import "./styles/foundation-chip.css";
   @import "./styles/foundation-misc.css";
   @import "./styles/foundation-slideview.css";
-  @import "./styles/foundation-edge-lighting.css";
 }
 
-/* Enable class-based dark mode for Tailwind CSS 4 */
-@custom-variant dark (&:where(.dark, .dark *));
+/* 테마는 <html>의 data-theme 하나로 정해요 (https://ux.moonwave.kr/patterns/theme#rule) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* F-09: Galaxy Fold narrow screen detection variant */
 @custom-variant fold (&:where([data-narrow-fold], [data-narrow-fold] *));
 
 @theme {
-  /* Primary Colors */
-  --color-primary-50: oklch(0.97 0.02 250);
-  --color-primary-100: oklch(0.93 0.04 250);
-  --color-primary-200: oklch(0.86 0.08 250);
-  --color-primary-300: oklch(0.76 0.12 250);
-  --color-primary-400: oklch(0.64 0.16 250);
-  --color-primary-500: oklch(0.55 0.18 250);
-  --color-primary-600: oklch(0.48 0.18 250);
-  --color-primary-700: oklch(0.40 0.15 250);
-  --color-primary-800: oklch(0.33 0.12 250);
-  --color-primary-900: oklch(0.27 0.09 250);
+  /* 강조색: 달빛 파랑. 단계는 바탕에서 얼마나 멀어지는지예요(50 옅은 면 → 900 가장 진한 글자).
+     키트의 토큰이 테마마다 값을 바꾸므로 dark: 변형을 따로 쓰지 않아요. */
+  --color-primary-50: var(--mw-accent-soft);
+  --color-primary-100: var(--mw-accent-soft);
+  --color-primary-200: color-mix(in srgb, var(--mw-accent) 32%, var(--surface-primary));
+  --color-primary-300: color-mix(in srgb, var(--mw-accent) 56%, var(--surface-primary));
+  --color-primary-400: var(--mw-accent);
+  --color-primary-500: var(--mw-accent);
+  --color-primary-600: var(--mw-accent-strong);
+  --color-primary-700: var(--mw-accent-pressed);
+  --color-primary-800: var(--mw-accent-pressed);
+  --color-primary-900: var(--mw-accent-pressed);
 
-  --color-success-50: oklch(0.97 0.03 145);
-  --color-success-100: oklch(0.93 0.05 145);
-  --color-success-200: oklch(0.86 0.08 145);
-  --color-success-300: oklch(0.76 0.12 145);
-  --color-success-400: oklch(0.68 0.15 145);
-  --color-success-500: oklch(0.62 0.18 145);
-  --color-success-600: oklch(0.52 0.16 145);
-  --color-success-700: oklch(0.44 0.14 145);
-  --color-success-800: oklch(0.36 0.11 145);
-  --color-success-900: oklch(0.28 0.08 145);
-  --color-success-950: oklch(0.18 0.05 145);
+  /* 중립색: 키트의 회색 단계 */
+  --color-white: var(--static-white);
+  --color-black: var(--static-black);
+  --color-zinc-50: var(--gray-25);
+  --color-zinc-100: var(--gray-50);
+  --color-zinc-200: var(--gray-100);
+  --color-zinc-300: var(--gray-200);
+  --color-zinc-400: var(--gray-400);
+  --color-zinc-500: var(--gray-500);
+  --color-zinc-600: var(--gray-600);
+  --color-zinc-700: var(--gray-700);
+  --color-zinc-800: var(--gray-750);
+  --color-zinc-900: var(--gray-800);
+  --color-zinc-950: var(--gray-900);
 
-  --color-warning-50: oklch(0.98 0.04 85);
-  --color-warning-100: oklch(0.93 0.06 80);
-  --color-warning-200: oklch(0.86 0.10 75);
-  --color-warning-300: oklch(0.80 0.14 72);
-  --color-warning-400: oklch(0.78 0.16 70);
-  --color-warning-500: oklch(0.75 0.18 70);
-  --color-warning-600: oklch(0.65 0.18 55);
-  --color-warning-700: oklch(0.55 0.16 50);
-  --color-warning-800: oklch(0.45 0.13 45);
-  --color-warning-900: oklch(0.35 0.10 40);
-  --color-warning-950: oklch(0.22 0.06 40);
+  /* 상태색: 키트의 원색 단계 (성공 teal · 주의 yellow · 오류 red) */
+  --color-success-50: var(--teal-100);
+  --color-success-100: var(--teal-100);
+  --color-success-200: var(--teal-200);
+  --color-success-300: var(--teal-300);
+  --color-success-400: var(--teal-400);
+  --color-success-500: var(--teal-500);
+  --color-success-600: var(--teal-500);
+  --color-success-700: var(--teal-600);
+  --color-success-800: var(--teal-700);
+  --color-success-900: var(--teal-700);
+  --color-success-950: var(--teal-800);
 
-  --color-danger-50: oklch(0.97 0.02 25);
-  --color-danger-100: oklch(0.93 0.04 25);
-  --color-danger-200: oklch(0.86 0.08 25);
-  --color-danger-300: oklch(0.76 0.14 25);
-  --color-danger-400: oklch(0.68 0.18 25);
-  --color-danger-500: oklch(0.58 0.22 25);
-  --color-danger-600: oklch(0.50 0.20 25);
-  --color-danger-700: oklch(0.42 0.18 25);
-  --color-danger-800: oklch(0.35 0.14 25);
-  --color-danger-900: oklch(0.28 0.10 25);
-  --color-danger-950: oklch(0.18 0.06 25);
+  --color-warning-50: var(--yellow-100);
+  --color-warning-100: var(--yellow-100);
+  --color-warning-200: var(--yellow-200);
+  --color-warning-300: var(--yellow-200);
+  --color-warning-400: var(--yellow-300);
+  --color-warning-500: var(--yellow-400);
+  --color-warning-600: var(--yellow-500);
+  --color-warning-700: var(--yellow-600);
+  --color-warning-800: var(--yellow-700);
+  --color-warning-900: var(--yellow-700);
+  --color-warning-950: var(--yellow-800);
 
-  /* Fonts */
-  --font-sans: var(--memo-font-family, 'Pretendard'), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  --color-danger-50: var(--red-100);
+  --color-danger-100: var(--red-100);
+  --color-danger-200: var(--red-200);
+  --color-danger-300: var(--red-300);
+  --color-danger-400: var(--red-400);
+  --color-danger-500: var(--red-500);
+  --color-danger-600: var(--red-600);
+  --color-danger-700: var(--red-700);
+  --color-danger-800: var(--red-700);
+  --color-danger-900: var(--red-800);
+  --color-danger-950: var(--red-800);
 
-  /* Breakpoints — canonical 3-tier scale (see src/utils/breakpoints.ts).
-     xs targets the narrowest recent phones (~360px); 2xl widened to 1920 for large desktops.
-     sm/md/lg/xl keep Tailwind defaults (640/768/1024/1280). */
-  --breakpoint-xs: 360px;
-  --breakpoint-2xl: 1920px;
+  /* Tailwind의 이름난 색도 키트의 원색 단계로 그려요 */
+  --color-amber-50: var(--yellow-100);
+  --color-amber-100: var(--yellow-100);
+  --color-amber-200: var(--yellow-200);
+  --color-amber-300: var(--yellow-200);
+  --color-amber-400: var(--yellow-300);
+  --color-amber-500: var(--yellow-400);
+  --color-amber-600: var(--yellow-500);
+  --color-amber-700: var(--yellow-600);
+  --color-amber-800: var(--yellow-700);
+  --color-amber-900: var(--yellow-700);
+  --color-amber-950: var(--yellow-800);
+  --color-orange-400: var(--yellow-300);
+  --color-orange-500: var(--yellow-400);
+  --color-yellow-400: var(--yellow-300);
+  --color-yellow-500: var(--yellow-400);
+  --color-emerald-50: var(--teal-100);
+  --color-emerald-100: var(--teal-100);
+  --color-emerald-200: var(--teal-200);
+  --color-emerald-300: var(--teal-300);
+  --color-emerald-400: var(--teal-400);
+  --color-emerald-500: var(--teal-500);
+  --color-emerald-600: var(--teal-500);
+  --color-emerald-700: var(--teal-600);
+  --color-emerald-800: var(--teal-700);
+  --color-emerald-900: var(--teal-700);
+  --color-red-50: var(--red-100);
+  --color-red-100: var(--red-100);
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-600: var(--red-600);
+  --color-rose-400: var(--red-400);
+  --color-rose-500: var(--red-500);
+  --color-blue-50: var(--blue-100);
+  --color-blue-100: var(--blue-100);
+  --color-blue-200: var(--blue-200);
+  --color-blue-300: var(--blue-300);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
+  --color-blue-700: var(--blue-700);
+  --color-blue-800: var(--blue-700);
+  --color-blue-900: var(--blue-800);
+  --color-purple-50: var(--purple-100);
+  --color-purple-100: var(--purple-100);
+  --color-purple-200: var(--purple-200);
+  --color-purple-300: var(--purple-300);
+  --color-purple-400: var(--purple-400);
+  --color-purple-500: var(--purple-500);
+  --color-purple-600: var(--purple-600);
+  --color-purple-700: var(--purple-700);
+  --color-purple-800: var(--purple-700);
+  --color-purple-900: var(--purple-800);
+  --color-violet-400: var(--purple-400);
+  --color-violet-500: var(--purple-500);
+
+  /* 글꼴: 키트의 Pretendard 하나 */
+  --font-sans: var(--font-family-default);
+  --font-mono: var(--mw-font-mono);
+  /* Regular(400)는 쓰지 않아요. 가장 가는 굵기가 Medium이에요 (foundations/typography) */
+  --font-weight-thin: var(--font-weight-medium);
+  --font-weight-extralight: var(--font-weight-medium);
+  --font-weight-light: var(--font-weight-medium);
+  --font-weight-normal: var(--font-weight-medium);
+  --font-weight-extrabold: var(--font-weight-bold);
+  --font-weight-black: var(--font-weight-bold);
+
+  /* 글자 크기: 키트의 단계(10 12 13 14 15 16 17 18 20 22 24 32 36 40 60)에 있는 값만 */
+  --text-13: 0.8125rem;
+  --text-13--line-height: 1.48;
+  --text-15: 0.9375rem;
+  --text-15--line-height: 1.48;
+  --text-17: 1.0625rem;
+  --text-17--line-height: 1.48;
+  --text-22: 1.375rem;
+  --text-22--line-height: 1.3;
+  --text-3xl: 2rem;
+  --text-5xl: 2.5rem;
+  --text-7xl: 3.75rem;
+  --text-8xl: 3.75rem;
+  --text-9xl: 3.75rem;
+
+  /* 모서리: 키트의 단계(2 4 6 8 12 16 · 완전히 둥글게) */
+  --radius-xs: var(--radius-2);
+  --radius-sm: var(--radius-4);
+  --radius-md: var(--radius-6);
+  --radius-lg: var(--radius-8);
+  --radius-xl: var(--radius-12);
+  --radius-2xl: var(--radius-16);
+  --radius-3xl: var(--radius-16);
+  --radius-4xl: var(--radius-16);
+
+  /* 그림자: 키트의 세 가지 */
+  --shadow-2xs: var(--shadow-1);
+  --shadow-xs: var(--shadow-1);
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-2);
+  --shadow-xl: var(--shadow-3);
+  --shadow-2xl: var(--shadow-3);
+
+  /* 움직임: 길이 100 · 200 · 300ms, 곡선은 키트의 것 */
+  --default-transition-duration: var(--motion-duration-medium);
+  --default-transition-timing-function: var(--mw-ease);
+  --ease-in: var(--motion-easing-ease-in);
+  --ease-out: var(--motion-easing-ease-out);
+  --ease-in-out: var(--motion-easing-ease-in-out);
+  --animate-ping: ping var(--motion-duration-loop) var(--motion-easing-ease-out) infinite;
+  --animate-pulse: pulse var(--motion-duration-loop) var(--motion-easing-ease-in-out) infinite;
+  --animate-bounce: bounce var(--motion-duration-loop) var(--motion-easing-ease-in-out) infinite;
+
+  /* 화면이 바뀌는 너비: 380 · 600 · 900 · 1280뿐이에요 (foundations/spacing-layout#breakpoints).
+     키트는 (max-width: 600px)처럼 쓰므로, 그 반대쪽 조건은 1px 위에서 시작해요. md와 lg는 같은 900px이에요. */
+  --breakpoint-xs: 381px;
+  --breakpoint-sm: 601px;
+  --breakpoint-md: 901px;
+  --breakpoint-lg: 901px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1280px;
+
+  /* Editor reading measure — optimal line length for comfortable writing/reading */
+  --editor-measure: 48rem;
+}
+
+/* 이름을 Tailwind가 지우지 않게 static으로 둬요 (일반 CSS에서 var()로 불러요) */
+@theme static {
+  --ease-standard: var(--mw-ease);
+  --ease-enter: var(--motion-easing-ease-out);
+  --ease-exit: var(--motion-easing-ease-in);
+  --ease-spring: var(--mw-ease-sheet);
+}
+
+/* Memo에만 있는 값 */
+:root {
+  --memo-saved-hold: 1400ms; /* '저장했어요' 표시가 사라지기 전에 머무는 시간 */
+  --memo-breathe-cycle: 10s; /* 숨 쉬는 글자(설정에서 켰을 때)의 한 호흡 */
 }
 
 /* Base styles */
+html, body, #root { height: 100%; }
 html {
-  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: calc(1rem * var(--memo-font-scale, 1));
-  /* App-like feel: no rubber-band scroll chaining at the document edge */
-  overscroll-behavior-y: contain;
+  /* 글자 크기 설정(--memo-font-scale)은 rem 단위 전체에 걸려요 */
+  font-size: calc(var(--font-size-16) * var(--memo-font-scale, 1));
+}
+/* 스크롤은 내용 영역(mw-app-content) 한 곳에서만 일어나요. 브라우저의 당겨서 새로 고침은 꺼요:
+   시트를 끌 때도 걸리기 때문이에요. 그 일은 키트의 PullRefresh가 내용 영역에서 해요. */
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  font-weight: var(--font-weight-medium);
 }
 
-/* Theme-aware text selection — tracks every data-palette variant via --color-primary-* */
-::selection {
-  background: color-mix(in oklch, var(--color-primary-500) 25%, transparent);
-  color: inherit;
-}
-
-.dark ::selection {
-  background: color-mix(in oklch, var(--color-primary-400) 35%, transparent);
-}
-
-/* Focus ring offsets must track the theme background — Tailwind's default
-   ring-offset color is #fff, which paints a white halo box in dark mode */
 @layer base {
+  /* Focus ring offsets must track the theme background */
   * {
-    --tw-ring-offset-color: var(--color-bg-primary);
+    --tw-ring-offset-color: var(--surface-primary);
+  }
+  /* tw-animate-css의 기본 길이(150ms)와 곡선(ease) 대신 키트의 값 */
+  .animate-in,
+  .animate-out {
+    --tw-duration: var(--motion-duration-medium);
+    --tw-ease: var(--mw-ease);
   }
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
-
-.dark {
+[data-theme="dark"] {
   color-scheme: dark;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: var(--space-8);
+  height: var(--space-8);
 }
 
 ::-webkit-scrollbar-track {
@@ -131,20 +271,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.7 0 0 / 0.3);
-  border-radius: 4px;
+  background: var(--border-secondary);
+  border-radius: var(--radius-4);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.6 0 0 / 0.5);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: oklch(0.5 0 0 / 0.4);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.6 0 0 / 0.6);
+  background: var(--border-primary);
 }
 
 .scrollbar-none {
@@ -161,292 +293,13 @@ html {
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: oklch(0.7 0 0 / 0.3);
-  border-radius: 4px;
-}
-
-/* ========================================
-   Color Palettes (Light Mode Only)
-   ======================================== */
-
-/* TECH-04: Light mode palettes unified to oklch (matching dark mode system) */
-html:not(.dark)[data-palette="ocean"] {
-  --color-primary-50: oklch(0.97 0.02 250);
-  --color-primary-100: oklch(0.93 0.04 250);
-  --color-primary-200: oklch(0.86 0.08 250);
-  --color-primary-300: oklch(0.76 0.12 250);
-  --color-primary-400: oklch(0.64 0.16 250);
-  --color-primary-500: oklch(0.55 0.18 250);
-  --color-primary-600: oklch(0.48 0.18 250);
-  --color-primary-700: oklch(0.40 0.15 250);
-  --color-primary-800: oklch(0.33 0.12 250);
-  --color-primary-900: oklch(0.27 0.09 250);
-}
-
-html:not(.dark)[data-palette="rose"] {
-  --color-primary-50: oklch(0.97 0.02 350);
-  --color-primary-100: oklch(0.93 0.04 350);
-  --color-primary-200: oklch(0.86 0.08 350);
-  --color-primary-300: oklch(0.76 0.14 350);
-  --color-primary-400: oklch(0.64 0.18 350);
-  --color-primary-500: oklch(0.55 0.20 350);
-  --color-primary-600: oklch(0.48 0.20 350);
-  --color-primary-700: oklch(0.40 0.16 350);
-  --color-primary-800: oklch(0.33 0.12 350);
-  --color-primary-900: oklch(0.27 0.08 350);
-}
-
-html:not(.dark)[data-palette="purple"] {
-  --color-primary-50: oklch(0.97 0.02 300);
-  --color-primary-100: oklch(0.93 0.04 300);
-  --color-primary-200: oklch(0.86 0.08 300);
-  --color-primary-300: oklch(0.76 0.14 300);
-  --color-primary-400: oklch(0.64 0.18 300);
-  --color-primary-500: oklch(0.55 0.20 300);
-  --color-primary-600: oklch(0.48 0.20 300);
-  --color-primary-700: oklch(0.40 0.16 300);
-  --color-primary-800: oklch(0.33 0.12 300);
-  --color-primary-900: oklch(0.27 0.08 300);
-}
-
-html:not(.dark)[data-palette="forest"] {
-  --color-primary-50: oklch(0.97 0.03 160);
-  --color-primary-100: oklch(0.93 0.05 160);
-  --color-primary-200: oklch(0.86 0.08 160);
-  --color-primary-300: oklch(0.76 0.14 160);
-  --color-primary-400: oklch(0.64 0.18 160);
-  --color-primary-500: oklch(0.55 0.20 160);
-  --color-primary-600: oklch(0.48 0.18 160);
-  --color-primary-700: oklch(0.40 0.14 160);
-  --color-primary-800: oklch(0.33 0.10 160);
-  --color-primary-900: oklch(0.27 0.06 160);
-}
-
-/* ========================================
-   Dark Mode Palettes
-   ======================================== */
-
-html.dark[data-palette="ocean"] {
-  --color-primary-50: oklch(0.15 0.03 250);
-  --color-primary-100: oklch(0.20 0.05 250);
-  --color-primary-200: oklch(0.28 0.08 250);
-  --color-primary-300: oklch(0.38 0.12 250);
-  --color-primary-400: oklch(0.50 0.16 250);
-  --color-primary-500: oklch(0.60 0.18 250);
-  --color-primary-600: oklch(0.68 0.16 250);
-  --color-primary-700: oklch(0.75 0.13 250);
-  --color-primary-800: oklch(0.82 0.10 250);
-  --color-primary-900: oklch(0.90 0.06 250);
-}
-
-html.dark[data-palette="rose"] {
-  --color-primary-50: oklch(0.15 0.03 350);
-  --color-primary-100: oklch(0.20 0.05 350);
-  --color-primary-200: oklch(0.28 0.08 350);
-  --color-primary-300: oklch(0.38 0.14 350);
-  --color-primary-400: oklch(0.50 0.18 350);
-  --color-primary-500: oklch(0.60 0.20 350);
-  --color-primary-600: oklch(0.68 0.18 350);
-  --color-primary-700: oklch(0.75 0.14 350);
-  --color-primary-800: oklch(0.82 0.10 350);
-  --color-primary-900: oklch(0.90 0.06 350);
-}
-
-html.dark[data-palette="purple"] {
-  --color-primary-50: oklch(0.15 0.03 300);
-  --color-primary-100: oklch(0.20 0.05 300);
-  --color-primary-200: oklch(0.28 0.08 300);
-  --color-primary-300: oklch(0.38 0.14 300);
-  --color-primary-400: oklch(0.50 0.18 300);
-  --color-primary-500: oklch(0.60 0.20 300);
-  --color-primary-600: oklch(0.68 0.18 300);
-  --color-primary-700: oklch(0.75 0.14 300);
-  --color-primary-800: oklch(0.82 0.10 300);
-  --color-primary-900: oklch(0.90 0.06 300);
-}
-
-html.dark[data-palette="forest"] {
-  --color-primary-50: oklch(0.15 0.03 160);
-  --color-primary-100: oklch(0.20 0.05 160);
-  --color-primary-200: oklch(0.28 0.08 160);
-  --color-primary-300: oklch(0.38 0.14 160);
-  --color-primary-400: oklch(0.50 0.18 160);
-  --color-primary-500: oklch(0.60 0.20 160);
-  --color-primary-600: oklch(0.68 0.16 160);
-  --color-primary-700: oklch(0.75 0.12 160);
-  --color-primary-800: oklch(0.82 0.08 160);
-  --color-primary-900: oklch(0.90 0.04 160);
-}
-
-/* ========================================
-   Living Workspace Palettes
-   ======================================== */
-
-/* Monochrome (Survival Mode) */
-html:not(.dark)[data-palette="monochrome"] {
-  --color-primary-50: oklch(0.97 0.00 0);
-  --color-primary-100: oklch(0.93 0.00 0);
-  --color-primary-200: oklch(0.86 0.00 0);
-  --color-primary-300: oklch(0.76 0.00 0);
-  --color-primary-400: oklch(0.64 0.00 0);
-  --color-primary-500: oklch(0.55 0.00 0);
-  --color-primary-600: oklch(0.48 0.00 0);
-  --color-primary-700: oklch(0.40 0.00 0);
-  --color-primary-800: oklch(0.33 0.00 0);
-  --color-primary-900: oklch(0.27 0.00 0);
-}
-
-html.dark[data-palette="monochrome"] {
-  --color-primary-50: oklch(0.15 0.00 0);
-  --color-primary-100: oklch(0.20 0.00 0);
-  --color-primary-200: oklch(0.28 0.00 0);
-  --color-primary-300: oklch(0.38 0.00 0);
-  --color-primary-400: oklch(0.50 0.00 0);
-  --color-primary-500: oklch(0.60 0.00 0);
-  --color-primary-600: oklch(0.68 0.00 0);
-  --color-primary-700: oklch(0.75 0.00 0);
-  --color-primary-800: oklch(0.82 0.00 0);
-  --color-primary-900: oklch(0.90 0.00 0);
-}
-
-/* Victory Gold (Time Capsule / Special Events) */
-html:not(.dark)[data-palette="victory-gold"] {
-  --color-primary-50: oklch(0.97 0.03 80);
-  --color-primary-100: oklch(0.93 0.06 80);
-  --color-primary-200: oklch(0.86 0.10 80);
-  --color-primary-300: oklch(0.78 0.14 75);
-  --color-primary-400: oklch(0.70 0.16 70);
-  --color-primary-500: oklch(0.65 0.18 65);
-  --color-primary-600: oklch(0.55 0.18 60);
-  --color-primary-700: oklch(0.45 0.14 55);
-  --color-primary-800: oklch(0.38 0.10 50);
-  --color-primary-900: oklch(0.30 0.06 45);
-}
-
-html.dark[data-palette="victory-gold"] {
-  --color-primary-50: oklch(0.15 0.03 80);
-  --color-primary-100: oklch(0.20 0.06 80);
-  --color-primary-200: oklch(0.28 0.10 75);
-  --color-primary-300: oklch(0.38 0.14 70);
-  --color-primary-400: oklch(0.50 0.16 65);
-  --color-primary-500: oklch(0.62 0.18 65);
-  --color-primary-600: oklch(0.70 0.16 70);
-  --color-primary-700: oklch(0.78 0.12 75);
-  --color-primary-800: oklch(0.85 0.08 80);
-  --color-primary-900: oklch(0.92 0.04 80);
-}
-
-/* Weather: Clear (warm yellow-orange) */
-html:not(.dark)[data-palette="weather-clear"] {
-  --color-primary-50: oklch(0.97 0.03 70);
-  --color-primary-100: oklch(0.93 0.06 70);
-  --color-primary-200: oklch(0.86 0.10 68);
-  --color-primary-300: oklch(0.78 0.14 65);
-  --color-primary-400: oklch(0.68 0.16 60);
-  --color-primary-500: oklch(0.60 0.18 55);
-  --color-primary-600: oklch(0.52 0.18 50);
-  --color-primary-700: oklch(0.44 0.14 48);
-  --color-primary-800: oklch(0.36 0.10 45);
-  --color-primary-900: oklch(0.28 0.06 42);
-}
-
-html.dark[data-palette="weather-clear"] {
-  --color-primary-50: oklch(0.15 0.03 70);
-  --color-primary-100: oklch(0.20 0.06 68);
-  --color-primary-200: oklch(0.28 0.10 65);
-  --color-primary-300: oklch(0.38 0.14 60);
-  --color-primary-400: oklch(0.50 0.16 55);
-  --color-primary-500: oklch(0.62 0.18 55);
-  --color-primary-600: oklch(0.70 0.16 60);
-  --color-primary-700: oklch(0.78 0.12 65);
-  --color-primary-800: oklch(0.85 0.08 70);
-  --color-primary-900: oklch(0.92 0.04 70);
-}
-
-/* Weather: Rain (desaturated blue-gray) */
-html:not(.dark)[data-palette="weather-rain"] {
-  --color-primary-50: oklch(0.97 0.01 250);
-  --color-primary-100: oklch(0.93 0.02 250);
-  --color-primary-200: oklch(0.86 0.04 250);
-  --color-primary-300: oklch(0.76 0.06 250);
-  --color-primary-400: oklch(0.64 0.08 250);
-  --color-primary-500: oklch(0.55 0.08 250);
-  --color-primary-600: oklch(0.48 0.08 250);
-  --color-primary-700: oklch(0.40 0.06 250);
-  --color-primary-800: oklch(0.33 0.04 250);
-  --color-primary-900: oklch(0.27 0.02 250);
-}
-
-html.dark[data-palette="weather-rain"] {
-  --color-primary-50: oklch(0.15 0.01 250);
-  --color-primary-100: oklch(0.20 0.02 250);
-  --color-primary-200: oklch(0.28 0.04 250);
-  --color-primary-300: oklch(0.38 0.06 250);
-  --color-primary-400: oklch(0.50 0.08 250);
-  --color-primary-500: oklch(0.60 0.08 250);
-  --color-primary-600: oklch(0.68 0.06 250);
-  --color-primary-700: oklch(0.75 0.04 250);
-  --color-primary-800: oklch(0.82 0.02 250);
-  --color-primary-900: oklch(0.90 0.01 250);
-}
-
-/* Weather: Snow (ice white, sky blue) */
-html:not(.dark)[data-palette="weather-snow"] {
-  --color-primary-50: oklch(0.98 0.01 220);
-  --color-primary-100: oklch(0.95 0.02 220);
-  --color-primary-200: oklch(0.88 0.04 220);
-  --color-primary-300: oklch(0.80 0.06 220);
-  --color-primary-400: oklch(0.70 0.08 220);
-  --color-primary-500: oklch(0.62 0.10 220);
-  --color-primary-600: oklch(0.52 0.10 220);
-  --color-primary-700: oklch(0.44 0.08 220);
-  --color-primary-800: oklch(0.36 0.06 220);
-  --color-primary-900: oklch(0.28 0.04 220);
-}
-
-html.dark[data-palette="weather-snow"] {
-  --color-primary-50: oklch(0.15 0.01 220);
-  --color-primary-100: oklch(0.20 0.02 220);
-  --color-primary-200: oklch(0.28 0.04 220);
-  --color-primary-300: oklch(0.38 0.06 220);
-  --color-primary-400: oklch(0.50 0.08 220);
-  --color-primary-500: oklch(0.62 0.10 220);
-  --color-primary-600: oklch(0.70 0.08 220);
-  --color-primary-700: oklch(0.78 0.06 220);
-  --color-primary-800: oklch(0.85 0.04 220);
-  --color-primary-900: oklch(0.92 0.02 220);
-}
-
-/* Weather: Overcast (low-contrast warm tone) */
-html:not(.dark)[data-palette="weather-overcast"] {
-  --color-primary-50: oklch(0.97 0.01 40);
-  --color-primary-100: oklch(0.93 0.02 40);
-  --color-primary-200: oklch(0.86 0.04 40);
-  --color-primary-300: oklch(0.76 0.06 40);
-  --color-primary-400: oklch(0.66 0.08 40);
-  --color-primary-500: oklch(0.58 0.08 40);
-  --color-primary-600: oklch(0.50 0.08 40);
-  --color-primary-700: oklch(0.42 0.06 40);
-  --color-primary-800: oklch(0.35 0.04 40);
-  --color-primary-900: oklch(0.28 0.02 40);
-}
-
-html.dark[data-palette="weather-overcast"] {
-  --color-primary-50: oklch(0.15 0.01 40);
-  --color-primary-100: oklch(0.20 0.02 40);
-  --color-primary-200: oklch(0.28 0.04 40);
-  --color-primary-300: oklch(0.38 0.06 40);
-  --color-primary-400: oklch(0.50 0.08 40);
-  --color-primary-500: oklch(0.60 0.08 40);
-  --color-primary-600: oklch(0.68 0.06 40);
-  --color-primary-700: oklch(0.75 0.04 40);
-  --color-primary-800: oklch(0.82 0.02 40);
-  --color-primary-900: oklch(0.90 0.01 40);
+  background: var(--border-secondary);
+  border-radius: var(--radius-4);
 }
 
 /* ========================================
@@ -481,10 +334,6 @@ html.dark[data-palette="weather-overcast"] {
   to { opacity: 0; }
 }
 
-@keyframes fadeOutDelayed {
-  0%, 70% { opacity: 1; }
-  100% { opacity: 0; }
-}
 
 @keyframes cardShrink {
   to { opacity: 0; transform: scale(0.85); max-height: 0; margin: 0; padding: 0; }
@@ -501,35 +350,29 @@ html.dark[data-palette="weather-overcast"] {
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg, transparent 25%, oklch(0.9 0 0 / 0.3) 50%, transparent 75%);
+  background: linear-gradient(90deg, transparent 25%, var(--border-secondary) 50%, transparent 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.dark .skeleton-shimmer {
-  background: linear-gradient(90deg, transparent 25%, oklch(0.3 0 0 / 0.3) 50%, transparent 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer var(--motion-duration-loop) var(--motion-easing-ease-in-out) infinite;
 }
 
 .animate-star-pulse {
-  animation: starPulse 0.4s ease-in-out;
+  animation: starPulse var(--motion-duration-long) var(--motion-easing-ease-in-out);
 }
 
 .animate-draw-check {
-  animation: drawCheck 0.3s ease-out forwards;
+  animation: drawCheck var(--motion-duration-long) var(--motion-easing-ease-out) forwards;
 }
 
 .animate-progress-spin {
-  animation: progressSpin 1s linear infinite;
+  animation: progressSpin var(--motion-duration-loop) linear infinite;
 }
 
 .animate-save-fadeout {
-  animation: fadeOutDelayed 2s ease-out forwards;
+  animation: fadeOut var(--motion-duration-long) var(--motion-easing-ease-out) var(--memo-saved-hold) forwards;
 }
 
 .animate-card-shrink {
-  animation: cardShrink 0.3s ease-in forwards;
+  animation: cardShrink var(--motion-duration-long) var(--motion-easing-ease-in) forwards;
   overflow: hidden;
 }
 
@@ -541,7 +384,7 @@ html.dark[data-palette="weather-overcast"] {
 }
 
 .animate-wiggle {
-  animation: wiggle 0.6s ease-in-out 2;
+  animation: wiggle var(--motion-duration-long) var(--motion-easing-ease-in-out) 4;
 }
 
 /* Page enter transition — View Transitions 미지원 브라우저 전용 폴백.
@@ -552,7 +395,7 @@ html.dark[data-palette="weather-overcast"] {
 }
 
 .page-enter {
-  animation: pageEnter 200ms ease-out forwards;
+  animation: pageEnter var(--motion-duration-medium) var(--motion-easing-ease-out) forwards;
 }
 
 /* Editor slide-in from right */
@@ -562,53 +405,14 @@ html.dark[data-palette="weather-overcast"] {
 }
 
 .animate-slide-in-right {
-  animation: slideInFromRight 200ms ease-out both;
+  animation: slideInFromRight var(--motion-duration-medium) var(--motion-easing-ease-out) both;
 }
 
 /* ========================================
-   Completion Catharsis Effects
+   Digital Garden: 최근에 손댄 메모는 한 단계 떠 있어요
    ======================================== */
-@keyframes completionGlow {
-  0% { box-shadow: inset 0 0 0 0 oklch(0.55 0.18 250 / 0); }
-  40% { box-shadow: inset 0 0 60px 20px oklch(0.55 0.18 250 / 0.08); }
-  100% { box-shadow: inset 0 0 0 0 oklch(0.55 0.18 250 / 0); }
-}
-
-@keyframes completionFlash {
-  0% { opacity: 0; }
-  30% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-html.completion-catharsis::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  animation: completionGlow 1.5s ease-out forwards;
-}
-
-html.completion-catharsis .completion-flash-overlay {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at center, oklch(0.95 0.02 250 / 0.15), transparent 70%);
-  pointer-events: none;
-  z-index: 9998;
-  animation: completionFlash 1.5s ease-out forwards;
-}
-
-/* ========================================
-   Digital Garden: Memory Decay Glow
-   ======================================== */
-
-@keyframes memoGlow {
-  0%, 100% { box-shadow: 0 0 0 transparent; }
-  50% { box-shadow: 0 0 16px oklch(0.7 0.12 var(--hue-primary, 250)); }
-}
-
 .memo-glow-active {
-  animation: memoGlow 3s ease-in-out infinite;
+  box-shadow: var(--shadow-2);
 }
 
 /* ========================================
@@ -621,7 +425,7 @@ html.completion-catharsis .completion-flash-overlay {
 }
 
 .breathing-active textarea {
-  animation: breathe 10s ease-in-out infinite;
+  animation: breathe var(--memo-breathe-cycle) var(--motion-easing-ease-in-out) infinite;
 }
 
 /* ========================================
@@ -637,23 +441,12 @@ html.completion-catharsis .completion-flash-overlay {
 /* ========================================
    Reduced Motion Support
    ======================================== */
+/* 움직임 줄이기: 키트(.mw-root)가 모든 움직임을 멈춰요. 여기서는 그 예외만 적어요. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .memo-glow-active { animation: none; }
-  .breathing-active textarea { animation: none; }
-
-  /* Progress indication is essential, not decorative — keep spinners alive (slower) */
+  /* Progress indication is essential, not decorative — keep spinners alive */
   .animate-spin,
   .animate-progress-spin {
-    animation-duration: 1.5s !important;
+    animation-duration: var(--motion-duration-loop) !important;
     animation-iteration-count: infinite !important;
   }
 
@@ -681,15 +474,15 @@ html.completion-catharsis .completion-flash-overlay {
 
   body,
   html {
-    background: white !important;
-    color: black !important;
+    background: var(--static-white) !important;
+    color: var(--static-black) !important;
   }
 
   .memo-card {
     break-inside: avoid;
-    border: 1px solid #ddd !important;
+    border: var(--border-width-1) solid var(--gray-150) !important;
     box-shadow: none !important;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-4);
   }
 
   .truncate {
@@ -697,32 +490,6 @@ html.completion-catharsis .completion-flash-overlay {
     overflow: visible !important;
     text-overflow: unset !important;
   }
-}
-
-/* ========================================
-   Accessibility
-   ======================================== */
-.skip-link {
-  position: absolute;
-  top: -100%;
-  left: 0;
-  z-index: 9998;
-  padding: 0.75rem 1.5rem;
-  background: var(--color-primary-600);
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-  text-decoration: none;
-  border-radius: 0 0 0.5rem 0;
-}
-
-.skip-link:focus {
-  top: 0;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
 }
 
 /* ========================================
@@ -771,25 +538,6 @@ summary {
   -webkit-overflow-scrolling: touch;
 }
 
-/* FAB narrow fold sizing */
-[data-narrow-fold] .fab-button {
-  right: 0.75rem;
-  gap: 0.5rem;
-}
-
-[data-narrow-fold] .fab-button button {
-  width: 2.5rem;
-  height: 2.5rem;
-}
-
-/* FAB desktop positioning override */
-@media (min-width: 768px) {
-  .fab-button {
-    bottom: 2rem !important;
-    right: 2rem;
-  }
-}
-
 /* Graceful degradation: disable backdrop-blur for reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   .backdrop-blur-sm {
@@ -802,31 +550,23 @@ summary {
    View Transitions
    ======================================== */
 ::view-transition-old(root) {
-  animation: fadeOut 120ms ease-out;
+  animation: fadeOut var(--motion-duration-short) var(--motion-easing-ease-out);
 }
 
 ::view-transition-new(root) {
-  animation: fadeIn 120ms ease-in 60ms;
+  animation: fadeIn var(--motion-duration-short) var(--motion-easing-ease-in);
 }
 
 ::view-transition-group(root) {
-  animation-duration: 180ms;
-}
-
-/* 하단 탭 인디케이터 — VT 네비게이션 시 이전 탭 위치에서 새 탭 위치로 morph */
-::view-transition-group(bottom-nav-indicator) {
-  animation-duration: 250ms;
-  animation-timing-function: var(--ease-spring);
+  animation-duration: var(--motion-duration-medium);
 }
 
 /* ─── Command Palette (cmdk) group headings ──────────── */
 [cmdk-group-heading] {
-  padding: 6px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
 }
 
 /* ─── Checklist Styles ──────────── */
@@ -854,59 +594,20 @@ summary {
 
 /* ─── High Contrast Mode (WCAG AAA) ──────────── */
 html[data-high-contrast] {
-  --color-primary-500: oklch(0.45 0.22 250);
-  --color-primary-600: oklch(0.38 0.22 250);
+  --color-primary-400: var(--mw-accent-strong);
+  --color-primary-500: var(--mw-accent-strong);
+  --color-primary-600: var(--mw-accent-pressed);
 }
 
-html[data-high-contrast] .dark {
-  --color-primary-400: oklch(0.72 0.16 250);
-  --color-primary-300: oklch(0.82 0.12 250);
-}
+html[data-high-contrast] .text-zinc-400,
+html[data-high-contrast] .text-zinc-500 { color: var(--text-secondary); }
 
-html[data-high-contrast] .text-zinc-400 { color: oklch(0.45 0 0); }
-html[data-high-contrast] .text-zinc-500 { color: oklch(0.40 0 0); }
-html[data-high-contrast].dark .text-zinc-400 { color: oklch(0.65 0 0); }
-html[data-high-contrast].dark .text-zinc-500 { color: oklch(0.60 0 0); }
-
-/* ─── Galaxy Fold Narrow Screen Overrides ──────── */
-/* F-12: Slightly reduce font scale on fold front screen */
-[data-narrow-fold] {
-  --memo-font-scale: 0.95;
-}
-
+/* ─── 좁은 폰 화면(380px 이하) ──────── */
 /* F-10: Ensure minimum touch target sizes on fold */
 [data-narrow-fold] button:not(.no-min-touch),
 [data-narrow-fold] a:not(.no-min-touch),
 [data-narrow-fold] [role="button"]:not(.no-min-touch) {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--mw-touch);
+  min-width: var(--mw-touch);
 }
 
-/* F-11: Smooth transitions during fold/unfold */
-@media (prefers-reduced-motion: no-preference) {
-  [data-narrow-fold] {
-    --fold-transition: padding 200ms ease, gap 200ms ease;
-  }
-}
-
-/* ─── Organic UI Aura ──────────── */
-html[data-aura] {
-  --aura-hue: 250;
-  --aura-saturation: 0;
-}
-
-html[data-aura]::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(ellipse at 50% 0%,
-    oklch(0.95 var(--aura-saturation, 0) var(--aura-hue, 250) / 0.25),
-    transparent 70%);
-  transition: all 3s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html[data-aura]::before { transition: none; }
-}

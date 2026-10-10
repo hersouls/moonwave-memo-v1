@@ -1,20 +1,16 @@
-import { Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import clsx from 'clsx'
-import { WifiOff } from 'lucide-react'
-import { Sidebar } from './components/layout/Sidebar'
-import { Header } from './components/layout/Header'
-import { BottomNav } from './components/layout/BottomNav'
-import { MobileNav } from './components/layout/MobileNav'
-import { Footer } from './components/layout/Footer'
+import { AppNav } from './components/layout/AppNav'
+import { AppTop } from './components/layout/AppTop'
+import { AppTabbar } from './components/layout/AppTabbar'
+import { PullRefresh } from './mw/PullRefresh'
+import { FloatingActionButton } from './mw/FloatingActionButton'
+import { IcLineWifi, IcLineWrite } from './mw/icons'
 import { UndoToast } from './components/ui/UndoToast'
 import { ToastContainer } from './components/ui/Toast'
 import { UpdateBanner } from './components/ui/UpdateBanner'
 import { AppLoadingScreen } from './components/ui/AppLoadingScreen'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
-import { FAB } from './components/ui/FAB'
-import { AmbientBackground } from './components/ui/AmbientBackground'
-import { EdgeLighting } from './components/ui/EdgeLighting'
 import { LockScreen } from './components/ui/LockScreen'
 import { useAppLockStore } from './hooks/useAppLock'
 import { clearAppBadge } from './utils/badge'
@@ -48,6 +44,7 @@ import { useThemeOrchestrator } from './stores/themeOrchestratorStore'
 import { registerRefreshCallbacks } from './services/firestoreSync'
 import { connectivity } from './services/connectivity'
 import { getCachedPosition, requestAndCachePosition, getSolarMode } from './services/solarCalculator'
+import './styles/shell.css'
 import { fetchWeather } from './services/weatherService'
 import { MEDIA } from '@/utils/breakpoints'
 
@@ -62,13 +59,11 @@ export default function App() {
   const initializeMemos = useMemoStore((state) => state.initialize)
   const initializeFolders = useFolderStore((state) => state.initialize)
   const initSettings = useSettingsStore((state) => state.initialize)
-  const isSidebarOpen = useUIStore((state) => state.isSidebarOpen)
-  const isTablet = useUIStore((state) => state.isTablet)
   const isMobile = useUIStore((state) => state.isMobile)
-  const tabletSidebarOpen = useUIStore((state) => state.tabletSidebarOpen)
   const isFocusMode = useUIStore((state) => state.isFocusMode)
-  // Tablet rail keeps its own collapse state; mirror it for the content offset.
-  const sidebarExpanded = isTablet ? tabletSidebarOpen : isSidebarOpen
+  const isKeyboardOpen = useUIStore((state) => state.isKeyboardOpen)
+  // 세로로 스크롤되는 유일한 곳(mw-app-content). 당겨서 새로 고침과 '탭을 다시 눌러 맨 위로'가 여기를 써요.
+  const content = useRef<HTMLElement>(null)
 
   // PERF: Subscribe to modal open states for conditional lazy rendering
   const isSettingsOpen = useUIStore((s) => s.isSettingsModalOpen)
@@ -140,8 +135,8 @@ export default function App() {
   const prevTheme = useRef(theme)
   useEffect(() => {
     if (prevTheme.current !== theme) {
-      const labels: Record<string, string> = { light: '라이트 모드', dark: '다크 모드', system: '시스템 설정' }
-      setThemeAnnouncement(`테마가 ${labels[theme] || theme}(으)로 변경되었습니다`)
+      const labels: Record<string, string> = { light: '밝게', dark: '어둡게', system: '시스템 설정 따르기' }
+      setThemeAnnouncement(`테마를 ${labels[theme] || theme}(으)로 바꿨어요`)
       prevTheme.current = theme
       const t = setTimeout(() => setThemeAnnouncement(''), 3000)
       return () => clearTimeout(t)
@@ -175,8 +170,6 @@ export default function App() {
         // Dynamically imported so the feature stays out of the initial bundle.
         import('@/services/syncFolder').then(({ initSyncFolder }) => initSyncFolder()).catch(() => {})
 
-        // Re-resolve orchestrator after initSettings to restore environment/event palette
-        useThemeOrchestrator.getState().resolve()
       } finally {
         setIsInitialized(true)
       }
@@ -248,7 +241,7 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // F-09: Galaxy Fold narrow screen detection
+  // F-09: 좁은 폰 화면(380px 이하)
   useEffect(() => {
     const mql = window.matchMedia(MEDIA.fold)
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
@@ -283,22 +276,11 @@ export default function App() {
     return () => mql.removeEventListener('change', handleChange)
   }, [])
 
-  // Mobile tier detection (≤767px: touch-first, bottom nav)
+  // 좁은 화면(900px 이하: 하단 탭). 뼈대가 바뀌는 너비는 키트와 같은 900px 하나예요.
   useEffect(() => {
     const mql = window.matchMedia(MEDIA.mobile)
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       useUIStore.setState({ isMobile: e.matches })
-    }
-    handleChange(mql)
-    mql.addEventListener('change', handleChange)
-    return () => mql.removeEventListener('change', handleChange)
-  }, [])
-
-  // Tablet tier detection (768–1023px: compact sidebar shell)
-  useEffect(() => {
-    const mql = window.matchMedia(MEDIA.tabletOnly)
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      useUIStore.setState({ isTablet: e.matches })
     }
     handleChange(mql)
     mql.addEventListener('change', handleChange)
@@ -353,11 +335,11 @@ export default function App() {
   const contextSurfacingEnabled = useSettingsStore((s) => s.settings.livingWorkspace.contextSurfacingEnabled)
   const { suggestedMemo, dismiss: dismissContextSuggestion } = useContextSurfacing(contextSurfacingEnabled)
 
-  // Living Workspace: Environment sync (solar + weather)
-  const environmentThemeEnabled = useSettingsStore((s) => s.settings.livingWorkspace.environmentThemeEnabled)
+  // 메모의 맥락 기록과 상단 바의 날씨에 쓰는 값(대략의 위치, 날씨, 낮과 밤)을 한 시간마다 받아 둬요.
+  // 화면의 색과 테마는 바꾸지 않아요: 테마는 설정의 data-theme 하나예요.
+  const contextSyncEnabled = useSettingsStore((s) => s.settings.livingWorkspace.environmentThemeEnabled)
   useEffect(() => {
-    if (!environmentThemeEnabled) {
-      // 꺼지면 환경 시그널 초기화 → 사용자 기본 팔레트로 복원
+    if (!contextSyncEnabled) {
       useThemeOrchestrator.getState().setEnvironment(null, null, null)
       return
     }
@@ -368,7 +350,7 @@ export default function App() {
       if (!pos) return
 
       const solarMode = getSolarMode(pos.latitude, pos.longitude)
-      const weather = await fetchWeather(pos.latitude, pos.longitude)
+      const weather = await fetchWeather()
 
       useThemeOrchestrator.getState().setEnvironment(
         weather?.condition ?? null,
@@ -380,12 +362,7 @@ export default function App() {
     syncEnvironment()
     const interval = setInterval(syncEnvironment, 60 * 60 * 1000) // every hour
     return () => clearInterval(interval)
-  }, [environmentThemeEnabled])
-
-  // Living Workspace: resolve orchestrator on settings change
-  useEffect(() => {
-    useThemeOrchestrator.getState().resolve()
-  }, [])
+  }, [contextSyncEnabled])
 
   // Sync currentView with URL
   const location = useLocation()
@@ -403,6 +380,28 @@ export default function App() {
     }
   }, [location.pathname, setCurrentView])
 
+  // 화면을 옮기면 내용을 맨 위로, 뒤로 돌아오면 있던 자리로 (스크롤이 창이 아니라 내용 영역에서 일어나요)
+  const scrollMemory = useRef(new Map<string, number>())
+  const lastPath = useRef(location.pathname)
+  useEffect(() => {
+    const node = content.current
+    if (!node) return
+    const remember = () => scrollMemory.current.set(lastPath.current, node.scrollTop)
+    node.addEventListener('scroll', remember, { passive: true })
+    return () => node.removeEventListener('scroll', remember)
+  }, [isInitialized])
+  useEffect(() => {
+    const node = content.current
+    lastPath.current = location.pathname
+    if (!node) return
+    node.scrollTo({ top: scrollMemory.current.get(location.pathname) ?? 0, behavior: 'instant' })
+  }, [location.pathname])
+
+  useEffect(() => {
+    const names: Record<string, string> = { dashboard: '홈', memos: '메모', memo: '메모', calendar: '캘린더', canvas: '캔버스' }
+    document.title = `${names[location.pathname.split('/')[1] || 'dashboard'] ?? 'Memo'} · Memo`
+  }, [location.pathname])
+
   if (!isInitialized) {
     return <AppLoadingScreen />
   }
@@ -411,76 +410,55 @@ export default function App() {
   // dashboard ↔ memos ↔ calendar 섹션 전환에서만 페이지 전환이 일어난다.
   const section = location.pathname.split('/')[1] || 'dashboard'
   const pageKey = section === 'memo' ? 'memos' : section
+  const isEditorRoute = location.pathname.startsWith('/memo/')
+  const fillsContent = isEditorRoute || (isMemoRoute && !isMobile)
+  const refresh = () => Promise.all([useMemoStore.getState().refreshFromDb(), useFolderStore.getState().refreshFromDb()])
 
   return (
-    <div
-      className="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col"
-      style={{
-        // 오프라인 배너 높이 — Header가 배너 아래에 sticky로 붙도록 CSS 변수로 전달
-        ...(!isOnline ? { '--offline-h': '36px' } : {}),
-        // 콘텐츠 좌측 인셋(사이드바 폭) — 키보드 열림 시 fixed 에디터가 사이드바를 덮지 않도록.
-        // 모바일(<md)·포커스 모드엔 사이드바가 없으므로 0.
-        '--content-left': isFocusMode || isMobile ? '0px' : sidebarExpanded ? '16rem' : '4rem',
-      } as React.CSSProperties}
-    >
-      <AmbientBackground />
+    <>
+      <a className="mw-skip" href="#main-content">본문으로 건너뛰기</a>
+      <div className={isFocusMode ? 'mw-app memo-focus' : 'mw-app'}>
+        <AppNav inert={isFocusMode} />
 
-      {/* A11Y: sr-only theme change announcement */}
-      {themeAnnouncement && (
-        <div className="sr-only" role="status" aria-live="polite">{themeAnnouncement}</div>
-      )}
+        <div className="mw-app-main">
+          <AppTop narrow={isMobile} inert={isFocusMode} />
 
-      {/* Offline banner — 다크온라이트 경고색(AA 대비) + 슬라이드 다운 등장 */}
-      {!isOnline && (
-        <div
-          role="alert"
-          className="sticky top-0 z-[var(--z-sticky)] flex items-center justify-center gap-2 px-4 py-2 bg-warning-100 text-warning-900 dark:bg-warning-950 dark:text-warning-300 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300 ease-enter"
-        >
-          <WifiOff className="w-4 h-4 text-warning-600 dark:text-warning-400" />
-          오프라인 상태입니다. 변경사항은 연결 복구 시 동기화됩니다.
-        </div>
-      )}
-
-      {/* 포커스 모드에서도 마운트 유지 — 크롬이 사라지는 대신 트랜지션으로 밀려난다 */}
-      <Sidebar />
-
-      <div
-        className={clsx(
-          // Sidebar appears at md+ (tablet & desktop); mobile (<md) uses bottom nav, no margin.
-          // 사이드바 rail과 같은 300ms/spring 커브로 마진이 함께 움직인다 (접기 desync 방지)
-          'flex-1 flex flex-col transition-[margin-left] duration-300 ease-spring',
-          !isFocusMode && (sidebarExpanded ? 'md:ml-64' : 'md:ml-16')
-        )}
-      >
-        <Header />
-        <main
-          id="main-content"
-          className={clsx(
-            'flex-1',
-            // 모바일 하단 내비(h-16 + safe-area)만큼 하단 여백 확보; md+에서는 사이드바가 대체
-            isFocusMode ? '' : 'pb-[calc(5rem+env(safe-area-inset-bottom,0px))]',
-            !isFocusMode && (isMemoRoute ? 'md:pb-0 lg:overflow-hidden' : 'md:pb-6')
+          {/* A11Y: sr-only theme change announcement */}
+          {themeAnnouncement && (
+            <div className="mw-sr-only" role="status" aria-live="polite">{themeAnnouncement}</div>
           )}
-        >
-          {/* TECH-02: ErrorBoundary wraps route content */}
-          <ErrorBoundary>
-            <div key={pageKey} className={supportsViewTransitions ? undefined : 'page-enter'}>
-              <Outlet />
-            </div>
-          </ErrorBoundary>
-        </main>
-        {!isMemoRoute && !isFocusMode && <Footer />}
-      </div>
 
-      {/* 포커스 모드: FAB는 페이드로 사라진다 (즉시 언마운트 방지) */}
-      <div
-        className={clsx('transition-opacity duration-200', isFocusMode && 'opacity-0 pointer-events-none')}
-        inert={isFocusMode || undefined}
-      >
-        <FAB />
+          {!isOnline && (
+            <div role="alert" className="mw-notice mw-notice--warn memo-offline">
+              <IcLineWifi size={20} />
+              <span>오프라인이에요. 바꾼 내용은 다시 연결되면 동기화해요.</span>
+            </div>
+          )}
+
+          {/* 손가락으로 쓰는 기기에서 내용을 당기면 기기와 클라우드의 메모를 다시 읽어요 */}
+          <PullRefresh scroller={content} onRefresh={refresh} />
+          <main ref={content} id="main-content" className="mw-app-content">
+            {/* TECH-02: ErrorBoundary wraps route content */}
+            <ErrorBoundary>
+              {/* 편집기와 넓은 화면의 메모 목록은 내용 영역의 높이를 채우고 저마다 스크롤해요 */}
+              <div key={pageKey} className={[fillsContent && 'memo-fill', !supportsViewTransitions && 'page-enter'].filter(Boolean).join(' ') || undefined}>
+                <Outlet />
+              </div>
+            </ErrorBoundary>
+          </main>
+
+          {/* 주 행동은 화면에 하나: 좁은 화면에서는 하단 탭 위의 FAB (넓은 화면에서는 페이지 머리의 버튼) */}
+          {!isEditorRoute && !isKeyboardOpen && (
+            <div className="mw-app-action">
+              <FloatingActionButton aria-label="새 메모 쓰기" onClick={() => navigate('/memo/new')}>
+                <IcLineWrite size={24} />
+              </FloatingActionButton>
+            </div>
+          )}
+
+          <AppTabbar scroller={content} inert={isFocusMode} />
+        </div>
       </div>
-      <BottomNav />
-      {!isFocusMode && <MobileNav />}
 
       {/* Global Modals — lazy loaded, rendered only when open */}
       <Suspense fallback={null}>
@@ -498,7 +476,6 @@ export default function App() {
 
       <UndoToast />
       <ToastContainer />
-      <EdgeLighting />
       <LockScreen />
       <UpdateBanner />
       <Suspense fallback={null}>
@@ -509,9 +486,6 @@ export default function App() {
         <ContextSuggestionBanner memo={suggestedMemo} onDismiss={dismissContextSuggestion} />
       )}
       {!isMemoRoute && <Suspense fallback={null}><FloatingTimer /></Suspense>}
-
-      {/* 라우트별 스크롤 복원 — 뒤로가기 시 위치 복원, 새 이동 시 최상단 */}
-      <ScrollRestoration getKey={(loc) => loc.pathname} />
-    </div>
+    </>
   )
 }

@@ -1,16 +1,4 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import {
-  TrendingUp,
-  Sparkles,
-  Repeat2,
-  Flame,
-  Tag,
-  Clock,
-  Sprout,
-  MessageCircle,
-  Lightbulb,
-  type LucideIcon,
-} from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { generateInsights, type Insight } from '@/services/insightEngine'
@@ -18,14 +6,16 @@ import { isAIAvailable, getUserApiKey } from '@/services/aiFeatures'
 import { incrementAIUsage } from '@/services/aiUsage'
 import { authedFetch } from '@/lib/apiBase'
 import { WidgetCard } from './WidgetCard'
+import { IcLineBulb, IcLineMessage, IcLineTime, IcMwFlame, IcMwRepeat, IcMwSparkles, IcMwTag, IcMwTrendUp } from '@/mw/icons'
+import type { IconType } from '@/components/ui/iconType'
 
-const INSIGHT_ICONS: Record<string, LucideIcon> = {
-  pattern: Repeat2,
-  streak: Flame,
-  tag: Tag,
-  time: Clock,
-  growth: Sprout,
-  mood: MessageCircle,
+const INSIGHT_ICONS: Record<string, IconType> = {
+  pattern: IcMwRepeat,
+  streak: IcMwFlame,
+  tag: IcMwTag,
+  time: IcLineTime,
+  growth: IcMwTrendUp,
+  mood: IcLineMessage,
 }
 
 export function InsightsWidget() {
@@ -110,13 +100,13 @@ export function InsightsWidget() {
 
   return (
     <WidgetCard
-      icon={TrendingUp}
+      icon={IcMwTrendUp}
       title="인사이트"
-      titleAdornment={aiInsights.length > 0 && <Sparkles className="h-3 w-3 shrink-0 text-amber-400" />}
+      titleAdornment={aiInsights.length > 0 && <IcMwSparkles size={12} className="shrink-0 text-amber-400" />}
     >
       <ul className="space-y-2.5">
         {allInsights.map((insight, i) => {
-          const Icon = INSIGHT_ICONS[insight.type] || Lightbulb
+          const Icon = INSIGHT_ICONS[insight.type] || IcLineBulb
           return (
             <li key={i} className="flex items-start gap-2.5">
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" aria-hidden="true" />

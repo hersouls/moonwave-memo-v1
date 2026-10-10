@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { History, Calendar, Sparkles } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { formatMemoDate } from '@/utils/format'
 import { stripMarkdown } from '@/utils/textUtils'
 import { WidgetCard } from './WidgetCard'
+import { IcLineCalendar, IcMwHistory, IcMwSparkles } from '@/mw/icons'
 
 export function MemoryLaneWidget() {
   const navigate = useNavigate()
@@ -38,11 +38,11 @@ export function MemoryLaneWidget() {
   if (anniversaryMemos.length === 0 && !randomRediscovery) return null
 
   return (
-    <WidgetCard icon={History} tint="amber" title="추억 돌아보기">
+    <WidgetCard icon={IcMwHistory} tint="amber" title="추억 돌아보기">
       {anniversaryMemos.length > 0 && (
         <div className={randomRediscovery ? 'mb-4' : undefined}>
           <div className="mb-2 flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
+            <IcLineCalendar size={16} className="text-zinc-400" aria-hidden="true" />
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">이 날의 추억</span>
           </div>
           <div className="space-y-2">
@@ -69,7 +69,7 @@ export function MemoryLaneWidget() {
       {randomRediscovery && (
         <div>
           <div className="mb-2 flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
+            <IcMwSparkles size={16} className="text-amber-400" aria-hidden="true" />
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">다시 발견하기</span>
           </div>
           <button

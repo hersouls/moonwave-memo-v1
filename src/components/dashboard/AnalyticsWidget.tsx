@@ -1,7 +1,7 @@
-import { BarChart3, Type, FileText } from 'lucide-react'
 import clsx from 'clsx'
 import { useWritingAnalytics } from '@/hooks/useWritingAnalytics'
 import { WidgetCard } from './WidgetCard'
+import { IcLineDocument, IcLineTextAdjust, IcMwChart } from '@/mw/icons'
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -14,14 +14,14 @@ export function AnalyticsWidget() {
 
   return (
     <WidgetCard
-      icon={BarChart3}
+      icon={IcMwChart}
       title="작성 분석"
       collapsible
       defaultCollapsed
       subheader={
         <div className="flex gap-6 px-5 pb-3">
           <div className="flex items-center gap-2">
-            <Type className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />
+            <IcLineTextAdjust size={16} className="text-zinc-400" aria-hidden="true" />
             <div>
               <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">
                 {analytics.totalWords.toLocaleString()}
@@ -30,7 +30,7 @@ export function AnalyticsWidget() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <FileText className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />
+            <IcLineDocument size={16} className="text-zinc-400" aria-hidden="true" />
             <div>
               <p className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900 dark:text-zinc-100">
                 {analytics.averageLength.toLocaleString()}

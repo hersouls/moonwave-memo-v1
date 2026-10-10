@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { StickyNote } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
+import { IcMwNote } from '@/mw/icons'
 
 export function OAuthCallback() {
   const navigate = useNavigate()
@@ -29,7 +29,7 @@ export function OAuthCallback() {
         {/* 브랜드 마크 */}
         <div className="mb-8 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500">
-            <StickyNote className="h-6 w-6 text-white" aria-hidden="true" />
+            <IcMwNote size={24} className="text-white" aria-hidden="true" />
           </div>
           <span className="text-lg font-bold text-[var(--color-text-primary)]">Memo</span>
         </div>

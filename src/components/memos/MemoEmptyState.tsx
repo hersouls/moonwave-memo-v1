@@ -1,9 +1,8 @@
-import { FileText, Search, Trash2, Plus, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useUIStore } from '@/stores/uiStore'
 import { useFolderStore } from '@/stores/folderStore'
-import { useAmbientImage } from '@/hooks/useAmbientImage'
+import { IcLineAdd, IcLineClose, IcLineDocument, IcLineSearch, IcLineTrash } from '@/mw/icons'
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours()
@@ -59,16 +58,16 @@ export function MemoEmptyState() {
   if (searchQuery.trim().length > 0) {
     return (
       <EmptyState
-        icon={<Search className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+        icon={<IcLineSearch size={32} className="text-zinc-300 dark:text-zinc-600" />}
         illustration={<SearchIllustration />}
         title="검색 결과가 없습니다"
         description={`"${searchQuery}"에 대한 결과를 찾을 수 없습니다`}
         action={
-          <button
+          <button type="button"
             onClick={() => setSearchQuery('')}
-            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+            className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left mt-3"
           >
-            <X className="h-4 w-4" />
+            <IcLineClose size={16} />
             검색어 초기화
           </button>
         }
@@ -79,7 +78,7 @@ export function MemoEmptyState() {
   if (isTrashView) {
     return (
       <EmptyState
-        icon={<Trash2 className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+        icon={<IcLineTrash size={32} className="text-zinc-300 dark:text-zinc-600" />}
         illustration={<TrashIllustration />}
         title="휴지통이 비어 있습니다"
         description="삭제된 메모가 이곳에 표시됩니다"
@@ -92,31 +91,20 @@ export function MemoEmptyState() {
 
 function DefaultEmptyState() {
   const navigate = useNavigate()
-  const { ambientImage } = useAmbientImage()
 
   return (
     <div className="relative">
-      {ambientImage && (
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none" aria-hidden="true">
-          <img
-            src={ambientImage.imageUrl}
-            alt=""
-            className="max-w-xs w-full rounded-2xl opacity-15 dark:opacity-10"
-            loading="lazy"
-          />
-        </div>
-      )}
       <EmptyState
-        icon={<FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />}
+        icon={<IcLineDocument size={32} className="text-zinc-300 dark:text-zinc-600" />}
         illustration={<NoteIllustration />}
         title={getTimeGreeting()}
         description="새 메모를 작성해보세요"
         action={
-          <button
+          <button type="button"
             onClick={() => navigate('/memo/new')}
-            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors"
+            className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-3"
           >
-            <Plus className="h-4 w-4" />
+            <IcLineAdd size={16} />
             새 메모 작성
           </button>
         }

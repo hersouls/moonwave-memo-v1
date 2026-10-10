@@ -148,7 +148,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.dark .slide-scroll-item + .slide-scroll-item {
+[data-theme="dark"] .slide-scroll-item + .slide-scroll-item {
   border-top-color: rgba(255, 255, 255, 0.06);
 }
 

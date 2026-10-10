@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command } from 'cmdk'
 import { Dialog as HeadlessDialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
-import { FileText, Plus, Settings, Moon, Sun, Search, Star, FolderOpen, Sparkles, Tags } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
@@ -13,6 +12,7 @@ import { analyzeMemo, classifyMemo } from '@/services/aiFeatures'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { Kbd } from './Kbd'
 import { Spinner } from './Spinner'
+import { IcLineAdd, IcLineDocument, IcLineFolder, IcLineSearch, IcLineSetting, IcMwMoon, IcMwSparkles, IcMwStar, IcMwSun, IcMwTag } from '@/mw/icons'
 
 const itemClass =
   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-700 cursor-pointer data-[selected=true]:bg-primary-50 data-[selected=true]:text-primary-700 dark:text-zinc-300 dark:data-[selected=true]:bg-primary-900/20 dark:data-[selected=true]:text-primary-300'
@@ -185,7 +185,7 @@ export function CommandPalette() {
           {smartMode ? (
             <>
               <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
-                <Sparkles className="h-4 w-4 shrink-0 text-amber-500" />
+                <IcMwSparkles size={16} className="shrink-0 text-amber-500" />
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">스마트 메모</span>
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">AI가 폴더와 태그를 자동 분류합니다</span>
               </div>
@@ -213,11 +213,11 @@ export function CommandPalette() {
                   </div>
                 )}
                 <div className="mt-3 flex items-center justify-between">
-                  <button
+                  <button type="button"
                     onClick={() => setSmartMode(false)}
-                    className="text-sm text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors"
+                    className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
                   >
-                    뒤로
+                    <span>뒤로</span>
                   </button>
                   <button
                     onClick={handleSmartSubmit}
@@ -231,7 +231,7 @@ export function CommandPalette() {
                       </>
                     ) : (
                       <>
-                        <Sparkles className="h-3.5 w-3.5" />
+                        <IcMwSparkles size={16} />
                         저장
                         <kbd className="ml-1 text-[10px] opacity-70">Ctrl+↵</kbd>
                       </>
@@ -243,7 +243,7 @@ export function CommandPalette() {
           ) : (
             <Command label="커맨드 팔레트" shouldFilter={true}>
               <div className="flex items-center gap-2 border-b border-zinc-200 px-4 dark:border-zinc-700">
-                <Search className="h-4 w-4 shrink-0 text-zinc-400" />
+                <IcLineSearch size={16} className="shrink-0 text-zinc-400" />
                 <Command.Input
                   value={query}
                   onValueChange={setQuery}
@@ -267,9 +267,9 @@ export function CommandPalette() {
                         className={itemClass}
                       >
                         {memo.isStarred ? (
-                          <Star className="h-4 w-4 shrink-0 fill-primary-500 text-primary-500" />
+                          <IcMwStar size={16} className="shrink-0 fill-primary-500 text-primary-500" />
                         ) : (
-                          <FileText className="h-4 w-4 shrink-0 text-zinc-400" />
+                          <IcLineDocument size={16} className="shrink-0 text-zinc-400" />
                         )}
                         <span className="truncate">{memo.title || '제목 없음'}</span>
                       </Command.Item>
@@ -286,7 +286,7 @@ export function CommandPalette() {
                         onSelect={() => handleSelect(`memo:${memo.id}`)}
                         className={itemClass}
                       >
-                        <FileText className="h-4 w-4 shrink-0 text-zinc-400" />
+                        <IcLineDocument size={16} className="shrink-0 text-zinc-400" />
                         <span className="truncate">{memo.title || '제목 없음'}</span>
                       </Command.Item>
                     ))}
@@ -299,7 +299,7 @@ export function CommandPalette() {
                     onSelect={() => setSmartMode(true)}
                     className={itemClass}
                   >
-                    <Sparkles className="h-4 w-4 shrink-0 text-amber-500" />
+                    <IcMwSparkles size={16} className="shrink-0 text-amber-500" />
                     스마트 메모 (AI 자동 분류)
                   </Command.Item>
                   <Command.Item
@@ -307,7 +307,7 @@ export function CommandPalette() {
                     onSelect={() => handleSelect('batch-tags')}
                     className={itemClass}
                   >
-                    <Tags className="h-4 w-4 shrink-0 text-amber-500" />
+                    <IcMwTag size={16} className="shrink-0 text-amber-500" />
                     태그 없는 메모에 AI 태그 일괄 생성
                   </Command.Item>
                   <Command.Item
@@ -315,7 +315,7 @@ export function CommandPalette() {
                     onSelect={() => handleSelect('new-memo')}
                     className={itemClass}
                   >
-                    <Plus className="h-4 w-4 shrink-0 text-zinc-400" />
+                    <IcLineAdd size={16} className="shrink-0 text-zinc-400" />
                     새 메모 작성
                   </Command.Item>
                   <Command.Item
@@ -323,7 +323,7 @@ export function CommandPalette() {
                     onSelect={() => handleSelect('all-memos')}
                     className={itemClass}
                   >
-                    <FolderOpen className="h-4 w-4 shrink-0 text-zinc-400" />
+                    <IcLineFolder size={16} className="shrink-0 text-zinc-400" />
                     전체 메모 보기
                   </Command.Item>
                   <Command.Item
@@ -331,7 +331,7 @@ export function CommandPalette() {
                     onSelect={() => handleSelect('settings')}
                     className={itemClass}
                   >
-                    <Settings className="h-4 w-4 shrink-0 text-zinc-400" />
+                    <IcLineSetting size={16} className="shrink-0 text-zinc-400" />
                     설정
                   </Command.Item>
                   <Command.Item
@@ -340,9 +340,9 @@ export function CommandPalette() {
                     className={itemClass}
                   >
                     {theme === 'dark' ? (
-                      <Sun className="h-4 w-4 shrink-0 text-zinc-400" />
+                      <IcMwSun size={16} className="shrink-0 text-zinc-400" />
                     ) : (
-                      <Moon className="h-4 w-4 shrink-0 text-zinc-400" />
+                      <IcMwMoon size={16} className="shrink-0 text-zinc-400" />
                     )}
                     테마 전환
                   </Command.Item>

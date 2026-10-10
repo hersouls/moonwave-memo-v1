@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { Newspaper, FileText, CheckSquare, Target, Sparkles, Heart, Lightbulb } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { parseChecklist } from '@/utils/checklistParser'
 import { useAIBriefing } from '@/hooks/useAIBriefing'
 import { WidgetCard } from './WidgetCard'
+import { IcLineBulb, IcLineDocument, IcLineHeart, IcMwCheckSquare, IcMwNews, IcMwSparkles, IcMwTarget } from '@/mw/icons'
 
 export function BriefingWidget() {
   const memos = useMemoStore((s) => s.memos)
@@ -58,16 +58,16 @@ export function BriefingWidget() {
 
   return (
     <WidgetCard
-      icon={Newspaper}
+      icon={IcMwNews}
       tint="amber"
       title="오늘의 브리핑"
-      titleAdornment={aiBriefing && <Sparkles className="h-3 w-3 shrink-0 text-amber-400" />}
+      titleAdornment={aiBriefing && <IcMwSparkles size={12} className="shrink-0 text-amber-400" />}
     >
       <div className="space-y-3">
         {/* AI Greeting */}
         {aiBriefing?.greeting && (
           <div className="flex items-start gap-3">
-            <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <IcMwSparkles size={16} className="text-amber-400 shrink-0 mt-0.5" />
             <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
               {aiBriefing.greeting}
             </p>
@@ -77,7 +77,7 @@ export function BriefingWidget() {
         {/* AI Mood Summary */}
         {aiBriefing?.moodSummary && (
           <div className="flex items-start gap-3">
-            <Heart className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <IcLineHeart size={16} className="text-amber-400 shrink-0 mt-0.5" />
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
               {aiBriefing.moodSummary}
             </p>
@@ -87,7 +87,7 @@ export function BriefingWidget() {
         {/* Fallback: Yesterday's memo count (shown when no AI greeting and not loading) */}
         {!aiLoading && !aiBriefing?.greeting && (
           <div className="flex items-center gap-3">
-            <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+            <IcLineDocument size={16} className="text-zinc-400 shrink-0" />
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               {'어제'}{' '}
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">
@@ -101,7 +101,7 @@ export function BriefingWidget() {
         {/* Pending TODOs */}
         {localBriefing.pendingTodos > 0 && (
           <div className="flex items-center gap-3">
-            <CheckSquare className="w-4 h-4 text-amber-500 shrink-0" />
+            <IcMwCheckSquare size={16} className="text-amber-500 shrink-0" />
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               {'미완료 TODO'}{' '}
               <span className="font-semibold text-amber-600 dark:text-amber-400">
@@ -115,7 +115,7 @@ export function BriefingWidget() {
         {/* AI Today Focus or Fallback */}
         {(aiBriefing?.todayFocus || localBriefing.suggestedFocus) && (
           <div className="flex items-start gap-3">
-            <Target className="w-4 h-4 text-primary-500 shrink-0 mt-0.5" />
+            <IcMwTarget size={16} className="text-primary-500 shrink-0 mt-0.5" />
             <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
               {aiBriefing?.todayFocus || localBriefing.suggestedFocus}
             </p>
@@ -125,7 +125,7 @@ export function BriefingWidget() {
         {/* AI Key Topics */}
         {aiBriefing?.keyTopics && aiBriefing.keyTopics.length > 0 && (
           <div className="flex items-start gap-3">
-            <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <IcLineBulb size={16} className="text-amber-500 shrink-0 mt-0.5" />
             <div className="flex flex-wrap gap-1.5">
               {aiBriefing.keyTopics.map((topic) => (
                 <span

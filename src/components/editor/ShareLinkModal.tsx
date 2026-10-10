@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Download, Eye, EyeOff } from 'lucide-react'
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/Dialog'
 import { generateShareHTML } from '@/services/shareLink'
 import { useToastStore } from '@/stores/toastStore'
+import { IcLineDownload, IcLineEye, IcLineEyeHidden } from '@/mw/icons'
 
 interface ShareLinkModalProps {
   isOpen: boolean
@@ -51,12 +51,12 @@ export function ShareLinkModal({ isOpen, onClose, title, body, tags }: ShareLink
           >
             {showPreview ? (
               <>
-                <EyeOff className="w-3.5 h-3.5" />
+                <IcLineEyeHidden size={16} />
                 {'\uC228\uAE30\uAE30'}
               </>
             ) : (
               <>
-                <Eye className="w-3.5 h-3.5" />
+                <IcLineEye size={16} />
                 {'\uBCF4\uAE30'}
               </>
             )}
@@ -76,17 +76,17 @@ export function ShareLinkModal({ isOpen, onClose, title, body, tags }: ShareLink
       </DialogBody>
 
       <DialogFooter>
-        <button
+        <button type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+          className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
         >
-          {'\uB2EB\uAE30'}
+          <span>{'\uB2EB\uAE30'}</span>
         </button>
         <button
           onClick={handleDownload}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-colors"
         >
-          <Download className="w-4 h-4" />
+          <IcLineDownload size={16} />
           HTML {'\uD30C\uC77C \uB2E4\uC6B4\uB85C\uB4DC'}
         </button>
       </DialogFooter>

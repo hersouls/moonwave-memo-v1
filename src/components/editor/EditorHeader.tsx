@@ -1,15 +1,13 @@
-import { ArrowLeft, Star, MoreVertical, Trash2, Share2, FolderInput, Columns2, Rows2, Maximize2, History, Pin, X, Download, ImagePlus, FileCode2, Type, Copy } from 'lucide-react'
 import { useState } from 'react'
-import clsx from 'clsx'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
-import { MEMO_COLORS } from '@/utils/constants'
-import type { MemoColor, EditorMode } from '@/lib/types'
+import type { EditorMode } from '@/lib/types'
 import { ShareCardModal } from './ShareCardModal'
 import { ShareLinkModal } from './ShareLinkModal'
+import { IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwHistory, IcMwList, IcMwStar } from '@/mw/icons'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 
@@ -24,13 +22,10 @@ interface EditorHeaderProps {
   body?: string
   tags?: string[]
   isPinned?: boolean
-  memoColor?: MemoColor
-  onColorChange?: (color: MemoColor) => void
 }
 
-export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, tags, isPinned, memoColor, onColorChange }: EditorHeaderProps) {
+export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, tags, isPinned }: EditorHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [showColorPicker, setShowColorPicker] = useState(false)
   const [showShareCard, setShowShareCard] = useState(false)
   const [showShareLink, setShowShareLink] = useState(false)
   const softDelete = useMemoStore((s) => s.softDelete)
@@ -41,8 +36,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
   const setEditorMode = useSettingsStore((s) => s.setEditorMode)
   const navigate = useNavigate()
   const isDesktop = useUIStore((s) => s.isDesktop)
-  const isTablet = useUIStore((s) => s.isTablet)
-  const isMdUp = isTablet || isDesktop
+  const isMdUp = isDesktop
   // Mode toggle is tier-aware: split needs desktop width, so tablet cycles tabs↔WYSIWYG only.
   const editorModeCycle: EditorMode[] = isDesktop ? ['tabs', 'split', 'tiptap'] : ['tabs', 'tiptap']
   const displayEditorMode: EditorMode = !isDesktop && editorMode === 'split' ? 'tabs' : editorMode
@@ -130,10 +124,10 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         {!isDesktop && (
           <button
             onClick={onBack}
-            className="f-icon-btn -ml-2"
+            className="mw-icon-button -ml-2"
             aria-label="뒤로가기"
           >
-            <ArrowLeft className="f-icon--default w-5 h-5" />
+            <IcLineChevronLeft size={20} />
           </button>
         )}
 
@@ -186,10 +180,10 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         {isDesktop && (
           <button
             onClick={onBack}
-            className="f-icon-btn"
+            className="mw-icon-button"
             aria-label="닫기"
           >
-            <X className="f-icon--muted w-5 h-5" />
+            <IcLineClose size={20} />
           </button>
         )}
 
@@ -198,62 +192,27 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         {isMdUp && (
           <button
             onClick={() => setEditorMode(nextEditorMode)}
-            className="f-icon-btn"
+            className="mw-icon-button"
             aria-label={`${editorModeLabel[nextEditorMode]}로 전환`}
             title={`${editorModeLabel[nextEditorMode]}로 전환`}
           >
             {displayEditorMode === 'tiptap' ? (
-              <Type className="f-icon--muted w-5 h-5" />
+              <IcLineTextAdjust size={20} />
             ) : displayEditorMode === 'split' ? (
-              <Rows2 className="f-icon--muted w-5 h-5" />
+              <IcMwList size={20} />
             ) : (
-              <Columns2 className="f-icon--muted w-5 h-5" />
+              <IcMwColumns size={20} />
             )}
           </button>
         )}
 
-        {/* Memo color selector */}
-        {onColorChange && (
-          <div className="relative">
-            <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="f-icon-btn"
-              aria-label="메모 색상 변경"
-            >
-              <span
-                className="block w-4 h-4 rounded-full ring-1 ring-zinc-300 dark:ring-zinc-600"
-                style={{ backgroundColor: MEMO_COLORS[memoColor || 'white'] }}
-              />
-            </button>
-            {showColorPicker && (
-              <>
-                <div className="fixed inset-0 z-20" onClick={() => setShowColorPicker(false)} />
-                <div className="ctx-menu absolute right-0 top-full mt-1 flex gap-1.5 z-30">
-                  {(Object.keys(MEMO_COLORS) as MemoColor[]).map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => { onColorChange(c); setShowColorPicker(false) }}
-                      className={clsx(
-                        'w-6 h-6 rounded-full transition-all',
-                        memoColor === c ? 'ring-2 ring-primary-500 scale-110' : 'ring-1 ring-zinc-200 dark:ring-zinc-600 hover:scale-105'
-                      )}
-                      style={{ backgroundColor: MEMO_COLORS[c] }}
-                      aria-label={`${c} 색상`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         <button
           onClick={onToggleStar}
-          className="f-icon-btn"
+          className="mw-icon-button"
           aria-label={isStarred ? '중요 해제' : '중요 표시'}
         >
-          <Star
-            className={`w-5 h-5 ${
+          <IcMwStar size={20}
+            className={`  ${
               isStarred
                 ? 'fill-primary-500 text-primary-500'
                 : 'text-zinc-500 dark:text-zinc-400'
@@ -265,12 +224,12 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           {/* A11Y-06: aria-haspopup + aria-expanded */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="f-icon-btn"
+            className="mw-icon-button"
             aria-label="더보기"
             aria-haspopup="menu"
             aria-expanded={isMenuOpen}
           >
-            <MoreVertical className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+            <IcLineMore size={20} className="text-zinc-700 dark:text-zinc-300" />
           </button>
 
           {isMenuOpen && (
@@ -283,7 +242,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
-                  <Maximize2 className="w-4 h-4" />
+                  <IcLineExpand size={16} />
                   집중 모드
                 </button>
                 {/* UX-19: Pin/unpin toggle */}
@@ -293,7 +252,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                     className="ctx-menu__item w-full"
                     role="menuitem"
                   >
-                    <Pin className="w-4 h-4" />
+                    <IcLinePin size={16} />
                     {isPinned ? '고정 해제' : '상단 고정'}
                   </button>
                 )}
@@ -303,7 +262,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                     className="ctx-menu__item w-full"
                     role="menuitem"
                   >
-                    <History className="w-4 h-4" />
+                    <IcMwHistory size={16} />
                     버전 기록
                   </button>
                 )}
@@ -312,7 +271,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
-                  <FolderInput className="w-4 h-4" />
+                  <IcLineFolder size={16} />
                   폴더 이동
                 </button>
                 <button
@@ -320,7 +279,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <IcLineShare size={16} />
                   공유
                 </button>
                 <button
@@ -328,7 +287,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
-                  <ImagePlus className="w-4 h-4" />
+                  <IcLineGallery size={16} />
                   카드로 공유
                 </button>
                 <button
@@ -336,7 +295,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
-                  <FileCode2 className="w-4 h-4" />
+                  <IcMwCode size={16} />
                   링크로 공유
                 </button>
                 <button
@@ -344,7 +303,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
-                  <Copy className="w-4 h-4" />
+                  <IcLineDuplicate size={16} />
                   전체 텍스트 복사
                 </button>
                 <button
@@ -352,7 +311,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
-                  <Download className="w-4 h-4" />
+                  <IcLineDownload size={16} />
                   마크다운 내보내기
                 </button>
                 <button
@@ -360,7 +319,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   className="ctx-menu__item ctx-menu__item--danger w-full"
                   role="menuitem"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <IcLineTrash size={16} />
                   삭제
                 </button>
               </div>
@@ -375,7 +334,6 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           title={title || ''}
           body={body || ''}
           tags={tags || []}
-          color={memoColor || 'white'}
           date={new Date().toISOString()}
         />
       )}

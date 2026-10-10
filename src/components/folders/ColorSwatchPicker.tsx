@@ -1,6 +1,6 @@
-import { Check } from 'lucide-react'
 import clsx from 'clsx'
 import { FOLDER_COLORS, FOLDER_COLOR_NAMES } from '@/utils/constants'
+import { IcLineCheck } from '@/mw/icons'
 
 interface ColorSwatchPickerProps {
   value: string
@@ -39,7 +39,7 @@ export function ColorSwatchPicker({
             )}
             style={{ backgroundColor: c }}
           >
-            {isSelected && <Check className="w-4 h-4 text-white drop-shadow-sm" aria-hidden="true" />}
+            {isSelected && <IcLineCheck size={16} className="text-white drop-shadow-sm" aria-hidden="true" />}
           </button>
         )
       })}

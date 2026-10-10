@@ -1,19 +1,4 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import {
-  FolderOpen,
-  HardDrive,
-  Loader2,
-  Check,
-  RefreshCw,
-  Download,
-  Upload,
-  AlertTriangle,
-  Plus,
-  X,
-  Server,
-  Info,
-  FolderTree,
-} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToastStore } from '@/stores/toastStore'
@@ -32,6 +17,7 @@ import {
   addMirrorFolder,
   removeMirrorFolder,
 } from '@/services/syncFolder'
+import { IcLineAdd, IcLineCheck, IcLineClose, IcLineDownload, IcLineFolder, IcLineInfo, IcLineLoading, IcLineRefresh, IcLineWarning, IcMwDrive, IcMwServer, IcMwUpload } from '@/mw/icons'
 
 /**
  * 동기화 폴더 설정 섹션 (§6 UI/UX 명세).
@@ -66,7 +52,7 @@ export function SyncFolderSection() {
         </h3>
         <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-zinc-50 dark:bg-zinc-900/40 opacity-70">
           <div className="flex items-start gap-3">
-            <HardDrive className="w-5 h-5 text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
+            <IcMwDrive size={20} className="text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm text-zinc-500 dark:text-zinc-400">
               이 기기는 폴더 저장을 지원하지 않습니다 — Firebase로만 동기화됩니다.
               <div className="text-xs mt-1 text-zinc-400 dark:text-zinc-500">
@@ -280,7 +266,7 @@ export function SyncFolderSection() {
             <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
               {folderName ? (
                 <span className="inline-flex items-center gap-1">
-                  <FolderOpen className="w-3 h-3" aria-hidden="true" />
+                  <IcLineFolder size={12} aria-hidden="true" />
                   {folderName}
                 </span>
               ) : (
@@ -290,7 +276,7 @@ export function SyncFolderSection() {
           </div>
           {!isCapacitor() && (
             <Button variant="secondary" size="sm" onClick={handlePickFolder} disabled={busy}>
-              <FolderOpen className="w-4 h-4 mr-1.5" />
+              <IcLineFolder size={16} className="mr-1.5" />
               {folderName ? '폴더 변경' : '폴더 선택'}
             </Button>
           )}
@@ -314,7 +300,7 @@ export function SyncFolderSection() {
                 />
               </div>
               <Button variant="secondary" size="sm" onClick={handleAddMirror} disabled={busy}>
-                <Plus className="w-4 h-4 mr-1.5" />
+                <IcLineAdd size={16} className="mr-1.5" />
                 폴더 추가
               </Button>
             </div>
@@ -326,7 +312,7 @@ export function SyncFolderSection() {
                     className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-[var(--color-border-subtle)]"
                   >
                     <span className="min-w-0 inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
-                      <Server className="w-3 h-3 shrink-0" aria-hidden="true" />
+                      <IcMwServer size={12} className="shrink-0" aria-hidden="true" />
                       <span className="truncate" title={m.path}>{m.path}</span>
                     </span>
                     <button
@@ -334,9 +320,9 @@ export function SyncFolderSection() {
                       onClick={() => handleRemoveMirror(m.path)}
                       disabled={busy}
                       aria-label={`미러 폴더 제거: ${m.name}`}
-                      className="shrink-0 p-1 rounded text-zinc-400 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 disabled:opacity-50"
+                      className="mw-icon-button shrink-0"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <IcLineClose size={16} />
                     </button>
                   </li>
                 ))}
@@ -386,7 +372,7 @@ export function SyncFolderSection() {
             <div className="text-xs text-zinc-500 dark:text-zinc-400">외부 .html 파일을 정화 후 새 메모로 가져옵니다.</div>
           </div>
           <Button variant="secondary" size="sm" onClick={() => htmlInputRef.current?.click()} disabled={busy}>
-            <Upload className="w-4 h-4 mr-1.5" />
+            <IcMwUpload size={16} className="mr-1.5" />
             파일 선택
           </Button>
           <input
@@ -420,7 +406,7 @@ export function SyncFolderSection() {
               폴더 접근 권한이 필요합니다.
             </span>
             <Button variant="secondary" size="sm" onClick={handleReconnect} disabled={busy}>
-              <RefreshCw className="w-4 h-4 mr-1.5" />
+              <IcLineRefresh size={16} className="mr-1.5" />
               폴더 다시 연결
             </Button>
           </div>
@@ -429,7 +415,7 @@ export function SyncFolderSection() {
         {/* 오류 */}
         {status === 'error' && errorMsg && (
           <div className="flex items-start gap-2 p-3 rounded-lg bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-800">
-            <AlertTriangle className="w-4 h-4 text-danger-600 dark:text-danger-400 shrink-0 mt-0.5" />
+            <IcLineWarning size={16} className="text-danger-600 dark:text-danger-400 shrink-0 mt-0.5" />
             <span className="text-xs text-danger-600 dark:text-danger-400">{errorMsg}</span>
           </div>
         )}
@@ -448,7 +434,7 @@ export function SyncFolderSection() {
             onClick={handleSyncStructure}
             disabled={busy || !enabled || !folderName}
           >
-            <FolderTree className="w-4 h-4 mr-1.5" />
+            <IcLineFolder size={16} className="mr-1.5" />
             폴더 동기화
           </Button>
         </div>
@@ -467,9 +453,9 @@ export function SyncFolderSection() {
             disabled={busy || !enabled || !folderName}
           >
             {busy && exportProgress ? (
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+              <IcLineLoading size={16} className="mr-1.5 animate-spin" />
             ) : (
-              <Download className="w-4 h-4 mr-1.5" />
+              <IcLineDownload size={16} className="mr-1.5" />
             )}
             지금 전체 내보내기
           </Button>
@@ -486,9 +472,9 @@ function InfoTip({ label, content }: { label: string; content: ReactNode }) {
       <button
         type="button"
         aria-label={label}
-        className="-my-1 inline-flex items-center justify-center w-6 h-6 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 cursor-help"
+        className="mw-icon-button -my-1"
       >
-        <Info className="w-3.5 h-3.5" aria-hidden="true" />
+        <IcLineInfo size={16} aria-hidden="true" />
       </button>
     </Tooltip>
   )
@@ -502,7 +488,7 @@ function StatusBadge({ status, enabled }: { status: string; enabled: boolean }) 
     case 'writing':
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
-          <Loader2 className="w-3 h-3 animate-spin" /> 저장 중…
+          <IcLineLoading size={12} className="animate-spin" /> 저장 중…
         </span>
       )
     case 'queued':
@@ -526,7 +512,7 @@ function StatusBadge({ status, enabled }: { status: string; enabled: boolean }) 
     default:
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300">
-          <Check className="w-3 h-3" /> 저장됨
+          <IcLineCheck size={12} /> 저장됨
         </span>
       )
   }

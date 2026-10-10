@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { EditorContent, type Editor } from '@tiptap/react'
 import { BubbleMenuPlugin } from '@tiptap/extension-bubble-menu'
-import { Bold, Italic, Code, Strikethrough, Link2 } from 'lucide-react'
 import clsx from 'clsx'
 import { LinkPopover } from './LinkPopover'
 import '@/styles/tiptap-editor.css'
+import { IcMwCode, IcMwLink } from '@/mw/icons'
+import { FormatGlyph } from '@/components/editor/FormatGlyph'
 
 interface TiptapEditorContentProps {
   editor: Editor | null
-  fontFamily: string
   isBreathing: boolean
   className?: string
 }
@@ -74,11 +74,11 @@ function TiptapBubbleMenu({ editor }: { editor: Editor }) {
   }
 
   const tools = [
-    { icon: <Bold className="w-4 h-4" />, label: '굵게', action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive('bold') },
-    { icon: <Italic className="w-4 h-4" />, label: '기울임', action: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive('italic') },
-    { icon: <Strikethrough className="w-4 h-4" />, label: '취소선', action: () => editor.chain().focus().toggleStrike().run(), active: editor.isActive('strike') },
-    { icon: <Code className="w-4 h-4" />, label: '코드', action: () => editor.chain().focus().toggleCode().run(), active: editor.isActive('code') },
-    { icon: <Link2 className="w-4 h-4" />, label: '링크', action: handleLinkClick, active: editor.isActive('link') },
+    { icon: <FormatGlyph kind="bold" />, label: '굵게', action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive('bold') },
+    { icon: <FormatGlyph kind="italic" />, label: '기울임', action: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive('italic') },
+    { icon: <FormatGlyph kind="strike" />, label: '취소선', action: () => editor.chain().focus().toggleStrike().run(), active: editor.isActive('strike') },
+    { icon: <IcMwCode size={16} />, label: '코드', action: () => editor.chain().focus().toggleCode().run(), active: editor.isActive('code') },
+    { icon: <IcMwLink size={16} />, label: '링크', action: handleLinkClick, active: editor.isActive('link') },
   ]
 
   return (
@@ -132,7 +132,6 @@ function TiptapBubbleMenu({ editor }: { editor: Editor }) {
 
 export function TiptapEditorContent({
   editor,
-  fontFamily,
   isBreathing,
   className,
 }: TiptapEditorContentProps) {
@@ -147,7 +146,6 @@ export function TiptapEditorContent({
           'tiptap-editor memo-markdown-preview flex-1 min-h-0 overflow-y-auto',
           className
         )}
-        style={{ fontFamily }}
       />
     </div>
   )

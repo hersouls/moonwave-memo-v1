@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { X, Lightbulb } from 'lucide-react'
 import type { Memo } from '@/lib/types'
+import { IcLineBulb, IcLineClose } from '@/mw/icons'
 
 interface ContextSuggestionBannerProps {
   memo: Memo
@@ -24,12 +24,12 @@ export function ContextSuggestionBanner({ memo, onDismiss }: ContextSuggestionBa
           className="absolute top-2 right-2 p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           aria-label="닫기"
         >
-          <X className="h-4 w-4" />
+          <IcLineClose size={16} />
         </button>
 
         <div className="flex items-start gap-3 pr-6">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-900/30">
-            <Lightbulb className="h-4 w-4 text-primary-500 dark:text-primary-400" />
+            <IcLineBulb size={16} className="text-primary-500 dark:text-primary-400" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">

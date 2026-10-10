@@ -1,8 +1,8 @@
 import clsx from 'clsx'
-import { ArrowUpDown } from 'lucide-react'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
 import type { SortBy } from '@/lib/types'
+import { IcMwSort } from '@/mw/icons'
 
 const SORT_LABELS: Record<SortBy, string> = {
   updatedAt: '수정일',
@@ -20,8 +20,6 @@ export function MemoFilterTabs() {
   const setActiveFolderId = useUIStore((s) => s.setActiveFolderId)
   const sortBy = useUIStore((s) => s.sortBy)
   const setSortBy = useUIStore((s) => s.setSortBy)
-  // UX-01: hide when sidebar is open on desktop
-  const isSidebarOpen = useUIStore((s) => s.isSidebarOpen)
 
   const userFolders = folders
     .filter((f) => !f.isSystem)
@@ -33,7 +31,7 @@ export function MemoFilterTabs() {
   // A11Y-01: role="tablist" + UX-01: hide when sidebar open on desktop
   return (
     <div
-      className={clsx('scrollbar-none flex gap-2 overflow-x-auto px-4 py-2 lg:px-0', isSidebarOpen && 'lg:hidden')}
+      className="scrollbar-none flex gap-2 overflow-x-auto px-4 py-2 lg:hidden"
       role="tablist"
       aria-label="메모 필터"
     >
@@ -92,15 +90,15 @@ export function MemoFilterTabs() {
       )}
 
       {/* Sort indicator chip */}
-      <button
+      <button type="button"
         onClick={() => {
           const idx = SORT_ORDER.indexOf(sortBy)
           setSortBy(SORT_ORDER[(idx + 1) % SORT_ORDER.length])
         }}
-        className="shrink-0 chip-text chip-text--sm chip-text--bordered flex items-center gap-1"
+        className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left shrink-0"
         aria-label={`정렬: ${SORT_LABELS[sortBy]}`}
       >
-        <ArrowUpDown className="h-3 w-3" />
+        <IcMwSort size={12} />
         {SORT_LABELS[sortBy]}
       </button>
     </div>

@@ -1,16 +1,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ThemeMode, ColorPalette, FontFamily, FontSize, MemoColor, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState, LivingWorkspaceSettings, AIProvider } from '@/lib/types'
-import { FONT_FAMILIES, FONT_SIZES } from '@/utils/constants'
+import type { ThemeMode, FontSize, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState, LivingWorkspaceSettings, AIProvider } from '@/lib/types'
+import { FONT_SIZES } from '@/utils/constants'
 
 interface SettingsState {
   settings: Settings
   initialize: () => void
   setTheme: (theme: ThemeMode) => void
-  setColorPalette: (palette: ColorPalette) => void
-  setFontFamily: (font: FontFamily) => void
   setFontSize: (size: FontSize) => void
-  setDefaultColor: (color: MemoColor) => void
   setDefaultFolder: (folderId: number | null) => void
   setInputStartPosition: (pos: InputStartPosition) => void
   toggleHashtagToTag: () => void
@@ -32,27 +29,21 @@ interface SettingsState {
   updateAppLock: (data: Partial<Settings['appLock']>) => void
 }
 
+/** 기기마다 기억하는 테마의 열쇠예요. public/theme-init.js가 첫 화면 전에 같은 열쇠를 읽어요. */
+const THEME_KEY = 'memo-theme'
+
+/** 테마는 <html>의 data-theme 하나로 정해요 (https://ux.moonwave.kr/patterns/theme#rule). */
 export function applyTheme(theme: ThemeMode) {
   const isDark =
     theme === 'dark' ||
     (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.classList.toggle('dark', isDark)
-}
-
-export function applyColorPalette(palette: ColorPalette) {
-  const root = document.documentElement
-  if (palette === 'default') {
-    root.removeAttribute('data-palette')
-  } else {
-    root.setAttribute('data-palette', palette)
-  }
-}
-
-export function applyFontFamily(fontId: FontFamily) {
-  const fontDef = FONT_FAMILIES.find((f) => f.id === fontId)
-  if (fontDef) {
-    document.documentElement.style.setProperty('--memo-font-family', fontDef.fontFamily)
-  }
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+  // 브라우저 위쪽 막대와 홈 화면 앱의 상태 표시줄 색
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', isDark ? '#232425' : '#ffffff'))
+  try {
+    if (theme === 'system') localStorage.removeItem(THEME_KEY)
+    else localStorage.setItem(THEME_KEY, theme)
+  } catch { /* 저장소를 못 쓰면 이번 화면에만 적용돼요 */ }
 }
 
 export function applyFontSize(sizeId: FontSize) {
@@ -69,7 +60,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       settings: {
-        theme: 'light',
+        theme: 'system',
         colorPalette: 'default',
         fontFamily: 'pretendard',
         fontSize: 'md',
@@ -140,10 +131,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       initialize: () => {
         const state = get()
-        const { theme, colorPalette, fontFamily, fontSize } = state.settings
+        // 저장된 colorPalette · fontFamily는 읽지 않아요 (개인화 기능을 없앴어요. 값은 지우지 않아요)
+        const { theme, fontSize } = state.settings
         applyTheme(theme)
-        applyColorPalette(colorPalette)
-        applyFontFamily(fontFamily)
         applyFontSize(fontSize)
 
         // Guard against multiple registrations
@@ -164,28 +154,9 @@ export const useSettingsStore = create<SettingsState>()(
         applyTheme(theme)
       },
 
-      setColorPalette: (palette) => {
-        set((state) => ({ settings: { ...state.settings, colorPalette: palette } }))
-        applyColorPalette(palette)
-      },
-
-      setFontFamily: (font) => {
-        set((state) => ({ settings: { ...state.settings, fontFamily: font } }))
-        applyFontFamily(font)
-      },
-
       setFontSize: (size) => {
         set((state) => ({ settings: { ...state.settings, fontSize: size } }))
         applyFontSize(size)
-      },
-
-      setDefaultColor: (color) => {
-        set((state) => ({
-          settings: {
-            ...state.settings,
-            memoSettings: { ...state.settings.memoSettings, defaultColor: color },
-          },
-        }))
       },
 
       setDefaultFolder: (folderId) => {
@@ -360,7 +331,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'memo-settings',
-      version: 4,
+      version: 5,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as { settings: Record<string, unknown> & { ai?: Record<string, unknown> } }
         if (version < 1 && state?.settings?.ai) {
@@ -436,6 +407,10 @@ export const useSettingsStore = create<SettingsState>()(
           const ai = (state.settings.ai ?? {}) as Record<string, unknown>
           if (ai.geminiApiKey === undefined) ai.geminiApiKey = ''
           if (ai.aiProvider === undefined) ai.aiProvider = 'anthropic'
+        }
+        // v4→v5: 테마의 기본은 시스템 설정 따르기예요. 예전 기본값 'light'는 고른 값과 가를 수 없어 시스템으로 돌려요.
+        if (version < 5 && state?.settings && state.settings.theme === 'light') {
+          state.settings.theme = 'system'
         }
         return state
       },

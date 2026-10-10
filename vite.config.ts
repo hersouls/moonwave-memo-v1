@@ -74,16 +74,18 @@ export default defineConfig({
     // Public source maps exposed the full source; build them only for the Sentry upload
     // ('hidden' = no sourceMappingURL comment), and the plugin deletes them afterwards.
     sourcemap: process.env.SENTRY_AUTH_TOKEN ? 'hidden' : false,
+    // CSP script-src 'self': 인라인 preload 폴리필을 넣지 않아요
+    modulePreload: { polyfill: false },
     rollupOptions: {
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
-          'vendor-ui': ['lucide-react', '@headlessui/react'],
+          'vendor-ui': ['@headlessui/react'],
           'vendor-data': ['zustand', 'dexie', 'dexie-react-hooks', 'date-fns', 'fuse.js'],
           'vendor-markdown': ['react-markdown', 'remark-gfm', 'remark-breaks', 'rehype-raw', 'rehype-highlight'],
           'vendor-d3': ['d3-force', 'd3-selection'],
-          'vendor-media': ['html-to-image', 'canvas-confetti'],
+          'vendor-media': ['html-to-image'],
           'vendor-diff': ['diff'],
           'vendor-tiptap': ['@tiptap/react', '@tiptap/starter-kit', 'tiptap-markdown'],
           'vendor-sentry': ['@sentry/react'],

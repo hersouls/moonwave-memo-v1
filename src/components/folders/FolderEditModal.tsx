@@ -67,11 +67,11 @@ export function FolderEditModal({ isOpen, onClose, folder }: FolderEditModalProp
 
         <DialogFooter>
           {!folder?.isDefault && !folder?.isSystem && (
-            <button
+            <button type="button"
               onClick={handleDelete}
-              className="h-11 px-4 text-sm font-medium rounded-xl text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 active:bg-danger-100 dark:active:bg-danger-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 sm:mr-auto"
+              className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default sm:mr-auto"
             >
-              삭제
+              <span>삭제</span>
             </button>
           )}
           <Button variant="ghost" onClick={onClose}>

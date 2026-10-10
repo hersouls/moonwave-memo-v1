@@ -1,6 +1,6 @@
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from './Dialog'
 import { Button } from './Button'
-import { AlertTriangle, Info } from 'lucide-react'
+import { IcLineInfo, IcLineWarning } from '@/mw/icons'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -25,7 +25,7 @@ export function ConfirmDialog({
   variant = 'info',
   isLoading = false,
 }: ConfirmDialogProps) {
-  const Icon = variant === 'info' ? Info : AlertTriangle
+  const Icon = variant === 'info' ? IcLineInfo : IcLineWarning
 
   const iconColors = {
     danger: 'text-danger-500 bg-danger-50 dark:bg-danger-900/30',
@@ -41,7 +41,7 @@ export function ConfirmDialog({
       <DialogBody>
         <div className="flex gap-4">
           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${iconColors[variant]}`}>
-            <Icon className="w-5 h-5" />
+            <Icon size={20} />
           </div>
           <div className="flex-1">
             <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-line">

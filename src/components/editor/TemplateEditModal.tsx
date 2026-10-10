@@ -1,35 +1,21 @@
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import { Fragment, useState, useEffect } from 'react'
-import {
-  Users, BookOpen, CheckSquare, Lightbulb, Calendar,
-  FileText, Star, Heart, Zap, Target, Briefcase, Code, Check,
-} from 'lucide-react'
 import { useTemplateStore } from '@/stores/templateStore'
 import type { MemoColor } from '@/lib/types'
 import type { MemoTemplate } from '@/utils/memoTemplates'
+import { IcLineBook, IcLineBulb, IcLineCalendar, IcLineDocument, IcLineHeart, IcLineUsers, IcMwCheckSquare, IcMwCode, IcMwStar, IcMwTarget } from '@/mw/icons'
 
 const AVAILABLE_ICONS = [
-  { name: 'Users', component: Users },
-  { name: 'BookOpen', component: BookOpen },
-  { name: 'CheckSquare', component: CheckSquare },
-  { name: 'Lightbulb', component: Lightbulb },
-  { name: 'Calendar', component: Calendar },
-  { name: 'FileText', component: FileText },
-  { name: 'Star', component: Star },
-  { name: 'Heart', component: Heart },
-  { name: 'Zap', component: Zap },
-  { name: 'Target', component: Target },
-  { name: 'Briefcase', component: Briefcase },
-  { name: 'Code', component: Code },
-]
-
-const TEMPLATE_COLORS: { id: MemoColor; label: string; cls: string }[] = [
-  { id: 'white', label: '기본', cls: 'bg-zinc-100 dark:bg-zinc-700' },
-  { id: 'yellow', label: '노랑', cls: 'bg-amber-300' },
-  { id: 'green', label: '초록', cls: 'bg-emerald-300' },
-  { id: 'blue', label: '파랑', cls: 'bg-blue-300' },
-  { id: 'pink', label: '분홍', cls: 'bg-pink-300' },
-  { id: 'purple', label: '보라', cls: 'bg-purple-300' },
+  { name: 'Users', component: IcLineUsers },
+  { name: 'BookOpen', component: IcLineBook },
+  { name: 'CheckSquare', component: IcMwCheckSquare },
+  { name: 'Lightbulb', component: IcLineBulb },
+  { name: 'Calendar', component: IcLineCalendar },
+  { name: 'FileText', component: IcLineDocument },
+  { name: 'Star', component: IcMwStar },
+  { name: 'Heart', component: IcLineHeart },
+  { name: 'Target', component: IcMwTarget },
+  { name: 'Code', component: IcMwCode },
 ]
 
 interface TemplateEditModalProps {
@@ -152,30 +138,6 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
                 ))}
               </div>
 
-              {/* Color */}
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                색상
-              </label>
-              <div role="group" aria-label="색상 선택" className="flex gap-2 mb-4">
-                {TEMPLATE_COLORS.map((c) => {
-                  const isSelected = color === c.id
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setColor(c.id)}
-                      aria-label={c.label}
-                      aria-pressed={isSelected}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${c.cls} transition-transform duration-150 ease-standard hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
-                        isSelected ? 'scale-110' : ''
-                      }`}
-                    >
-                      {isSelected && <Check className="w-4 h-4 text-white drop-shadow-sm" aria-hidden="true" />}
-                    </button>
-                  )
-                })}
-              </div>
-
               {/* Title preset */}
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 제목 프리셋
@@ -202,16 +164,16 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
 
               {/* Actions */}
               <div className="flex gap-2 justify-end">
-                <button
+                <button type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default"
                 >
-                  취소
+                  <span>취소</span>
                 </button>
-                <button
+                <button type="button"
                   onClick={handleSave}
                   disabled={!name.trim()}
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary-500 rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mw-button mw-button--primary mw-button--medium"
                 >
                   {isEditing ? '저장' : '만들기'}
                 </button>

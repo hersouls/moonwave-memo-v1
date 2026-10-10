@@ -1,10 +1,10 @@
 import { memo } from 'react'
-import { FolderOpen } from 'lucide-react'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStats } from '@/hooks/useMemoStats'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { WidgetCard } from './WidgetCard'
+import { IcLineFolder } from '@/mw/icons'
 
 export const FolderList = memo(function FolderList() {
   const { navigateWithTransition } = useViewTransition()
@@ -27,7 +27,7 @@ export const FolderList = memo(function FolderList() {
 
   return (
     <WidgetCard
-      icon={FolderOpen}
+      icon={IcLineFolder}
       title="폴더"
       meta={userFolders.length}
       collapsible
@@ -36,23 +36,23 @@ export const FolderList = memo(function FolderList() {
           type="button"
           onClick={handleEditClick}
           aria-label="폴더 편집"
-          className="rounded-md px-2 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
+          className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default"
         >
-          편집
+          <span>편집</span>
         </button>
       }
       bodyClassName="p-0"
     >
       {userFolders.length === 0 ? (
         <div className="flex flex-col items-center gap-2 px-5 py-6 text-center">
-          <FolderOpen className="h-5 w-5 text-zinc-400" aria-hidden="true" />
+          <IcLineFolder size={20} className="text-zinc-400" aria-hidden="true" />
           <p className="text-sm text-zinc-500 dark:text-zinc-400">폴더가 없습니다</p>
           <button
             type="button"
             onClick={handleEditClick}
-            className="text-xs font-medium text-primary-600 hover:underline dark:text-primary-400"
+            className="mw-text-button mw-text-button--underline mw-text-button--small mw-text-button--default"
           >
-            폴더 만들기
+            <span>폴더 만들기</span>
           </button>
         </div>
       ) : (

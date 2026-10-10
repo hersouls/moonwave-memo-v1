@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Maximize2, Share2 } from 'lucide-react'
 import { useGraphData } from '@/hooks/useGraphData'
 import { useFolderStore } from '@/stores/folderStore'
 import { WidgetCard } from './WidgetCard'
 import { ForceGraph, GROUP_COLORS } from './ForceGraph'
 import { KnowledgeGraphModal } from './KnowledgeGraphModal'
+import { IcLineExpand, IcLineShare } from '@/mw/icons'
 
 const NONE_COLOR = '#a1a1aa'
 
@@ -63,18 +63,18 @@ export function KnowledgeGraph() {
       onClick={() => setModalOpen(true)}
       aria-label="지식 그래프 확대"
       title="확대하여 탐색"
-      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-white/[0.06] dark:hover:text-zinc-200"
+      className="mw-icon-button"
     >
-      <Maximize2 className="h-4 w-4" />
+      <IcLineExpand size={16} />
     </button>
   ) : undefined
 
   return (
     <>
-      <WidgetCard icon={Share2} title="지식 그래프" action={expandAction} bodyClassName="px-2 py-2.5">
+      <WidgetCard icon={IcLineShare} title="지식 그래프" action={expandAction} bodyClassName="px-2 py-2.5">
         {!hasGraph ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Share2 className="h-5 w-5 text-zinc-400" aria-hidden="true" />
+            <IcLineShare size={20} className="text-zinc-400" aria-hidden="true" />
             <p className="text-sm text-zinc-500 dark:text-zinc-400">메모가 3개 이상 필요합니다</p>
           </div>
         ) : (
@@ -98,7 +98,7 @@ export function KnowledgeGraph() {
             {/* 확대 유도 오버레이 */}
             <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-white/70 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 dark:from-zinc-900/70">
               <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-zinc-900/80 px-3 py-1 text-xs font-medium text-white backdrop-blur dark:bg-white/90 dark:text-zinc-900">
-                <Maximize2 className="h-3 w-3" />
+                <IcLineExpand size={12} />
                 확대하여 탐색
               </span>
             </div>

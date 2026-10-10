@@ -1,4 +1,3 @@
-import { Tags, X } from 'lucide-react'
 
 interface TagInputProps {
   tags: string[]
@@ -19,25 +18,27 @@ export function TagInput({ tags, onRemoveTag, onEdit }: TagInputProps) {
         >
           #{tag}
           {onRemoveTag && (
-            <button
+            <button type="button"
               onClick={() => onRemoveTag(tag)}
-              className="hover:text-primary-900 dark:hover:text-primary-100"
+              className="mw-icon-button"
             >
-              <X className="w-3 h-3" />
+              <IcLineClose size={12} />
             </button>
           )}
         </span>
       ))}
       {onEdit && (
-        <button
+        <button type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-colors"
+          className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left"
           aria-label="태그 편집"
         >
-          <Tags className="w-3 h-3" />
+          <IcMwTag size={12} />
           태그 편집
         </button>
       )}
     </div>
   )
 }
+
+import { IcLineClose, IcMwTag } from '@/mw/icons'

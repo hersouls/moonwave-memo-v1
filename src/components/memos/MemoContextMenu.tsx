@@ -1,7 +1,7 @@
-import { CheckCircle, LayoutGrid, LayoutList, ArrowUpDown } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useUIStore } from '@/stores/uiStore'
 import type { SortBy } from '@/lib/types'
+import { IcMwCheckCircle, IcMwGrid, IcMwList, IcMwSort } from '@/mw/icons'
 
 const SORT_LABELS: Record<SortBy, string> = {
   updatedAt: '수정 날짜순',
@@ -42,11 +42,11 @@ export function MemoContextMenu() {
 
   const menuItems = (
     <>
-      <button
+      <button type="button"
         onClick={handleSelectMode}
-        className="ctx-menu__item"
+        className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left"
       >
-        <CheckCircle className="ctx-menu__item-icon" />
+        <IcMwCheckCircle className="ctx-menu__item-icon" />
         메모 선택
       </button>
 
@@ -55,9 +55,9 @@ export function MemoContextMenu() {
         className="ctx-menu__item"
       >
         {viewMode === 'list' ? (
-          <LayoutGrid className="ctx-menu__item-icon" />
+          <IcMwGrid className="ctx-menu__item-icon" />
         ) : (
-          <LayoutList className="ctx-menu__item-icon" />
+          <IcMwList className="ctx-menu__item-icon" />
         )}
         보기 방식
         <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
@@ -69,7 +69,7 @@ export function MemoContextMenu() {
         onClick={handleCycleSort}
         className="ctx-menu__item"
       >
-        <ArrowUpDown className="ctx-menu__item-icon" />
+        <IcMwSort className="ctx-menu__item-icon" />
         정렬 기준
         <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
           {SORT_LABELS[sortBy]}
