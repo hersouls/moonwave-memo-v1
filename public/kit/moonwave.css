@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.1.0 · all in one
+/*! Moonwave UX 1.1.1 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -18890,14 +18890,15 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 /* 누르는 영역 — 보이는 크기가 44px보다 작은 부품은 손가락으로 쓰는 기기에서 누르는 영역만 --mw-touch(44px)로 넓혀요
    (foundations/spacing-layout 누르는 영역과 밀도). 보이는 모양과 자리는 그대로예요. 원본에는 이 영역이 없어서 Small 버튼(32px),
    칩(36px), 글자 버튼(20px), 스위치(28px), 입력 칸 안의 글자 줄(22px)이 손가락보다 작았어요.
+   Input 칩의 지우기(X, 16px)도 같아요. 영역이 없어서 서비스가 키트의 Input 칩을 쓰지 못하고 칩을 따로 만들었어요(Memo, 2026-10-10).
    영역은 부품의 한가운데에 놓여서, 44px보다 작은 쪽으로만 늘어나요. :where()라서 서비스가 자리를 따로 잡은 부품은 그대로예요.
    영역은 inset으로 잡아요. transform으로 가운데에 옮기면 부품이 소수점 자리에 놓였을 때 눌리는 자리가 1px 밀려서,
    44px 간격으로 쌓인 칩 두 줄의 영역이 서로 1px씩 겹쳤어요. */
 @media (pointer: coarse) {
-  :where(.mw-button--small, .mw-text-button, .mw-select-chip, .mw-filter-chip, .mw-input-chip, .mw-switch, .mw-folder-chip-group-toggle,
+  :where(.mw-button--small, .mw-text-button, .mw-select-chip, .mw-filter-chip, .mw-input-chip, .mw-input-chip__icon, .mw-switch, .mw-folder-chip-group-toggle,
     .mw-search__search-button, .mw-search__clear-button, .mw-tooltip__close-button, .mw-list-button, .mw-list-headline__icon,
     .mw-number-indicator__button) { position: relative; }
-  :where(.mw-button--small, .mw-text-button, .mw-select-chip, .mw-filter-chip, .mw-input-chip, .mw-switch, .mw-folder-chip-group-toggle,
+  :where(.mw-button--small, .mw-text-button, .mw-select-chip, .mw-filter-chip, .mw-input-chip, .mw-input-chip__icon, .mw-switch, .mw-folder-chip-group-toggle,
     .mw-search__search-button, .mw-search__clear-button, .mw-tooltip__close-button, .mw-list-button, .mw-list-headline__icon,
     .mw-number-indicator__button)::after {
     content: ""; position: absolute; inset: min(0px, calc((100% - var(--mw-touch)) / 2));
@@ -18934,6 +18935,12 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 [data-theme="dark"] .mw-textfield--read-only .mw-textfield__label,
 [data-theme="dark"] .mw-textarea--read-only .mw-textarea__label { color: var(--text-secondary); }
 [data-theme="dark"] .mw-helper-text--error { color: color-mix(in srgb, var(--text-feedback-critical) 75%, var(--text-primary)); }
+
+/* 글자를 받는 칸의 최소 너비 — 원본의 320px은 넓은 화면에서 칸이 너무 좁아지지 않게 하는 값이에요. 360px 폰에서는 옆에 버튼
+   하나만 붙어도 칸이 줄지 못해 버튼 밑으로 들어갔어요(Memo, 2026-10-10). 폰(600px 이하)에서는 놓인 자리의 너비를 따라요. */
+@media (max-width: 600px) {
+  .mw-textfield, .mw-textarea, .mw-search--type-outline { min-width: 0; }
+}
 
 /* Moonwave 앱 레이어
  * 모든 Moonwave 서비스가 함께 쓰는 바탕과 뼈대예요: 글꼴, 초기화, 포커스, 앱 셸(사이드바 · 상단 바 · 하단 탭 · 패널 · 시트),
@@ -18984,7 +18991,7 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 :where(.mw-root) :where(ul, ol) { margin: 0; padding: 0; list-style: none; }
 :where(.mw-root) :where(a) { color: inherit; }
 /* 글자를 받는 칸은 감싸는 상자가 포커스를 보여 주므로 뺐어요 (moonwave-components.css의 보정 참고) */
-.mw-root :focus-visible:not(.mw-textfield__input, .mw-textarea__textarea, .mw-search__input, .mw-checkbox__input, .mw-radiobutton__input) { outline: var(--border-width-2) solid var(--mw-focus); outline-offset: 2px; }
+.mw-root :focus-visible:not(.mw-textfield__input, .mw-textarea__textarea, .mw-search__input, .mw-searchbar input, .mw-checkbox__input, .mw-radiobutton__input) { outline: var(--border-width-2) solid var(--mw-focus); outline-offset: 2px; }
 :where(.mw-root) :where(a, button, summary, [tabindex]):not([class*='mw-']):focus-visible { border-radius: var(--radius-4); }
 .mw-root ::selection { background: var(--mw-accent-soft); color: var(--text-primary); }
 

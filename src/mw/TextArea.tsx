@@ -91,8 +91,13 @@ export function TextArea({
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current
     if (textarea) {
+      // 높이를 다시 재는 동안 칸이 잠깐 한 줄로 줄어요. 그 사이 바깥에서 스크롤되는 상자가 위로 당겨져서, 긴 글의 끝에서
+      // 글자를 칠 때마다 화면이 맨 위로 튀었어요(Memo, 2026-10-10). 스크롤 자리를 적어 두었다가 돌려놔요.
+      const held: [Element, number][] = []
+      for (let el = textarea.parentElement; el; el = el.parentElement) if (el.scrollTop > 0) held.push([el, el.scrollTop])
       textarea.style.height = 'auto'
       textarea.style.height = `${textarea.scrollHeight}px`
+      for (const [el, top] of held) if (el.scrollTop !== top) el.scrollTop = top
     }
   }, [])
 

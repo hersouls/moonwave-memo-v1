@@ -465,12 +465,9 @@ body {
    편집기: 내용 칸
    ======================================== */
 
-/* 키트의 Text Area는 글을 따라 높이가 늘어요. 편집기에서는 칸이 화면의 남은 높이를 채우고 글이 칸 안에서 스크롤돼요.
-   긴 메모에서도 테두리가 끊기지 않고, 글자를 칠 때 스크롤이 튀지 않고, 목차 · 나란히 보기가 칸의 스크롤을 따라가요.
-   키트 컴포넌트가 글자를 칠 때마다 적는 높이(style.height)는 여기서 눌러요. */
-/* 제목 칸과 내용 칸은 편집기 너비를 그대로 따라가요. 키트의 가장 좁은 너비(320px)를 두면 360px 폰에서 제목 칸이 옆의 버튼 밑으로 들어가요. */
-.memo-editor-title .mw-textfield,
-.memo-editor-body .mw-textarea { min-width: 0; }
+/* 키트의 Text Area는 글을 따라 높이가 늘어요. 편집기는 화면 하나가 통째로 글 쓰는 자리라서, 칸이 남은 높이를 채우고
+   글이 칸 안에서 스크롤돼요: 긴 메모에서도 테두리가 끊기지 않고, 태그 줄과 글자 수가 늘 아래에 보이고,
+   목차 · 나란히 보기가 칸의 스크롤을 따라가요. 그래서 키트 컴포넌트가 적는 높이(style.height)는 여기서 눌러요. */
 .memo-editor-body { min-height: var(--memo-editor-body-min); }
 .memo-editor-body > .mw-textarea-container,
 .memo-editor-body .mw-textarea { flex: 1 1 auto; min-height: 0; }

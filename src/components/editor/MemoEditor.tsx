@@ -843,7 +843,7 @@ export function MemoEditor() {
 
       {/* UX-18: maxLength={100} on title + 제목 재생성 버튼([폴더]_요약_YYMMDD) */}
       {/* 제목: 키트의 Text Field예요. 레이블이 늘 보여요. */}
-      <div className="memo-editor-title flex items-start gap-2 mb-3">
+      <div className="flex items-start gap-2 mb-3">
         <TextField
           ref={titleRef}
           id="memo-title"
@@ -896,10 +896,12 @@ export function MemoEditor() {
 
           {/* Feature hint: slash commands */}
           {!isFocusMode && !body && (
-            <FeatureHint
-              id="slash-commands"
-              message="'/'를 입력하면 슬래시 명령어를 쓸 수 있어요. 제목, 구분선, 코드 블록 등을 빠르게 넣어 보세요."
-            />
+            <div className="mt-2">
+              <FeatureHint
+                id="slash-commands"
+                message="'/'를 입력하면 슬래시 명령어를 쓸 수 있어요. 제목, 구분선, 코드 블록 등을 빠르게 넣어 보세요."
+              />
+            </div>
           )}
         </>
       )}

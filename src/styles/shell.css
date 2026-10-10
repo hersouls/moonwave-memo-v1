@@ -101,7 +101,3 @@ button.mw-sheet__grab { min-height: var(--mw-touch); }
   .mw-popup__container:has(> .memo-dialog--full) { align-items: stretch; padding: 0; }
   .mw-popup.memo-dialog--full { width: 100%; max-width: none; height: 100dvh; max-height: none; border-radius: 0; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 }
-
-/* 찾기 바(mw-searchbar): 포커스는 바의 테두리와 옅은 띠가 알려요. 키트의 포커스 고리 규칙이 안쪽 input에도 걸려서
-   고리가 두 겹으로 그려지던 것을 꺼요 (키트에서는 이 input이 고리를 빼는 목록에 아직 없어요). */
-.mw-root .mw-searchbar input:focus-visible { outline: 0; }
