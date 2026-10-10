@@ -250,6 +250,7 @@ export function SlideView() {
       role="dialog"
       aria-modal="true"
       aria-label="슬라이드 보기"
+      data-theme="dark"
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-xl" />
@@ -314,18 +315,18 @@ export function SlideView() {
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {/* View mode toggle */}
-          <button
+          <button type="button"
             onClick={toggleViewMode}
-            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="mw-button mw-button--tertiary-subtle mw-button--medium"
             title={isSlideMode ? '스크롤 보기' : '슬라이드 보기'}
             aria-label={isSlideMode ? '스크롤 보기' : '슬라이드 보기'}
           >
             {isSlideMode ? <IcMwList size={20} /> : <IcMwColumns size={20} />}
           </button>
           {/* Theme toggle */}
-          <button
+          <button type="button"
             onClick={() => setSlideTheme(isDark ? 'light' : 'dark')}
-            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="mw-button mw-button--tertiary-subtle mw-button--medium"
             title={isDark ? '라이트 테마' : '다크 테마'}
             aria-label={isDark ? '라이트 테마' : '다크 테마'}
           >
@@ -385,17 +386,17 @@ export function SlideView() {
                 {currentIndex + 1} / {totalSlides}
               </span>
               <div className="flex items-center gap-2">
-                <button
+                <button type="button"
                   onClick={cycleAutoPlayInterval}
-                  className="min-w-11 min-h-11 flex items-center justify-center px-2 rounded-lg text-white/60 hover:text-white text-xs tabular-nums hover:bg-white/10 transition-colors"
+                  className="mw-button mw-button--tertiary-subtle mw-button--medium"
                   title="자동 재생 간격"
                   aria-label={`자동 재생 간격 ${autoPlayInterval}초`}
                 >
                   {autoPlayInterval}초
                 </button>
-                <button
+                <button type="button"
                   onClick={() => setIsAutoPlaying((prev) => !prev)}
-                  className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  className="mw-button mw-button--tertiary-subtle mw-button--medium"
                   title={isAutoPlaying ? '일시 정지' : '자동 재생'}
                   aria-label={isAutoPlaying ? '일시 정지' : '자동 재생'}
                 >
@@ -418,9 +419,9 @@ export function SlideView() {
       {isSlideMode && isDesktop && controlsVisible && (
         <>
           {currentIndex > 0 && (
-            <button
+            <button type="button"
               onClick={goPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 text-white/70 hover:text-white hover:bg-black/50 transition-colors backdrop-blur-sm"
+              className="mw-icon-button absolute left-4 top-1/2 -translate-y-1/2"
               title="이전 슬라이드"
               aria-label="이전 슬라이드"
             >
@@ -428,9 +429,9 @@ export function SlideView() {
             </button>
           )}
           {currentIndex < totalSlides - 1 && (
-            <button
+            <button type="button"
               onClick={goNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 text-white/70 hover:text-white hover:bg-black/50 transition-colors backdrop-blur-sm"
+              className="mw-icon-button absolute right-4 top-1/2 -translate-y-1/2"
               title="다음 슬라이드"
               aria-label="다음 슬라이드"
             >

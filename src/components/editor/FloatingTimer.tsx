@@ -40,7 +40,7 @@ export function FloatingTimer() {
 
   return (
     <div className="fixed bottom-20 right-4 z-30 md:bottom-10 md:right-6 animate-in slide-in-from-bottom duration-200">
-      <div className="flex items-center gap-2 rounded-2xl bg-zinc-900/90 dark:bg-zinc-100/90 px-3 py-2 shadow-lg backdrop-blur-sm">
+      <div className="flex items-center gap-2 rounded-2xl border border-[var(--border-secondary)] bg-[var(--surface-floating)] px-3 py-2 shadow-md">
         {/* Progress ring */}
         <svg className="h-8 w-8 -rotate-90" viewBox="0 0 32 32">
           <circle
@@ -62,21 +62,21 @@ export function FloatingTimer() {
           />
         </svg>
 
-        <span className="font-mono text-sm tabular-nums text-white dark:text-zinc-900 min-w-[3.5ch]">
+        <span className="font-mono text-sm tabular-nums text-[var(--text-primary)] min-w-[3.5ch]">
           {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
         </span>
 
-        <button
+        <button type="button"
           onClick={() => (isRunning ? pause() : start())}
-          className="rounded-lg p-1 text-zinc-300 hover:text-white dark:text-zinc-600 dark:hover:text-zinc-900 transition-colors"
+          className="mw-button mw-button--tertiary-subtle mw-button--medium"
           aria-label={isRunning ? '일시정지' : '시작'}
         >
           {isRunning ? <IcLinePause size={16} /> : <IcFillPlay size={16} />}
         </button>
 
-        <button
+        <button type="button"
           onClick={reset}
-          className="rounded-lg p-1 text-zinc-300 hover:text-white dark:text-zinc-600 dark:hover:text-zinc-900 transition-colors"
+          className="mw-button mw-button--tertiary-subtle mw-button--medium"
           aria-label="초기화"
         >
           {seconds === 0 ? <IcLineClose size={16} /> : <IcLineUndo size={16} />}

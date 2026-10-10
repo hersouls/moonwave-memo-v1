@@ -44,9 +44,9 @@ export function TimeCapsuleBanner() {
 
   return (
     <div className="relative mx-4 mt-3 mb-1 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3 dark:border-amber-800/50 dark:from-amber-950/30 dark:to-yellow-950/20">
-      <button
+      <button type="button"
         onClick={handleDismiss}
-        className="absolute top-2 right-2 p-1 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+        className="mw-icon-button absolute top-2 right-2"
         aria-label="닫기"
       >
         <IcLineClose size={16} />
@@ -61,9 +61,9 @@ export function TimeCapsuleBanner() {
             <IcLineTime size={16} className="inline mr-1 -mt-0.5" />
             {capsule.yearsAgo}년 전 오늘, 당신이 깊게 몰입했던 기록입니다
           </p>
-          <button
+          <button type="button"
             onClick={handleClick}
-            className="mt-1 text-sm text-amber-700 dark:text-amber-300 hover:underline truncate block max-w-full text-left"
+            className="mw-button mw-button--tertiary-subtle mw-button--medium mt-1 truncate"
           >
             "{capsule.memo.title || '제목 없음'}"
           </button>

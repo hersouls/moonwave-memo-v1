@@ -103,12 +103,12 @@ function CodeBlock({ className, children, ...props }: React.HTMLAttributes<HTMLE
           {language}
         </div>
       )}
-      <button
+      <button type="button"
         onClick={handleCopy}
-        className="absolute top-1 right-1 px-1.5 py-0.5 text-xs font-medium rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="mw-text-button mw-text-button--ghost mw-text-button--small mw-text-button--default absolute top-1 right-1 opacity-0 group-hover:opacity-100"
         aria-label="코드 복사"
       >
-        {copied ? '복사됨' : '복사'}
+        <span>{copied ? '복사됨' : '복사'}</span>
       </button>
       <code className={className} {...props}>{children}</code>
     </div>

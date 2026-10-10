@@ -45,6 +45,8 @@ import { buildRuleTitle, composeTitle, getCategoryLabel, resolveTitleDate } from
 import { isAIAvailable, summarizeTitleKeyword } from '@/services/aiFeatures'
 import { IcFillPlay, IcLineClose, IcLineDownload, IcLineExpand, IcLineLoading, IcLineMinus, IcLineRewrite, IcMwCheckSquare, IcMwCode, IcMwHistory, IcMwList, IcMwQuote, IcMwSpark, IcMwSparkles } from '@/mw/icons'
 import { FormatGlyph } from '@/components/editor/FormatGlyph'
+import { TextField } from '@/mw/TextField'
+import { TextArea } from '@/mw/TextArea'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 type EditorTab = 'edit' | 'preview'
@@ -856,17 +858,17 @@ export function MemoEditor() {
       )}
 
       {/* UX-18: maxLength={100} on title + 제목 재생성 버튼([폴더]_요약_YYMMDD) */}
-      <label htmlFor="memo-title" className="mb-1 block text-xs font-semibold text-[var(--text-tertiary)]">제목</label>
+      {/* 제목: 키트의 Text Field예요. 레이블이 늘 보여요. */}
       <div className="flex items-start gap-2 mb-3">
-        <input
+        <TextField
           ref={titleRef}
           id="memo-title"
-          type="text"
+          label="제목"
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
-          placeholder="제목을 적어요"
           maxLength={100}
-          className="min-h-11 w-full text-3xl lg:text-3xl fold:text-lg font-bold tracking-[-0.02em] leading-tight text-balance text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none"
+          showClearButton={false}
+          containerClassName="min-w-0 flex-1"
         />
         <button
           type="button"
@@ -888,18 +890,17 @@ export function MemoEditor() {
         tiptapBodyContent
       ) : (
         <>
-          <div className={clsx('relative flex-1 flex flex-col min-h-0', isBreathing && 'breathing-active')}>
-            {/* UX-03: Apply user font, UX-20: Fills remaining space */}
-            <label htmlFor="memo-body" className="mb-1 block text-xs font-semibold text-[var(--text-tertiary)]">내용</label>
-            <textarea
+          {/* 내용: 키트의 Text Area예요. 글이 늘면 칸이 따라 늘고, 이 영역이 스크롤돼요. */}
+          <div className={clsx('relative flex-1 min-h-0 overflow-y-auto pb-32', isBreathing && 'breathing-active')}>
+            <TextArea
               ref={bodyRef}
               id="memo-body"
+              label="내용"
               value={body}
               onChange={handleBodyInput}
               onKeyDown={handleBodyKeyDown}
               placeholder="메모를 적어요. '/' 명령어와 마크다운을 쓸 수 있어요"
-              className="w-full flex-1 min-h-0 pb-32 text-17 leading-[1.8] tracking-[-0.003em] text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-primary-500 bg-transparent border-none outline-none resize-none"
-                />
+            />
             {/* AI Autocomplete ghost text */}
             {ghostText && (
               <div className="pointer-events-none absolute bottom-2 left-0 text-xs text-zinc-400 dark:text-zinc-600 italic truncate max-w-full px-1">
@@ -928,10 +929,10 @@ export function MemoEditor() {
         <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
           <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">AI 태그</span>
           {aiTags.map((tag) => (
-            <button
+            <button type="button"
               key={tag}
               onClick={() => handleAITagClick(tag)}
-              className="px-2 py-0.5 text-xs rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+              className="mw-button mw-button--secondary mw-button--medium"
             >
               #{tag}
             </button>
@@ -1189,9 +1190,9 @@ export function MemoEditor() {
 
       {/* Focus mode: semi-transparent close button for touch devices / PWA */}
       {isFocusMode && 'ontouchstart' in window && (
-        <button
+        <button type="button"
           onClick={() => useUIStore.getState().toggleFocusMode()}
-          className="fixed top-4 right-4 z-50 p-2.5 rounded-full bg-zinc-900/30 dark:bg-zinc-100/30 text-zinc-600 dark:text-zinc-300 backdrop-blur-sm opacity-50 hover:opacity-90 active:opacity-100 transition-opacity"
+          className="mw-icon-button fixed top-4 right-4 z-50 active:opacity-100"
           aria-label="포커스 모드 나가기"
         >
           <IcLineClose size={20} />

@@ -373,7 +373,7 @@ export function KnowledgeGraphModal({
                   type="button"
                   onClick={cycleLabel}
                   title="라벨 표시 방식 전환"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]"
+                  className="mw-button mw-button--tertiary-subtle mw-button--medium"
                 >
                   <IcMwTag size={16} />
                   <span className="hidden md:inline">{LABEL_TEXT[labelMode]}</span>

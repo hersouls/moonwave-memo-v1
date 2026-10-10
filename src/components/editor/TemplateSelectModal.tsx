@@ -163,9 +163,9 @@ export function TemplateSelectModal() {
 
               {/* Add new template button */}
               {isManageMode && (
-                <button
+                <button type="button"
                   onClick={handleAddNew}
-                  className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 hover:border-primary-400 hover:text-primary-500 transition-colors"
+                  className="mw-button mw-button--tertiary-subtle mw-button--medium"
                 >
                   <IcLineAdd size={24} />
                   <span className="text-sm font-medium">새 템플릿</span>

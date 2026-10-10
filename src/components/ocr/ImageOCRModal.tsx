@@ -186,10 +186,10 @@ function StepImageSelect({
               alt="선택된 이미지"
               className="w-full max-h-48 object-contain"
             />
-            <button
+            <button type="button"
               onClick={(e) => { e.stopPropagation(); clearSelection() }}
               aria-label="선택한 이미지 제거"
-              className="absolute top-2 right-2 flex items-center justify-center w-10 h-10 -m-1 rounded-full text-white transition-colors group/clear"
+              className="mw-button mw-button--tertiary-subtle mw-button--medium absolute top-2 right-2 -m-1"
             >
               <span className="flex items-center justify-center w-7 h-7 rounded-full bg-black/50 group-hover/clear:bg-black/70 transition-colors">
                 <IcLineClose size={16} />

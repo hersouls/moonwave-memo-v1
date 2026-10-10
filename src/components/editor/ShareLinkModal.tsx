@@ -82,9 +82,9 @@ export function ShareLinkModal({ isOpen, onClose, title, body, tags }: ShareLink
         >
           <span>{'\uB2EB\uAE30'}</span>
         </button>
-        <button
+        <button type="button"
           onClick={handleDownload}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-colors"
+          className="mw-button mw-button--primary mw-button--medium"
         >
           <IcLineDownload size={16} />
           HTML {'\uD30C\uC77C \uB2E4\uC6B4\uB85C\uB4DC'}

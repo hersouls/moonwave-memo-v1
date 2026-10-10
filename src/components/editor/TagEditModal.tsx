@@ -155,13 +155,13 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
           {suggestions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {suggestions.map((tag) => (
-                <button
+                <button type="button"
                   key={tag}
                   onClick={() => {
                     addTag(tag)
                     setSuggestions((prev) => prev.filter((t) => t !== tag))
                   }}
-                  className="px-2.5 py-1 text-xs rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+                  className="mw-button mw-button--secondary mw-button--medium"
                 >
                   + #{tag}
                 </button>

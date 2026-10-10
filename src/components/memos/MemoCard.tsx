@@ -550,7 +550,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                     useUIStore.getState().setSearchQuery('')
                     navigate('/memos')
                   }}
-                  className="relative z-[2] inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors cursor-pointer after:absolute after:-inset-y-2 after:-inset-x-1.5 after:content-['']"
+                  className="mw-button mw-button--secondary mw-button--medium relative z-[2] after:absolute after:-inset-y-2 after:-inset-x-1.5"
                 >
                   #{tag}
                 </button>

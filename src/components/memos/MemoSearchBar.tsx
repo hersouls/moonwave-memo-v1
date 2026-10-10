@@ -219,7 +219,7 @@ export function MemoSearchBar() {
                 <button
                   type="button"
                   onClick={() => handleSelectRecent(query)}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 py-2 pl-3 pr-1 text-left text-sm text-zinc-700 dark:text-zinc-300"
+                  className="mw-button mw-button--tertiary-subtle mw-button--medium min-w-0 flex-1"
                 >
                   <IcLineTime size={16} className="text-zinc-400 shrink-0" />
                   <span className="flex-1 truncate">{query}</span>
@@ -227,7 +227,7 @@ export function MemoSearchBar() {
                 <button
                   type="button"
                   onClick={(e) => handleRemoveRecent(e, query)}
-                  className="relative mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 after:absolute after:-inset-1 after:content-['']"
+                  className="mw-icon-button relative mr-1 shrink-0 after:absolute after:-inset-1"
                   aria-label={`"${query}" 최근 검색 삭제`}
                 >
                   <IcLineClose size={12} />

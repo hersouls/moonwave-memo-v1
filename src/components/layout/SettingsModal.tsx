@@ -1305,7 +1305,7 @@ export function SettingsModal() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input type={showOpenAIKey ? 'text' : 'password'} value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} placeholder="sk-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showOpenAIKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
+                  <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showOpenAIKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
                 <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'openai' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
@@ -1325,7 +1325,7 @@ export function SettingsModal() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input type={showAnthropicKey ? 'text' : 'password'} value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} placeholder="sk-ant-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showAnthropicKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
+                  <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showAnthropicKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
                 <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'anthropic' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
@@ -1345,7 +1345,7 @@ export function SettingsModal() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input type={showGeminiKey ? 'text' : 'password'} value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} placeholder="AIza..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
-                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} aria-label={showGeminiKey ? 'API 키 숨기기' : 'API 키 표시'} className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">{showGeminiKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
+                  <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} aria-label={showGeminiKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showGeminiKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
                 <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'gemini' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>

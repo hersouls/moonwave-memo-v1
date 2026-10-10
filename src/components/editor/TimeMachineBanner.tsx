@@ -25,9 +25,9 @@ function WeatherIcon({ weather }: { weather: WeatherCondition | null }) {
 export function TimeMachineBanner({ snapshot, onDismiss }: TimeMachineBannerProps) {
   return (
     <div className="relative mx-4 mt-2 mb-1 rounded-xl border border-amber-200/60 bg-gradient-to-r from-amber-50/80 to-orange-50/60 px-4 py-2.5 dark:border-amber-800/40 dark:from-amber-950/20 dark:to-orange-950/15">
-      <button
+      <button type="button"
         onClick={onDismiss}
-        className="absolute top-1.5 right-1.5 p-1 rounded-lg text-amber-400 hover:text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+        className="mw-icon-button absolute top-1.5 right-1.5"
         aria-label="닫기"
       >
         <IcLineClose size={16} />

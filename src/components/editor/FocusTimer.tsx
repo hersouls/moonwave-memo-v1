@@ -30,9 +30,9 @@ export function FocusTimer() {
       <span className="font-mono text-xs tabular-nums">
         {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
       </span>
-      <button
+      <button type="button"
         onClick={() => (isRunning ? pause() : start())}
-        className="rounded p-0.5 transition-colors hover:bg-white/20"
+        className="mw-button mw-button--tertiary-subtle mw-button--medium"
         aria-label={isRunning ? '일시정지' : '시작'}
       >
         {isRunning ? <IcLinePause size={12} /> : <IcFillPlay size={12} />}
