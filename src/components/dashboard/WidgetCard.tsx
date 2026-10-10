@@ -62,12 +62,13 @@ export function WidgetCard({
       >
         <Icon className="h-4 w-4" />
       </span>
-      <span className="flex min-w-0 items-center gap-1.5">
-        <span className="truncate text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+      <div className="flex min-w-0 items-center gap-1.5">
+        {/* 위젯의 이름은 페이지 제목(h1) 아래의 제목이에요. 위젯 안의 작은 제목은 h3로 써요 */}
+        <h2 className="truncate text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
           {title}
-        </span>
+        </h2>
         {titleAdornment}
-      </span>
+      </div>
       {meta != null && (
         <span className="ml-auto shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
           {meta}

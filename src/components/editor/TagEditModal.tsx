@@ -115,7 +115,7 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
             </span>
           ))}
           {bodyTags.length === 0 && draft.length === 0 && (
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">아직 태그가 없습니다</span>
+            <span className="text-xs text-[var(--text-tertiary)]">아직 태그가 없어요</span>
           )}
         </div>
 
@@ -171,7 +171,7 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
             </div>
           )}
           {suggestError && (
-            <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">{suggestError}</p>
+            <p className="mt-2 text-xs text-[var(--text-tertiary)]">{suggestError}</p>
           )}
         </div>
       </DialogBody>

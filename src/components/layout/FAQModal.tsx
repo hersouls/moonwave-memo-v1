@@ -17,7 +17,7 @@ interface FAQCategory {
 
 const FAQ_DATA: FAQCategory[] = [
   {
-    title: '메모 작성 & 편집 📝',
+    title: '메모 쓰기와 편집',
     items: [
       {
         q: '메모를 어떻게 작성하나요?',
@@ -46,7 +46,7 @@ const FAQ_DATA: FAQCategory[] = [
     ],
   },
   {
-    title: '편집기 고급 기능 🛠️',
+    title: '편집기 고급 기능',
     items: [
       {
         q: '메모에 집중하고 싶어요. (집중 모드 & 타이머)',
@@ -71,7 +71,7 @@ const FAQ_DATA: FAQCategory[] = [
     ],
   },
   {
-    title: '고급 뷰 & 정렬 방식 👀',
+    title: '보기와 정렬',
     items: [
       {
         q: '메모를 할 일(Todo)이나 상태별로 관리할 수 있나요?',
@@ -88,7 +88,7 @@ const FAQ_DATA: FAQCategory[] = [
     ],
   },
   {
-    title: 'AI 스마트 기능 🤖',
+    title: 'AI 기능',
     items: [
       {
         q: 'AI 요약 및 자동완성은 어떻게 동작하나요?',
@@ -109,7 +109,7 @@ const FAQ_DATA: FAQCategory[] = [
     ],
   },
   {
-    title: '대시보드 & 시각화 위젯 📊',
+    title: '대시보드와 위젯',
     items: [
       {
         q: '나의 기록 습관을 눈으로 확인하고 싶어요. (히트맵 & 요약)',
@@ -126,7 +126,7 @@ const FAQ_DATA: FAQCategory[] = [
     ],
   },
   {
-    title: '폴더 & 태그 관리 📁',
+    title: '폴더와 태그',
     items: [
       {
         q: '폴더 관리는 어떻게 하나요?',
@@ -139,7 +139,7 @@ const FAQ_DATA: FAQCategory[] = [
     ],
   },
   {
-    title: '데이터 동기화 & PWA 환경 ⚙️',
+    title: '동기화와 앱 설치',
     items: [
       {
         q: '인터넷이 끊겨도 사용할 수 있나요?',
@@ -227,6 +227,7 @@ export function FAQModal() {
                   <button
                     onClick={() => toggleCategory(originalIndex)}
                     type="button"
+                    aria-expanded={!!isExpanded}
                     className="mw-button mw-button--tertiary-subtle mw-button--large w-full justify-between"
                   >
                     <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">

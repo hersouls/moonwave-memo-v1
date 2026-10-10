@@ -172,6 +172,18 @@
   flex-shrink: 0;
 }
 
+/* 항목의 아이콘은 글이 길어도 눌리지 않아요 (16px 아이콘이 15px로 줄던 자리) */
+.ctx-menu__item > svg {
+  flex-shrink: 0;
+}
+
+/* 항목 끝의 지금 값(보기 방식 · 정렬 기준). 메뉴는 떠 있는 면이라 어두운 테마에서 --text-tertiary는 3.25:1이에요 */
+.ctx-menu__item-value {
+  margin-left: auto;
+  font-size: var(--font-size-12);
+  color: var(--text-secondary);
+}
+
 .ctx-menu__item-label {
   flex: 1;
   text-align: left;

@@ -55,7 +55,7 @@ export function SyncFolderSection() {
             <IcMwDrive size={20} className="text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm text-zinc-500 dark:text-zinc-400">
               이 기기는 폴더 저장을 지원하지 않습니다 — Firebase로만 동기화됩니다.
-              <div className="text-xs mt-1 text-zinc-400 dark:text-zinc-500">
+              <div className="text-xs mt-1 text-[var(--text-tertiary)]">
                 Chrome 또는 Edge 데스크톱 브라우저에서 사용할 수 있습니다.
               </div>
             </div>
@@ -279,7 +279,7 @@ export function SyncFolderSection() {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                미러 폴더 <span className="text-xs font-normal text-zinc-400">(NAS·백업, 복사 전용)</span>
+                미러 폴더 <span className="text-xs font-normal text-[var(--text-tertiary)]">(NAS·백업, 복사 전용)</span>
                 <InfoTip
                   label="미러 폴더 설명"
                   content={
@@ -320,7 +320,7 @@ export function SyncFolderSection() {
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+              <p className="text-xs text-[var(--text-tertiary)]">
                 로컬 저장 결과를 복사할 NAS·백업 폴더를 추가할 수 있습니다. 주 저장 폴더와 겹치지 않는 별도 위치여야 합니다.
               </p>
             )}
@@ -474,7 +474,7 @@ function InfoTip({ label, content }: { label: string; content: ReactNode }) {
 
 function StatusBadge({ status, enabled }: { status: string; enabled: boolean }) {
   if (!enabled) {
-    return <span className="text-xs text-zinc-400 dark:text-zinc-500">꺼짐</span>
+    return <span className="text-xs text-[var(--text-tertiary)]">꺼짐</span>
   }
   switch (status) {
     case 'writing':

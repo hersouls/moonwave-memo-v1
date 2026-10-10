@@ -28,7 +28,7 @@ export function AndroidDownloadSection() {
               <div className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">
                 새 빌드가 나오면 같은 파일을 다시 받아 덮어 설치하면 돼요.
               </div>
-              <div className="text-xs mt-1 text-zinc-400 dark:text-zinc-500">
+              <div className="text-xs mt-1 text-[var(--text-tertiary)]">
                 스토어 밖에서 받는 앱이라, 설치할 때 “출처를 알 수 없는 앱” 허용을 물어봐요.
               </div>
             </div>

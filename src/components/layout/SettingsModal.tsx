@@ -592,7 +592,7 @@ export function SettingsModal() {
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 px-1">
           화면 테마
         </h3>
-        <div role="group" aria-label="화면 테마" className="flex flex-wrap gap-2">
+        <div role="group" aria-label="화면 테마" className="memo-chip-wrap">
           {themeOptions.map((option) => (
             <button
               key={option.value}
@@ -617,7 +617,7 @@ export function SettingsModal() {
         </h3>
         <div className="space-y-4">
           {/* Font Size */}
-          <div role="group" aria-label="글자 크기" className="flex flex-wrap gap-2">
+          <div role="group" aria-label="글자 크기" className="memo-chip-wrap">
             {FONT_SIZES.map((size) => (
               <button
                 key={size.id}
@@ -1178,7 +1178,7 @@ export function SettingsModal() {
           {/* AI Provider */}
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">AI 프로바이더</label>
-            <div role="group" aria-label="AI 제공자" className="flex flex-wrap gap-2">
+            <div role="group" aria-label="AI 제공자" className="memo-chip-wrap">
               {providerOptions.map((opt) => (
                 <button
                   key={opt.value}
@@ -1196,7 +1196,7 @@ export function SettingsModal() {
           {/* OCR Provider */}
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">OCR 프로바이더</label>
-            <div role="group" aria-label="글자 인식 제공자" className="flex flex-wrap gap-2">
+            <div role="group" aria-label="글자 인식 제공자" className="memo-chip-wrap">
               {ocrProviderOptions.map((opt) => (
                 <button
                   key={opt.value}
@@ -1214,7 +1214,7 @@ export function SettingsModal() {
           {/* STT Language */}
           <div>
             <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">음성 인식 언어</label>
-            <div role="group" aria-label="음성 인식 언어" className="flex flex-wrap gap-2">
+            <div role="group" aria-label="음성 인식 언어" className="memo-chip-wrap">
               {languageOptions.map((opt) => (
                 <button
                   key={opt.value}

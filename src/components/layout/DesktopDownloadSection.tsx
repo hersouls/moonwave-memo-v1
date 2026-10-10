@@ -84,7 +84,7 @@ export function DesktopDownloadSection() {
                     : `최신 v${normalize(info.version)} · ${sizeMB}`
                 )}
               </div>
-              <div className="text-xs mt-1 text-zinc-400 dark:text-zinc-500">
+              <div className="text-xs mt-1 text-[var(--text-tertiary)]">
                 서명되지 않은 설치본입니다 — 설치 시 SmartScreen 경고가 나오면 “추가 정보 → 실행”.
               </div>
             </div>

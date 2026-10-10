@@ -287,10 +287,10 @@ export function KnowledgeGraphModal({
             </DialogTitle>
             <p className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
               메모 {nodes.length} · 연결 {mergedLinks.length}
-              {autoCount > 0 && <span className="text-zinc-400 dark:text-zinc-500"> · 자동 {autoCount}</span>}
-              {orphanCount > 0 && <span className="text-zinc-400 dark:text-zinc-500"> · 고아 {orphanCount}</span>}
+              {autoCount > 0 && <span className="text-[var(--text-tertiary)]"> · 자동 {autoCount}</span>}
+              {orphanCount > 0 && <span className="text-[var(--text-tertiary)]"> · 고아 {orphanCount}</span>}
               {truncated && total != null && (
-                <span className="text-zinc-400 dark:text-zinc-500"> · 최근 {nodes.length}개(전체 {total})</span>
+                <span className="text-[var(--text-tertiary)]"> · 최근 {nodes.length}개(전체 {total})</span>
               )}
             </p>
           </div>

@@ -44,9 +44,9 @@ export function AnalyticsWidget() {
       <div className="space-y-5">
         {/* Hour distribution */}
         <div>
-          <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+          <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
             {'시간대별 작성 분포'}
-          </h4>
+          </h3>
           <div className="flex items-end gap-[2px] h-16">
             {analytics.hourDistribution.map((count, hour) => (
               <div
@@ -77,9 +77,9 @@ export function AnalyticsWidget() {
 
         {/* Day distribution */}
         <div>
-          <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+          <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
             {'요일별 작성 분포'}
-          </h4>
+          </h3>
           <div className="flex items-end gap-1 h-12">
             {analytics.dayDistribution.map((count, day) => (
               <div key={day} className="flex-1 flex flex-col items-center gap-1 self-stretch justify-end">
@@ -108,9 +108,9 @@ export function AnalyticsWidget() {
         {/* Monthly trend */}
         {analytics.monthlyTrend.length > 0 && (
           <div>
-            <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+            <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
               {'월별 추세'}
-            </h4>
+            </h3>
             <div className="flex items-end gap-2 h-12">
               {analytics.monthlyTrend.map((item, i) => (
                 <div key={item.month} className="flex-1 flex flex-col items-center gap-1 self-stretch justify-end">
@@ -134,9 +134,9 @@ export function AnalyticsWidget() {
         {/* Top tags */}
         {analytics.topTags.length > 0 && (
           <div>
-            <h4 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+            <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
               {'상위 태그'}
-            </h4>
+            </h3>
             <div className="flex flex-wrap gap-1.5">
               {analytics.topTags.map(({ tag, count }) => (
                 <span
