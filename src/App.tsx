@@ -9,7 +9,7 @@ import { IcLineWifi, IcLineWrite } from './mw/icons'
 import { UndoToast } from './components/ui/UndoToast'
 import { ToastContainer } from './components/ui/Toast'
 import { UpdateBanner } from './components/ui/UpdateBanner'
-import { AppLoadingScreen } from './components/ui/AppLoadingScreen'
+import { RouteLoading } from './components/layout/PageLoading'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { LockScreen } from './components/ui/LockScreen'
 import { useAppLockStore } from './hooks/useAppLock'
@@ -402,10 +402,6 @@ export default function App() {
     document.title = `${names[location.pathname.split('/')[1] || 'dashboard'] ?? 'Memo'} · Memo`
   }, [location.pathname])
 
-  if (!isInitialized) {
-    return <AppLoadingScreen />
-  }
-
   // 섹션 단위 페이지 키: /memo/1 → /memo/2 (분할 뷰 내부 이동)에서는 리마운트하지 않고,
   // dashboard ↔ memos ↔ calendar 섹션 전환에서만 페이지 전환이 일어난다.
   const section = location.pathname.split('/')[1] || 'dashboard'
@@ -436,13 +432,14 @@ export default function App() {
           )}
 
           {/* 손가락으로 쓰는 기기에서 내용을 당기면 기기와 클라우드의 메모를 다시 읽어요 */}
-          <PullRefresh scroller={content} onRefresh={refresh} />
+          {isInitialized && <PullRefresh scroller={content} onRefresh={refresh} />}
           <main ref={content} id="main-content" className="mw-app-content">
             {/* TECH-02: ErrorBoundary wraps route content */}
             <ErrorBoundary>
               {/* 편집기와 넓은 화면의 메모 목록은 내용 영역의 높이를 채우고 저마다 스크롤해요 */}
               <div key={pageKey} className={[fillsContent && 'memo-fill', !supportsViewTransitions && 'page-enter'].filter(Boolean).join(' ') || undefined}>
-                <Outlet />
+                {/* 기기의 메모를 읽는 동안에도 뼈대와 화면의 제목은 바로 그려요. 내용의 자리만 먼저 보여 줘요 */}
+                {isInitialized ? <Outlet /> : <RouteLoading />}
               </div>
             </ErrorBoundary>
           </main>
@@ -460,32 +457,37 @@ export default function App() {
         </div>
       </div>
 
-      {/* Global Modals — lazy loaded, rendered only when open */}
-      <Suspense fallback={null}>
-        {isSettingsOpen && <SettingsModal />}
-        {isTermsOpen && <TermsModal />}
-        {isFAQOpen && <FAQModal />}
-        {isFolderSelectOpen && <FolderSelectModal />}
-        {isTemplateOpen && <TemplateSelectModal />}
-        {isVoiceOpen && <VoiceUploadModal />}
-        {isImageOCROpen && <ImageOCRModal />}
-        {isCommandPaletteOpen && <CommandPalette />}
-        {isShortcutsOpen && <KeyboardShortcutsModal />}
-        {slideViewMemoId != null && <SlideView />}
-      </Suspense>
+      {/* 기기의 메모를 읽은 뒤에 그리는 것들 (읽기 전에는 뼈대와 화면의 제목 · 내용의 자리만 있어요) */}
+      {isInitialized && (
+        <>
+          {/* Global Modals — lazy loaded, rendered only when open */}
+          <Suspense fallback={null}>
+            {isSettingsOpen && <SettingsModal />}
+            {isTermsOpen && <TermsModal />}
+            {isFAQOpen && <FAQModal />}
+            {isFolderSelectOpen && <FolderSelectModal />}
+            {isTemplateOpen && <TemplateSelectModal />}
+            {isVoiceOpen && <VoiceUploadModal />}
+            {isImageOCROpen && <ImageOCRModal />}
+            {isCommandPaletteOpen && <CommandPalette />}
+            {isShortcutsOpen && <KeyboardShortcutsModal />}
+            {slideViewMemoId != null && <SlideView />}
+          </Suspense>
 
-      <UndoToast />
-      <ToastContainer />
-      <LockScreen />
-      <UpdateBanner />
-      <Suspense fallback={null}>
-        <IOSInstallBanner />
-        <TimeCapsuleBanner />
-      </Suspense>
-      {suggestedMemo && !isFocusMode && !isMemoRoute && (
-        <ContextSuggestionBanner memo={suggestedMemo} onDismiss={dismissContextSuggestion} />
+          <UndoToast />
+          <ToastContainer />
+          <LockScreen />
+          <UpdateBanner />
+          <Suspense fallback={null}>
+            <IOSInstallBanner />
+            <TimeCapsuleBanner />
+          </Suspense>
+          {suggestedMemo && !isFocusMode && !isMemoRoute && (
+            <ContextSuggestionBanner memo={suggestedMemo} onDismiss={dismissContextSuggestion} />
+          )}
+          {!isMemoRoute && <Suspense fallback={null}><FloatingTimer /></Suspense>}
+        </>
       )}
-      {!isMemoRoute && <Suspense fallback={null}><FloatingTimer /></Suspense>}
     </>
   )
 }

@@ -1,33 +1,9 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { MemoList } from './MemoList'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
-
-const LIST_MIN_W = 280
-const LIST_MAX_W = 600
-const LIST_DEFAULT_W = 360
-const STORAGE_KEY = 'memo-split-width'
-
-function usePanelWidth() {
-  const [width, setWidth] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const n = Number(saved)
-        if (n >= LIST_MIN_W && n <= LIST_MAX_W) return n
-      }
-    } catch { /* noop */ }
-    return LIST_DEFAULT_W
-  })
-
-  const persist = useCallback((w: number) => {
-    setWidth(w)
-    try { localStorage.setItem(STORAGE_KEY, String(w)) } catch { /* noop */ }
-  }, [])
-
-  return [width, persist] as const
-}
+import { LIST_MAX_W, LIST_MIN_W, usePanelWidth } from './panelWidth'
 
 function ResizeHandle({ onResize }: { onResize: (deltaX: number) => void }) {
   const isDragging = useRef(false)

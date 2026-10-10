@@ -15,6 +15,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { useMemoFilters } from '@/hooks/useMemoFilters'
 import { CreateActions, PageHead } from '@/components/layout/PageHead'
+import { MEMOS_TITLE } from '@/components/layout/pages'
 import { Button } from '@/mw/Button'
 import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { useUIStore } from '@/stores/uiStore'
@@ -175,9 +176,9 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
 
   // 지금 보고 있는 목록의 이름이 이 화면의 제목이에요
   const pageTitle = isTrashView ? '휴지통'
-    : activeFolderId != null ? (folders.find((f) => f.id === activeFolderId)?.name ?? '메모')
+    : activeFolderId != null ? (folders.find((f) => f.id === activeFolderId)?.name ?? MEMOS_TITLE)
     : activeTag ? `#${activeTag}`
-    : activeFilter === 'starred' ? '중요' : '메모'
+    : activeFilter === 'starred' ? '중요' : MEMOS_TITLE
 
   const emptyTrashButton = isTrashView && filteredMemos.length > 0 && (
     <button type="button"

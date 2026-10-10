@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CreateActions, PageHead } from '@/components/layout/PageHead'
+import { timeGreeting, todayLine } from '@/components/layout/pages'
 import clsx from 'clsx'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -62,13 +63,6 @@ function GridItem({ children }: { children: ReactNode }) {
   return <div className="mb-4 break-inside-avoid empty:hidden">{children}</div>
 }
 
-function getTimeGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return '좋은 아침이에요'
-  if (hour < 18) return '좋은 오후예요'
-  return '좋은 저녁이에요'
-}
-
 export function DashboardPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
@@ -77,16 +71,12 @@ export function DashboardPage() {
 
   // 이름을 모르면 인사만 해요 ('사용자'는 설정의 자리 표시 값이에요)
   const displayName = user?.displayName || (profileName && profileName !== '사용자' ? profileName : '')
-  const todayStr = new Date().toLocaleDateString('ko-KR', {
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long',
-  })
+  const todayStr = todayLine()
 
   return (
     <div className="mw-page @container">
       {/* 페이지 머리: 인사와 오늘 날짜, 오른쪽에 주 행동 */}
-      <PageHead title={displayName ? `${getTimeGreeting()}, ${displayName}님` : getTimeGreeting()} description={todayStr} actions={<CreateActions />} />
+      <PageHead title={displayName ? `${timeGreeting()}, ${displayName}님` : timeGreeting()} description={todayStr} actions={<CreateActions />} />
 
       {isEmpty ? (
         /* 첫 실행 상태 — 첫 메모 작성 CTA 히어로 */

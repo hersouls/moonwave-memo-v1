@@ -21,6 +21,7 @@ import { useMinWidth, useSettled } from '@/hooks/useMinWidth'
 import { TagEditModal } from './TagEditModal'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { Spinner } from '@/components/ui/Spinner'
+import { editorTitle } from '@/components/layout/pages'
 import { extractTags, mergeTagsOnBodyChange, normalizeAITags } from '@/lib/tagParser'
 import { useAITagSuggestions } from '@/hooks/useAIFeatures'
 import { useAIAutocomplete } from '@/hooks/useAIAutocomplete'
@@ -1019,7 +1020,7 @@ export function MemoEditor() {
       ref={rootRef}
       className="flex flex-col h-full min-h-0"
     >
-      <h1 className="mw-sr-only">{memoId ? '메모 고치기' : '새 메모 쓰기'}</h1>
+      <h1 className="mw-sr-only">{editorTitle(!memoId)}</h1>
       {!isFocusMode && !isKeyboardOpen && (
         <EditorHeader
           isStarred={isStarred}

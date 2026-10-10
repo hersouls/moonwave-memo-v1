@@ -242,6 +242,9 @@
   --memo-row-min: 340px; /* 목록 보기의 가로로 긴 카드 한 장의 가장 좁은 너비 */
   --memo-inspector-w: 320px; /* 넓은 화면에서 편집기 옆에 놓이는 정보 칸 */
   --memo-calendar-w: 400px; /* 넓은 화면에서 달력이 차지하는 너비 (나머지는 그날의 메모가 써요) */
+  /* 화면을 불러오는 동안 내용의 자리(Skeleton)의 높이: 메모 카드 한 장, 달력 한 장 */
+  --memo-loading-card-h: 128px;
+  --memo-loading-calendar-h: 400px;
 }
 
 /* Base styles */
@@ -514,6 +517,18 @@ body {
   .memo-calendar__month { display: grid; }
   .memo-calendar__list { flex: 1; min-width: 0; }
 }
+
+/* ========================================
+   불러오는 동안: 내용이 들어올 자리 (PageLoading)
+   ======================================== */
+
+/* 키트의 Skeleton은 기본 크기(200px)만 정해 둬요. 들어올 내용의 너비 · 높이 · 모서리에 맞춰요
+   (키트의 종류 클래스와 무게가 같아서 .mw-skeleton을 함께 써요) */
+.mw-skeleton.memo-loading__card { display: block; width: 100%; height: var(--memo-loading-card-h); border-radius: var(--radius-16); }
+.mw-skeleton.memo-loading__calendar { display: block; width: 100%; height: var(--memo-loading-calendar-h); border-radius: var(--radius-16); }
+.mw-skeleton.memo-loading__line { display: block; width: 100%; margin-top: var(--space-12); }
+.mw-skeleton.memo-loading__line--title { width: 50%; height: var(--space-32); margin: 0 0 var(--space-24); }
+.mw-skeleton.memo-loading__line--short { width: 66%; }
 
 /* ========================================
    편집기: 정보 칸 (넓은 화면)
