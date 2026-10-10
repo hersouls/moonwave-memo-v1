@@ -260,13 +260,10 @@ function StepFileSelect({
           {/* Controls */}
           <div className="flex items-center gap-4">
             {recorder.status === 'idle' || recorder.status === 'requesting-permission' ? (
-              <button
+              <button type="button"
                 onClick={recorder.start}
                 disabled={recorder.status === 'requesting-permission'}
-                className={clsx(
-                  'w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-[var(--shadow-2)] transition-[transform,background-color] hover:scale-105 active:scale-95',
-                  recorder.status === 'requesting-permission' && 'animate-pulse opacity-70 hover:scale-100'
-                )}
+                className="mw-fab mw-fab--fab"
                 aria-label="녹음 시작"
               >
                 <IcLineMic size={32} />
@@ -274,9 +271,9 @@ function StepFileSelect({
             ) : (
               <>
                 {/* Pause/Resume */}
-                <button
+                <button type="button"
                   onClick={recorder.status === 'paused' ? recorder.resume : recorder.pause}
-                  className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 flex items-center justify-center transition-transform hover:scale-105"
+                  className="mw-fab mw-fab--inverse"
                   aria-label={recorder.status === 'paused' ? '재개' : '일시정지'}
                 >
                   {recorder.status === 'paused' ? (
@@ -385,14 +382,9 @@ function StepResult({
       <div className="flex items-center justify-between px-1">
         <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{text.length}자</span>
         {hasSegments && (
-          <button
+          <button type="button" aria-pressed={includeTimestamps}
             onClick={onTimestampToggle}
-            className={clsx(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-              includeTimestamps
-                ? 'bg-primary-50 text-primary-600 '
-                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
-            )}
+            className={`mw-select-chip mw-select-chip--${includeTimestamps ? 'on' : 'off'}`}
           >
             타임스탬프 {includeTimestamps ? 'ON' : 'OFF'}
           </button>

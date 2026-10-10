@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import clsx from 'clsx'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
 import { useFolderStore } from '@/stores/folderStore'
 import { useMemoStore } from '@/stores/memoStore'
@@ -34,16 +33,11 @@ export function FolderSelectModal() {
           {folders.map((folder) => {
             const isCurrent = currentMemo?.folderId === folder.id
             return (
-              <button
+              <button type="button"
                 key={folder.id}
                 onClick={() => handleSelect(folder.id!)}
                 aria-current={isCurrent ? 'true' : undefined}
-                className={clsx(
-                  'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors',
-                  'hover:bg-zinc-50 dark:hover:bg-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-700',
-                  'focus:outline-none focus-visible:bg-zinc-50 dark:focus-visible:bg-zinc-800',
-                  isCurrent && 'bg-primary-50/50 '
-                )}
+                className="mw-sheet__item w-full"
               >
                 <span
                   className="w-3 h-3 rounded-full flex-shrink-0"
@@ -58,14 +52,9 @@ export function FolderSelectModal() {
             )
           })}
 
-          <button
+          <button type="button"
             onClick={() => setIsCreateOpen(true)}
-            className={clsx(
-              'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors',
-              'text-zinc-500 dark:text-zinc-400',
-              'hover:bg-zinc-50 dark:hover:bg-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-700',
-              'focus:outline-none focus-visible:bg-zinc-50 dark:focus-visible:bg-zinc-800'
-            )}
+            className="mw-sheet__item w-full"
           >
             <IcLineAdd size={16} className="flex-shrink-0" />
             <span>새 폴더</span>

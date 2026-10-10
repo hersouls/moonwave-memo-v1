@@ -219,10 +219,10 @@ export function CommandPalette() {
                   >
                     <span>뒤로</span>
                   </button>
-                  <button
+                  <button type="button"
                     onClick={handleSmartSubmit}
                     disabled={!smartText.trim() || isClassifying}
-                    className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-[var(--color-on-accent)] hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="mw-button mw-button--primary mw-button--medium"
                   >
                     {isClassifying ? (
                       <>

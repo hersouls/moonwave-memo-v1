@@ -82,14 +82,10 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
 
       <nav className="flex-1 overflow-y-auto py-2 px-1" aria-label="문서 목차">
         {headings.map((heading, index) => (
-          <button
+          <button type="button"
             key={heading.line}
             onClick={() => onScrollToHeadingIndex ? onScrollToHeadingIndex(index) : onScrollToLine(heading.line)}
-            className={clsx(
-              'w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-colors',
-              'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60 hover:text-zinc-900 dark:hover:text-zinc-200',
-              'truncate block'
-            )}
+            className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default w-full justify-start truncate"
             style={{ paddingLeft: `${(heading.level - minLevel) * 12 + 10}px` }}
             title={heading.text}
           >

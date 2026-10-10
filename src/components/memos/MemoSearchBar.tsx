@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import clsx from 'clsx'
 import { useUIStore } from '@/stores/uiStore'
 import { parseNaturalQuery } from '@/services/aiSearch'
 import { SearchFilters } from './SearchFilters'
@@ -168,26 +167,16 @@ export function MemoSearchBar() {
             placeholder="메모 검색"
             className="flex-1 bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
-          <button
+          <button type="button" aria-pressed={showFilters}
             onClick={() => setShowFilters(!showFilters)}
-            className={clsx(
-              '-my-2 flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full transition-colors',
-              showFilters
-                ? 'bg-primary-100 text-primary-600 '
-                : 'text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-            )}
+            className={showFilters ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'}
             aria-label="필터"
           >
             <IcMwSliders size={16} />
           </button>
-          <button
+          <button type="button" aria-pressed={aiMode}
             onClick={() => setAiMode(!aiMode)}
-            className={clsx(
-              '-my-2 flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full transition-colors',
-              aiMode
-                ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                : 'text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-            )}
+            className={aiMode ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'}
             aria-label="\uC2A4\uB9C8\uD2B8 \uAC80\uC0C9"
             title="\uC790\uC5F0\uC5B4 \uAC80\uC0C9"
           >

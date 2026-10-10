@@ -105,14 +105,10 @@ export function SmartFolderCreateModal({ isOpen, onClose }: SmartFolderCreateMod
           {PRESET_SMART_FOLDERS.map((folder) => {
             const isSelected = selectedIds.has(folder.id)
             return (
-              <button
+              <button type="button" aria-pressed={isSelected}
                 key={folder.id}
                 onClick={() => handleToggle(folder.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                  isSelected
-                    ? 'border-primary-300 bg-primary-50 '
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                }`}
+                className="mw-sheet__item w-full"
               >
                 <div className="shrink-0">
                   {ICON_MAP[folder.icon] || <IcMwSparkles size={20} className="text-zinc-400" />}

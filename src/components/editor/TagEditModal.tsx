@@ -144,10 +144,10 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
 
         {/* AI 제안 */}
         <div>
-          <button
+          <button type="button"
             onClick={handleSuggest}
             disabled={isSuggesting || body.trim().length < 20}
-            className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 disabled:opacity-40 transition-colors"
+            className="mw-button mw-button--tertiary-subtle mw-button--medium"
           >
             {isSuggesting ? <Spinner size="sm" label="" className="h-3.5 w-3.5" /> : <IcMwSparkles size={16} />}
             AI 태그 제안

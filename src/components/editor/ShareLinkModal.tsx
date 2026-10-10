@@ -45,9 +45,9 @@ export function ShareLinkModal({ isOpen, onClose, title, body, tags }: ShareLink
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {'\uBBF8\uB9AC\uBCF4\uAE30'}
           </span>
-          <button
+          <button type="button"
             onClick={() => setShowPreview(!showPreview)}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+            className="mw-button mw-button--tertiary-subtle mw-button--medium"
           >
             {showPreview ? (
               <>

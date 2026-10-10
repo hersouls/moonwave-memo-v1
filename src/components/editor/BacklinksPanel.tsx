@@ -25,9 +25,9 @@ export function BacklinksPanel({ memoId, title }: BacklinksPanelProps) {
 
   return (
     <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
-      <button
+      <button type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+        className="mw-button mw-button--tertiary-subtle mw-button--large w-full justify-start"
       >
         <IcMwLink size={16} className="text-primary-500" />
         <span className="flex-1 text-left">

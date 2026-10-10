@@ -123,14 +123,10 @@ export function TemplateEditModal({ isOpen, onClose, template }: TemplateEditMod
               </label>
               <div className="grid grid-cols-6 gap-2 mb-4">
                 {AVAILABLE_ICONS.map(({ name: iconName, component: IconComp }) => (
-                  <button
+                  <button type="button" aria-pressed={icon === iconName}
                     key={iconName}
                     onClick={() => setIcon(iconName)}
-                    className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all ${
-                      icon === iconName
-                        ? 'bg-primary-100 text-primary-600 ring-2 ring-primary-500'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700'
-                    }`}
+                    className={icon === iconName ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'}
                     title={iconName}
                   >
                     <IconComp className="w-5 h-5" />

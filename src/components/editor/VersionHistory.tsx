@@ -109,10 +109,10 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
             ) : (
               <div className="py-3 px-3">
                 {versions.map((v, idx) => (
-                  <button
+                  <button type="button"
                     key={v.id}
                     onClick={() => setSelectedIdx(idx)}
-                    className="w-full flex items-start gap-2.5 text-left group"
+                    className="mw-sheet__item w-full"
                   >
                     {/* Timeline dot + line */}
                     <div className="flex flex-col items-center shrink-0 pt-1">

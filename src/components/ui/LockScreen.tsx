@@ -18,10 +18,10 @@ export function LockScreen() {
       <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
         생체 인증으로 잠금 해제하세요
       </p>
-      <button
+      <button type="button"
         onClick={unlock}
         disabled={isAuthenticating}
-        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-accent)] text-[var(--color-on-accent)] font-medium text-sm hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-pressed)] disabled:opacity-50 transition-colors"
+        className="mw-button mw-button--primary mw-button--large"
       >
         {isAuthenticating ? (
           <Spinner size="md" label="인증 중" />

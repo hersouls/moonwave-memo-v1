@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Dialog, DialogHeader, DialogBody } from '@/components/ui/Dialog'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FOLDER_COLORS, FONT_SIZES } from '@/utils/constants'
+import { ColorSwatchPicker } from '@/components/folders/ColorSwatchPicker'
 import {
   createBackup,
   downloadBackup,
@@ -832,28 +833,18 @@ export function SettingsModal() {
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowFolderDropdown(false)} />
               <div className="absolute z-[var(--z-dropdown)] left-0 right-0 mt-1 py-1 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] shadow-[var(--shadow-2)] max-h-48 overflow-y-auto">
-                <button
+                <button type="button"
                   onClick={() => { setDefaultFolder(null); setShowFolderDropdown(false) }}
-                  className={clsx(
-                    'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left',
-                    !settings.memoSettings.defaultFolderId
-                      ? 'text-primary-600 font-medium bg-primary-50 '
-                      : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'
-                  )}
+                  className="mw-sheet__item w-full"
                 >
                   <span>전체 메모</span>
                   {!settings.memoSettings.defaultFolderId && <IcLineCheck size={16} className="ml-auto" />}
                 </button>
                 {folders.map((folder) => (
-                  <button
+                  <button type="button"
                     key={folder.id}
                     onClick={() => { setDefaultFolder(folder.id!); setShowFolderDropdown(false) }}
-                    className={clsx(
-                      'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left',
-                      settings.memoSettings.defaultFolderId === folder.id
-                        ? 'text-primary-600 font-medium bg-primary-50 '
-                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700'
-                    )}
+                    className="mw-sheet__item w-full"
                   >
                     <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: folder.color }} />
                     <span>{folder.name}</span>
@@ -952,19 +943,7 @@ export function SettingsModal() {
                 }}
               />
               <div className="flex items-center gap-1.5">
-                {FOLDER_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setNewFolderColor(c)}
-                    aria-label={`폴더 색상 ${c}`}
-                    aria-pressed={newFolderColor === c}
-                    className={clsx(
-                      'w-6 h-6 rounded-full transition-[transform,box-shadow]',
-                      newFolderColor === c ? 'ring-2 ring-offset-1 ring-primary-500 scale-110' : ''
-                    )}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
+                <ColorSwatchPicker value={newFolderColor} onChange={setNewFolderColor} />
               </div>
               <div className="flex gap-2 justify-end">
                 <button type="button"
@@ -1022,19 +1001,7 @@ export function SettingsModal() {
                       }}
                     />
                     <div className="flex items-center gap-1.5">
-                      {FOLDER_COLORS.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setEditFolderColor(c)}
-                          aria-label={`폴더 색상 ${c}`}
-                          aria-pressed={editFolderColor === c}
-                          className={clsx(
-                            'w-5 h-5 rounded-full transition-[transform,box-shadow]',
-                            editFolderColor === c ? 'ring-2 ring-offset-1 ring-primary-500 scale-110' : ''
-                          )}
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
+                      <ColorSwatchPicker value={editFolderColor} onChange={setEditFolderColor} />
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -1307,7 +1274,7 @@ export function SettingsModal() {
                   <input type={showOpenAIKey ? 'text' : 'password'} value={localOpenAIKey} onChange={(e) => setLocalOpenAIKey(e.target.value)} placeholder="sk-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
                   <button type="button" onClick={() => setShowOpenAIKey(!showOpenAIKey)} aria-label={showOpenAIKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showOpenAIKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'openai' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
+                <button type="button" onClick={() => handleTestConnection('openai')} disabled={!localOpenAIKey.trim() || testingProvider === 'openai'} className="mw-button mw-button--tertiary-subtle mw-button--medium">{testingProvider === 'openai' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
               {openAIKeySaved && localOpenAIKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
@@ -1327,7 +1294,7 @@ export function SettingsModal() {
                   <input type={showAnthropicKey ? 'text' : 'password'} value={localAnthropicKey} onChange={(e) => setLocalAnthropicKey(e.target.value)} placeholder="sk-ant-..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
                   <button type="button" onClick={() => setShowAnthropicKey(!showAnthropicKey)} aria-label={showAnthropicKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showAnthropicKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'anthropic' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
+                <button type="button" onClick={() => handleTestConnection('anthropic')} disabled={!localAnthropicKey.trim() || testingProvider === 'anthropic'} className="mw-button mw-button--tertiary-subtle mw-button--medium">{testingProvider === 'anthropic' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
               {anthropicKeySaved && localAnthropicKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>
@@ -1347,7 +1314,7 @@ export function SettingsModal() {
                   <input type={showGeminiKey ? 'text' : 'password'} value={localGeminiKey} onChange={(e) => setLocalGeminiKey(e.target.value)} placeholder="AIza..." autoComplete="off" className="w-full px-3 py-2 rounded-lg border border-[var(--color-border-default)] bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary-500 pr-10" />
                   <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} aria-label={showGeminiKey ? 'API 키 숨기기' : 'API 키 표시'} className="mw-icon-button absolute right-1 top-1/2 -translate-y-1/2">{showGeminiKey ? <IcLineEyeHidden size={16} /> : <IcLineEye size={16} />}</button>
                 </div>
-                <button onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="px-3 py-2 rounded-lg border border-[var(--color-border-default)] text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 shrink-0 transition-colors">{testingProvider === 'gemini' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
+                <button type="button" onClick={() => handleTestConnection('gemini')} disabled={!localGeminiKey.trim() || testingProvider === 'gemini'} className="mw-button mw-button--tertiary-subtle mw-button--medium">{testingProvider === 'gemini' ? <IcLineLoading size={16} className="animate-spin" /> : '테스트'}</button>
               </div>
               {geminiKeySaved && localGeminiKey.trim() && <p className="mt-1 text-xs text-success-600 flex items-center gap-1"><IcLineCheck size={12} /> 저장됨</p>}
             </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Fuse from 'fuse.js'
 import { useMemoStore } from '@/stores/memoStore'
 import type { Memo } from '@/lib/types'
@@ -18,7 +18,6 @@ interface ScoredMemo {
 
 export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps) {
   const memos = useMemoStore((s) => s.memos)
-  const navigate = useNavigate()
   const [isExpanded, setIsExpanded] = useState(true)
 
   const relatedMemos = useMemo(() => {
@@ -72,9 +71,9 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
 
   return (
     <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700/50 overflow-hidden">
-      <button
+      <button type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors"
+        className="mw-button mw-button--tertiary-subtle mw-button--large w-full justify-start"
       >
         <IcMwLink size={16} className="text-primary-500 shrink-0" />
         <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex-1">
@@ -94,8 +93,8 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
         <ul className="px-4 pb-3 space-y-1">
           {relatedMemos.map((memo) => (
             <li key={memo.id}>
-              <button
-                onClick={() => navigate(`/memo/${memo.id}`)}
+              <Link
+                to={`/memo/${memo.id}`}
                 className="w-full text-left py-1.5 px-2 -mx-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors group"
               >
                 <p className="text-sm text-zinc-700 dark:text-zinc-300 truncate group-hover:text-primary-600 transition-colors">
@@ -106,7 +105,7 @@ export function RelatedMemosPanel({ memoId, tags, body }: RelatedMemosPanelProps
                     {memo.tags.slice(0, 3).map((t) => `#${t}`).join(' ')}
                   </p>
                 )}
-              </button>
+              </Link>
             </li>
           ))}
         </ul>

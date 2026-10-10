@@ -313,22 +313,17 @@ export function KnowledgeGraphModal({
               )}
             </div>
 
-            <button
+            <button aria-pressed={is3D}
               type="button"
               onClick={() => setIs3D((v) => !v)}
               title={is3D ? '2D 뷰로 전환' : '3D 뷰로 전환 (최초 1회 로딩)'}
-              className={clsx(
-                'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
-                is3D
-                  ? 'border-primary-300 bg-primary-50 text-primary-600 '
-                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
-              )}
+              className={`mw-select-chip mw-select-chip--${is3D ? 'on' : 'off'}`}
             >
               <IcMwRotate size={16} />
               <span className="hidden md:inline">{is3D ? '2D' : '3D'}</span>
             </button>
 
-            <button
+            <button aria-pressed={aiOn}
               type="button"
               onClick={() => setAiOn((v) => !v)}
               title={
@@ -336,12 +331,7 @@ export function KnowledgeGraphModal({
                   ? `AI 의미 연결 ${aiOn ? '끄기' : '켜기'}${sem.skipped > 0 ? ` — ${sem.skipped}개 미계산(키 필요)` : ''}`
                   : 'AI 의미 연결 — OpenAI 키 또는 로그인 필요 (기존 캐시는 오프라인 동작)'
               }
-              className={clsx(
-                'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
-                aiOn
-                  ? 'border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300'
-                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
-              )}
+              className={`mw-select-chip mw-select-chip--${aiOn ? 'on' : 'off'}`}
             >
               <IcMwSparkles size={16} className={clsx(' ', sem.computing && 'animate-pulse')} />
               <span className="hidden md:inline">
@@ -350,16 +340,11 @@ export function KnowledgeGraphModal({
             </button>
 
             {orphanCount > 0 && (
-              <button
+              <button aria-pressed={hideOrphans}
                 type="button"
                 onClick={() => setHideOrphans((v) => !v)}
                 title={hideOrphans ? '모든 메모 보기' : '연결 없는 메모 숨기기'}
-                className={clsx(
-                  'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
-                  hideOrphans
-                    ? 'border-primary-300 bg-primary-50 text-primary-600 '
-                    : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
-                )}
+                className={`mw-select-chip mw-select-chip--${hideOrphans ? 'on' : 'off'}`}
               >
                 {hideOrphans ? <IcLineEye size={16} /> : <IcLineEyeHidden size={16} />}
                 <span className="hidden md:inline">{hideOrphans ? '전체' : `고아 ${orphanCount}`}</span>
@@ -521,16 +506,11 @@ export function KnowledgeGraphModal({
               {legendGroups.map((g) => {
                 const on = highlightGroup === g
                 return (
-                  <button
+                  <button aria-pressed={on}
                     key={g}
                     type="button"
                     onClick={() => setHighlightGroup(on ? null : g)}
-                    className={clsx(
-                      'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium transition-colors',
-                      on
-                        ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10'
-                    )}
+                    className={`mw-select-chip mw-select-chip--${on ? 'on' : 'off'}`}
                   >
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colorMap.get(g) || 'var(--mw-cat-other)' }} />
                     {folderName(g)}

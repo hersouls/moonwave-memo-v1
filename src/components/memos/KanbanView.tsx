@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import clsx from 'clsx'
 import type { Memo } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
 import { formatMemoDate } from '@/utils/format'
@@ -126,14 +125,9 @@ function KanbanCard({ memo, onClick }: { memo: Memo; onClick: () => void }) {
     .slice(0, 120)
 
   return (
-    <button
+    <button type="button"
       onClick={onClick}
-      className={clsx(
-        // Same card species as MemoCard: hairline border + scoped transitions
-        'w-full text-left p-3 rounded-xl bg-white dark:bg-zinc-800 border border-[var(--card-hairline)]',
-        'shadow-sm hover:shadow-md transition-[transform,box-shadow,border-color,background-color] duration-200',
-        'hover:-translate-y-0.5 hover:border-zinc-950/[0.12] dark:hover:border-white/[0.16] active:scale-[0.98]'
-      )}
+      className="mw-surface mw-surface--link w-full text-left"
     >
       <p className="text-sm font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100 truncate mb-1">
         {memo.title || '\uC81C\uBAA9 \uC5C6\uC74C'}
