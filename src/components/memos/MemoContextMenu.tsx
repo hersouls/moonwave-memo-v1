@@ -51,7 +51,7 @@ export function MemoContextMenu() {
     return (
       <>
         <div className="fixed inset-0 z-20" onClick={closeContextMenu} />
-        <div className="ctx-menu absolute right-2 top-12 z-30 min-w-[200px] origin-top-right animate-in fade-in zoom-in-95 duration-200">
+        <div className="ctx-menu absolute right-0 top-full z-30 mt-1 min-w-[200px] origin-top-right animate-in fade-in zoom-in-95 duration-200">
           <div className="flex flex-col" role="menu" aria-label={MENU_LABEL}>
             <button type="button" role="menuitem" onClick={handleSelectMode} className="ctx-menu__item">
               <IcMwCheckCircle className="ctx-menu__item-icon" />

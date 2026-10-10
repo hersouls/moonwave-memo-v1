@@ -20,12 +20,15 @@ import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
-import { IcLineMore, IcLinePin, IcLineTrash } from '@/mw/icons'
+import { IcLineMore, IcLinePin, IcLineTrash, IcMwGrid, IcMwList, IcMwSort } from '@/mw/icons'
+import type { SortBy } from '@/lib/types'
 
 // PERF-01: initial visible count
 const INITIAL_VISIBLE = 30
-// 목록 보기: 한 줄에 카드 하나. 내용 영역이 넓으면 읽기 좋은 너비에서 멈춰요.
-const LIST_CLASS = 'flex flex-col gap-2.5 @lg:max-w-3xl @lg:mx-auto'
+const SORT_LABELS: Record<SortBy, string> = { updatedAt: '고친 날짜순', createdAt: '만든 날짜순', title: '제목순' }
+const SORT_ORDER: SortBy[] = ['updatedAt', 'createdAt', 'title']
+// 목록 보기: 가로로 긴 카드. 놓인 자리가 넓으면 두 칸, 세 칸으로 늘어요 (.memo-list, index.css)
+const LIST_CLASS = 'memo-list'
 const LOAD_MORE_COUNT = 30
 
 // Infinite scroll sentinel using IntersectionObserver
@@ -63,9 +66,13 @@ function SkeletonMemoCard() {
   )
 }
 
-export function MemoList() {
+/** `pane`: 넓은 화면에서 편집기 옆의 좁은 칸에 놓였을 때예요. 머리와 도구 줄을 줄여요. */
+export function MemoList({ pane = false }: { pane?: boolean } = {}) {
   const filteredMemos = useMemoFilters()
   const viewMode = useUIStore((s) => s.viewMode)
+  const setViewMode = useUIStore((s) => s.setViewMode)
+  const sortBy = useUIStore((s) => s.sortBy)
+  const setSortBy = useUIStore((s) => s.setSortBy)
   const { gridClass, handleTouchStart, handleTouchMove } = usePinchZoom()
   const isSelectionMode = useUIStore((s) => s.isSelectionMode)
   const isDesktop = useUIStore((s) => s.isDesktop)
@@ -172,6 +179,17 @@ export function MemoList() {
     : activeTag ? `#${activeTag}`
     : activeFilter === 'starred' ? '중요' : '메모'
 
+  const emptyTrashButton = isTrashView && filteredMemos.length > 0 && (
+    <button type="button"
+      onClick={() => setIsEmptyTrashOpen(true)}
+      className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left shrink-0"
+      aria-label="휴지통 비우기"
+    >
+      <IcLineTrash size={16} />
+      비우기
+    </button>
+  )
+
   const handleEmptyTrash = async () => {
     await emptyTrash()
     setIsEmptyTrashOpen(false)
@@ -184,7 +202,7 @@ export function MemoList() {
         actions={
           <>
             <Button variant="tertiary-subtle" size="medium" onClick={() => setShowQuickMemo(true)}>빠른 메모</Button>
-            <CreateActions compact />
+            <CreateActions compact={pane} />
           </>
         }
       />
@@ -192,21 +210,12 @@ export function MemoList() {
       {showQuickMemo && (
         <QuickMemoInput onClose={() => setShowQuickMemo(false)} />
       )}
-      {/* Filter tabs + context menu button */}
-      <div className="flex items-center gap-2">
+      {/* 좁은 화면: 거르는 탭과 더보기 (넓은 화면에서는 사이드바가 폴더를, 아래 도구 줄이 더보기를 맡아요) */}
+      <div className="flex items-center gap-2 lg:hidden">
         <div className="flex-1 min-w-0">
           <MemoFilterTabs />
         </div>
-        {isTrashView && filteredMemos.length > 0 && (
-          <button type="button"
-            onClick={() => setIsEmptyTrashOpen(true)}
-            className="mw-button mw-button--tertiary-subtle mw-button--medium mw-button--icon-left shrink-0"
-            aria-label="휴지통 비우기"
-          >
-            <IcLineTrash size={16} />
-            비우기
-          </button>
-        )}
+        {emptyTrashButton}
         <button
           onClick={openContextMenu}
           className="mw-icon-button shrink-0"
@@ -216,9 +225,43 @@ export function MemoList() {
         </button>
       </div>
 
-      {/* Search bar */}
-      <div className="mt-2">
-        <MemoSearchBar />
+      {/* 찾기. 넓은 화면에서는 같은 줄 오른쪽에 보기 방식 · 정렬 · 더보기가 놓여요 */}
+      <div className="mt-2 flex items-start gap-2 lg:mt-0">
+        <div className="min-w-0 flex-1 lg:max-w-md">
+          <MemoSearchBar />
+        </div>
+        <div className="relative ml-auto hidden shrink-0 items-center gap-1 lg:flex">
+          {emptyTrashButton}
+          {!pane && (
+            <>
+              <div role="group" aria-label="보기 방식" className="flex items-center">
+                <button type="button" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'} aria-label="목록으로 보기" title="목록으로 보기">
+                  <IcMwList size={20} />
+                </button>
+                <button type="button" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'} aria-label="격자로 보기" title="격자로 보기">
+                  <IcMwGrid size={20} />
+                </button>
+              </div>
+              <button type="button"
+                onClick={() => setSortBy(SORT_ORDER[(SORT_ORDER.indexOf(sortBy) + 1) % SORT_ORDER.length])}
+                className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left"
+                aria-label={`정렬: ${SORT_LABELS[sortBy]}. 누르면 바뀌어요`}
+              >
+                <IcMwSort size={16} />
+                {SORT_LABELS[sortBy]}
+              </button>
+            </>
+          )}
+          <button
+            onClick={openContextMenu}
+            className="mw-icon-button"
+            aria-label="더보기 메뉴"
+          >
+            <IcLineMore size={20} className="text-zinc-500 dark:text-zinc-400" />
+          </button>
+          {/* 넓은 화면에서는 이 버튼 아래에 뜨는 메뉴, 좁은 화면에서는 시트예요 */}
+          <MemoContextMenu />
+        </div>
       </div>
 
       {/* A11Y: Search results count for screen readers */}
@@ -257,7 +300,7 @@ export function MemoList() {
             data-memo-item
             className={clsx(
               'animate-in slide-in-from-bottom',
-              viewMode === 'grid' && 'h-full',
+              'h-full',
               showSwipeHint && index === 0 && 'animate-wiggle'
             )}
             style={{
@@ -271,7 +314,7 @@ export function MemoList() {
         )
         const sectionHeaderClass = clsx(
           'flex items-center gap-1.5 px-1 pb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400',
-          viewMode === 'grid' && 'col-span-full'
+          'col-span-full'
         )
         return (
           <div
@@ -313,8 +356,6 @@ export function MemoList() {
       {/* Selection mode bar */}
       {isSelectionMode && <BatchActionBar isTrashView={isTrashView} />}
 
-      {/* Context menu bottom sheet */}
-      <MemoContextMenu />
 
       {/* Empty trash confirmation */}
       <ConfirmDialog

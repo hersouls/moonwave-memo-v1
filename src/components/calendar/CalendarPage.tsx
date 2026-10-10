@@ -13,13 +13,15 @@ export function CalendarPage() {
 
   const { memoCounts, getMemosForDate } = useCalendarMemos(currentMonth)
   const selectedMemos = selectedDate ? getMemosForDate(selectedDate) : []
+  const monthTotal = [...memoCounts.values()].reduce((sum, n) => sum + n, 0)
 
   return (
     <div className="mw-page">
       <PageHead title="캘린더" description="날짜를 누르면 그날 쓴 메모를 볼 수 있어요." actions={<CreateActions />} />
-      {/* 데스크톱 면적 역전: 캘린더 = flex-1 주인공, 선택 날짜 패널 = 우측 고정폭 인스펙터 */}
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-6">
-        <div className="w-full xl:min-w-0 xl:flex-1">
+      {/* 넓은 화면: 달력은 제 크기로 왼쪽에, 남은 너비는 그날의 메모가 여러 칸으로 써요 (.memo-calendar, index.css).
+          달력을 화면 너비만큼 늘리면 날짜 사이만 벌어지고 그 아래가 통째로 비어요. */}
+      <div className="memo-calendar">
+        <div className="memo-calendar__side">
           <CalendarGrid
             currentMonth={currentMonth}
             onMonthChange={setCurrentMonth}
@@ -27,8 +29,18 @@ export function CalendarPage() {
             onDateSelect={setSelectedDate}
             memoCounts={memoCounts}
           />
+          <dl className="mw-surface memo-calendar__month">
+            <div>
+              <dt>이 달에 쓴 메모</dt>
+              <dd>{monthTotal.toLocaleString()}<small>개</small></dd>
+            </div>
+            <div>
+              <dt>메모를 쓴 날</dt>
+              <dd>{memoCounts.size}<small>일</small></dd>
+            </div>
+          </dl>
         </div>
-        <div className="w-full xl:sticky xl:top-0 xl:w-[360px] xl:shrink-0">
+        <div className="memo-calendar__list">
           <CalendarMemoList
             memos={selectedMemos}
             selectedDate={selectedDate}

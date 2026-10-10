@@ -16,6 +16,8 @@ import { FocusTimer } from './FocusTimer'
 const VersionHistory = lazy(() => import('./VersionHistory').then((m) => ({ default: m.VersionHistory })))
 const RelatedMemosPanel = lazy(() => import('./RelatedMemosPanel').then((m) => ({ default: m.RelatedMemosPanel })))
 import { TagInput } from './TagInput'
+import { EditorInspector } from './EditorInspector'
+import { useMinWidth, useSettled } from '@/hooks/useMinWidth'
 import { TagEditModal } from './TagEditModal'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { Spinner } from '@/components/ui/Spinner'
@@ -145,6 +147,10 @@ export function MemoEditor() {
   const isTiptapRef = useRef(isTiptap)
   isTiptapRef.current = isTiptap
   const isSplit = editorMode === 'split' && isLg && !isFocusMode
+  // 편집기가 놓인 자리가 넓으면(900px부터, 나란히 보기에서는 1280px부터) 오른쪽에 정보 칸을 둬요
+  const rootRef = useRef<HTMLDivElement>(null)
+  const isRoomy = useMinWidth(rootRef, isSplit ? 1280 : 900)
+  const [inspectorOpen, setInspectorOpen] = useState(true)
 
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
@@ -772,6 +778,12 @@ export function MemoEditor() {
   const charCount = isTiptap ? tiptapCharCount : body.length
   const readingTime = Math.max(1, Math.ceil(charCount / 400)) // Korean: ~400 chars/min
   const checklistStats = useMemo(() => getChecklistStats(body), [body])
+  // 정보 칸: 자리가 넓고, 집중 모드가 아니고, 데미안 창이 그 자리를 쓰고 있지 않을 때
+  const showInspector = isRoomy && inspectorOpen && !isFocusMode && !(showAlterEgo && alterEgoEnabled)
+  // 도구 줄의 목차 버튼: 넓은 자리에서는 정보 칸(목차가 그 안에 있어요)을, 좁은 자리에서는 목차 칸을 여닫아요
+  const toggleSidePanel = () => { if (isRoomy) setInspectorOpen((open) => !open); else setShowOutline((open) => !open) }
+  // 이어진 메모는 모든 메모를 훑어 찾아요. 글자를 칠 때마다가 아니라 잠깐 멈췄을 때 다시 찾아요
+  const settledBody = useSettled(body, 1200)
 
   // Checkbox toggle handler for interactive checklist
   const handleCheckboxToggle = useCallback((lineIndex: number, _checked: boolean) => {
@@ -907,7 +919,7 @@ export function MemoEditor() {
       )}
 
       {/* UX-06: TagInput for current tags (hide when keyboard open to maximize edit area) */}
-      {!isFocusMode && !isKeyboardOpen && (
+      {!isFocusMode && !isKeyboardOpen && !showInspector && (
         <TagInput tags={currentTags} onEdit={() => setIsTagEditOpen(true)} />
       )}
 
@@ -991,7 +1003,7 @@ export function MemoEditor() {
     { id: 'codeblock', group: '삽입', label: '코드 블록', icon: <IcMwCode size={16} />, run: () => insertSnippet('```\n\n```') },
     { id: 'quote', group: '삽입', label: '인용', icon: <IcMwQuote size={16} />, run: () => insertSnippet('> ') },
     { id: 'divider', group: '삽입', label: '구분선', icon: <IcLineMinus size={16} />, run: () => insertSnippet('\n---\n') },
-    ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '목차 열고 닫기', icon: <IcMwList size={16} />, run: () => setShowOutline((p) => !p) }] : []),
+    ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '목차 열고 닫기', icon: <IcMwList size={16} />, run: toggleSidePanel }] : []),
     ...(alterEgoEnabled ? [{ id: 'alterego', group: '보기 · 도구', label: '데미안(AI 대화) 열고 닫기', icon: <IcMwSpark size={16} />, run: () => setShowAlterEgo((p) => !p) }] : []),
     { id: 'focus', group: '보기 · 도구', label: '집중 모드', icon: <IcLineExpand size={16} />, run: () => useUIStore.getState().toggleFocusMode() },
     ...(memoId ? [{ id: 'slide', group: '보기 · 도구', label: '슬라이드 보기', icon: <IcFillPlay size={16} />, shortcut: 'F5', run: () => useUIStore.getState().openSlideView(memoId) }] : []),
@@ -1004,6 +1016,7 @@ export function MemoEditor() {
     <div
       // 내용 영역(mw-app-content)의 높이를 모두 써요. 키보드가 올라오면 화면이 줄고(interactive-widget=resizes-content)
       // 키트가 하단 탭을 비켜 주므로, 따로 고정하지 않아요.
+      ref={rootRef}
       className="flex flex-col h-full min-h-0"
     >
       <h1 className="mw-sr-only">{memoId ? '메모 고치기' : '새 메모 쓰기'}</h1>
@@ -1042,7 +1055,7 @@ export function MemoEditor() {
           onAIEnhance={handleAIEnhance}
           onToggleAlterEgo={() => setShowAlterEgo((prev) => !prev)}
           alterEgoEnabled={alterEgoEnabled}
-          onToggleOutline={isMdUp ? () => setShowOutline((prev) => !prev) : undefined}
+          onToggleOutline={isMdUp ? toggleSidePanel : undefined}
           onSlideView={memoId ? () => useUIStore.getState().openSlideView(memoId) : undefined}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
         />
@@ -1130,8 +1143,34 @@ export function MemoEditor() {
           {/* AI Summary + Backlinks moved into previewContent and tiptap section above */}
         </div>
 
+        {/* 정보 칸 — 편집기 자리가 넓을 때 (분량 · 태그 · 목차 · 이어진 메모) */}
+        {showInspector && (
+          <EditorInspector
+            body={body}
+            folder={currentFolder}
+            tags={currentTags}
+            charCount={charCount}
+            readingTime={readingTime}
+            checklist={checklistStats}
+            createdAt={memo?.createdAt}
+            updatedAt={memo?.updatedAt}
+            onEditTags={() => setIsTagEditOpen(true)}
+            onScrollToLine={handleOutlineScrollToLine}
+            onScrollToHeadingIndex={isTiptap ? handleOutlineScrollToHeadingIndex : undefined}
+          >
+            {memoId && (
+              <>
+                <BacklinksPanel memoId={memoId} title={title} />
+                <Suspense fallback={null}>
+                  <RelatedMemosPanel memoId={memoId} tags={currentTags} body={settledBody} />
+                </Suspense>
+              </>
+            )}
+          </EditorInspector>
+        )}
+
         {/* Outline panel — desktop only */}
-        {showOutline && isMdUp && !isFocusMode && (
+        {showOutline && isMdUp && !isFocusMode && !showInspector && (
           <div className="hidden md:block w-52 shrink-0">
             <EditorOutline body={body} onScrollToLine={handleOutlineScrollToLine} onScrollToHeadingIndex={isTiptap ? handleOutlineScrollToHeadingIndex : undefined} onClose={() => setShowOutline(false)} />
           </div>
@@ -1202,7 +1241,7 @@ export function MemoEditor() {
             <span>나가기</span>
           </button>
         </div>
-      ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && (
+      ) : (isTiptap || activeTab === 'edit' || isSplit) && charCount > 0 && !isKeyboardOpen && !showInspector && (
         <div className="flex items-center gap-3 px-4 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full py-1.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
           <span>{charCount.toLocaleString()}자</span>
           <span>·</span>

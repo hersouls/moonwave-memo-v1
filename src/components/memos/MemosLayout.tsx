@@ -1,10 +1,8 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MemoList } from './MemoList'
-import { MemoEditorModal } from '../editor/MemoEditorModal'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
-import { IcLineKeyboard, IcMwNote } from '@/mw/icons'
 
 const LIST_MIN_W = 280
 const LIST_MAX_W = 600
@@ -131,60 +129,43 @@ export function MemosLayout() {
     return () => window.removeEventListener('keydown', handleSplitKeyDown)
   }, [navigate])
 
-  // Wide desktop (xl: 1280px+): Master-detail split view with resizable panels
+  // 넓은 화면(901px부터)에서 메모를 열지 않았을 때: 목록이 내용 영역 전체를 써요.
+  // 예전에는 1280px부터 늘 둘로 나눠서, 메모를 고르기 전에는 오른쪽 칸이 통째로 비어 있었어요.
+  if (isDesktop && !isOnMemoRoute) {
+    return (
+      <div className="h-full overflow-y-auto overscroll-contain">
+        <MemoList />
+      </div>
+    )
+  }
+
+  // 1280px부터, 메모를 열었을 때: 왼쪽에 목록(너비를 끌어 바꿀 수 있어요), 오른쪽에 편집기
   if (isWideDesktop) {
     return (
       // 내용 영역(mw-app-content)의 높이를 모두 써요. 목록과 편집기가 저마다 스크롤해요.
       <div className="h-full flex flex-row">
-        {/* Left: MemoList panel (resizable, independent scroll) */}
         <div
           className="shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-y-auto overscroll-contain"
           style={{ width: listWidth }}
         >
-          <MemoList />
+          <MemoList pane />
         </div>
 
-        {/* Resize handle */}
         <ResizeHandle onResize={handleResize} />
 
-        {/* Right: Editor panel or empty state. flex flex-col이어야 에디터 라우트 래퍼의
-            flex-1이 패널 높이를 채운다 — 블록 컨텍스트에서는 flex-1이 무효화돼 에디터가
-            콘텐츠 높이로 붕괴하고 하단에 대량의 빈 공간이 생겼다. */}
+        {/* flex flex-col이어야 편집기 라우트 래퍼의 flex-1이 칸의 높이를 채워요 */}
         <div className="flex-1 min-w-0 flex flex-col overflow-y-auto overscroll-contain">
-          {isOnMemoRoute ? (
-            <Outlet />
-          ) : (
-            <div className="flex items-center justify-center h-full text-[var(--text-secondary)]">
-              <div className="text-center">
-                <IcMwNote size={48} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm">메모를 골라 주세요</p>
-                <p className="text-xs mt-1 text-[var(--text-tertiary)]">
-                  Alt+N으로 새 메모를 쓸 수도 있어요
-                </p>
-                <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-[var(--text-tertiary)]">
-                  <IcLineKeyboard size={16} />
-                  <span>Ctrl+[ / ]로 메모 사이를 오가요</span>
-                </div>
-              </div>
-            </div>
-          )}
+          <Outlet />
         </div>
       </div>
     )
   }
 
-  // Standard desktop (lg: 1024-1279px): Modal overlay
+  // 901~1279px, 메모를 열었을 때: 편집기가 내용 영역 전체를 써요 (가림막 위의 창으로 띄우면 둘레가 비어요)
   if (isDesktop) {
     return (
       <div className="h-full flex flex-col">
-        <div className="flex-1 overflow-y-auto">
-          <MemoList />
-        </div>
-        {isOnMemoRoute && (
-          <MemoEditorModal onClose={() => navigate('/memos')}>
-            <Outlet />
-          </MemoEditorModal>
-        )}
+        <Outlet />
       </div>
     )
   }

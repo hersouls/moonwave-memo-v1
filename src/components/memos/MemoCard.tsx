@@ -384,7 +384,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       onMouseLeave={handleMouseLeave}
       draggable={isDesktop && !isSelectionMode && !isTrashView}
       onDragStart={handleDragStart}
-      className={clsx('group relative overflow-hidden rounded-2xl fold:rounded-xl', isGrid && 'h-full', isDeleting && 'animate-card-shrink')}
+      className={clsx('group relative h-full overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}
     >
       {/* Swipe action backgrounds with progressive visual feedback */}
       {isTouchDevice && !isSelectionMode && (() => {
@@ -454,7 +454,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           isSelected && 'ring-2 ring-primary-500',
           // UX-07: stronger active highlight
           isActive && 'lg:ring-1 lg:ring-primary-300 lg:dark:ring-primary-700 lg:bg-primary-50/50 lg:dark:bg-primary-900/10',
-          isGrid ? 'h-full flex-col' : 'flex-row gap-0',
+          isGrid ? 'h-full flex-col' : 'h-full flex-row gap-0',
           isRecent && digitalGardenEnabled && 'memo-glow-active'
         )}
         onContextMenu={(e) => {

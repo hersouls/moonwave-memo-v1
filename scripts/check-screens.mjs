@@ -1,4 +1,4 @@
-// Memo: do the phone screens still hold up when there are real-looking memos in them?
+// Memo: do the screens still hold up when there are real-looking memos in them? Phone widths first, then tablet and PC.
 //
 //   node scripts/check-screens.mjs            run the checks (scripts/deploy.sh does, before every deploy)
 //   node scripts/check-screens.mjs --shots    …and leave screenshots in the system temp folder (path is printed)
@@ -73,6 +73,21 @@ const base = `http://127.0.0.1:${server.httpServer.address().port}`
 const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: ['--mute-audio'] })
 const touchSrc = existsSync(AUDIT) ? (() => { const s = readFileSync(AUDIT, 'utf8'); const a = s.indexOf('function touchTargets()'); return a < 0 ? null : s.slice(a, s.indexOf('/**', a)).replace('function touchTargets()', 'function ()') })() : null
 
+const seed = (page) => page.evaluate(async (MEMOS) => {
+  const folders = (await import('/src/stores/folderStore.ts')).useFolderStore.getState()
+  const memos = (await import('/src/stores/memoStore.ts')).useMemoStore.getState()
+  const ids = {}
+  for (const [name, n] of [['IPP', 3], ['개발', 6], ['회사', 4]]) ids[name] = await folders.addFolder(name, `var(--mw-cat-${n})`)
+  let first
+  for (const m of [...MEMOS].reverse()) {
+    const id = await memos.addMemo({ title: m.title, body: m.body, folderId: m.folder ? ids[m.folder] : null, tags: m.tags })
+    if (m.pin) await memos.togglePin(id)
+    if (m.star) await memos.toggleStar(id)
+    first = id
+  }
+  return first
+}, MEMOS)
+
 const failures = []
 try {
   // the two widths the owner's phones really have: 412 (default display size) and 360 (text one step bigger)
@@ -83,20 +98,7 @@ try {
     const fail = (where, what) => failures.push(`${size.width}px ${where}: ${what}`)
     page.on('pageerror', (e) => fail('화면 오류', String(e).slice(0, 160)))
     await page.goto(base + '/', { waitUntil: 'domcontentloaded' }); await sleep(3000)
-    const firstId = await page.evaluate(async (MEMOS) => {
-      const folders = (await import('/src/stores/folderStore.ts')).useFolderStore.getState()
-      const memos = (await import('/src/stores/memoStore.ts')).useMemoStore.getState()
-      const ids = {}
-      for (const [name, n] of [['IPP', 3], ['개발', 6], ['회사', 4]]) ids[name] = await folders.addFolder(name, `var(--mw-cat-${n})`)
-      let first
-      for (const m of [...MEMOS].reverse()) {
-        const id = await memos.addMemo({ title: m.title, body: m.body, folderId: m.folder ? ids[m.folder] : null, tags: m.tags })
-        if (m.pin) await memos.togglePin(id)
-        if (m.star) await memos.toggleStar(id)
-        first = id
-      }
-      return first
-    }, MEMOS)
+    const firstId = await seed(page)
     await page.reload({ waitUntil: 'domcontentloaded' }); await sleep(2500) // the app reads the seeded memos back from its database
     const go = async (path, wait = 2000) => { await page.evaluate((p) => { history.pushState({}, '', p); dispatchEvent(new PopStateEvent('popstate')) }, path); await sleep(wait) }
     const view = (mode) => page.evaluate(async (mode) => { (await import('/src/stores/uiStore.ts')).useUIStore.getState().setViewMode(mode) }, mode)
@@ -172,6 +174,64 @@ try {
     await common('미리보기')
     await ctx.close()
   }
+
+  // ── 넓은 화면: 빈 칸으로 남는 자리가 없어야 해요 (2026-10-10 소유자: "태블릿 · PC에서 공백이 너무 많음").
+  //    그날의 화면은 메모를 고르기 전에는 오른쪽 칸이 통째로 비었고, 목록은 한 칸만 가운데에, 달력은 화면 너비만큼 늘어나 있었어요.
+  for (const size of [{ width: 1180, height: 820 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }]) {
+    const ctx = await browser.newContext({ viewport: size, locale: 'ko-KR', timezoneId: 'Asia/Seoul' })
+    const page = await ctx.newPage()
+    const fail = (where, what) => failures.push(`${size.width}px ${where}: ${what}`)
+    page.on('pageerror', (e) => fail('화면 오류', String(e).slice(0, 160)))
+    await page.goto(base + '/', { waitUntil: 'domcontentloaded' }); await sleep(3000)
+    const firstId = await seed(page)
+    await page.reload({ waitUntil: 'domcontentloaded' }); await sleep(2500)
+    const go = async (path, wait = 2000) => { await page.evaluate((p) => { history.pushState({}, '', p); dispatchEvent(new PopStateEvent('popstate')) }, path); await sleep(wait) }
+    const view = (mode) => page.evaluate(async (mode) => { (await import('/src/stores/uiStore.ts')).useUIStore.getState().setViewMode(mode) }, mode)
+    const shot = async (name) => { if (SHOTS) await page.screenshot({ path: join(SHOTS, `${size.width}-${name}.png`) }) }
+    const overflow = async (where) => { const f = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, w: innerWidth })); if (f.sw > f.w + 1) fail(where, `화면이 옆으로 넘쳐요 (${f.sw}px > ${f.w}px)`); await shot(where) }
+    // the content area: everything right of the sidebar, below the top bar
+    const area = () => page.evaluate(() => { const r = document.querySelector('.mw-app-content').getBoundingClientRect(); return { left: r.left, width: r.width } })
+
+    // 메모 목록(메모를 열지 않았을 때): 카드가 내용 영역의 너비를 여러 칸으로 써요
+    await go('/memos'); await view('list'); await sleep(600)
+    // (칸 수는 격자가 실제로 나눈 칸으로 세요: 첫 줄은 '고정됨' 묶음이라 카드가 칸 수보다 적을 수 있어요)
+    const lib = await page.evaluate(() => { const list = document.querySelector('.memo-list'); const r = list?.getBoundingClientRect(); return { perRow: list ? getComputedStyle(list).gridTemplateColumns.split(' ').filter(Boolean).length : 0, right: r?.right ?? 0, left: r?.left ?? 0 } })
+    const a = await area()
+    const used = (lib.right - lib.left) / Math.min(a.width, 1560)
+    const wantCols = size.width >= 1900 ? 4 : size.width >= 1400 ? 3 : 2
+    if (lib.perRow < wantCols) fail('목록', `가로로 긴 카드가 한 줄에 ${lib.perRow}장뿐이에요 (${wantCols}장은 놓여야 해요)`)
+    if (used < 0.85) fail('목록', `카드가 내용 영역 너비의 ${Math.round(used * 100)}%만 써요 (옆이 비어 있어요)`)
+    await overflow('목록')
+
+    // 메모를 열었을 때: 편집기와 그 옆 칸이 내용 영역을 채워요
+    await go('/memo/' + firstId, 2800)
+    const ed = await page.evaluate(() => {
+      const rect = (el) => el?.getBoundingClientRect()
+      const box = rect(document.querySelector('.mw-textarea')), insp = rect(document.querySelector('.memo-inspector')), dialog = document.querySelector('[role="dialog"]:not([inert])')
+      const pane = [...document.querySelectorAll('.memo-card')].length > 0
+      return { box: box ? { left: box.left, right: box.right, width: box.width } : null, inspector: insp ? Math.round(insp.width) : 0, dialog: !!dialog, pane }
+    })
+    if (ed.dialog) fail('편집기', '편집기가 가림막 위의 창으로 떠요 (내용 영역을 그대로 써야 해요)')
+    if (!ed.box) fail('편집기', '내용 칸을 찾지 못했어요')
+    else {
+      const filled = (ed.box.width + ed.inspector + (ed.pane ? 360 : 0)) / a.width
+      if (filled < 0.7) fail('편집기', `편집기와 그 옆 칸이 내용 영역 너비의 ${Math.round(filled * 100)}%만 써요`)
+      if (size.width >= 1900 && !ed.inspector) fail('편집기', '넓은 화면인데 정보 칸(분량 · 태그 · 목차)이 없어요')
+      if (size.width >= 1280 && !ed.pane) fail('편집기', '1280px부터는 편집기 왼쪽에 메모 목록이 있어야 해요')
+    }
+    await overflow('편집기')
+
+    // 캘린더: 달력은 제 크기로, 그날의 메모가 그 옆을 써요
+    await go('/calendar')
+    const cal = await page.evaluate(() => { const rect = (el) => el?.getBoundingClientRect(); const g = rect(document.querySelector('.mw-date-picker')), l = rect(document.querySelector('.memo-calendar__list')); return g && l ? { grid: Math.round(g.width), beside: l.left >= g.right - 1, list: Math.round(l.width) } : null })
+    if (!cal) fail('캘린더', '달력이나 그날의 메모 칸을 찾지 못했어요')
+    else if (a.width >= 900) {
+      if (!cal.beside) fail('캘린더', '달력과 그날의 메모가 나란히 놓이지 않았어요 (달력 아래가 비어요)')
+      if (cal.grid > 480) fail('캘린더', `달력이 ${cal.grid}px까지 늘어났어요 (날짜 사이만 벌어져요)`)
+    }
+    await overflow('캘린더')
+    await ctx.close()
+  }
 } finally {
   await browser.close()
   await server.close()
@@ -179,9 +239,9 @@ try {
 
 if (SHOTS) console.log(`[screens] 화면 사진: ${SHOTS}`)
 if (failures.length) {
-  console.error(`[screens] 메모가 든 폰 화면에서 ${failures.length}곳이 깨졌어요:`)
+  console.error(`[screens] 메모가 든 화면에서 ${failures.length}곳이 깨졌어요:`)
   for (const f of failures) console.error(`  - ${f}`)
   console.error('[screens] 고친 뒤 다시 실행해요: node scripts/check-screens.mjs --shots (화면 사진을 남겨요)')
   process.exit(1)
 }
-console.log('[screens] 메모가 든 폰 화면(412 · 360px)의 목록 · 격자 · 편집기 · 미리보기가 모두 괜찮아요')
+console.log('[screens] 메모가 든 화면이 모두 괜찮아요: 폰(412 · 360px)의 목록 · 격자 · 편집기 · 미리보기, 넓은 화면(1180 · 1440 · 1920px)의 목록 · 편집기 · 캘린더')

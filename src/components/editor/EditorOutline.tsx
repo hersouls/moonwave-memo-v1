@@ -8,7 +8,7 @@ interface Heading {
   line: number
 }
 
-function parseHeadings(body: string): Heading[] {
+export function parseHeadings(body: string): Heading[] {
   const headings: Heading[] = []
   const lines = body.split('\n')
   for (let i = 0; i < lines.length; i++) {
@@ -59,8 +59,6 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
     )
   }
 
-  const minLevel = Math.min(...headings.map((h) => h.level))
-
   return (
     <div className="h-full flex flex-col border-l border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/50">
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-200 dark:border-zinc-700">
@@ -80,24 +78,34 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-2 px-1" aria-label="문서 목차">
-        {headings.map((heading, index) => (
-          <button type="button"
-            key={heading.line}
-            onClick={() => onScrollToHeadingIndex ? onScrollToHeadingIndex(index) : onScrollToLine(heading.line)}
-            className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default w-full justify-start truncate"
-            style={{ paddingLeft: `${(heading.level - minLevel) * 12 + 10}px` }}
-            title={heading.text}
-          >
-            <span className={clsx(
-              heading.level === 1 && 'font-semibold text-zinc-800 dark:text-zinc-200',
-              heading.level === 2 && 'font-medium',
-            )}>
-              {heading.text}
-            </span>
-          </button>
-        ))}
-      </nav>
+      <div className="flex-1 overflow-y-auto py-2 px-1">
+        <OutlineList headings={headings} onScrollToLine={onScrollToLine} onScrollToHeadingIndex={onScrollToHeadingIndex} />
+      </div>
     </div>
+  )
+}
+
+/** 목차의 줄들이에요. 누르면 편집기가 그 제목으로 가요. 목차 칸과 넓은 화면의 정보 칸이 함께 써요. */
+export function OutlineList({ headings, onScrollToLine, onScrollToHeadingIndex }: { headings: Heading[]; onScrollToLine: (line: number) => void; onScrollToHeadingIndex?: (index: number) => void }) {
+  const minLevel = Math.min(...headings.map((h) => h.level))
+  return (
+    <nav aria-label="문서 목차">
+      {headings.map((heading, index) => (
+        <button type="button"
+          key={heading.line}
+          onClick={() => onScrollToHeadingIndex ? onScrollToHeadingIndex(index) : onScrollToLine(heading.line)}
+          className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default w-full justify-start truncate"
+          style={{ paddingLeft: `${(heading.level - minLevel) * 12 + 10}px` }}
+          title={heading.text}
+        >
+          <span className={clsx(
+            heading.level === 1 && 'font-semibold text-zinc-800 dark:text-zinc-200',
+            heading.level === 2 && 'font-medium',
+          )}>
+            {heading.text}
+          </span>
+        </button>
+      ))}
+    </nav>
   )
 }

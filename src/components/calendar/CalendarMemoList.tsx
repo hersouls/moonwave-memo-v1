@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { format, parseISO, isToday } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useNavigate } from 'react-router-dom'
@@ -14,12 +13,6 @@ interface CalendarMemoListProps {
 
 export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps) {
   const navigate = useNavigate()
-
-  // 데스크톱에서 카드가 내부 스크롤 컨테이너 — 날짜 전환 시 스크롤 위치 초기화
-  const cardRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    cardRef.current?.scrollTo({ top: 0 })
-  }, [selectedDate])
 
   if (!selectedDate) {
     return (
@@ -39,18 +32,15 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
 
   return (
     // .card는 overflow:hidden — 스크롤은 내부 요소로 분리해야 동작한다
-    <div className="card lg:flex lg:max-h-[calc(100vh-6.5rem)] lg:flex-col">
-      <div
-        ref={cardRef}
-        className="p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain"
-      >
+    <div className="card">
+      <div className="p-4">
       {/* 날짜 변경 시 콘텐츠 전체가 부드럽게 등장 */}
       <div
         key={selectedDate}
         className="animate-in fade-in duration-200 ease-enter motion-safe:slide-in-from-bottom-1"
       >
         {/* 헤더: 날짜 위계 + 오늘 배지 + 카운트 필, 데스크톱 내부 스크롤에서 sticky */}
-        <div className="-mx-4 mb-3 border-b border-[var(--card-hairline)] px-4 pb-3 lg:sticky lg:top-0 lg:z-10 lg:-mt-4 lg:bg-[var(--card-bg-default)] lg:pt-4">
+        <div className="-mx-4 mb-3 border-b border-[var(--card-hairline)] px-4 pb-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-baseline gap-1.5">
               <h3 className="shrink-0 text-15 font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100">
@@ -98,11 +88,11 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
             }
           />
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="memo-list">
             {memos.map((memo, i) => (
               <div
                 key={memo.id}
-                className="animate-in fade-in fill-mode-backwards duration-200 ease-enter motion-safe:slide-in-from-bottom-1"
+                className="h-full animate-in fade-in fill-mode-backwards duration-200 ease-enter motion-safe:slide-in-from-bottom-1"
                 style={{ animationDelay: `${Math.min(i, 6) * 25}ms` }}
               >
                 <MemoCard memo={memo} viewMode="list" />

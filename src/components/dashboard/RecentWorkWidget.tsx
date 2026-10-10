@@ -34,26 +34,27 @@ export function RecentWorkWidget() {
       }
       bodyClassName="p-0"
     >
-      <div className="divide-y divide-zinc-100 dark:divide-white/[0.06]">
-        {recentMemos.map((memo) => (
-          <Link
-            key={memo.id}
-            to={`/memo/${memo.id}`}
-            className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.03]"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+      {/* 카드가 넓으면 세 건을 나란히, 좁으면 아래로 쌓아요. 칸 사이의 선은 위 · 왼쪽 선을 바깥으로 1px 밀어 가려요 */}
+      <div className="overflow-hidden">
+        <div className="memo-recent">
+          {recentMemos.map((memo) => (
+            <Link
+              key={memo.id}
+              to={`/memo/${memo.id}`}
+              className="memo-recent__item transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.03]"
+            >
+              <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 {memo.title || '제목 없음'}
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
-                {stripMarkdown(memo.body).slice(0, 60) || '내용 없음'}
+              <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                {stripMarkdown(memo.body).slice(0, 140) || '내용 없음'}
               </p>
-            </div>
-            <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 shrink-0">
-              {formatMemoDate(memo.updatedAt)}
-            </span>
-          </Link>
-        ))}
+              <p className="mt-1.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
+                {formatMemoDate(memo.updatedAt)}
+              </p>
+            </Link>
+          ))}
+        </div>
       </div>
     </WidgetCard>
   )

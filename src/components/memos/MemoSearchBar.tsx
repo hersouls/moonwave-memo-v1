@@ -151,7 +151,7 @@ export function MemoSearchBar() {
       <div>
         <button type="button"
           onClick={handleExpand}
-          className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left w-full"
+          className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left w-full lg:w-auto"
         >
           <IcLineSearch size={16} />
           메모 검색

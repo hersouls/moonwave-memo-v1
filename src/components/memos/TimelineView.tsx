@@ -49,7 +49,7 @@ export function TimelineView({ memos }: TimelineViewProps) {
             </div>
 
             {/* Memo cards */}
-            <div className="ml-7 flex flex-col gap-2">
+            <div className="memo-list ml-7">
               {dateMemos.map((memo, index) => (
                 <MemoCard key={memo.id ?? `tl-${index}`} memo={memo} viewMode="list" />
               ))}

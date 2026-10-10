@@ -238,6 +238,10 @@
   --memo-card-min: 168px; /* 격자 보기에서 메모 카드 한 장의 가장 좁은 너비: 380px 폰은 한 칸, 그보다 넓으면 두 칸부터 */
   --memo-card-min-compact: 132px;
   --memo-card-min-expanded: 280px;
+  --memo-card-min-wide: 220px; /* 넓은 내용 영역(900px부터)에서 격자 카드의 가장 좁은 너비 */
+  --memo-row-min: 340px; /* 목록 보기의 가로로 긴 카드 한 장의 가장 좁은 너비 */
+  --memo-inspector-w: 320px; /* 넓은 화면에서 편집기 옆에 놓이는 정보 칸 */
+  --memo-calendar-w: 400px; /* 넓은 화면에서 달력이 차지하는 너비 (나머지는 그날의 메모가 써요) */
 }
 
 /* Base styles */
@@ -460,6 +464,94 @@ body {
 }
 .memo-grid--compact { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--memo-card-min-compact)), 1fr)); }
 .memo-grid--expanded { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--memo-card-min-expanded)), 1fr)); }
+/* 넓은 화면에서는 카드가 한 줄에 열 장 가까이 놓이지 않게 한 장을 조금 넓혀요 */
+@container mw-content (min-width: 900px) {
+  .memo-grid { --memo-card-min: var(--memo-card-min-wide); }
+}
+
+/* 목록 보기도 같은 방식이에요: 가로로 긴 카드가 폰에서는 한 칸, 태블릿은 두 칸, 넓은 화면은 서너 칸.
+   넓은 화면에서 한 칸만 가운데에 두면 양옆이 통째로 비어요. */
+.memo-list {
+  display: grid;
+  gap: var(--space-12);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--memo-row-min)), 1fr));
+}
+
+/* ========================================
+   홈: 최근 작업
+   ======================================== */
+
+/* 줄을 채우며 감겨요: 세 건이 두 칸 너비에 놓이면 마지막 한 건이 줄 전체를 써서 빈 칸이 남지 않아요 */
+.memo-recent {
+  display: flex;
+  flex-wrap: wrap;
+  margin: calc(var(--border-width-1) * -1) 0 0 calc(var(--border-width-1) * -1);
+}
+.memo-recent__item {
+  flex: 1 1 var(--memo-row-min);
+  display: block;
+  min-width: 0;
+  padding: var(--space-12) var(--space-20);
+  border-top: var(--border-width-1) solid var(--border-secondary);
+  border-left: var(--border-width-1) solid var(--border-secondary);
+}
+
+/* ========================================
+   캘린더
+   ======================================== */
+
+.memo-calendar { display: flex; flex-direction: column; gap: var(--space-16); }
+.memo-calendar__side { display: flex; flex-direction: column; gap: var(--space-16); }
+/* 이 달의 요약은 달력 아래가 비는 넓은 화면에서만 보여요. 좁은 화면에서는 그날의 메모가 바로 이어져요 */
+.memo-calendar__month { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-16); }
+.memo-calendar__month dt { font-size: var(--font-size-13); color: var(--text-tertiary); }
+.memo-calendar__month dd { margin-top: var(--space-4); font-size: var(--font-size-24); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.memo-calendar__month dd small { margin-left: var(--space-2); font-size: var(--font-size-14); font-weight: var(--font-weight-medium); color: var(--text-secondary); }
+/* 내용 영역이 넓으면 달력과 그날의 메모를 나란히 둬요. 달력은 따라 내려오고(sticky), 메모는 남은 너비를 여러 칸으로 써요 */
+@container mw-content (min-width: 900px) {
+  .memo-calendar { flex-direction: row; align-items: flex-start; gap: var(--space-24); }
+  .memo-calendar__side { flex: none; width: var(--memo-calendar-w); position: sticky; top: var(--space-16); }
+  .memo-calendar__month { display: grid; }
+  .memo-calendar__list { flex: 1; min-width: 0; }
+}
+
+/* ========================================
+   편집기: 정보 칸 (넓은 화면)
+   ======================================== */
+
+.memo-inspector {
+  flex: none;
+  width: var(--memo-inspector-w);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  padding: var(--space-20) var(--space-20) var(--space-32);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: var(--border-width-1) solid var(--border-secondary);
+  background: var(--background-secondary);
+}
+.memo-inspector__title {
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+}
+.memo-inspector__hint {
+  margin-top: var(--space-8);
+  font-size: var(--font-size-13);
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+.memo-inspector__facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-8) var(--space-16);
+  margin-top: var(--space-8);
+  font-size: var(--font-size-13);
+  font-variant-numeric: tabular-nums;
+}
+.memo-inspector__facts dt { color: var(--text-tertiary); }
+.memo-inspector__facts dd { min-width: 0; text-align: right; color: var(--text-primary); }
 
 /* ========================================
    편집기: 내용 칸
