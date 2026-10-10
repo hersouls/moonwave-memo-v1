@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { normalizeAITags } from '@/lib/tagParser'
 import { suggestTags } from '@/services/aiFeatures'
-import { IcLineAdd, IcLineClose, IcMwSparkles, IcMwTag } from '@/mw/icons'
+import { IcLineAdd, IcLineClose, IcMwSparkles } from '@/mw/icons'
 import { TextField } from '@/mw/TextField'
 
 interface TagEditModalProps {
@@ -65,10 +65,10 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
       )
       setSuggestions(normalized)
       if (normalized.length === 0) {
-        setSuggestError(error ? 'AI 제안을 가져오지 못했습니다' : '제안할 새 태그가 없습니다')
+        setSuggestError(error ? 'AI 제안을 가져오지 못했어요. 잠시 후 다시 시도해 주세요' : '제안할 새 태그가 없어요')
       }
     } catch {
-      setSuggestError('AI 제안을 가져오지 못했습니다')
+      setSuggestError('AI 제안을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')
     } finally {
       setIsSuggesting(false)
     }
@@ -83,36 +83,24 @@ export function TagEditModal({ open, onClose, bodyTags, fieldTags, body, onSave 
     <Dialog open={open} onClose={onClose} size="md">
       <DialogHeader
         title="태그 편집"
-        description="태그는 본문에 추가되지 않고 별도로 저장됩니다."
+        description="태그는 본문에 넣지 않고 따로 저장해요."
         onClose={onClose}
       />
       <DialogBody className="space-y-4">
         {/* 현재 태그 */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-3">
+          {/* 본문에 적은 #태그: 본문에서만 지울 수 있어서 눌리지 않는 키트 Tag로 보여요 */}
           {bodyTags.map((tag) => (
-            <span
-              key={`body-${tag}`}
-              title="본문 해시태그 — 본문에서 삭제할 수 있습니다"
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-            >
-              <IcMwTag size={12} />
-              {tag}
+            <span key={`body-${tag}`} title="본문에 적은 태그예요. 본문에서 지울 수 있어요" className="mw-tag mw-tag--category-basic mw-tag--large">
+              #{tag}
             </span>
           ))}
+          {/* 따로 붙인 태그: 키트의 Input 칩이에요. 칩을 누르면 지워져요 (저장하기 전에는 취소로 되돌릴 수 있어요) */}
           {draft.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 "
-            >
+            <button key={tag} type="button" className="mw-input-chip mw-input-chip--off" aria-label={`${tag} 태그 지우기`} onClick={() => setDraft((prev) => prev.filter((t) => t !== tag))}>
               #{tag}
-              <button type="button"
-                onClick={() => setDraft((prev) => prev.filter((t) => t !== tag))}
-                className="mw-icon-button"
-                aria-label={`${tag} 태그 삭제`}
-              >
-                <IcLineClose size={12} />
-              </button>
-            </span>
+              <span className="mw-input-chip__icon"><IcLineClose size={16} /></span>
+            </button>
           ))}
           {bodyTags.length === 0 && draft.length === 0 && (
             <span className="text-xs text-[var(--text-tertiary)]">아직 태그가 없어요</span>

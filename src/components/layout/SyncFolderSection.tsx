@@ -54,9 +54,9 @@ export function SyncFolderSection() {
           <div className="flex items-start gap-3">
             <IcMwDrive size={20} className="text-zinc-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm text-zinc-500 dark:text-zinc-400">
-              이 기기는 폴더 저장을 지원하지 않습니다 — Firebase로만 동기화됩니다.
+              이 기기에서는 폴더에 저장할 수 없어요. Firebase로만 동기화해요.
               <div className="text-xs mt-1 text-[var(--text-tertiary)]">
-                Chrome 또는 Edge 데스크톱 브라우저에서 사용할 수 있습니다.
+                Chrome이나 Edge 데스크톱 브라우저에서 쓸 수 있어요.
               </div>
             </div>
           </div>
@@ -71,7 +71,7 @@ export function SyncFolderSection() {
       setBusy(true)
       try {
         await disableSyncFolder()
-        showToast('동기화 폴더를 껐습니다. 폴더의 파일은 그대로 유지됩니다.', 'info')
+        showToast('동기화 폴더를 껐어요. 폴더의 파일은 그대로 남아요.', 'info')
       } finally {
         setBusy(false)
       }
@@ -80,9 +80,9 @@ export function SyncFolderSection() {
       setBusy(true)
       try {
         const result = await pickSyncFolder()
-        if (result === 'picked') showToast('동기화 폴더가 연결되었습니다.', 'success')
+        if (result === 'picked') showToast('동기화 폴더를 연결했어요.', 'success')
         else if (result === 'overlaps-mirror')
-          showToast('미러 폴더와 같거나 겹치는 폴더는 주 저장 폴더로 지정할 수 없습니다.', 'warning')
+          showToast('미러 폴더와 같거나 겹치는 폴더는 주 저장 폴더로 정할 수 없어요.', 'warning')
       } finally {
         setBusy(false)
       }
@@ -94,9 +94,9 @@ export function SyncFolderSection() {
     setBusy(true)
     try {
       const result = await pickSyncFolder()
-      if (result === 'picked') showToast('폴더가 변경되었습니다. 전체 내보내기로 파일을 채우세요.', 'success')
+      if (result === 'picked') showToast('폴더를 바꿨어요. 전체 내보내기로 파일을 채워 주세요.', 'success')
       else if (result === 'overlaps-mirror')
-        showToast('미러 폴더와 같거나 겹치는 폴더는 주 저장 폴더로 지정할 수 없습니다.', 'warning')
+        showToast('미러 폴더와 같거나 겹치는 폴더는 주 저장 폴더로 정할 수 없어요.', 'warning')
     } finally {
       setBusy(false)
     }
@@ -107,8 +107,8 @@ export function SyncFolderSection() {
     setBusy(true)
     try {
       const ok = await reconnectSyncFolder()
-      if (ok) showToast('폴더 권한이 복원되었습니다.', 'success')
-      else showToast('폴더 권한을 얻지 못했습니다.', 'warning')
+      if (ok) showToast('폴더 권한을 다시 받았어요.', 'success')
+      else showToast('폴더 권한을 받지 못했어요. 다시 연결해 권한을 허용해 주세요.', 'warning')
     } finally {
       setBusy(false)
     }
@@ -121,12 +121,12 @@ export function SyncFolderSection() {
     try {
       const result = await exportAllMemosToFolder((p) => setExportProgress(p))
       if (result.failed > 0) {
-        showToast(`전체 내보내기 중 ${result.failed}건 저장 실패 — ${result.written}건만 기록됨. 폴더 연결을 확인하세요.`, 'error')
+        showToast(`전체 내보내기에서 ${result.failed}건을 저장하지 못했어요. ${result.written}건만 기록했어요. 폴더 연결을 확인해 주세요.`, 'error')
       } else {
-        showToast(`전체 내보내기 완료 — ${result.written}건 기록`, 'success')
+        showToast(`전체 내보내기를 마쳤어요. ${result.written}건을 기록했어요.`, 'success')
       }
     } catch {
-      showToast('전체 내보내기에 실패했습니다.', 'error')
+      showToast('전체 내보내기를 하지 못했어요. 폴더 연결을 확인해 주세요.', 'error')
     } finally {
       setBusy(false)
       setExportProgress(null)
@@ -138,9 +138,9 @@ export function SyncFolderSection() {
     setBusy(true)
     try {
       const { folders } = await syncFolderStructure()
-      showToast(`폴더 구조를 동기화했습니다 — 폴더 ${folders}개를 디스크에 반영`, 'success')
+      showToast(`폴더 구조를 동기화했어요. 폴더 ${folders}개를 디스크에 반영했어요.`, 'success')
     } catch {
-      showToast('폴더 구조 동기화에 실패했습니다.', 'error')
+      showToast('폴더 구조를 동기화하지 못했어요. 다시 시도해 주세요.', 'error')
     } finally {
       setBusy(false)
     }
@@ -151,11 +151,11 @@ export function SyncFolderSection() {
     setBusy(true)
     try {
       const result = await addMirrorFolder()
-      if (result === 'added') showToast('미러 폴더가 추가되었습니다. 기존 파일을 복사합니다.', 'success')
+      if (result === 'added') showToast('미러 폴더를 추가했어요. 기존 파일을 복사해요.', 'success')
       else if (result === 'duplicate')
-        showToast('이미 등록된 미러 폴더와 같거나 겹치는 폴더는 추가할 수 없습니다.', 'warning')
+        showToast('이미 등록한 미러 폴더와 같거나 겹치는 폴더는 추가할 수 없어요.', 'warning')
       else if (result === 'overlaps-primary')
-        showToast('주 저장 폴더와 같거나 겹치는 폴더는 미러로 지정할 수 없습니다. 별도의 폴더를 선택하세요.', 'warning')
+        showToast('주 저장 폴더와 같거나 겹치는 폴더는 미러로 정할 수 없어요. 다른 폴더를 골라 주세요.', 'warning')
     } finally {
       setBusy(false)
     }
@@ -166,7 +166,7 @@ export function SyncFolderSection() {
     setBusy(true)
     try {
       await removeMirrorFolder(path)
-      showToast('미러 폴더를 제거했습니다. 폴더의 파일은 유지됩니다.', 'info')
+      showToast('미러 폴더를 뺐어요. 폴더의 파일은 그대로 남아요.', 'info')
     } finally {
       setBusy(false)
     }
@@ -177,7 +177,7 @@ export function SyncFolderSection() {
     setBusy(true)
     try {
       await setSyncFolderFormat(fmt)
-      if (enabled) showToast('저장 형식을 변경하고 파일을 다시 내보냈습니다.', 'success')
+      if (enabled) showToast('저장 형식을 바꾸고 파일을 다시 내보냈어요.', 'success')
     } finally {
       setBusy(false)
     }
@@ -191,7 +191,7 @@ export function SyncFolderSection() {
     try {
       const { imported, failed } = await importHtmlFiles(files)
       showToast(
-        failed ? `${imported}건 가져옴, ${failed}건 실패` : `HTML ${imported}건을 메모로 가져왔습니다.`,
+        failed ? `${imported}건을 가져왔고, ${failed}건은 가져오지 못했어요.` : `HTML ${imported}건을 메모로 가져왔어요.`,
         failed ? 'warning' : 'success',
       )
     } finally {
@@ -232,12 +232,12 @@ export function SyncFolderSection() {
 
       <div className="p-5 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 shadow-sm space-y-4">
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          메모를 지정한 폴더에 <code className="text-xs px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">.md</code> 파일로 자동 저장합니다.
+          메모를 지정한 폴더에 <code className="text-xs px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">.md</code> 파일로 자동 저장해요.
           {isElectron()
-            ? ' 데스크톱 앱은 상시 접근하며 NAS 네트워크 폴더도 지정할 수 있습니다.'
+            ? ' 데스크톱 앱은 폴더에 늘 접근할 수 있고, NAS 네트워크 폴더도 정할 수 있어요.'
             : isCapacitor()
-              ? ' 폰의 문서 폴더에 저장되며, Synology Drive 등 동기화 앱으로 NAS와 연결할 수 있습니다.'
-              : ' 브라우저 탭이 열려 있을 때만 동작합니다.'}
+              ? ' 폰의 문서 폴더에 저장하고, Synology Drive 같은 동기화 앱으로 NAS와 연결할 수 있어요.'
+              : ' 브라우저 탭이 열려 있을 때만 동작해요.'}
         </p>
 
         {/* ② 주 저장 폴더 */}
@@ -249,8 +249,8 @@ export function SyncFolderSection() {
                 label="주 저장 폴더 설명"
                 content={
                   <div className="space-y-1 font-normal text-left leading-relaxed">
-                    <p className="font-semibold">메모가 실제 파일로 저장되는 원본 폴더 (기기당 1개)</p>
-                    <p>데스크톱 앱은 이 폴더를 감시해, 밖에서 파일을 고치면 앱에도 자동 반영됩니다 (양방향).</p>
+                    <p className="font-semibold">메모를 실제 파일로 저장하는 원본 폴더예요 (기기당 1개)</p>
+                    <p>데스크톱 앱은 이 폴더를 지켜보다가, 밖에서 파일을 고치면 앱에도 자동으로 반영해요 (양방향).</p>
                   </div>
                 }
               />
@@ -262,7 +262,7 @@ export function SyncFolderSection() {
                   {folderName}
                 </span>
               ) : (
-                '지정되지 않음'
+                '아직 정하지 않았어요'
               )}
             </div>
           </div>
@@ -284,9 +284,9 @@ export function SyncFolderSection() {
                   label="미러 폴더 설명"
                   content={
                     <div className="space-y-1 font-normal text-left leading-relaxed">
-                      <p className="font-semibold">주 저장 폴더의 결과를 그대로 복사하는 백업 폴더 (NAS·외장, 여러 개 가능)</p>
-                      <p>복사 전용(단방향): 앱이 읽지 않으므로 여기 파일을 고쳐도 반영되지 않습니다. 실패 시 자동 재시도.</p>
-                      <p>주 저장 폴더와 같거나 겹치는 폴더는 지정할 수 없습니다.</p>
+                      <p className="font-semibold">주 저장 폴더의 결과를 그대로 복사하는 백업 폴더예요 (NAS·외장, 여러 개 가능)</p>
+                      <p>복사 전용(단방향): 앱이 읽지 않아서 여기 파일을 고쳐도 반영되지 않아요. 복사하지 못하면 자동으로 다시 시도해요.</p>
+                      <p>주 저장 폴더와 같거나 겹치는 폴더는 정할 수 없어요.</p>
                     </div>
                   }
                 />
@@ -311,7 +311,7 @@ export function SyncFolderSection() {
                       type="button"
                       onClick={() => handleRemoveMirror(m.path)}
                       disabled={busy}
-                      aria-label={`미러 폴더 제거: ${m.name}`}
+                      aria-label={`미러 폴더 빼기: ${m.name}`}
                       className="mw-icon-button shrink-0"
                     >
                       <IcLineClose size={16} />
@@ -321,12 +321,12 @@ export function SyncFolderSection() {
               </ul>
             ) : (
               <p className="text-xs text-[var(--text-tertiary)]">
-                로컬 저장 결과를 복사할 NAS·백업 폴더를 추가할 수 있습니다. 주 저장 폴더와 겹치지 않는 별도 위치여야 합니다.
+                로컬 저장 결과를 복사할 NAS·백업 폴더를 추가할 수 있어요. 주 저장 폴더와 겹치지 않는 다른 위치여야 해요.
               </p>
             )}
             {pendingOps > 0 && (
               <p className="text-xs text-warning-600 dark:text-warning-400">
-                미러 대기 중 {pendingOps}건 — 연결되면 자동 재시도합니다.
+                미러 복사 {pendingOps}건이 기다리고 있어요. 연결되면 자동으로 다시 시도해요.
               </p>
             )}
           </div>
@@ -361,11 +361,11 @@ export function SyncFolderSection() {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">HTML 가져오기</div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400">외부 .html 파일을 정화 후 새 메모로 가져옵니다.</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">외부 .html 파일을 안전하게 정리한 뒤 새 메모로 가져와요.</div>
           </div>
           <Button variant="secondary" size="sm" onClick={() => htmlInputRef.current?.click()} disabled={busy}>
             <IcMwUpload size={16} className="mr-1.5" />
-            파일 선택
+            파일 고르기
           </Button>
           <input
             ref={htmlInputRef}
@@ -395,7 +395,7 @@ export function SyncFolderSection() {
         {status === 'needs-permission' && (
           <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-warning-50 dark:bg-warning-900/10 border border-warning-200 dark:border-warning-800">
             <span className="text-xs text-warning-700 dark:text-warning-300">
-              폴더 접근 권한이 필요합니다.
+              폴더 접근 권한이 필요해요.
             </span>
             <Button variant="secondary" size="sm" onClick={handleReconnect} disabled={busy}>
               <IcLineRefresh size={16} className="mr-1.5" />
@@ -417,7 +417,7 @@ export function SyncFolderSection() {
           <div className="min-w-0">
             <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">폴더 구조 동기화</div>
             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-              앱의 모든 폴더를 디스크에 폴더로 만듭니다(빈 폴더 포함). 파일·외부 폴더는 건드리지 않습니다.
+              앱의 모든 폴더를 디스크에 폴더로 만들어요(빈 폴더 포함). 파일과 외부 폴더는 건드리지 않아요.
             </div>
           </div>
           <Button
@@ -435,8 +435,8 @@ export function SyncFolderSection() {
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
             {exportProgress
-              ? `내보내는 중… ${exportProgress.done}/${exportProgress.total}`
-              : '기존 메모와 폴더 구조 전부를 폴더에 채웁니다.'}
+              ? `내보내고 있어요 ${exportProgress.done}/${exportProgress.total}`
+              : '기존 메모와 폴더 구조를 모두 폴더에 채워요.'}
           </div>
           <Button
             variant="secondary"

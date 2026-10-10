@@ -80,7 +80,7 @@ describe('api/ocr', () => {
     providerResponse = leakyError
     const res = await callHandler(ocr, { token, body: { imageDataUrl: IMAGE } })
     expect(res.statusCode).toBe(502)
-    expect(res.body).toEqual({ error: 'AI 서비스 요청에 실패했습니다.' })
+    expect(res.body).toEqual({ error: 'AI 서비스에 요청하지 못했어요. 잠시 뒤에 다시 시도해 주세요.' })
   })
 })
 
@@ -109,7 +109,7 @@ describe('api/stt', () => {
     providerResponse = leakyError
     const res = await callHandler(stt, { token, body: { audioBase64: AUDIO } })
     expect(res.statusCode).toBe(502)
-    expect(res.body).toEqual({ error: 'AI 서비스 요청에 실패했습니다.' })
+    expect(res.body).toEqual({ error: 'AI 서비스에 요청하지 못했어요. 잠시 뒤에 다시 시도해 주세요.' })
     expect(logged.join('\n')).not.toContain(leakedKey)
   })
 })

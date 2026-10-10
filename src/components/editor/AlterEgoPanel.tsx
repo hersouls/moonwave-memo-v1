@@ -66,7 +66,7 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
           <IcMwSpark size={48} className="text-zinc-300 dark:text-zinc-600" />
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            AI 서비스를 사용하려면 API 키가 필요합니다
+            AI 서비스를 쓰려면 API 키가 필요해요
           </p>
           <button type="button"
             onClick={() => useUIStore.getState().openSettingsModal()}
@@ -116,9 +116,9 @@ export function AlterEgoPanel({ body, onClose }: AlterEgoPanelProps) {
           <div className="flex flex-col items-center justify-center h-full text-center gap-2 px-4">
             <IcMwSpark size={32} className="text-zinc-200 dark:text-zinc-700" />
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              데미안은 당신의 또 다른 자아입니다.
+              데미안은 나의 또 다른 자아예요.
               <br />
-              글쓰기에 대해 질문하거나 생각을 나눠보세요.
+              글쓰기에 대해 묻거나 생각을 나눠 보세요.
             </p>
           </div>
         )}

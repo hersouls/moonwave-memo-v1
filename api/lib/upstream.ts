@@ -6,7 +6,7 @@ import type { VercelResponse } from '@vercel/node'
  * ids, or quota/billing state. Callers get a generic Korean message + status.
  */
 
-export const GENERIC_AI_ERROR = 'AI 서비스 요청에 실패했습니다.'
+export const GENERIC_AI_ERROR = 'AI 서비스에 요청하지 못했어요. 잠시 뒤에 다시 시도해 주세요.'
 
 export class ProviderError extends Error {
   constructor(
@@ -53,8 +53,8 @@ export function sendUpstreamError(res: VercelResponse, scope: string, err: unkno
   logUpstreamError(scope, err)
   let message = GENERIC_AI_ERROR
   if (!usingServerKey && err instanceof ProviderError) {
-    if (err.status === 401 || err.status === 403) message = '입력한 API 키가 거부되었습니다. 설정에서 키를 확인해 주세요.'
-    else if (err.status === 429) message = 'AI 제공자의 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.'
+    if (err.status === 401 || err.status === 403) message = '넣은 API 키가 받아들여지지 않았어요. 설정에서 키를 확인해 주세요.'
+    else if (err.status === 429) message = 'AI 제공자의 요청 한도를 넘었어요. 잠시 뒤에 다시 시도해 주세요.'
   }
   return res.status(502).json({ error: message })
 }

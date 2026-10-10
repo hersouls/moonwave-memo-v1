@@ -157,13 +157,13 @@ export function MemosLayout() {
             <div className="flex items-center justify-center h-full text-[var(--text-secondary)]">
               <div className="text-center">
                 <IcMwNote size={48} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm">메모를 선택하세요</p>
+                <p className="text-sm">메모를 골라 주세요</p>
                 <p className="text-xs mt-1 text-[var(--text-tertiary)]">
-                  또는 Alt+N으로 새 메모 작성
+                  Alt+N으로 새 메모를 쓸 수도 있어요
                 </p>
                 <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-[var(--text-tertiary)]">
                   <IcLineKeyboard size={16} />
-                  <span>Ctrl+[ / ] 으로 메모 탐색</span>
+                  <span>Ctrl+[ / ]로 메모 사이를 오가요</span>
                 </div>
               </div>
             </div>

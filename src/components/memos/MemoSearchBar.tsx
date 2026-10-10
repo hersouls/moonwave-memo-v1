@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useUIStore } from '@/stores/uiStore'
 import { parseNaturalQuery } from '@/services/aiSearch'
 import { SearchFilters } from './SearchFilters'
@@ -69,6 +70,15 @@ export function MemoSearchBar() {
     setIsExpanded(true)
     setTimeout(() => inputRef.current?.focus(), 50)
   }
+
+  // 하단 탭의 '찾기'(/memos?find=1)로 왔으면 찾기 칸을 열고 바로 글자를 받아요. 탭을 다시 눌러도 같아요.
+  const location = useLocation()
+  useEffect(() => {
+    if (!new URLSearchParams(location.search).has('find')) return
+    setIsExpanded(true)
+    const timer = setTimeout(() => inputRef.current?.focus(), 50)
+    return () => clearTimeout(timer)
+  }, [location.key, location.search])
 
   const handleClear = () => {
     setLocalQuery('')
@@ -152,8 +162,9 @@ export function MemoSearchBar() {
 
   return (
     <div ref={containerRef}>
-      <div className="relative">
-        <div className="mw-searchbar" role="search">
+      <div className="relative" role="search">
+        {/* 키트의 찾기 바는 label이에요: 높이 44px의 바 전체가 글자 칸을 누르는 영역이 돼요 */}
+        <label className="mw-searchbar">
           <IcLineSearch size={20} />
           <input
             ref={inputRef}
@@ -192,7 +203,7 @@ export function MemoSearchBar() {
               <IcLineClose size={16} />
             </button>
           )}
-        </div>
+        </label>
 
         {/* Recent searches dropdown — elevated surface tokens (dark parity with menus/popovers) */}
         {showRecent && !localQuery && recentSearches.length > 0 && (
@@ -218,7 +229,7 @@ export function MemoSearchBar() {
                   type="button"
                   onClick={(e) => handleRemoveRecent(e, query)}
                   className="mw-icon-button relative mr-1 shrink-0 after:absolute after:-inset-1"
-                  aria-label={`"${query}" 최근 검색 삭제`}
+                  aria-label={`"${query}" 최근 검색 지우기`}
                 >
                   <IcLineClose size={12} />
                 </button>

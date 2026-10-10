@@ -59,7 +59,7 @@ export function AISummaryPanel({ content }: AISummaryPanelProps) {
             onClick={handleGenerate}
             className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default mt-2"
           >
-            <span>다시 생성</span>
+            <span>다시 만들기</span>
           </button>
         </div>
       )}

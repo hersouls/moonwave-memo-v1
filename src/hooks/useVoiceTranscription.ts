@@ -47,7 +47,7 @@ export function useVoiceTranscription() {
     setError(null)
     const validation = validateAudioFile(file)
     if (!validation.valid) {
-      setError(validation.error || '유효하지 않은 파일입니다')
+      setError(validation.error || '쓸 수 없는 파일이에요. 다른 파일을 골라 주세요')
       setStatus('error')
       return
     }
@@ -71,7 +71,7 @@ export function useVoiceTranscription() {
     } catch (err) {
       stopProgressSimulation()
       setProgress(0)
-      const msg = err instanceof Error ? err.message : '음성 변환 중 오류가 발생했습니다'
+      const msg = err instanceof Error ? err.message : '음성을 받아 적지 못했어요. 다시 시도해 주세요'
       setError(msg)
       setStatus('error')
     }

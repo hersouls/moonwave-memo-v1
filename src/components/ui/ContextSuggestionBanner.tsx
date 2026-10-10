@@ -33,7 +33,7 @@ export function ContextSuggestionBanner({ memo, onDismiss }: ContextSuggestionBa
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              지금 이 메모가 필요하지 않으세요?
+              지금 이 메모가 필요하지 않나요?
             </p>
             <button type="button"
               onClick={handleClick}

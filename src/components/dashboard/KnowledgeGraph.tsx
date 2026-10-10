@@ -62,7 +62,7 @@ export function KnowledgeGraph() {
       type="button"
       onClick={() => setModalOpen(true)}
       aria-label="지식 그래프 확대"
-      title="확대하여 탐색"
+      title="크게 펼쳐 살펴보기"
       className="mw-icon-button"
     >
       <IcLineExpand size={16} />
@@ -75,7 +75,7 @@ export function KnowledgeGraph() {
         {!hasGraph ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <IcLineShare size={20} className="text-zinc-400" aria-hidden="true" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">메모가 3개 이상 필요합니다</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">메모가 3개 이상 필요해요</p>
           </div>
         ) : (
           <div className="relative block w-full overflow-hidden rounded-lg">

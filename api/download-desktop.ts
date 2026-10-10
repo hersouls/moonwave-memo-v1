@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const token = process.env.RELEASE_GH_TOKEN
   if (!token) {
-    return res.status(503).json({ error: '데스크톱 다운로드가 아직 설정되지 않았습니다 (RELEASE_GH_TOKEN 미설정).' })
+    return res.status(503).json({ error: '데스크톱 앱 내려받기가 아직 준비되지 않았어요 (RELEASE_GH_TOKEN이 설정되지 않았어요).' })
   }
 
   const platform = (firstQuery(req.query.platform) || 'win').toLowerCase()
@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const relRes = await fetch(`${GH_API}/repos/${REPO}/releases/latest`, { headers: ghHeaders })
     if (relRes.status === 404) {
-      return res.status(404).json({ error: '아직 발행된 데스크톱 릴리스가 없습니다.' })
+      return res.status(404).json({ error: '아직 올라온 데스크톱 앱이 없어요.' })
     }
     if (!relRes.ok) {
       return res.status(502).json({ error: `GitHub 릴리스 조회 실패 (${relRes.status}).` })
@@ -74,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const release = (await relRes.json()) as Release
     const asset = pickAsset(release.assets || [], platform)
     if (!asset) {
-      return res.status(404).json({ error: `최신 릴리스에 '${platform}' 설치본이 없습니다.` })
+      return res.status(404).json({ error: `최신 판에 '${platform}' 설치 파일이 없어요.` })
     }
 
     if (wantInfo) {
@@ -101,6 +101,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     return res.status(502).json({ error: `설치본 자산 응답이 예상과 다릅니다 (${assetRes.status}).` })
   } catch (err) {
-    return res.status(502).json({ error: err instanceof Error ? err.message : '다운로드에 실패했습니다.' })
+    return res.status(502).json({ error: err instanceof Error ? err.message : '내려받지 못했어요. 잠시 뒤에 다시 시도해 주세요.' })
   }
 }

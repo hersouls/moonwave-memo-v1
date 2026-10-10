@@ -50,7 +50,7 @@ export function validateImageFile(file: File): ValidationResult {
   if (!ALLOWED_EXTENSIONS.includes(ext)) {
     return {
       valid: false,
-      error: `지원하지 않는 파일 형식입니다. 지원 형식: ${ALLOWED_EXTENSIONS.join(', ')}`,
+      error: `지원하지 않는 파일 형식이에요. 쓸 수 있는 형식: ${ALLOWED_EXTENSIONS.join(', ')}`,
     }
   }
 
@@ -58,7 +58,7 @@ export function validateImageFile(file: File): ValidationResult {
   if (file.type && !hasValidMime) {
     return {
       valid: false,
-      error: `지원하지 않는 파일 형식입니다 (${file.type})`,
+      error: `지원하지 않는 파일 형식이에요 (${file.type})`,
     }
   }
 
@@ -66,7 +66,7 @@ export function validateImageFile(file: File): ValidationResult {
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
     return {
       valid: false,
-      error: `파일 크기가 20MB를 초과합니다 (${sizeMB}MB)`,
+      error: `20MB가 넘는 파일은 올릴 수 없어요 (지금 파일: ${sizeMB}MB)`,
     }
   }
 
@@ -121,9 +121,9 @@ async function extractTextWithOpenAI(
     })
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('텍스트 추출이 취소되었습니다')
+      throw new Error('글자 읽기를 취소했어요')
     }
-    throw new Error('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.')
+    throw new Error('연결하지 못했어요. 인터넷 연결을 확인해 주세요.')
   }
 
   if (!res.ok) {
@@ -146,12 +146,12 @@ async function extractTextWithAnthropic(
   // Parse data URL -> base64 + media type
   const match = imageDataUrl.match(/^data:(image\/[\w+]+);base64,(.+)$/)
   if (!match) {
-    throw new Error('이미지 데이터 형식이 올바르지 않습니다')
+    throw new Error('이미지 데이터 형식이 올바르지 않아요')
   }
   const rawMediaType = match[1]
   const allowedMediaTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
   if (!allowedMediaTypes.includes(rawMediaType as typeof allowedMediaTypes[number])) {
-    throw new Error(`지원하지 않는 이미지 형식입니다: ${rawMediaType}`)
+    throw new Error(`지원하지 않는 이미지 형식이에요: ${rawMediaType}`)
   }
   const mediaType = rawMediaType as typeof allowedMediaTypes[number]
   const base64Data = match[2]
@@ -190,9 +190,9 @@ async function extractTextWithAnthropic(
     })
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('텍스트 추출이 취소되었습니다')
+      throw new Error('글자 읽기를 취소했어요')
     }
-    throw new Error('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.')
+    throw new Error('연결하지 못했어요. 인터넷 연결을 확인해 주세요.')
   }
 
   if (!res.ok) {
@@ -208,15 +208,15 @@ async function extractTextWithAnthropic(
 // ─── Error Handler ────────────────────────────────
 function handleAPIError(status: number, provider: string): never {
   if (status === 401) {
-    throw new Error(`${provider} API 키가 유효하지 않습니다. 설정에서 API 키를 확인해주세요.`)
+    throw new Error(`${provider} API 키가 올바르지 않아요. 설정에서 API 키를 확인해 주세요.`)
   }
   if (status === 429) {
-    throw new Error('API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.')
+    throw new Error('API 요청 한도를 넘었어요. 잠시 후 다시 시도해 주세요.')
   }
   if (status === 413) {
-    throw new Error('이미지 크기가 너무 큽니다.')
+    throw new Error('이미지가 너무 커요. 더 작은 이미지로 다시 시도해 주세요.')
   }
-  throw new Error('텍스트 추출 중 오류가 발생했습니다')
+  throw new Error('글자를 읽지 못했어요. 다시 시도해 주세요')
 }
 
 // ─── Unified API: proxy first, then direct fallback ──
@@ -237,7 +237,7 @@ export async function extractTextFromImage(
     // data URL is already base64 (+33%), so guard on its length to fail with a clear,
     // actionable message instead of the generic "unavailable" error below.
     if (imageDataUrl.length > VERCEL_PROXY_MAX_CHARS) {
-      throw new Error('이미지가 서버 업로드 한도(약 3MB)를 초과합니다. 설정에서 API 키를 등록하면 더 큰 이미지도 인식할 수 있습니다.')
+      throw new Error('서버로 올릴 수 있는 크기(약 3MB)를 넘는 이미지예요. 설정에서 API 키를 등록하면 더 큰 이미지도 읽을 수 있어요.')
     }
     let proxyRes: Response | null = null
     try {
@@ -257,7 +257,7 @@ export async function extractTextFromImage(
       return { text: data.text || '', provider }
     }
     if (proxyRes?.status === 413) {
-      throw new Error('이미지가 서버 업로드 한도를 초과합니다. 설정에서 API 키를 등록하면 더 큰 이미지도 인식할 수 있습니다.')
+      throw new Error('서버로 올릴 수 있는 크기를 넘는 이미지예요. 설정에서 API 키를 등록하면 더 큰 이미지도 읽을 수 있어요.')
     }
     if (proxyRes && [401, 403, 429].includes(proxyRes.status)) {
       throw new Error(await apiErrorMessage(proxyRes))
@@ -265,7 +265,7 @@ export async function extractTextFromImage(
   }
 
   // Fallback to direct API calls with user-provided key
-  if (!apiKey) throw new Error('OCR을 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+  if (!apiKey) throw new Error('OCR을 쓸 수 없어요. 잠시 후 다시 시도해 주세요.')
   if (provider === 'anthropic') {
     return extractTextWithAnthropic(imageDataUrl, apiKey, language, signal)
   }

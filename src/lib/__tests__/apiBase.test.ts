@@ -99,6 +99,6 @@ describe('apiErrorMessage', () => {
     const korean = new Response(JSON.stringify({ error: 'AI 서비스 요청에 실패했습니다.' }), { status: 502 })
     expect(await apiErrorMessage(korean)).toBe('AI 서비스 요청에 실패했습니다.')
     const english = new Response(JSON.stringify({ error: 'Incorrect API key provided: sk-…' }), { status: 502 })
-    expect(await apiErrorMessage(english)).toBe('서버 오류: 502')
+    expect(await apiErrorMessage(english)).toBe('서버에서 요청을 처리하지 못했어요 (502). 잠시 후 다시 시도해 주세요')
   })
 })

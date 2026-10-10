@@ -28,14 +28,14 @@ export function ShareLinkModal({ isOpen, onClose, title, body, tags }: ShareLink
     a.download = `${title || 'memo'}.html`
     a.click()
     URL.revokeObjectURL(url)
-    useToastStore.getState().showToast('HTML \uD30C\uC77C\uC774 \uB2E4\uC6B4\uB85C\uB4DC\uB418\uC5C8\uC2B5\uB2C8\uB2E4', 'success')
+    useToastStore.getState().showToast('HTML 파일을 내려받았어요', 'success')
   }
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="lg">
       <DialogHeader
         title={'\uB9C1\uD06C\uB85C \uACF5\uC720'}
-        description={'\uBA54\uBAA8\uB97C HTML \uD30C\uC77C\uB85C \uB0B4\uBCF4\uB0B4 \uACF5\uC720\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'}
+        description={'메모를 HTML 파일로 내보내 공유할 수 있어요.'}
         onClose={onClose}
       />
 
@@ -68,7 +68,7 @@ export function ShareLinkModal({ isOpen, onClose, title, body, tags }: ShareLink
             <iframe
               srcDoc={htmlContent}
               className="w-full h-[300px] border-0"
-              title="Share preview"
+              title="공유 미리보기"
               sandbox="allow-same-origin"
             />
           </div>
@@ -87,7 +87,7 @@ export function ShareLinkModal({ isOpen, onClose, title, body, tags }: ShareLink
           className="mw-button mw-button--primary mw-button--medium"
         >
           <IcLineDownload size={16} />
-          HTML {'\uD30C\uC77C \uB2E4\uC6B4\uB85C\uB4DC'}
+          HTML {'파일 내려받기'}
         </button>
       </DialogFooter>
     </Dialog>

@@ -40,7 +40,7 @@ export async function compressImage(
 
       const ctx = canvas.getContext('2d')
       if (!ctx) {
-        reject(new Error('이미지 처리 중 오류가 발생했습니다'))
+        reject(new Error('이미지를 처리하지 못했어요. 다시 시도해 주세요.'))
         return
       }
 
@@ -52,7 +52,7 @@ export async function compressImage(
 
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl)
-      reject(new Error('이미지를 로드할 수 없습니다. 다른 형식의 이미지를 사용해주세요.'))
+      reject(new Error('이미지를 불러오지 못했어요. 다른 형식의 이미지를 써 주세요.'))
     }
 
     img.src = objectUrl

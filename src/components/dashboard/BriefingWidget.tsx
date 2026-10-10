@@ -89,11 +89,11 @@ export function BriefingWidget() {
           <div className="flex items-center gap-3">
             <IcLineDocument size={16} className="text-zinc-400 shrink-0" />
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {'어제'}{' '}
+              {'어제 메모'}{' '}
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                 {localBriefing.yesterdayCount}{'개'}
               </span>
-              {'의 메모를 작성했습니다'}
+              {'를 썼어요'}
             </p>
           </div>
         )}
@@ -103,11 +103,11 @@ export function BriefingWidget() {
           <div className="flex items-center gap-3">
             <IcMwCheckSquare size={16} className="text-amber-500 shrink-0" />
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {'미완료 TODO'}{' '}
+              {'할 일'}{' '}
               <span className="font-semibold text-amber-600 dark:text-amber-400">
                 {localBriefing.pendingTodos}{'개'}
               </span>
-              {'가 남아있습니다'}
+              {'가 남아 있어요'}
             </p>
           </div>
         )}
@@ -150,7 +150,7 @@ export function BriefingWidget() {
         {aiLoading && (
           <div className="flex items-center gap-2 pl-7">
             <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{'AI 분석 중...'}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{'AI가 분석하고 있어요'}</span>
           </div>
         )}
       </div>

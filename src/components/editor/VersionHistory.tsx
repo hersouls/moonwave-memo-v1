@@ -103,9 +103,9 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
           {/* Timeline sidebar */}
           <div className="w-48 shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-y-auto">
             {isLoading ? (
-              <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">로딩 중...</div>
+              <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">불러오고 있어요</div>
             ) : versions.length === 0 ? (
-              <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">버전 기록이 없습니다.</div>
+              <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">아직 버전 기록이 없어요.</div>
             ) : (
               <div className="py-3 px-3">
                 {versions.map((v, idx) => (
@@ -182,7 +182,7 @@ export function VersionHistory({ memoId, currentTitle, currentBody, onRestore, o
               </>
             ) : (
               <div className="flex items-center justify-center h-full text-sm text-zinc-500 dark:text-zinc-400">
-                왼쪽에서 버전을 선택하세요
+                왼쪽에서 버전을 골라 주세요
               </div>
             )}
           </div>

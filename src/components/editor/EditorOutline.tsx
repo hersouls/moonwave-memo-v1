@@ -52,7 +52,7 @@ export function EditorOutline({ body, onScrollToLine, onScrollToHeadingIndex, on
         </div>
         <div className="flex-1 flex items-center justify-center px-4 text-center">
           <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-            마크다운 헤딩(# ~ ####)을<br />사용하면 여기에 목차가<br />자동 생성됩니다.
+            마크다운 제목(# ~ ####)을<br />쓰면 여기에 목차가<br />자동으로 만들어져요.
           </p>
         </div>
       </div>

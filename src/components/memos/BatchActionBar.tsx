@@ -70,7 +70,7 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
       url: `${window.location.origin}/memo/${memo.id}`,
     })
     if (result === 'copied') {
-      useToastStore.getState().showToast('클립보드에 복사되었습니다', 'success')
+      useToastStore.getState().showToast('클립보드에 복사했어요', 'success')
     }
     clearSelection()
   }
@@ -78,7 +78,7 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
   const handleRestore = async () => {
     navigator.vibrate?.(20)
     await batchRestore(selectedMemoIds)
-    useToastStore.getState().showToast(`${count}개 메모가 복원되었습니다`, 'success')
+    useToastStore.getState().showToast(`메모 ${count}개를 복원했어요`, 'success')
     clearSelection()
   }
 
@@ -87,7 +87,7 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
     for (const id of selectedMemoIds) {
       await permanentDelete(id)
     }
-    useToastStore.getState().showToast(`${count}개 메모가 영구 삭제되었습니다`, 'info')
+    useToastStore.getState().showToast(`메모 ${count}개를 완전히 지웠어요`, 'info')
     setIsPermanentDeleteOpen(false)
     clearSelection()
   }
@@ -98,9 +98,9 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
     setIsRegenerating(true)
     try {
       await batchRegenerateTitles(selectedMemoIds)
-      useToastStore.getState().showToast(`${count}개 메모 제목을 재생성했습니다`, 'success')
+      useToastStore.getState().showToast(`메모 ${count}개의 제목을 다시 만들었어요`, 'success')
     } catch {
-      useToastStore.getState().showToast('제목 재생성에 실패했습니다', 'error')
+      useToastStore.getState().showToast('제목을 다시 만들지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsRegenerating(false)
       clearSelection()
@@ -116,22 +116,22 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
       const { showToast } = useToastStore.getState()
       const done = result.generated + result.recovered
       if (result.alreadyRunning) {
-        showToast('태그 생성이 이미 진행 중입니다', 'info')
+        showToast('이미 태그를 만들고 있어요', 'info')
       } else if (done > 0 && result.unprocessed > 0) {
-        showToast(`${done}개 메모에 태그를 생성했습니다 (${result.unprocessed}개는 생성하지 못했습니다)`, 'success')
+        showToast(`메모 ${done}개에 태그를 만들었어요 (${result.unprocessed}개는 만들지 못했어요)`, 'success')
       } else if (done > 0) {
-        showToast(`${done}개 메모에 태그를 생성했습니다`, 'success')
+        showToast(`메모 ${done}개에 태그를 만들었어요`, 'success')
       } else if (result.unprocessed > 0) {
         if (result.aiUnavailable) {
-          showToast('AI를 사용할 수 없어 태그를 생성하지 못했습니다. 설정에서 API 키를 등록하세요', 'warning')
+          showToast('AI를 쓸 수 없어 태그를 만들지 못했어요. 설정에서 API 키를 등록해 주세요', 'warning')
         } else {
-          showToast('AI 태그 생성에 실패했습니다. 잠시 후 다시 시도하세요', 'error')
+          showToast('AI 태그를 만들지 못했어요. 잠시 후 다시 시도해 주세요', 'error')
         }
       } else {
-        showToast('선택한 메모에 이미 태그가 있거나 대상이 없습니다', 'info')
+        showToast('고른 메모에 이미 태그가 있거나 태그를 만들 메모가 없어요', 'info')
       }
     } catch {
-      useToastStore.getState().showToast('태그 생성에 실패했습니다', 'error')
+      useToastStore.getState().showToast('태그를 만들지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsTagging(false)
       clearSelection()
@@ -165,10 +165,10 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
             <button type="button"
               onClick={() => setIsPermanentDeleteOpen(true)}
               className="mw-button mw-button--tertiary-subtle mw-button--medium shrink-0"
-              aria-label="영구 삭제"
+              aria-label="완전히 지우기"
             >
               <IcLineTrash size={16} />
-              <span className="hidden sm:inline">영구 삭제</span>
+              <span className="hidden sm:inline">완전히 지우기</span>
             </button>
           </>
         ) : (
@@ -178,9 +178,9 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
               <span className="hidden sm:inline">이동</span>
             </button>
 
-            <button onClick={handleDelete} className={btnClass} aria-label="삭제">
+            <button onClick={handleDelete} className={btnClass} aria-label="지우기">
               <IcLineTrash size={16} />
-              <span className="hidden sm:inline">삭제</span>
+              <span className="hidden sm:inline">지우기</span>
             </button>
 
             <button onClick={handleStar} className={btnClass} aria-label="중요">
@@ -246,9 +246,9 @@ export function BatchActionBar({ isTrashView = false }: BatchActionBarProps) {
         open={isPermanentDeleteOpen}
         onClose={() => setIsPermanentDeleteOpen(false)}
         onConfirm={handlePermanentDelete}
-        title="영구 삭제"
-        description={`선택한 ${count}개 메모를 영구적으로 삭제합니다. 이 작업은 되돌릴 수 없습니다.`}
-        confirmText="영구 삭제"
+        title={`메모 ${count}개를 완전히 지울까요?`}
+        description="지운 메모는 되돌릴 수 없어요."
+        confirmText="완전히 지우기"
         variant="danger"
       />
     </>

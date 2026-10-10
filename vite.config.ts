@@ -43,7 +43,11 @@ function buildVersionPlugin(): Plugin {
   }
 }
 
+// 설정 화면의 '버전'에 보이는 값이에요 (package.json의 version)
+const appVersion: string = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')).version
+
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
   plugins: [
     react(),
     tailwindcss(),

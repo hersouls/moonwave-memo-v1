@@ -58,12 +58,12 @@ async function callOpenAIDirect(apiKey: string, prompt: string, systemPrompt: st
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
+      return { text: '', error: err.error?.message || `AI 서비스가 요청을 처리하지 못했어요 (${res.status})` }
     }
     const data = await res.json()
     return { text: data.choices?.[0]?.message?.content?.trim() || '' }
   } catch (err) {
-    return { text: '', error: `요청 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+    return { text: '', error: `AI 요청을 보내지 못했어요 (${err instanceof Error ? err.message : '원인 미상'})` }
   }
 }
 
@@ -86,13 +86,13 @@ async function callAnthropicDirect(apiKey: string, prompt: string, systemPrompt:
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
+      return { text: '', error: err.error?.message || `AI 서비스가 요청을 처리하지 못했어요 (${res.status})` }
     }
     const data = await res.json()
     const textBlock = data.content?.find((c: { type: string }) => c.type === 'text')
     return { text: textBlock?.text?.trim() || '' }
   } catch (err) {
-    return { text: '', error: `요청 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+    return { text: '', error: `AI 요청을 보내지 못했어요 (${err instanceof Error ? err.message : '원인 미상'})` }
   }
 }
 
@@ -112,12 +112,12 @@ async function callGeminiDirect(apiKey: string, prompt: string, systemPrompt: st
     )
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
+      return { text: '', error: err.error?.message || `AI 서비스가 요청을 처리하지 못했어요 (${res.status})` }
     }
     const data = await res.json()
     return { text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '' }
   } catch (err) {
-    return { text: '', error: `요청 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+    return { text: '', error: `AI 요청을 보내지 못했어요 (${err instanceof Error ? err.message : '원인 미상'})` }
   }
 }
 
@@ -131,7 +131,7 @@ async function callViaServerProxy(prompt: string, systemPrompt: string, provider
   // Check daily limit before calling
   if (isAILimitReached()) {
     useToastStore.getState().showToast(
-      '오늘의 무료 AI 사용 횟수(50회)를 초과했습니다',
+      '오늘 무료로 쓸 수 있는 AI 횟수(50회)를 다 썼어요',
       'warning',
       { action: { label: 'API 키 등록', onClick: () => useUIStore.getState().openSettingsModal() } }
     )
@@ -170,7 +170,7 @@ async function callViaServerProxy(prompt: string, systemPrompt: string, provider
   } catch (err) {
     // Signed out and no personal key: say so instead of calling the server.
     if (err instanceof AuthRequiredError) return { text: '', error: err.message }
-    return { text: '', error: `서버 연결 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+    return { text: '', error: `서버에 연결하지 못했어요 (${err instanceof Error ? err.message : '원인 미상'})` }
   }
 }
 
@@ -403,7 +403,7 @@ export async function enhanceReadability(content: string): Promise<{ enhanced: s
   // everything past char 5000 is silently deleted on a long memo (permanent data loss).
   const tail = content.length > READABILITY_LIMIT ? '\n\n' + content.slice(READABILITY_LIMIT) : ''
   const warnTruncated = () => {
-    if (tail) useToastStore.getState().showToast('긴 메모라 앞부분 5000자만 AI 편집했습니다. 나머지는 그대로 유지됩니다.', 'info')
+    if (tail) useToastStore.getState().showToast('긴 메모라 앞부분 5,000자만 AI로 편집했어요. 나머지는 그대로 남아요.', 'info')
   }
 
   // Try LangChain endpoint first

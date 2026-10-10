@@ -55,7 +55,7 @@ export default createHandler(POLICIES.briefing, async (req: VercelRequest, res: 
 }
 
 규칙:
-- 한국어로 작성
+- 한국어 해요체로 작성 (예: "메모 3개를 썼어요"). 합니다체 · 반말은 쓰지 않음
 - 간결하고 따뜻한 톤
 - 실제 메모 내용을 기반으로 구체적으로 작성
 - JSON 외의 텍스트를 포함하지 마세요`),
@@ -73,12 +73,12 @@ export default createHandler(POLICIES.briefing, async (req: VercelRequest, res: 
 
   return res.status(200).json({
     briefing: {
-      greeting: `최근 ${(recentMemos as MemoInput[]).length}개의 메모를 작성했습니다.`,
+      greeting: `최근에 메모 ${(recentMemos as MemoInput[]).length}개를 썼어요.`,
       moodSummary: '',
       keyTopics: [],
       pendingActions: pendingTodos || [],
       todayFocus: '',
-      encouragement: currentStreak >= 3 ? `${currentStreak}일 연속 작성 중입니다!` : '',
+      encouragement: currentStreak >= 3 ? `${currentStreak}일째 이어서 쓰고 있어요` : '',
     },
     usingServerKey,
   })

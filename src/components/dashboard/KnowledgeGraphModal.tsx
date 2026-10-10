@@ -38,7 +38,7 @@ class Graph3DBoundary extends Component<
     if (this.state.failed) {
       return (
         <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <p>3D 뷰를 불러오지 못했습니다 — 네트워크 또는 앱 업데이트를 확인해 주세요.</p>
+          <p>3D 보기를 불러오지 못했어요. 인터넷 연결이나 앱 업데이트를 확인해 주세요.</p>
           <button
             type="button"
             onClick={() => {
@@ -257,13 +257,13 @@ export function KnowledgeGraphModal({
 
   const handleExport = useCallback(async () => {
     if (!graphRef.current) {
-      toast('그래프가 아직 준비되지 않았습니다', 'info')
+      toast('그래프를 아직 준비하고 있어요. 잠시 후 다시 시도해 주세요', 'info')
       return
     }
     try {
       await graphRef.current.exportPNG()
     } catch {
-      toast('이미지 저장에 실패했습니다', 'error')
+      toast('이미지를 저장하지 못했어요. 다시 시도해 주세요', 'error')
     }
   }, [toast])
 
@@ -316,7 +316,7 @@ export function KnowledgeGraphModal({
             <button aria-pressed={is3D}
               type="button"
               onClick={() => setIs3D((v) => !v)}
-              title={is3D ? '2D 뷰로 전환' : '3D 뷰로 전환 (최초 1회 로딩)'}
+              title={is3D ? '2D 보기로 바꾸기' : '3D 보기로 바꾸기 (처음 한 번만 불러와요)'}
               className={`mw-select-chip mw-select-chip--${is3D ? 'on' : 'off'}`}
             >
               <IcMwRotate size={16} />
@@ -328,8 +328,8 @@ export function KnowledgeGraphModal({
               onClick={() => setAiOn((v) => !v)}
               title={
                 sem.capable || sem.links.length > 0
-                  ? `AI 의미 연결 ${aiOn ? '끄기' : '켜기'}${sem.skipped > 0 ? ` — ${sem.skipped}개 미계산(키 필요)` : ''}`
-                  : 'AI 의미 연결 — OpenAI 키 또는 로그인 필요 (기존 캐시는 오프라인 동작)'
+                  ? `AI 의미 연결 ${aiOn ? '끄기' : '켜기'}${sem.skipped > 0 ? ` · ${sem.skipped}개는 계산하지 못했어요 (키 필요)` : ''}`
+                  : 'AI 의미 연결을 쓰려면 OpenAI 키나 로그인이 필요해요 (이미 계산해 둔 연결은 오프라인에서도 보여요)'
               }
               className={`mw-select-chip mw-select-chip--${aiOn ? 'on' : 'off'}`}
             >
@@ -414,7 +414,7 @@ export function KnowledgeGraphModal({
                 fallback={
                   <div className="flex h-full items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                     <IcLineLoading size={16} className="animate-spin" />
-                    3D 엔진 로딩 중…
+                    3D 보기를 불러오고 있어요
                   </div>
                 }
               >
@@ -453,9 +453,9 @@ export function KnowledgeGraphModal({
           {mergedLinks.length === 0 && !sem.computing && (
             <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center px-6">
               <p className="max-w-sm rounded-xl bg-white/80 px-4 py-3 text-center text-sm text-zinc-500 shadow-sm backdrop-blur dark:bg-zinc-900/70 dark:text-zinc-400">
-                아직 메모 간 연결이 없습니다. 본문에{' '}
+                아직 메모 사이에 연결이 없어요. 본문에{' '}
                 <span className="font-mono text-zinc-700 dark:text-zinc-200">[[메모 제목]]</span> 을 적거나,
-                태그를 달거나, AI 연결을 켜면 관계가 자동으로 그려집니다.
+                태그를 달거나, AI 연결을 켜면 관계를 자동으로 그려요.
               </p>
             </div>
           )}

@@ -27,8 +27,8 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
         <EmptyState
           size="sm"
           icon={<IcLineCalendar size={24} className="text-zinc-300 dark:text-zinc-600" />}
-          title="날짜를 선택하세요"
-          description="날짜를 선택하면 해당 날짜의 메모를 볼 수 있습니다."
+          title="날짜를 골라 주세요"
+          description="날짜를 누르면 그날 쓴 메모를 볼 수 있어요."
         />
       </div>
     )
@@ -82,8 +82,8 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
             title="이 날짜에는 메모가 없어요"
             description={
               isSelectedToday
-                ? '새 메모를 작성해 오늘을 기록해보세요.'
-                : '이 날짜에 작성된 메모가 없습니다.'
+                ? '새 메모를 써서 오늘을 기록해 보세요.'
+                : '이 날짜에 쓴 메모가 없어요.'
             }
             action={
               isSelectedToday ? (
@@ -92,7 +92,7 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
                   className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-3"
                 >
                   <IcLineEdit size={16} />
-                  메모 작성
+                  메모 쓰기
                 </button>
               ) : undefined
             }

@@ -29,15 +29,15 @@ export function ShareTargetPage() {
     addMemo({ title, body, folderId: null })
       .then((id) => {
         if (id) {
-          useToastStore.getState().showToast('공유된 내용으로 메모가 생성되었습니다', 'success')
+          useToastStore.getState().showToast('공유한 내용으로 메모를 만들었어요', 'success')
           navigate(`/memo/${id}`, { replace: true })
         } else {
-          useToastStore.getState().showToast('메모 생성에 실패했습니다', 'error')
+          useToastStore.getState().showToast('메모를 만들지 못했어요. 다시 시도해 주세요', 'error')
           navigate('/', { replace: true })
         }
       })
       .catch(() => {
-        useToastStore.getState().showToast('메모 생성에 실패했습니다', 'error')
+        useToastStore.getState().showToast('메모를 만들지 못했어요. 다시 시도해 주세요', 'error')
         navigate('/', { replace: true })
       })
   }, [searchParams, addMemo, navigate])
@@ -55,7 +55,7 @@ export function ShareTargetPage() {
 
         <Spinner size="md" className="w-6 h-6 text-primary-500" label="" />
         <p className="mt-4 text-sm text-[var(--color-text-secondary)]" role="status">
-          공유된 내용으로 메모를 만드는 중...
+          공유한 내용으로 메모를 만들고 있어요
         </p>
       </div>
     </div>

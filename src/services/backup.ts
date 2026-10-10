@@ -92,10 +92,10 @@ export function parseBackupFile(
         const data = JSON.parse(text)
         resolve({ success: true, data })
       } catch {
-        resolve({ success: false, error: '파일을 읽을 수 없습니다. 유효한 JSON 파일인지 확인하세요.' })
+        resolve({ success: false, error: '파일을 읽지 못했어요. 올바른 JSON 파일인지 확인해 주세요.' })
       }
     }
-    reader.onerror = () => resolve({ success: false, error: '파일 읽기에 실패했습니다.' })
+    reader.onerror = () => resolve({ success: false, error: '파일을 읽지 못했어요. 다시 시도해 주세요.' })
     reader.readAsText(file)
   })
 }
@@ -105,26 +105,26 @@ export function validateBackup(data: unknown): BackupValidationResult {
   const warnings: string[] = []
 
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    return { valid: false, errors: ['유효한 JSON 파일이 아닙니다.'], warnings: [] }
+    return { valid: false, errors: ['올바른 JSON 파일이 아니에요.'], warnings: [] }
   }
 
   const backup = data as Partial<BackupFile>
 
   if (!backup.version) {
-    errors.push('버전 정보가 없습니다.')
+    errors.push('버전 정보가 없어요.')
   }
 
   if (!backup.data) {
-    errors.push('데이터가 없습니다.')
+    errors.push('데이터가 없어요.')
     return { valid: false, errors, warnings }
   }
 
   if (!Array.isArray(backup.data.memos)) {
-    errors.push('메모 데이터가 유효하지 않습니다.')
+    errors.push('메모 데이터가 올바르지 않아요.')
   }
 
   if (!Array.isArray(backup.data.folders)) {
-    warnings.push('폴더 데이터가 없습니다. 기본 폴더가 사용됩니다.')
+    warnings.push('폴더 데이터가 없어요. 기본 폴더를 써요.')
   }
 
   return {
@@ -235,7 +235,7 @@ export async function restoreFromBackup(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : '데이터 복원에 실패했습니다.',
+      error: error instanceof Error ? error.message : '데이터를 복원하지 못했어요. 다시 시도해 주세요.',
     }
   }
 }

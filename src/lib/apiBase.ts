@@ -94,7 +94,7 @@ export async function apiErrorMessage(res: Response): Promise<string> {
       const body = (await res.json().catch(() => null)) as { error?: unknown } | null
       return res.status >= 500 && typeof body?.error === 'string' && /[가-힣]/.test(body.error)
         ? body.error
-        : `서버 오류: ${res.status}`
+        : `서버에서 요청을 처리하지 못했어요 (${res.status}). 잠시 후 다시 시도해 주세요`
     }
   }
 }

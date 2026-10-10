@@ -74,7 +74,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
     })
     if (result === 'copied') {
       const { useToastStore } = await import('@/stores/toastStore')
-      useToastStore.getState().showToast('클립보드에 복사되었습니다', 'success')
+      useToastStore.getState().showToast('클립보드에 복사했어요', 'success')
     }
     setIsMenuOpen(false)
   }
@@ -94,13 +94,13 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
 
     const { useToastStore } = await import('@/stores/toastStore')
     if (!fullText) {
-      useToastStore.getState().showToast('복사할 내용이 없습니다', 'info')
+      useToastStore.getState().showToast('복사할 내용이 없어요', 'info')
       return
     }
     const { copyTextToClipboard } = await import('@/utils/share')
     const ok = await copyTextToClipboard(fullText)
     useToastStore.getState().showToast(
-      ok ? '전체 텍스트가 복사되었습니다' : '복사에 실패했습니다',
+      ok ? '전체 텍스트를 복사했어요' : '복사하지 못했어요. 다시 시도해 주세요',
       ok ? 'success' : 'warning',
     )
   }
@@ -128,7 +128,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           <button
             onClick={onBack}
             className="mw-icon-button"
-            aria-label="뒤로가기"
+            aria-label="뒤로 가기"
           >
             <IcLineChevronLeft size={20} />
           </button>
@@ -196,8 +196,8 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           <button
             onClick={() => setEditorMode(nextEditorMode)}
             className="mw-icon-button"
-            aria-label={`${editorModeLabel[nextEditorMode]}로 전환`}
-            title={`${editorModeLabel[nextEditorMode]}로 전환`}
+            aria-label={`${editorModeLabel[nextEditorMode]}로 바꾸기`}
+            title={`${editorModeLabel[nextEditorMode]}로 바꾸기`}
           >
             {displayEditorMode === 'tiptap' ? (
               <IcLineTextAdjust size={20} />
@@ -319,7 +319,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   role="menuitem"
                 >
                   <IcLineTrash size={16} />
-                  삭제
+                  지우기
                 </button>
               </div>
             </>

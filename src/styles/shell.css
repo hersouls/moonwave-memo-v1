@@ -96,6 +96,10 @@ button.mw-sheet__grab { min-height: var(--mw-touch); }
 .memo-dialog__body { min-width: 0; }
 @media (max-width: 600px) {
   .mw-popup.memo-dialog { width: 100%; max-height: calc(100dvh - var(--space-48)); }
+  /* 탭과 긴 내용이 든 대화상자(설정 · 도움말 · 약관)는 폰에서 화면 전체를 써요: 키트 Popup의 Full Screen 자리예요.
+     아래에 뜬 카드에 담으면 화면의 4분의 3을 덮고도 내용이 좁아요. */
+  .mw-popup__container:has(> .memo-dialog--full) { align-items: stretch; padding: 0; }
+  .mw-popup.memo-dialog--full { width: 100%; max-width: none; height: 100dvh; max-height: none; border-radius: 0; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 }
 
 /* 찾기 바(mw-searchbar): 포커스는 바의 테두리와 옅은 띠가 알려요. 키트의 포커스 고리 규칙이 안쪽 input에도 걸려서

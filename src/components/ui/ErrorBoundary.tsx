@@ -43,11 +43,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </div>
 
             <h2 className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              오류가 발생했습니다
+              화면을 보여 주지 못했어요
             </h2>
 
             <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-              예상치 못한 문제가 발생했습니다.
+              예상하지 못한 문제가 생겼어요.
               <br />
               다시 시도해 주세요.
             </p>

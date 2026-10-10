@@ -7,10 +7,10 @@ export interface Insight {
 
 const DAY_NAMES = ['\uC77C\uC694\uC77C', '\uC6D4\uC694\uC77C', '\uD654\uC694\uC77C', '\uC218\uC694\uC77C', '\uBAA9\uC694\uC77C', '\uAE08\uC694\uC77C', '\uD1A0\uC694\uC77C']
 const HOUR_LABELS: Record<string, string> = {
-  morning: '\uC624\uC804 6-12\uC2DC',
-  afternoon: '\uC624\uD6C4 12-18\uC2DC',
-  evening: '\uC800\uB141 18-24\uC2DC',
-  night: '\uC0C8\uBCBD 0-6\uC2DC',
+  morning: '오전 6~12시',
+  afternoon: '오후 12~18시',
+  evening: '저녁 18~24시',
+  night: '새벽 0~6시',
 }
 
 export function generateInsights(memos: Memo[]): Insight[] {
@@ -34,7 +34,7 @@ export function generateInsights(memos: Memo[]): Insight[] {
   if (recurringTags.length > 0) {
     const top = recurringTags[0]
     insights.push({
-      text: `#${top[0]} \uD0DC\uADF8\uB97C ${top[1]}\uD68C \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4. \uC790\uC8FC \uB2E4\uB8E8\uB294 \uC8FC\uC81C\uC785\uB2C8\uB2E4.`,
+      text: `#${top[0]} 태그를 ${top[1]}번 썼어요. 자주 다루는 주제예요.`,
       type: 'tag',
     })
   }
@@ -52,7 +52,7 @@ export function generateInsights(memos: Memo[]): Insight[] {
   const maxPeriod = Object.entries(hourBuckets).sort((a, b) => b[1] - a[1])[0]
   if (maxPeriod[1] > active.length * 0.4) {
     insights.push({
-      text: `\uC8FC\uB85C ${HOUR_LABELS[maxPeriod[0]]}\uC5D0 \uBA54\uBAA8\uB97C \uC791\uC131\uD569\uB2C8\uB2E4.`,
+      text: `주로 ${HOUR_LABELS[maxPeriod[0]]}에 메모를 써요.`,
       type: 'time',
     })
   }
@@ -66,7 +66,7 @@ export function generateInsights(memos: Memo[]): Insight[] {
   const maxDayRatio = dayCounts[maxDay] / active.length
   if (maxDayRatio > 0.25) {
     insights.push({
-      text: `${DAY_NAMES[maxDay]}\uC5D0 \uAC00\uC7A5 \uB9CE\uC774 \uC791\uC131\uD569\uB2C8\uB2E4 (${dayCounts[maxDay]}\uAC1C).`,
+      text: `${DAY_NAMES[maxDay]}에 가장 많이 써요 (${dayCounts[maxDay]}개).`,
       type: 'pattern',
     })
   }
@@ -94,7 +94,7 @@ export function generateInsights(memos: Memo[]): Insight[] {
 
   if (currentStreak >= 3) {
     insights.push({
-      text: `${currentStreak}\uC77C \uC5F0\uC18D \uBA54\uBAA8\uB97C \uC791\uC131\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4!`,
+      text: `${currentStreak}일 연속으로 메모를 쓰고 있어요.`,
       type: 'streak',
     })
   }
@@ -110,7 +110,7 @@ export function generateInsights(memos: Memo[]): Insight[] {
 
     if (recentAvg > olderAvg * 1.3) {
       insights.push({
-        text: '\uCD5C\uADFC \uBA54\uBAA8\uAC00 \uC774\uC804\uBCF4\uB2E4 \uB354 \uAE38\uC5B4\uC9C0\uACE0 \uC788\uC2B5\uB2C8\uB2E4.',
+        text: '최근 메모가 이전보다 더 길어지고 있어요.',
         type: 'pattern',
       })
     }

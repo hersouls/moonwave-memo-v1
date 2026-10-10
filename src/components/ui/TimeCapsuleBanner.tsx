@@ -59,7 +59,7 @@ export function TimeCapsuleBanner() {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
             <IcLineTime size={16} className="inline mr-1 -mt-0.5" />
-            {capsule.yearsAgo}년 전 오늘, 당신이 깊게 몰입했던 기록입니다
+            {capsule.yearsAgo}년 전 오늘, 깊게 몰입했던 기록이에요
           </p>
           <button type="button"
             onClick={handleClick}

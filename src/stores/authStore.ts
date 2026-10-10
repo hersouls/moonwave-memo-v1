@@ -102,7 +102,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
         console.error('Redirect result error:', err)
         set({
           isSigningIn: false,
-          error: 'Google 로그인에 실패했습니다. 다시 시도해주세요.',
+          error: 'Google로 로그인하지 못했어요. 다시 시도해 주세요.',
         })
       })
 
@@ -130,10 +130,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
         const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
         const result = await FirebaseAuthentication.signInWithGoogle()
         const idToken = result.credential?.idToken
-        if (!idToken) throw new Error('Google 로그인이 취소되었습니다.')
+        if (!idToken) throw new Error('Google 로그인이 취소됐어요.')
         await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
       } catch (err) {
-        const message = err instanceof Error ? err.message : '로그인에 실패했습니다.'
+        const message = err instanceof Error ? err.message : '로그인하지 못했어요. 다시 시도해 주세요.'
         // 사용자가 로그인 시트를 닫은 경우는 오류로 표시하지 않는다.
         const canceled = /cancel/i.test(message)
         set({ error: canceled ? null : message, isSigningIn: false })
@@ -161,11 +161,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
           await signInWithRedirect(auth, provider)
           return
         } catch (redirectErr) {
-          const message = redirectErr instanceof Error ? redirectErr.message : '로그인에 실패했습니다.'
+          const message = redirectErr instanceof Error ? redirectErr.message : '로그인하지 못했어요. 다시 시도해 주세요.'
           set({ error: message, isSigningIn: false })
         }
       } else {
-        const message = err instanceof Error ? err.message : '로그인에 실패했습니다.'
+        const message = err instanceof Error ? err.message : '로그인하지 못했어요. 다시 시도해 주세요.'
         set({ error: message, isSigningIn: false })
       }
     }
@@ -186,13 +186,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
       set({ user: null, error: null })
       if (leftover.queued > 0 || leftover.unconfirmed) {
         useToastStore.getState().showToast(
-          '아직 클라우드에 올라가지 않은 변경사항은 이 기기에 보관됩니다. 같은 계정으로 다시 로그인하면 동기화됩니다.',
+          '아직 클라우드에 올라가지 않은 변경 내용은 이 기기에 보관해요. 같은 계정으로 다시 로그인하면 동기화해요.',
           'warning',
           { duration: 8000 },
         )
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '로그아웃에 실패했습니다.'
+      const message = err instanceof Error ? err.message : '로그아웃하지 못했어요. 다시 시도해 주세요.'
       set({ error: message })
     } finally {
       set({ isSigningOut: false })

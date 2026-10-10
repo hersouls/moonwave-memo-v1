@@ -22,9 +22,11 @@ export function PageHead({ title, description, actions }: { title: ReactNode; de
  * 넓은 화면의 주 행동(새 메모)과 다른 방법으로 만들기(음성 · 사진 · 템플릿).
  * 900px 이하에서는 감추고, 같은 행동을 하단 탭 위의 FAB과 더보기 시트가 맡아요.
  */
-export function CreateActions() {
+export function CreateActions({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate()
   const ui = useUIStore.getState
+  // 메모 목록은 넓은 화면에서 좁은 칸(나란히 보기의 왼쪽)에 놓여요. 거기서는 주 행동만 둬요: 다 넣으면 버튼이 두 줄로 꺾여요.
+  if (compact) return <Button variant="primary" size="medium" className="mw-wide-only" onClick={() => navigate('/memo/new')}><IcLineWrite size={20} />새 메모</Button>
   return (
     <>
       <button type="button" className="mw-icon-button mw-wide-only" onClick={() => ui().openVoiceModal()} aria-label="음성 메모" title="음성 메모"><IcLineMic size={20} /></button>

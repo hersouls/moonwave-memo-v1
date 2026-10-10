@@ -164,7 +164,7 @@ export async function initSyncFolder(): Promise<void> {
     }
   } catch (err) {
     console.error('Sync folder init failed:', err)
-    store.setStatus('error', '동기화 폴더를 복원하지 못했습니다.')
+    store.setStatus('error', '동기화 폴더를 복원하지 못했어요. 폴더를 다시 연결해 주세요.')
   }
 }
 
@@ -202,7 +202,7 @@ export async function pickSyncFolder(): Promise<PickFolderResult> {
     // AbortError = user cancelled the picker; not an error worth surfacing.
     if ((err as DOMException)?.name === 'AbortError') return 'cancelled'
     console.error('Sync folder pick failed:', err)
-    store.setStatus('error', '폴더를 선택하지 못했습니다.')
+    store.setStatus('error', '폴더를 고르지 못했어요. 다시 시도해 주세요.')
     return 'error'
   }
 }
@@ -222,7 +222,7 @@ export async function reconnectSyncFolder(): Promise<boolean> {
     return true
   } catch (err) {
     console.error('Sync folder reconnect failed:', err)
-    store.setStatus('error', '폴더 권한을 다시 얻지 못했습니다.')
+    store.setStatus('error', '폴더 권한을 다시 받지 못했어요.')
     return false
   }
 }
@@ -327,7 +327,7 @@ async function writeMemoNow(memo: Memo): Promise<WriteOutcome> {
     return 'written'
   } catch (err) {
     console.error('Sync folder write failed:', err)
-    store.setStatus('error', '폴더에 저장하지 못했습니다.')
+    store.setStatus('error', '폴더에 저장하지 못했어요.')
     return 'error'
   }
 }
@@ -348,7 +348,7 @@ async function deleteMemoFileNow(memo: Memo): Promise<void> {
     store.setStatus('idle')
   } catch (err) {
     console.error('Sync folder delete failed:', err)
-    store.setStatus('error', '폴더에서 삭제하지 못했습니다.')
+    store.setStatus('error', '폴더에서 지우지 못했어요.')
   }
 }
 
@@ -458,7 +458,7 @@ export async function syncFolderStructure(): Promise<{ folders: number }> {
       store.setStatus('idle')
     } catch (err) {
       console.error('Sync folder structure sync failed:', err)
-      store.setStatus('error', '폴더 구조를 동기화하지 못했습니다.')
+      store.setStatus('error', '폴더 구조를 동기화하지 못했어요.')
     }
   })
   return { folders }
@@ -480,7 +480,7 @@ export async function notifyFolderCreated(name: string): Promise<void> {
       }
     } catch (err) {
       console.error('Sync folder create-dir failed:', err)
-      useSyncFolderStore.getState().setStatus('error', '폴더를 만들지 못했습니다.')
+      useSyncFolderStore.getState().setStatus('error', '폴더를 만들지 못했어요.')
     }
   })
 }
@@ -508,7 +508,7 @@ export async function notifyFolderRenamed(folderId: number, oldName: string, new
       useSyncFolderStore.getState().setStatus('idle')
     } catch (err) {
       console.error('Sync folder rename failed:', err)
-      useSyncFolderStore.getState().setStatus('error', '폴더 이름 변경을 반영하지 못했습니다.')
+      useSyncFolderStore.getState().setStatus('error', '바뀐 폴더 이름을 반영하지 못했어요.')
     }
   })
 }
@@ -551,7 +551,7 @@ export async function notifyFolderDeleted(oldName: string, memoIds: number[]): P
       useSyncFolderStore.getState().setStatus('idle')
     } catch (err) {
       console.error('Sync folder delete cleanup failed:', err)
-      useSyncFolderStore.getState().setStatus('error', '폴더 삭제를 반영하지 못했습니다.')
+      useSyncFolderStore.getState().setStatus('error', '지운 폴더를 반영하지 못했어요.')
     }
   })
 }
@@ -591,7 +591,7 @@ export async function exportAllMemosToFolder(
       onProgress?.({ total: memos.length, done: i + 1 })
     }
     // Leave the error status visible if any write failed (e.g. folder unplugged).
-    store.setStatus(failed > 0 ? 'error' : 'idle', failed > 0 ? `${failed}건 저장 실패` : undefined)
+    store.setStatus(failed > 0 ? 'error' : 'idle', failed > 0 ? `${failed}건을 저장하지 못했어요` : undefined)
     store.setFileCount(await countFileSyncRecords())
   })
 
@@ -650,7 +650,7 @@ function circuitBreakerTripped(): boolean {
     cbTripped = true
     useSyncFolderStore.getState().setStatus(
       'error',
-      '외부 변경이 한꺼번에 많이 감지되어 자동 가져오기를 멈췄습니다. 폴더를 다시 연결하면 재개됩니다.',
+      '밖에서 바뀐 파일이 한꺼번에 많아 자동 가져오기를 멈췄어요. 폴더를 다시 연결하면 이어서 가져와요.',
     )
     stopWatching()
     return true

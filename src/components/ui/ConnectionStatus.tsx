@@ -54,7 +54,7 @@ export function ConnectionStatus() {
 
     if (awaitingReconnectSync.current && isOnline) {
       awaitingReconnectSync.current = false
-      useToastStore.getState().showToast('온라인으로 복구되었습니다. 동기화가 완료되었습니다.', 'success')
+      useToastStore.getState().showToast('다시 연결됐어요. 동기화를 마쳤어요.', 'success')
     }
     if (pillWorthy.current) {
       pillWorthy.current = false
@@ -118,9 +118,9 @@ export function ConnectionStatusIcon() {
       className="p-1"
       title={
         offline ? '오프라인' :
-        syncStatus === 'syncing' ? '동기화 중...' :
-        syncStatus === 'error' ? '동기화 오류' :
-        syncStatus === 'synced' ? '동기화 완료' : '온라인'
+        syncStatus === 'syncing' ? '동기화하고 있어요' :
+        syncStatus === 'error' ? '동기화하지 못했어요' :
+        syncStatus === 'synced' ? '동기화했어요' : '온라인'
       }
     >
       {offline ? (

@@ -70,7 +70,7 @@ export function FolderEditModal({ isOpen, onClose, folder }: FolderEditModalProp
               onClick={handleDelete}
               className="mw-text-button mw-text-button--ghost mw-text-button--medium mw-text-button--default sm:mr-auto"
             >
-              <span>삭제</span>
+              <span>지우기</span>
             </button>
           )}
           <Button variant="ghost" onClick={onClose}>
@@ -87,9 +87,9 @@ export function FolderEditModal({ isOpen, onClose, folder }: FolderEditModalProp
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={confirmDelete}
-        title="폴더 삭제"
-        description={`"${folder?.name ?? ''}" 폴더를 삭제하시겠습니까?\n폴더 내 메모는 삭제되지 않습니다.`}
-        confirmText="삭제"
+        title="폴더를 지울까요?"
+        description={`'${folder?.name ?? ''}' 폴더를 지워요.\n안에 있던 메모는 기본 폴더로 옮겨져요.`}
+        confirmText="지우기"
         cancelText="취소"
         variant="danger"
       />

@@ -148,14 +148,14 @@ export function useAudioRecorder() {
       cleanup()
       if (err instanceof DOMException) {
         if (err.name === 'NotAllowedError') {
-          setError('마이크 권한이 필요합니다. 브라우저 설정에서 마이크를 허용해 주세요.')
+          setError('마이크 권한이 필요해요. 브라우저 설정에서 마이크를 허용해 주세요.')
         } else if (err.name === 'NotFoundError') {
-          setError('마이크를 찾을 수 없습니다.')
+          setError('마이크를 찾지 못했어요. 마이크가 연결되어 있는지 확인해 주세요.')
         } else {
-          setError('마이크 접근 중 오류가 발생했습니다.')
+          setError('마이크를 쓰지 못했어요. 다시 시도해 주세요.')
         }
       } else {
-        setError('이 브라우저에서는 녹음을 지원하지 않습니다.')
+        setError('이 브라우저에서는 녹음할 수 없어요.')
       }
       setStatus('error')
     }

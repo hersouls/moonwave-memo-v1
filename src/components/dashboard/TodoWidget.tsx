@@ -39,7 +39,7 @@ export function TodoWidget() {
   if (uncheckedTodos.length === 0) return null
 
   return (
-    <WidgetCard icon={IcMwCheckSquare} tint="primary" title={`${uncheckedTodos.length}개의 할 일`}>
+    <WidgetCard icon={IcMwCheckSquare} tint="primary" title={`할 일 ${uncheckedTodos.length}개`}>
       <ul className="space-y-2">
         {uncheckedTodos.map((todo, index) => (
           <li key={`${todo.memoId}-${index}`}>

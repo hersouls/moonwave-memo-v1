@@ -7,9 +7,9 @@ export function TermsModal() {
   const onClose = useUIStore((state) => state.closeTermsModal)
 
   return (
-    <Dialog open={isOpen} onClose={onClose} size="lg">
+    <Dialog open={isOpen} onClose={onClose} size="lg" full>
       <DialogHeader title="서비스 이용약관" onClose={onClose} />
-      <DialogBody className="max-h-[70dvh] overflow-y-auto" tabIndex={0} aria-label="약관 내용">
+      <DialogBody className="min-h-0 flex-1 overflow-y-auto sm:max-h-[70dvh] sm:flex-none" tabIndex={0} aria-label="약관 내용">
         <div className="prose prose-sm dark:prose-invert max-w-none space-y-8 pr-2">
           {/* ─── 이용약관 ──────────────────────────────── */}
           <section>

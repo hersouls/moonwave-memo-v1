@@ -59,7 +59,7 @@ export default createHandler(POLICIES.digest, async (req: VercelRequest, res: Ve
 }
 
 규칙:
-- 한국어로 작성
+- 한국어 해요체로 작성 (예: "메모 3개를 썼어요"). 합니다체 · 반말은 쓰지 않음
 - 메모 내용을 기반으로 구체적으로 작성
 - 긍정적이지만 정직한 톤
 - themes는 최대 5개
@@ -79,7 +79,7 @@ export default createHandler(POLICIES.digest, async (req: VercelRequest, res: Ve
 
   return res.status(200).json({
     digest: {
-      summary: `이번 주에 ${memos.length}개의 메모를 작성했습니다.`,
+      summary: `이번 주에 메모 ${memos.length}개를 썼어요.`,
       themes: topTags.slice(0, 3).map(([t]) => t),
       moodTrend: '',
       growth: '',

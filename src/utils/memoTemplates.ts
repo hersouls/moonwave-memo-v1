@@ -26,7 +26,7 @@ export const MEMO_TEMPLATES: MemoTemplate[] = [
     icon: 'Users',
     color: 'blue',
     title: '회의록 - ',
-    body: '## 참석자\n\n\n## 안건\n\n\n## 결정사항\n\n\n## Action Items\n\n- [ ] \n',
+    body: '## 참석자\n\n\n## 안건\n\n\n## 결정사항\n\n\n## 할 일\n\n- [ ] \n',
   },
   {
     id: 'diary',

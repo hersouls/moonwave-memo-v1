@@ -19,8 +19,8 @@ export function EditorEmptyState() {
     <EmptyState
       icon={<IcLineDocument size={32} className="text-zinc-300 dark:text-zinc-600" />}
       illustration={<EditorIllustration />}
-      title="메모를 선택하세요"
-      description="왼쪽 목록에서 메모를 선택하거나 새 메모를 작성하세요"
+      title="메모를 골라 주세요"
+      description="왼쪽 목록에서 메모를 고르거나 새 메모를 써 보세요"
       size="lg"
     />
   )

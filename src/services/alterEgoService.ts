@@ -60,7 +60,7 @@ async function callViaProxy(prompt: string, systemPrompt: string): Promise<AIRes
     const result = await aiChatFn({ prompt, systemPrompt })
     return { text: result.data.text }
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Cloud Function 호출 실패'
+    const message = err instanceof Error ? err.message : 'AI 답을 받지 못했어요. 잠시 후 다시 시도해 주세요'
     return { text: '', error: message }
   }
 }
@@ -88,13 +88,13 @@ async function callOpenAI(messages: Array<{ role: string; content: string }>, ma
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
+      return { text: '', error: err.error?.message || `AI 서비스가 요청을 처리하지 못했어요 (${res.status})` }
     }
 
     const data = await res.json()
     return { text: data.choices?.[0]?.message?.content?.trim() || '' }
   } catch (err) {
-    return { text: '', error: `요청 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+    return { text: '', error: `AI 요청을 보내지 못했어요 (${err instanceof Error ? err.message : '원인 미상'})` }
   }
 }
 
@@ -126,14 +126,14 @@ async function callAnthropic(messages: Array<{ role: string; content: string }>,
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
+      return { text: '', error: err.error?.message || `AI 서비스가 요청을 처리하지 못했어요 (${res.status})` }
     }
 
     const data = await res.json()
     const textBlock = data.content?.find((c: { type: string }) => c.type === 'text')
     return { text: textBlock?.text?.trim() || '' }
   } catch (err) {
-    return { text: '', error: `요청 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+    return { text: '', error: `AI 요청을 보내지 못했어요 (${err instanceof Error ? err.message : '원인 미상'})` }
   }
 }
 
@@ -163,13 +163,13 @@ async function callGemini(messages: Array<{ role: string; content: string }>, sy
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return { text: '', error: err.error?.message || `API 오류: ${res.status}` }
+      return { text: '', error: err.error?.message || `AI 서비스가 요청을 처리하지 못했어요 (${res.status})` }
     }
 
     const data = await res.json()
     return { text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '' }
   } catch (err) {
-    return { text: '', error: `요청 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}` }
+    return { text: '', error: `AI 요청을 보내지 못했어요 (${err instanceof Error ? err.message : '원인 미상'})` }
   }
 }
 

@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import { useFolderStore } from '@/stores/folderStore'
 import type { Folder } from '@/lib/types'
 import { IcLineCheck, IcLineChevronDown, IcLineChevronUp } from '@/mw/icons'
+import { useCloseRequest } from '@/mw/close'
 
 interface FolderSelectorProps {
   currentFolder?: Folder
@@ -13,6 +14,8 @@ interface FolderSelectorProps {
 
 export function FolderSelector({ currentFolder, onFolderChange, className = 'mb-4' }: FolderSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
+  // 펼친 목록은 Esc와 폰의 뒤로 가기로도 닫혀요
+  useCloseRequest(isOpen, () => setIsOpen(false))
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const listRef = useRef<HTMLDivElement>(null)
   const folders = useFolderStore((s) => s.folders).filter((f) => !f.isSystem)

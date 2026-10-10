@@ -115,10 +115,10 @@ function SemanticCanvas() {
             시맨틱 캔버스
           </h2>
           <p className="text-zinc-500 dark:text-zinc-400 mb-4">
-            OpenAI API 키가 필요합니다
+            OpenAI API 키가 필요해요
           </p>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md">
-            메모 간의 의미적 유사성을 시각화하려면 OpenAI의 텍스트 임베딩 API가 필요합니다.
+            뜻이 비슷한 메모끼리 모아 보여 주려면 OpenAI의 텍스트 임베딩 API가 필요해요.
             설정에서 API 키를 입력해 주세요.
           </p>
         </div>
@@ -148,7 +148,7 @@ function SemanticCanvas() {
           <button type="button"
             onClick={() => navigate('/')}
             className="mw-icon-button"
-            aria-label="뒤로가기"
+            aria-label="뒤로 가기"
           >
             <IcLineChevronLeft size={20} />
           </button>
@@ -188,7 +188,7 @@ function SemanticCanvas() {
           <div className="flex flex-col items-center gap-3">
             <IcLineLoading size={32} className="text-primary-500 animate-spin" />
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              임베딩 계산 중...
+              메모끼리 얼마나 비슷한지 계산하고 있어요
             </span>
           </div>
         </div>

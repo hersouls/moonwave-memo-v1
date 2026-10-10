@@ -20,7 +20,7 @@ interface UseTiptapEditorOptions {
 
 export function useTiptapEditor({
   initialContent,
-  placeholder = '메모를 입력하세요...',
+  placeholder = '메모를 적어요',
   onUpdate,
   editable = true,
 }: UseTiptapEditorOptions) {

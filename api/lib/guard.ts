@@ -161,11 +161,11 @@ export async function guardAiRequest(
   for (const field of [...(policy.stringFields ?? []), 'provider', 'userApiKey']) {
     const v = body[field]
     if (v !== undefined && v !== null && typeof v !== 'string') {
-      return reject(res, 400, 'invalid_input', `${field} 형식이 올바르지 않습니다.`)
+      return reject(res, 400, 'invalid_input', `${field} 형식이 맞지 않아요.`)
     }
   }
   if (body.provider != null && !PROVIDERS.has(body.provider as string)) {
-    return reject(res, 400, 'invalid_input', '지원하지 않는 AI 제공자입니다.')
+    return reject(res, 400, 'invalid_input', '지원하지 않는 AI 제공자예요.')
   }
 
   for (const [field, cap] of Object.entries(policy.fieldCaps ?? {})) {
@@ -182,7 +182,7 @@ export async function guardAiRequest(
     res.setHeader('Retry-After', String(decision.retryAfterSec))
     res.status(429).json({
       error: 'rate_limited',
-      message: `AI 요청이 너무 많습니다. ${formatWait(decision.retryAfterSec)} 후 다시 시도해 주세요.`,
+      message: `AI 요청이 너무 많아요. ${formatWait(decision.retryAfterSec)} 뒤에 다시 시도해 주세요.`,
       retryAfter: decision.retryAfterSec,
     })
     return null

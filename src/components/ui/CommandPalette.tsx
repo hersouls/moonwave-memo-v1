@@ -127,7 +127,7 @@ export function CommandPalette() {
           .filter((m) => m.id != null && (m.tags ?? []).length === 0)
           .map((m) => m.id!)
         if (targets.length === 0) {
-          useToastStore.getState().showToast('태그가 없는 메모가 없습니다', 'info')
+          useToastStore.getState().showToast('태그 없는 메모가 없어요', 'info')
           break
         }
         batchGenerateTags(targets)
@@ -135,23 +135,23 @@ export function CommandPalette() {
             const { showToast } = useToastStore.getState()
             const done = result.generated + result.recovered
             if (result.alreadyRunning) {
-              showToast('태그 생성이 이미 진행 중입니다', 'info')
+              showToast('이미 태그를 만들고 있어요', 'info')
             } else if (done > 0 && result.unprocessed > 0) {
-              showToast(`${done}개 메모에 태그를 생성했습니다 (${result.unprocessed}개는 생성하지 못했습니다)`, 'success')
+              showToast(`메모 ${done}개에 태그를 만들었어요 (${result.unprocessed}개는 만들지 못했어요)`, 'success')
             } else if (done > 0) {
-              showToast(`${done}개 메모에 태그를 생성했습니다`, 'success')
+              showToast(`메모 ${done}개에 태그를 만들었어요`, 'success')
             } else if (result.unprocessed > 0) {
               if (result.aiUnavailable) {
-                showToast('AI를 사용할 수 없어 태그를 생성하지 못했습니다. 설정에서 API 키를 등록하세요', 'warning')
+                showToast('AI를 쓸 수 없어 태그를 만들지 못했어요. 설정에서 API 키를 등록해 주세요', 'warning')
               } else {
-                showToast('AI 태그 생성에 실패했습니다. 잠시 후 다시 시도하세요', 'error')
+                showToast('AI 태그를 만들지 못했어요. 잠시 후 다시 시도해 주세요', 'error')
               }
             } else {
-              showToast('태그를 생성할 대상 메모가 없습니다', 'info')
+              showToast('태그를 만들 메모가 없어요', 'info')
             }
           })
           .catch(() => {
-            useToastStore.getState().showToast('태그 생성에 실패했습니다', 'error')
+            useToastStore.getState().showToast('태그를 만들지 못했어요. 다시 시도해 주세요', 'error')
           })
         break
       }
@@ -188,7 +188,7 @@ export function CommandPalette() {
               <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
                 <IcMwSparkles size={16} className="shrink-0 text-amber-500" />
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">스마트 메모</span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">AI가 폴더와 태그를 자동 분류합니다</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">AI가 폴더와 태그를 자동으로 분류해요</span>
               </div>
               <div className="p-4">
                 <TextArea
@@ -209,7 +209,7 @@ export function CommandPalette() {
                 />
                 {classifyResult && (
                   <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    폴더: {classifyResult.folder || '기본'} | 태그: {classifyResult.tags.join(', ') || '없음'}
+                    폴더: {classifyResult.folder || '기본'} | 태그: {classifyResult.tags.join(', ') || '해당 없음'}
                   </div>
                 )}
                 <div className="mt-3 flex items-center justify-between">
@@ -227,7 +227,7 @@ export function CommandPalette() {
                     {isClassifying ? (
                       <>
                         <Spinner size="sm" label="" className="h-3.5 w-3.5" />
-                        분류 중...
+                        분류하고 있어요
                       </>
                     ) : (
                       <>
@@ -241,7 +241,7 @@ export function CommandPalette() {
               </div>
             </>
           ) : (
-            <Command label="커맨드 팔레트" shouldFilter={true}>
+            <Command label="명령 팔레트" shouldFilter={true}>
               <div className="flex border-b border-zinc-200 p-3 dark:border-zinc-700">
                 <label className="mw-searchbar">
                   <IcLineSearch size={20} />
@@ -256,7 +256,7 @@ export function CommandPalette() {
 
               <Command.List className="max-h-80 overflow-y-auto p-2">
                 <Command.Empty className="py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                  결과를 찾을 수 없습니다
+                  결과를 찾지 못했어요
                 </Command.Empty>
 
                 {!query && (
@@ -295,7 +295,7 @@ export function CommandPalette() {
                   </Command.Group>
                 )}
 
-                <Command.Group heading="액션">
+                <Command.Group heading="명령">
                   <Command.Item
                     value="스마트 메모 AI 자동 분류"
                     onSelect={() => setSmartMode(true)}

@@ -782,7 +782,7 @@ function subscribeListener(name: ListenerName, ctx: SyncWriteContext) {
       syncStatus.noteListenerFailed(name)
       if (slot.failures === 1) {
         useToastStore.getState().showToast(
-          name === 'memos' ? '메모 동기화 연결이 끊어졌습니다' : '폴더 동기화 연결이 끊어졌습니다',
+          name === 'memos' ? '메모 동기화 연결이 끊겼어요. 다시 연결하고 있어요' : '폴더 동기화 연결이 끊겼어요. 다시 연결하고 있어요',
           'warning',
         )
       }
@@ -852,12 +852,12 @@ async function announceAccountSwitch(claim: Extract<ClaimResult, { kind: 'switch
   await refreshMemos?.().catch(() => {})
   const { showToast } = useToastStore.getState()
   if (claim.restoredOwnBackup) {
-    showToast('이 기기에 보관해 둔 이 계정의 로컬 데이터를 복원했습니다.', 'info', { duration: 6000 })
+    showToast('이 기기에 보관해 둔 이 계정의 로컬 데이터를 복원했어요.', 'info', { duration: 6000 })
   }
   if (claim.backupId != null) {
-    const unsynced = claim.unsyncedMemoCount > 0 ? ` (동기화되지 않은 메모 ${claim.unsyncedMemoCount}개 포함)` : ''
+    const unsynced = claim.unsyncedMemoCount > 0 ? ` (동기화하지 않은 메모 ${claim.unsyncedMemoCount}개 포함)` : ''
     showToast(
-      `이전 계정의 로컬 데이터는 이 계정에 올리지 않고 이 기기에 따로 보관했습니다${unsynced}. 설정 › 클라우드 동기화에서 내려받을 수 있습니다.`,
+      `이전 계정의 로컬 데이터는 이 계정에 올리지 않고 이 기기에 따로 보관했어요${unsynced}. 설정 › 클라우드 동기화에서 내려받을 수 있어요.`,
       'info',
       { duration: 10_000 },
     )

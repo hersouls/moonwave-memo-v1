@@ -100,7 +100,7 @@ export function DashboardPage() {
               첫 메모를 시작해 보세요
             </h2>
             <p className="max-w-xs text-sm text-zinc-500 dark:text-zinc-400">
-              떠오르는 생각을 기록하면 통계·히트맵·인사이트가 이곳에 채워집니다
+              떠오르는 생각을 기록하면 통계·히트맵·인사이트가 여기에 채워져요
             </p>
             <button
               type="button"
@@ -108,7 +108,7 @@ export function DashboardPage() {
               className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-2"
             >
               <IcLineWrite size={16} />
-              새 메모 작성
+              새 메모 쓰기
             </button>
           </div>
         </div>

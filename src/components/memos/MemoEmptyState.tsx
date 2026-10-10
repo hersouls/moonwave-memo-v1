@@ -6,10 +6,10 @@ import { IcLineAdd, IcLineClose, IcLineDocument, IcLineSearch, IcLineTrash } fro
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours()
-  if (hour >= 5 && hour <= 11) return '좋은 아침이에요!'
-  if (hour >= 12 && hour <= 17) return '좋은 오후에요!'
-  if (hour >= 18 && hour <= 21) return '좋은 저녁이에요!'
-  return '편안한 밤 되세요!'
+  if (hour >= 5 && hour <= 11) return '좋은 아침이에요'
+  if (hour >= 12 && hour <= 17) return '좋은 오후예요'
+  if (hour >= 18 && hour <= 21) return '좋은 저녁이에요'
+  return '편안한 밤이에요'
 }
 
 function SearchIllustration() {
@@ -60,15 +60,15 @@ export function MemoEmptyState() {
       <EmptyState
         icon={<IcLineSearch size={32} className="text-zinc-300 dark:text-zinc-600" />}
         illustration={<SearchIllustration />}
-        title="검색 결과가 없습니다"
-        description={`"${searchQuery}"에 대한 결과를 찾을 수 없습니다`}
+        title="메모를 찾지 못했어요"
+        description={`"${searchQuery}"에 맞는 메모가 없어요. 검색어를 줄이거나 다른 낱말로 찾아보세요.`}
         action={
           <button type="button"
             onClick={() => setSearchQuery('')}
             className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left mt-3"
           >
             <IcLineClose size={16} />
-            검색어 초기화
+            검색어 지우기
           </button>
         }
       />
@@ -80,8 +80,8 @@ export function MemoEmptyState() {
       <EmptyState
         icon={<IcLineTrash size={32} className="text-zinc-300 dark:text-zinc-600" />}
         illustration={<TrashIllustration />}
-        title="휴지통이 비어 있습니다"
-        description="삭제된 메모가 이곳에 표시됩니다"
+        title="휴지통이 비어 있어요"
+        description="지운 메모가 여기에 모여요"
       />
     )
   }
@@ -98,14 +98,14 @@ function DefaultEmptyState() {
         icon={<IcLineDocument size={32} className="text-zinc-300 dark:text-zinc-600" />}
         illustration={<NoteIllustration />}
         title={getTimeGreeting()}
-        description="새 메모를 작성해보세요"
+        description="아직 메모가 없어요. 새 메모를 써 보세요"
         action={
           <button type="button"
             onClick={() => navigate('/memo/new')}
             className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-3"
           >
             <IcLineAdd size={16} />
-            새 메모 작성
+            새 메모 쓰기
           </button>
         }
       />

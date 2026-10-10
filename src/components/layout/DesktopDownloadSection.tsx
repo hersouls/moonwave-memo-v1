@@ -70,22 +70,22 @@ export function DesktopDownloadSection() {
                 installedVersion ? (
                   <span>설치된 버전 <span className="tabular-nums">v{installedVersion}</span></span>
                 ) : (
-                  <span>설치된 버전을 확인할 수 없습니다 (이전 버전)</span>
+                  <span>설치된 버전을 확인하지 못했어요 (이전 버전)</span>
                 )
               ) : (
-                'Windows용 데스크톱 앱을 내려받아 설치할 수 있습니다.'
+                'Windows용 데스크톱 앱을 내려받아 설치할 수 있어요.'
               )}
               <div className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">
-                {state === 'loading' && '최신 버전 확인 중…'}
-                {state === 'unavailable' && '아직 배포된 설치본이 없습니다.'}
+                {state === 'loading' && '최신 버전을 확인하고 있어요'}
+                {state === 'unavailable' && '아직 배포한 설치본이 없어요.'}
                 {state === 'ready' && info && (
                   hasUpdate
-                    ? `새 버전 v${normalize(info.version)} 있음 · ${sizeMB}`
+                    ? `새 버전이 있어요: v${normalize(info.version)} · ${sizeMB}`
                     : `최신 v${normalize(info.version)} · ${sizeMB}`
                 )}
               </div>
               <div className="text-xs mt-1 text-[var(--text-tertiary)]">
-                서명되지 않은 설치본입니다 — 설치 시 SmartScreen 경고가 나오면 “추가 정보 → 실행”.
+                서명하지 않은 설치본이에요. 설치할 때 SmartScreen 경고가 나오면 “추가 정보 → 실행”을 눌러 주세요.
               </div>
             </div>
           </div>
@@ -100,7 +100,7 @@ export function DesktopDownloadSection() {
             ) : (
               <IcLineDownload size={16} className="mr-1.5" />
             )}
-            {isElectronApp && hasUpdate ? '업데이트 내려받기' : '다운로드'}
+            {isElectronApp && hasUpdate ? '업데이트 내려받기' : '내려받기'}
           </Button>
         </div>
       </div>

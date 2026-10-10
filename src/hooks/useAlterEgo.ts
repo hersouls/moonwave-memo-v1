@@ -67,7 +67,7 @@ export function useAlterEgo(body: string, memoId?: number) {
     const currentMessages = messagesRef.current
     const currentExchangeCount = currentMessages.filter((m) => m.role === 'user').length
     if (currentExchangeCount >= MAX_EXCHANGES) {
-      setError('대화 횟수가 제한(5회)에 도달했습니다. 초기화 후 다시 시도해 주세요.')
+      setError('대화는 5회까지 할 수 있어요. 대화를 초기화한 뒤 다시 시도해 주세요.')
       return
     }
     if (isLoadingRef.current) return
@@ -89,7 +89,7 @@ export function useAlterEgo(body: string, memoId?: number) {
         setMessages((prev) => [...prev, assistantMessage])
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
+      setError(err instanceof Error ? err.message : '답을 받지 못했어요. 잠시 후 다시 시도해 주세요')
       setMessages((prev) => prev.slice(0, -1))
     } finally {
       setIsLoading(false)

@@ -346,7 +346,7 @@ export function MemoEditor() {
     } catch (err) {
       console.error('AutoSave failed:', err)
       setSaveStatus('error')
-      useToastStore.getState().showToast('메모 저장에 실패했습니다', 'error')
+      useToastStore.getState().showToast('메모를 저장하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       savingRef.current = false
     }
@@ -497,7 +497,7 @@ export function MemoEditor() {
 
   const { editor: tiptapEditor, characterCount: tiptapCharCount } = useTiptapEditor({
     initialContent: body,
-    placeholder: '메모를 입력하세요. 마크다운을 사용할 수 있습니다.',
+    placeholder: '메모를 적어요. 마크다운을 쓸 수 있어요',
     onUpdate: handleTiptapUpdate,
   })
   tiptapEditorRef.current = tiptapEditor
@@ -535,22 +535,6 @@ export function MemoEditor() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     await autoSave()
     navigateWithTransition('/memos')
-  }
-
-  // UX-06: 태그 삭제 — 본문 해시태그는 본문에서 제거, 필드 전용(AI/수동) 태그는 tags 필드에서 제거
-  const handleRemoveTag = (tag: string) => {
-    if (extractTags(body).includes(tag)) {
-      const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      // 경계 검사 필수: #여행 삭제가 #여행계획의 접두어까지 매칭해 본문을 훼손하지 않도록
-      const newBody = body.replace(new RegExp(`#${escaped}(?![가-힣a-zA-Z0-9_])\\s?`, 'g'), '').trim()
-      handleBodyChange(newBody)
-      return
-    }
-    if (memoId) {
-      updateMemo(memoId, { tags: currentTags.filter((t) => t !== tag) })
-    } else {
-      setPendingTags((prev) => prev.filter((t) => t !== tag))
-    }
   }
 
   // TECH-01: Markdown insertion helper — uses ref to avoid stale closure
@@ -749,7 +733,7 @@ export function MemoEditor() {
   const handleRegenerateTitle = useCallback(async () => {
     const b = latestDataRef.current.body
     if (!b.trim()) {
-      useToastStore.getState().showToast('본문을 입력하면 제목을 생성할 수 있습니다', 'info')
+      useToastStore.getState().showToast('본문을 입력하면 제목을 만들 수 있어요', 'info')
       return
     }
     setIsRegeneratingTitle(true)
@@ -776,7 +760,7 @@ export function MemoEditor() {
         scheduleAutoSave()
       }
     } catch {
-      if (isMountedRef.current) useToastStore.getState().showToast('제목 재생성에 실패했습니다', 'error')
+      if (isMountedRef.current) useToastStore.getState().showToast('제목을 다시 만들지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       if (isMountedRef.current) setIsRegeneratingTitle(false)
     }
@@ -801,7 +785,7 @@ export function MemoEditor() {
     setBody(enhanced)
     setSaveStatus('modified')
     scheduleAutoSave()
-    useToastStore.getState().showToast('AI 편집이 적용되었습니다. Ctrl+Z로 되돌릴 수 있습니다.', 'success')
+    useToastStore.getState().showToast('AI 편집을 적용했어요. Ctrl+Z로 되돌릴 수 있어요.', 'success')
   }, [pushUndoSnapshot, scheduleAutoSave])
 
   // 태그 편집 모달 저장 — 필드 태그만 교체, 본문 해시태그는 본문이 진실원본
@@ -905,7 +889,7 @@ export function MemoEditor() {
             {/* AI Autocomplete ghost text */}
             {ghostText && (
               <div className="pointer-events-none absolute bottom-2 left-4 right-4 text-xs text-[var(--text-secondary)] italic truncate">
-                Tab을 눌러 수락: <span className="text-zinc-500 dark:text-zinc-500">{ghostText.slice(0, 80)}{ghostText.length > 80 ? '...' : ''}</span>
+                Tab을 누르면 수락해요: <span className="text-zinc-500 dark:text-zinc-500">{ghostText.slice(0, 80)}{ghostText.length > 80 ? '...' : ''}</span>
               </div>
             )}
           </div>
@@ -914,7 +898,7 @@ export function MemoEditor() {
           {!isFocusMode && !body && (
             <FeatureHint
               id="slash-commands"
-              message="'/' 키를 입력하면 슬래시 커맨드를 사용할 수 있습니다. 제목, 구분선, 코드 블록 등을 빠르게 삽입해보세요."
+              message="'/'를 입력하면 슬래시 명령어를 쓸 수 있어요. 제목, 구분선, 코드 블록 등을 빠르게 넣어 보세요."
             />
           )}
         </>
@@ -922,7 +906,7 @@ export function MemoEditor() {
 
       {/* UX-06: TagInput for current tags (hide when keyboard open to maximize edit area) */}
       {!isFocusMode && !isKeyboardOpen && (
-        <TagInput tags={currentTags} onRemoveTag={handleRemoveTag} onEdit={() => setIsTagEditOpen(true)} />
+        <TagInput tags={currentTags} onEdit={() => setIsTagEditOpen(true)} />
       )}
 
       {/* AI Tag suggestions (hide when keyboard open to maximize edit area) */}
@@ -939,7 +923,7 @@ export function MemoEditor() {
             </button>
           ))}
           {aiTagsLoading && (
-            <span className="text-xs text-zinc-400 animate-pulse">분석 중...</span>
+            <span className="text-xs text-zinc-400 animate-pulse">분석하고 있어요</span>
           )}
         </div>
       )}
@@ -980,10 +964,10 @@ export function MemoEditor() {
   }
 
   const runAIEnhanceFromPalette = async () => {
-    if (!body || body.trim().length < 20) { useToastStore.getState().showToast('내용이 너무 짧습니다 (20자 이상 필요)', 'warning'); return }
+    if (!body || body.trim().length < 20) { useToastStore.getState().showToast('내용이 너무 짧아요. 20자 이상 적어 주세요', 'warning'); return }
     const { enhanceReadability } = await import('@/services/aiFeatures')
     const result = await enhanceReadability(body)
-    if (result.error) { useToastStore.getState().showToast(`AI 편집 실패: ${result.error}`, 'error'); return }
+    if (result.error) { if (result.error !== 'daily_limit_exceeded') useToastStore.getState().showToast(`AI 편집을 하지 못했어요. ${result.error}`, 'error'); return }
     if (result.enhanced) handleAIEnhance(result.enhanced)
   }
 
@@ -1005,8 +989,8 @@ export function MemoEditor() {
     { id: 'codeblock', group: '삽입', label: '코드 블록', icon: <IcMwCode size={16} />, run: () => insertSnippet('```\n\n```') },
     { id: 'quote', group: '삽입', label: '인용', icon: <IcMwQuote size={16} />, run: () => insertSnippet('> ') },
     { id: 'divider', group: '삽입', label: '구분선', icon: <IcLineMinus size={16} />, run: () => insertSnippet('\n---\n') },
-    ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '아웃라인 토글', icon: <IcMwList size={16} />, run: () => setShowOutline((p) => !p) }] : []),
-    ...(alterEgoEnabled ? [{ id: 'alterego', group: '보기 · 도구', label: '데미안(AI 대화) 토글', icon: <IcMwSpark size={16} />, run: () => setShowAlterEgo((p) => !p) }] : []),
+    ...(isMdUp ? [{ id: 'outline', group: '보기 · 도구', label: '목차 열고 닫기', icon: <IcMwList size={16} />, run: () => setShowOutline((p) => !p) }] : []),
+    ...(alterEgoEnabled ? [{ id: 'alterego', group: '보기 · 도구', label: '데미안(AI 대화) 열고 닫기', icon: <IcMwSpark size={16} />, run: () => setShowAlterEgo((p) => !p) }] : []),
     { id: 'focus', group: '보기 · 도구', label: '집중 모드', icon: <IcLineExpand size={16} />, run: () => useUIStore.getState().toggleFocusMode() },
     ...(memoId ? [{ id: 'slide', group: '보기 · 도구', label: '슬라이드 보기', icon: <IcFillPlay size={16} />, shortcut: 'F5', run: () => useUIStore.getState().openSlideView(memoId) }] : []),
     ...(memoId ? [{ id: 'versions', group: '보기 · 도구', label: '버전 기록', icon: <IcMwHistory size={16} />, run: () => setShowVersionHistory(true) }] : []),
@@ -1194,7 +1178,7 @@ export function MemoEditor() {
         <button type="button"
           onClick={() => useUIStore.getState().toggleFocusMode()}
           className="mw-icon-button fixed top-4 right-4 z-50 active:opacity-100"
-          aria-label="포커스 모드 나가기"
+          aria-label="집중 모드 나가기"
         >
           <IcLineClose size={20} />
         </button>

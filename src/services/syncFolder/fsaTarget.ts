@@ -36,7 +36,7 @@ export class FsaFileSyncTarget implements FileSyncTarget {
   private async writeBlob(path: string, contents: Blob | string): Promise<void> {
     const { dirs, name } = splitPath(path)
     const dir = await this.dirHandle(dirs, true)
-    if (!dir) throw new Error(`디렉터리를 만들 수 없습니다: ${dirs.join('/')}`)
+    if (!dir) throw new Error(`폴더를 만들지 못했어요: ${dirs.join('/')}`)
     const fileHandle = await dir.getFileHandle(name, { create: true })
     const writable = await fileHandle.createWritable()
     try {
@@ -82,7 +82,7 @@ export class FsaFileSyncTarget implements FileSyncTarget {
     const dirs = path.split('/').filter(Boolean)
     if (!dirs.length) return
     const handle = await this.dirHandle(dirs, true)
-    if (!handle) throw new Error(`디렉터리를 만들 수 없습니다: ${dirs.join('/')}`)
+    if (!handle) throw new Error(`폴더를 만들지 못했어요: ${dirs.join('/')}`)
   }
 
   async removeDir(path: string): Promise<void> {

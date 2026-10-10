@@ -96,7 +96,7 @@ export function SmartFolderCreateModal({ isOpen, onClose }: SmartFolderCreateMod
     <Dialog open={isOpen} onClose={onClose} size="md">
       <DialogHeader
         title={'\uC2A4\uB9C8\uD2B8 \uD3F4\uB354 \uCD94\uAC00'}
-        description={'\uC870\uAC74\uC5D0 \uB9DE\uB294 \uBA54\uBAA8\uB97C \uC790\uB3D9\uC73C\uB85C \uBAA8\uC544\uBCF4\uB294 \uC2A4\uB9C8\uD2B8 \uD3F4\uB354\uB97C \uC120\uD0DD\uD558\uC138\uC694.'}
+        description={'조건에 맞는 메모를 자동으로 모아 보는 스마트 폴더를 골라 주세요.'}
         onClose={onClose}
       />
 

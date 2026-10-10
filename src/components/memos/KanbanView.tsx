@@ -63,7 +63,7 @@ export function KanbanView({ memos }: KanbanViewProps) {
   if (columns.length === 0) {
     return (
       <div className="flex items-center justify-center py-20 text-zinc-500 dark:text-zinc-400">
-        <p className="text-sm">{'\uBA54\uBAA8\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4'}</p>
+        <p className="text-sm">{'메모가 없어요'}</p>
       </div>
     )
   }

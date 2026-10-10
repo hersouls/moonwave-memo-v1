@@ -184,7 +184,7 @@ export function MemoList() {
         actions={
           <>
             <Button variant="tertiary-subtle" size="medium" onClick={() => setShowQuickMemo(true)}>빠른 메모</Button>
-            <CreateActions />
+            <CreateActions compact />
           </>
         }
       />
@@ -225,7 +225,7 @@ export function MemoList() {
       {searchQuery && (
         <div className="sr-only" role="status" aria-live="polite">
           {filteredMemos.length === 0
-            ? `"${searchQuery}" 검색 결과가 없습니다.`
+            ? `"${searchQuery}"에 맞는 메모를 찾지 못했어요.`
             : `"${searchQuery}" 검색 결과 ${filteredMemos.length}개`}
         </div>
       )}
@@ -233,7 +233,7 @@ export function MemoList() {
       {/* 손짓 안내: 손가락으로 쓰는 화면에서 한 번, 목록 위에 */}
       {showSwipeHint && !isDesktop && filteredMemos.length > 0 && viewMode !== 'kanban' && (
         <div className="mt-3">
-          <FeatureHint id="swipe-onboarding" message="카드를 옆으로 밀면 중요 표시나 삭제를 할 수 있어요. 길게 누르면 여러 개를 골라요." />
+          <FeatureHint id="swipe-onboarding" message="카드를 옆으로 밀면 중요 표시를 하거나 지울 수 있어요. 길게 누르면 여러 개를 골라요." />
         </div>
       )}
 
@@ -321,8 +321,8 @@ export function MemoList() {
         open={isEmptyTrashOpen}
         onClose={() => setIsEmptyTrashOpen(false)}
         onConfirm={handleEmptyTrash}
-        title="휴지통 비우기"
-        description="휴지통의 모든 메모가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+        title="휴지통을 비울까요?"
+        description="휴지통의 모든 메모를 완전히 지워요. 지운 메모는 되돌릴 수 없어요."
         confirmText="비우기"
         variant="danger"
       />

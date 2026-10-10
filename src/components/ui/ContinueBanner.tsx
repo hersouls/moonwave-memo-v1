@@ -36,7 +36,7 @@ export function ContinueBanner() {
       <IcLineDocument size={20} className="text-primary-500 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm text-primary-700 ">
-          이전에 보던 메모가 있습니다
+          이전에 보던 메모가 있어요
         </p>
         <p className="text-xs text-primary-500 truncate">
           {memo.title || '제목 없음'}

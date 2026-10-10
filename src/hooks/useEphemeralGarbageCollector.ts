@@ -34,7 +34,7 @@ export function useEphemeralGarbageCollector(): void {
       })
 
       useToastStore.getState().showToast(
-        `임시 메모 ${expired.length}개가 만료되어 삭제되었습니다`,
+        `시간이 다 된 임시 메모 ${expired.length}개를 지웠어요`,
         'info'
       )
     }

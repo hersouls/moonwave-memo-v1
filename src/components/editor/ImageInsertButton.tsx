@@ -28,7 +28,7 @@ export function ImageInsertButton({ onInsert, memoId }: ImageInsertButtonProps) 
     e.target.value = ''
 
     if (!file.type.startsWith('image/')) {
-      useToastStore.getState().showToast('\uC774\uBBF8\uC9C0 \uD30C\uC77C\uB9CC \uC120\uD0DD\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4', 'warning')
+      useToastStore.getState().showToast('이미지 파일만 고를 수 있어요', 'warning')
       return
     }
 
@@ -49,10 +49,10 @@ export function ImageInsertButton({ onInsert, memoId }: ImageInsertButtonProps) 
 
       const markdown = `![\uC774\uBBF8\uC9C0](memo-image:${imageId})`
       onInsert(markdown)
-      useToastStore.getState().showToast('\uC774\uBBF8\uC9C0\uAC00 \uCD94\uAC00\uB418\uC5C8\uC2B5\uB2C8\uB2E4', 'success')
+      useToastStore.getState().showToast('이미지를 추가했어요', 'success')
     } catch (err) {
       console.error('Failed to insert image:', err)
-      useToastStore.getState().showToast('\uC774\uBBF8\uC9C0 \uCD94\uAC00\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4', 'error')
+      useToastStore.getState().showToast('이미지를 추가하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsProcessing(false)
     }

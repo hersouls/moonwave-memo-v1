@@ -55,7 +55,7 @@ export function useImageOCR() {
     setError(null)
     const validation = validateImageFile(file)
     if (!validation.valid) {
-      setError(validation.error || '유효하지 않은 파일입니다')
+      setError(validation.error || '쓸 수 없는 파일이에요. 다른 파일을 골라 주세요')
       setStatus('error')
       return
     }
@@ -69,7 +69,7 @@ export function useImageOCR() {
       setCompressedData(compressed)
       setImagePreview(compressed.dataUrl)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '이미지 처리 중 오류가 발생했습니다'
+      const msg = err instanceof Error ? err.message : '이미지를 처리하지 못했어요. 다시 시도해 주세요'
       setError(msg)
       setStatus('error')
       return
@@ -95,7 +95,7 @@ export function useImageOCR() {
     } catch (err) {
       stopProgressSimulation()
       setProgress(0)
-      const msg = err instanceof Error ? err.message : '텍스트 추출 중 오류가 발생했습니다'
+      const msg = err instanceof Error ? err.message : '글자를 읽지 못했어요. 다시 시도해 주세요'
       setError(msg)
       setStatus('error')
     }

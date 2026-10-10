@@ -57,7 +57,7 @@ export function IOSInstallBanner() {
                 Memo 앱 설치
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                홈 화면에서 바로 실행하세요
+                홈 화면에서 바로 열어 보세요
               </p>
             </div>
           </div>
@@ -77,11 +77,11 @@ export function IOSInstallBanner() {
               <span className="text-xs font-bold text-primary-600 ">1</span>
             </div>
             <p className="text-sm text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-              하단의 공유
+              아래쪽 공유
               <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-primary-500 text-white">
                 <IcLineShare size={16} />
               </span>
-              버튼을 탭하세요
+              버튼을 눌러 주세요
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export function IOSInstallBanner() {
               <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-200">
                 <IcLineAdd size={16} />
               </span>
-              홈 화면에 추가를 선택하세요
+              홈 화면에 추가를 골라 주세요
             </p>
           </div>
         </div>

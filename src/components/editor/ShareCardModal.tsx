@@ -48,9 +48,9 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, date }: Sha
       a.download = `${title || 'memo'}-card.png`
       a.click()
       URL.revokeObjectURL(url)
-      useToastStore.getState().showToast('이미지가 저장되었습니다', 'success')
+      useToastStore.getState().showToast('이미지를 저장했어요', 'success')
     } catch {
-      useToastStore.getState().showToast('이미지 생성에 실패했습니다', 'error')
+      useToastStore.getState().showToast('이미지를 만들지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setExporting(false)
     }
@@ -67,10 +67,10 @@ export function ShareCardModal({ isOpen, onClose, title, body, tags, date }: Sha
       if (!blob) throw new Error('Failed to generate image')
       const result = await shareAsImage(blob, title || 'Memo')
       if (result === 'copied') {
-        useToastStore.getState().showToast('클립보드에 복사되었습니다', 'success')
+        useToastStore.getState().showToast('클립보드에 복사했어요', 'success')
       }
     } catch {
-      useToastStore.getState().showToast('공유에 실패했습니다', 'error')
+      useToastStore.getState().showToast('공유하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setExporting(false)
     }

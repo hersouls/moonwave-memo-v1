@@ -42,7 +42,7 @@ export function EphemeralBanner({ expiresAt, onSave }: EphemeralBannerProps) {
         )}
       />
       <span className="flex-1">
-        {isExpired ? '만료됨' : `남은 시간 ${display}`}
+        {isExpired ? '시간이 다 됐어요' : `남은 시간 ${display}`}
       </span>
       <button type="button"
         onClick={onSave}

@@ -47,7 +47,7 @@ export const FolderList = memo(function FolderList() {
       {userFolders.length === 0 ? (
         <div className="flex flex-col items-center gap-2 px-5 py-6 text-center">
           <IcLineFolder size={20} className="text-zinc-400" aria-hidden="true" />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">폴더가 없습니다</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">아직 폴더가 없어요</p>
           <button
             type="button"
             onClick={handleEditClick}

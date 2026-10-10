@@ -26,7 +26,7 @@ export function QuickMemoInput({ onClose }: QuickMemoInputProps) {
     const folders = useFolderStore.getState().folders
     const title = buildRuleTitle({ folderId: null, createdAt: new Date().toISOString(), body }, folders)
     await addMemo({ title, body, folderId: null })
-    useToastStore.getState().showToast('메모가 저장되었습니다', 'success')
+    useToastStore.getState().showToast('메모를 저장했어요', 'success')
     setBody('')
     onClose()
   }

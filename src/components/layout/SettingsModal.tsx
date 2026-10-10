@@ -44,7 +44,7 @@ function SyncStatusBadge({ status }: { status: SyncStatus }) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 ">
           <IcLineLoading size={12} className="animate-spin" />
-          동기화 중...
+          동기화 중
         </span>
       )
     case 'synced':
@@ -65,7 +65,7 @@ function SyncStatusBadge({ status }: { status: SyncStatus }) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300">
           <IcLineWarning size={12} />
-          오프라인 — 연결되면 동기화
+          오프라인 · 연결되면 동기화해요
         </span>
       )
     default:
@@ -166,7 +166,7 @@ function CloudSyncSection() {
                 disabled={isSigningOut}
                 className="mw-button mw-button--secondary mw-button--medium"
               >
-                {isSigningOut ? '동기화 마무리 중...' : '로그아웃'}
+                {isSigningOut ? '동기화를 마무리하고 있어요' : '로그아웃'}
               </button>
             </div>
 
@@ -184,7 +184,7 @@ function CloudSyncSection() {
             </div>
 
             <InfoBanner icon={<IcLineCloud size={16} />}>
-              다른 기기에서 같은 계정으로 로그인하면 자동으로 동기화됩니다.
+              다른 기기에서 같은 계정으로 로그인하면 자동으로 동기화해요.
             </InfoBanner>
           </div>
         ) : (
@@ -197,7 +197,7 @@ function CloudSyncSection() {
                 기기 간 동기화
               </h4>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">
-                Google 계정으로 로그인하여 모든 기기에서 메모를 동기화하세요.
+                Google 계정으로 로그인하면 모든 기기에서 메모를 동기화할 수 있어요.
               </p>
             </div>
             <Button variant="secondary" onClick={login} loading={isSigningIn}>
@@ -211,7 +211,7 @@ function CloudSyncSection() {
               </InfoBanner>
             )}
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              로그인 없이도 로컬에서 모든 기능을 사용할 수 있습니다.
+              로그인하지 않아도 이 기기에서는 모든 기능을 쓸 수 있어요.
             </p>
           </div>
         )}
@@ -473,7 +473,7 @@ export function SettingsModal() {
       setLastBackupDate(new Date())
     } catch (error) {
       console.error('Backup failed:', error)
-      showToast('백업에 실패했습니다', 'error')
+      showToast('백업하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsBackingUp(false)
     }
@@ -489,7 +489,7 @@ export function SettingsModal() {
 
     const result = await parseBackupFile(file)
     if (!result.success || !result.data) {
-      setRestoreError(result.error || '파일을 읽을 수 없습니다.')
+      setRestoreError(result.error || '파일을 읽지 못했어요. 백업 파일이 맞는지 확인해 주세요.')
       return
     }
 
@@ -516,7 +516,7 @@ export function SettingsModal() {
 
       const parseResult = await parseBackupFile(pendingRestore.file)
       if (!parseResult.success || !parseResult.data) {
-        throw new Error('파일을 읽을 수 없습니다.')
+        throw new Error('파일을 읽지 못했어요. 백업 파일이 맞는지 확인해 주세요.')
       }
 
       const result = await restoreFromBackup(parseResult.data)
@@ -526,7 +526,7 @@ export function SettingsModal() {
 
       window.location.reload()
     } catch (error) {
-      setRestoreError(error instanceof Error ? error.message : '복원에 실패했습니다.')
+      setRestoreError(error instanceof Error ? error.message : '복원하지 못했어요. 다시 시도해 주세요.')
     } finally {
       setIsRestoring(false)
       setPendingRestore(null)
@@ -548,7 +548,7 @@ export function SettingsModal() {
   const handleDeleteFolderConfirm = async () => {
     if (!pendingDeleteFolder) return
     await deleteFolder(pendingDeleteFolder.id)
-    showToast(`'${pendingDeleteFolder.name}' 폴더가 삭제되었습니다`, 'info')
+    showToast(`'${pendingDeleteFolder.name}' 폴더를 지웠어요`, 'info')
     setShowDeleteFolderConfirm(false)
     setPendingDeleteFolder(null)
   }
@@ -565,7 +565,7 @@ export function SettingsModal() {
   }
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '없음'
+    if (!dateStr) return '해당 없음'
     try {
       return new Date(dateStr).toLocaleDateString('ko-KR', {
         year: 'numeric',
@@ -575,7 +575,7 @@ export function SettingsModal() {
         minute: '2-digit',
       })
     } catch {
-      return '없음'
+      return '날짜 미상'
     }
   }
 
@@ -643,7 +643,7 @@ export function SettingsModal() {
         <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-zinc-500 dark:text-zinc-400">버전</span>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">1.0.0</span>
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">{__APP_VERSION__}</span>
           </div>
           <div className="border-t border-[var(--color-border-subtle)] my-3" />
           <button type="button"
@@ -700,7 +700,7 @@ export function SettingsModal() {
             <div className="w-full text-center py-4">
               <IcLineMy size={48} className="mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Google 로그인 시 프로필이 자동으로 표시됩니다.
+                Google로 로그인하면 프로필이 자동으로 표시돼요.
               </p>
             </div>
           )}
@@ -738,7 +738,7 @@ export function SettingsModal() {
           <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/80">
             <div className="space-y-1">
               <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                백업 다운로드
+                백업 내려받기
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">
                 마지막 백업: <span className="font-medium text-zinc-700 dark:text-zinc-300">{formatDate(settings.lastBackupDate)}</span>
@@ -751,7 +751,7 @@ export function SettingsModal() {
               disabled={isBackingUp}
             >
               <IcLineDownload size={16} className="mr-1.5" />
-              {isBackingUp ? '백업 중...' : '백업'}
+              {isBackingUp ? '백업하고 있어요' : '백업'}
             </Button>
           </div>
 
@@ -762,7 +762,7 @@ export function SettingsModal() {
                 데이터 복원
               </div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                백업 파일에서 데이터를 복원합니다.
+                백업 파일에서 데이터를 복원해요.
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -773,7 +773,7 @@ export function SettingsModal() {
                 disabled={isRestoring}
               >
                 <IcMwUpload size={16} className="mr-1.5" />
-                {isRestoring ? '복원 중...' : '복원'}
+                {isRestoring ? '복원하고 있어요' : '복원'}
               </Button>
               <input
                 ref={fileInputRef}
@@ -790,7 +790,7 @@ export function SettingsModal() {
             <div className="p-4 rounded-xl bg-danger-50 dark:bg-danger-900/30 border border-danger-200 dark:border-danger-800">
               <div className="flex items-center gap-2 text-danger-700 dark:text-danger-300 mb-1">
                 <IcLineWarning size={16} />
-                <span className="text-sm font-semibold">복원 오류</span>
+                <span className="text-sm font-semibold">복원하지 못했어요</span>
               </div>
               <p className="text-xs text-danger-600 dark:text-danger-400 whitespace-pre-line pl-6">
                 {restoreError}
@@ -887,14 +887,14 @@ export function SettingsModal() {
         </h3>
         <div className="space-y-3">
           <ToggleItem
-            label="'#텍스트' 입력 시 태그로 변환"
-            description="태그로 변환 후에는 해당 태그를 포함하는 메모를 모아볼 수 있습니다."
+            label="'#텍스트'를 입력하면 태그로 바꾸기"
+            description="태그로 바꾸면 그 태그가 붙은 메모를 모아 볼 수 있어요."
             enabled={settings.memoSettings.hashtagToTag}
             onChange={toggleHashtagToTag}
           />
           <ToggleItem
             label="링크 미리보기 표시"
-            description="URL 입력 시 링크 미리보기를 함께 표시합니다."
+            description="URL을 입력하면 링크 미리보기를 함께 보여 줘요."
             enabled={settings.memoSettings.linkPreview}
             onChange={toggleLinkPreview}
           />
@@ -970,8 +970,8 @@ export function SettingsModal() {
           {folders.length === 0 && !isAddingFolder && (
             <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 text-center">
               <IcLineFolder size={32} className="mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">폴더가 없습니다</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">새 폴더를 추가하여 메모를 정리하세요</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">아직 폴더가 없어요</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">새 폴더를 추가해 메모를 정리해 보세요</p>
             </div>
           )}
 
@@ -1076,7 +1076,7 @@ export function SettingsModal() {
                           setShowDeleteFolderConfirm(true)
                         }}
                         className="mw-icon-button -my-2"
-                        aria-label={`${folder.name} 삭제`}
+                        aria-label={`${folder.name} 지우기`}
                       >
                         <IcLineTrash size={16} />
                       </button>
@@ -1095,7 +1095,7 @@ export function SettingsModal() {
   const handleTestConnection = async (provider: 'openai' | 'anthropic' | 'gemini') => {
     const key = provider === 'openai' ? localOpenAIKey : provider === 'anthropic' ? localAnthropicKey : localGeminiKey
     if (!key.trim()) {
-      showToast('API 키를 먼저 입력하세요', 'warning')
+      showToast('API 키를 먼저 입력해 주세요', 'warning')
       return
     }
     setTestingProvider(provider)
@@ -1120,14 +1120,14 @@ export function SettingsModal() {
       }
       if (res.ok) {
         setResult('success')
-        showToast('연결 성공', 'success')
+        showToast('연결했어요', 'success')
       } else {
         setResult('error')
-        showToast('API 키를 확인해주세요', 'error')
+        showToast('연결하지 못했어요. API 키를 확인해 주세요', 'error')
       }
     } catch {
       setResult('error')
-      showToast('네트워크 오류가 발생했습니다', 'error')
+      showToast('연결하지 못했어요. 인터넷 연결을 확인한 뒤 다시 시도해 주세요', 'error')
     } finally {
       setTestingProvider(null)
     }
@@ -1159,14 +1159,14 @@ export function SettingsModal() {
       <div className="rounded-xl bg-primary-50 border border-primary-100 p-4 space-y-2">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 기능 활성화됨</span>
+          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 기능을 쓸 수 있어요</span>
         </div>
         {hasAnyKey ? (
-          <p className="text-xs text-primary-600 ">내 API 키로 무제한 사용 중</p>
+          <p className="text-xs text-primary-600 ">내 API 키로 한도 없이 쓰고 있어요</p>
         ) : (
           <p className="text-xs text-zinc-600 dark:text-zinc-400">
             오늘 사용: <span className="font-semibold text-zinc-900 dark:text-zinc-100">{aiUsage.count}/50회</span> (서버 키)
-            {aiUsage.count >= 10 && <span className="text-danger-500 ml-1">한도 초과</span>}
+            {aiUsage.count >= 50 && <span className="text-danger-500 ml-1">한도를 넘었어요</span>}
           </p>
         )}
       </div>
@@ -1177,7 +1177,7 @@ export function SettingsModal() {
         <div className="p-4 rounded-xl border border-[var(--color-border-subtle)] bg-white dark:bg-zinc-900/50 space-y-5">
           {/* AI Provider */}
           <div>
-            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">AI 프로바이더</label>
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">AI 제공자</label>
             <div role="group" aria-label="AI 제공자" className="memo-chip-wrap">
               {providerOptions.map((opt) => (
                 <button
@@ -1195,7 +1195,7 @@ export function SettingsModal() {
 
           {/* OCR Provider */}
           <div>
-            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">OCR 프로바이더</label>
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">OCR 제공자</label>
             <div role="group" aria-label="글자 인식 제공자" className="memo-chip-wrap">
               {ocrProviderOptions.map((opt) => (
                 <button
@@ -1232,7 +1232,7 @@ export function SettingsModal() {
           {/* AI Autocomplete */}
           <ToggleItem
             label="AI 자동완성"
-            description="입력 중 AI가 다음 문장을 제안합니다 (Tab으로 수락)"
+            description="입력하는 동안 AI가 다음 문장을 제안해요 (Tab으로 수락)"
             enabled={settings.ai?.aiAutocomplete ?? false}
             onChange={() => useSettingsStore.getState().toggleAIAutocomplete()}
           />
@@ -1251,7 +1251,7 @@ export function SettingsModal() {
           고급: 내 API 키 등록 (무제한)
         </button>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 px-1 mb-4">
-          키를 등록하면 서버 키 대신 내 키를 사용합니다. 하루 사용 한도 없이 무제한 AI 기능.
+          키를 등록하면 서버 키 대신 내 키를 써요. 하루 사용 한도 없이 AI 기능을 쓸 수 있어요.
         </p>
 
         {showAdvancedKeys && (
@@ -1310,7 +1310,7 @@ export function SettingsModal() {
       {/* Info */}
       <section>
         <InfoBanner icon={<IcLineShield size={16} />}>
-          API 키를 등록하지 않아도 하루 50회까지 무료로 AI 기능을 사용할 수 있습니다. 등록된 키는 이 기기에만 저장됩니다.
+          API 키를 등록하지 않아도 하루 50회까지 무료로 AI 기능을 쓸 수 있어요. 등록한 키는 이 기기에만 저장해요.
         </InfoBanner>
       </section>
     </div>
@@ -1330,7 +1330,7 @@ export function SettingsModal() {
               <div className="w-8 h-8 rounded-full bg-success-100 dark:bg-success-900/40 flex items-center justify-center">
                 <IcLineMoblie size={16} />
               </div>
-              <span className="text-sm font-medium">앱이 이미 설치되어 있습니다</span>
+              <span className="text-sm font-medium">앱이 이미 설치되어 있어요</span>
             </div>
           ) : canInstallPWA ? (
             <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -1339,7 +1339,7 @@ export function SettingsModal() {
                   앱으로 설치하기
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  홈 화면에 추가하여 네이티브 앱처럼 더 빠르고 편리하게 사용할 수 있습니다.
+                  홈 화면에 추가하면 네이티브 앱처럼 더 빠르고 편리하게 쓸 수 있어요.
                 </p>
               </div>
               <Button
@@ -1354,7 +1354,7 @@ export function SettingsModal() {
           ) : (
             <div className="text-sm text-zinc-500 dark:text-zinc-400">
               <p className="mb-2">
-                브라우저 메뉴에서 "홈 화면에 추가"를 선택하여 앱을 설치할 수 있습니다.
+                브라우저 메뉴에서 "홈 화면에 추가"를 고르면 앱을 설치할 수 있어요.
               </p>
               <ul className="list-disc list-inside text-xs space-y-1 pl-1">
                 <li>Chrome: 메뉴 &rarr; 앱 설치</li>
@@ -1376,7 +1376,7 @@ export function SettingsModal() {
         <ToggleItem
           icon={<IcLineEye size={16} />}
           label="고대비 모드"
-          description="텍스트와 UI 요소의 대비를 높여 가독성을 개선합니다"
+          description="글자와 화면 요소의 대비를 높여 더 읽기 쉽게 해요"
           enabled={settings.highContrastMode ?? false}
           onChange={() => useSettingsStore.getState().toggleHighContrast()}
         />
@@ -1392,10 +1392,10 @@ export function SettingsModal() {
         <div className="flex items-center justify-between p-4 rounded-xl border border-danger-200 dark:border-danger-800 bg-danger-50 dark:bg-danger-900/10">
           <div className="space-y-0.5">
             <div className="text-sm font-medium text-danger-700 dark:text-danger-300">
-              모든 데이터 삭제
+              모든 데이터 지우기
             </div>
             <div className="text-xs text-danger-600/80 dark:text-danger-400/80">
-              모든 메모와 설정이 삭제됩니다. 복구할 수 없습니다.
+              모든 메모와 설정을 지워요. 지운 데이터는 되돌릴 수 없어요.
             </div>
           </div>
           <Button
@@ -1404,7 +1404,7 @@ export function SettingsModal() {
             onClick={() => setShowClearConfirm(true)}
           >
             <IcLineTrash size={16} className="mr-1.5" />
-            삭제
+            지우기
           </Button>
         </div>
       </section>
@@ -1425,13 +1425,13 @@ export function SettingsModal() {
             Living Workspace
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
-            사용자의 환경과 행동에 반응하는 생동감 있는 작업 공간 설정
+            환경과 행동에 반응하는 생동감 있는 작업 공간을 설정해요
           </p>
 
           <div className="space-y-3">
             <ToggleItem label="날씨와 위치 맥락" description="메모에 쓴 때의 날씨와 낮밤을 함께 적고, 상단 바에 날씨를 보여 줘요" enabled={lw.environmentThemeEnabled} onChange={() => handleToggle('environmentThemeEnabled')} />
             <ToggleItem label="타임캡슐" description="지난해 같은 날에 쓴 메모를 알려 줘요" enabled={lw.timeCapsuleEnabled} onChange={() => handleToggle('timeCapsuleEnabled')} />
-            <ToggleItem label="사운드 동기화" description="테마에 맞는 인터랙션 사운드 재생" enabled={lw.soundSyncEnabled} onChange={() => handleToggle('soundSyncEnabled')} />
+            <ToggleItem label="사운드 동기화" description="조작할 때 테마에 맞는 소리를 들려줘요" enabled={lw.soundSyncEnabled} onChange={() => handleToggle('soundSyncEnabled')} />
           </div>
         </section>
 
@@ -1441,13 +1441,13 @@ export function SettingsModal() {
             감각 경험
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
-            글쓰기를 다감각적으로 확장하는 몰입 기능
+            여러 감각으로 글쓰기에 몰입하게 돕는 기능이에요
           </p>
           <div className="space-y-3">
-            <ToggleItem label="디지털 정원" description="방치된 메모는 퇴색, 활발한 메모는 빛남" enabled={lw.digitalGardenEnabled} onChange={() => handleToggle('digitalGardenEnabled')} />
-            <ToggleItem label="호흡 타이포그래피" description="빠른 타이핑 시 자간이 심호흡 리듬으로 맥동" enabled={lw.breathingTypographyEnabled} onChange={() => handleToggle('breathingTypographyEnabled')} />
-            <ToggleItem label="소멸의 공간 (브레인 덤프)" description="1시간 후 자동 소멸되는 임시 메모 모드" enabled={lw.ephemeralBrainDumpEnabled} onChange={() => handleToggle('ephemeralBrainDumpEnabled')} />
-            <ToggleItem label="앰비언트 사운드스케이프" description="타이핑이 앰비언트 음악을 생성" enabled={lw.ambientSoundscapeEnabled} onChange={() => handleToggle('ambientSoundscapeEnabled')} />
+            <ToggleItem label="디지털 정원" description="오래 둔 메모는 색이 바래고, 자주 쓰는 메모는 빛나요" enabled={lw.digitalGardenEnabled} onChange={() => handleToggle('digitalGardenEnabled')} />
+            <ToggleItem label="호흡 타이포그래피" description="빠르게 입력하면 글자 사이가 심호흡 리듬으로 움직여요" enabled={lw.breathingTypographyEnabled} onChange={() => handleToggle('breathingTypographyEnabled')} />
+            <ToggleItem label="소멸의 공간 (브레인 덤프)" description="한 시간 뒤에 저절로 사라지는 임시 메모 모드예요" enabled={lw.ephemeralBrainDumpEnabled} onChange={() => handleToggle('ephemeralBrainDumpEnabled')} />
+            <ToggleItem label="앰비언트 사운드스케이프" description="글을 입력하면 앰비언트 음악이 만들어져요" enabled={lw.ambientSoundscapeEnabled} onChange={() => handleToggle('ambientSoundscapeEnabled')} />
           </div>
         </section>
 
@@ -1457,11 +1457,11 @@ export function SettingsModal() {
             지능형 보조
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
-            맥락을 이해하는 스마트 기능
+            맥락을 이해하는 스마트 기능이에요
           </p>
           <div className="space-y-3">
-            <ToggleItem label="공감각 타임머신" description="과거 메모 열람 시 작성 당시 환경(날씨/시간) 재현" enabled={lw.timeMachineEnabled} onChange={() => handleToggle('timeMachineEnabled')} />
-            <ToggleItem label="맥락 자동 제안" description="시간/요일 패턴으로 필요한 메모 자동 추천" enabled={lw.contextSurfacingEnabled} onChange={() => handleToggle('contextSurfacingEnabled')} />
+            <ToggleItem label="공감각 타임머신" description="예전 메모를 열면 쓸 때의 환경(날씨/시간)을 다시 보여 줘요" enabled={lw.timeMachineEnabled} onChange={() => handleToggle('timeMachineEnabled')} />
+            <ToggleItem label="맥락 자동 제안" description="시간과 요일 패턴을 보고 필요한 메모를 자동으로 추천해요" enabled={lw.contextSurfacingEnabled} onChange={() => handleToggle('contextSurfacingEnabled')} />
           </div>
         </section>
 
@@ -1471,11 +1471,11 @@ export function SettingsModal() {
             AI 고급
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 px-1">
-            AI API를 활용하는 고급 기능 (API 키 필요)
+            AI API를 쓰는 고급 기능이에요 (API 키 필요)
           </p>
           <div className="space-y-3">
-            <ToggleItem label="시맨틱 캔버스" description="의미 유사도 기반 2D 메모 클러스터링 (OpenAI 키 필요)" enabled={lw.semanticCanvasEnabled} onChange={() => handleToggle('semanticCanvasEnabled')} />
-            <ToggleItem label="데미안 모드 (AI 대화)" description="과거 글쓰기 스타일의 AI가 소크라테스식 문답 (API 키 필요)" enabled={lw.alterEgoEnabled} onChange={() => handleToggle('alterEgoEnabled')} />
+            <ToggleItem label="시맨틱 캔버스" description="뜻이 비슷한 메모끼리 2D 화면에 모아 보여 줘요 (OpenAI 키 필요)" enabled={lw.semanticCanvasEnabled} onChange={() => handleToggle('semanticCanvasEnabled')} />
+            <ToggleItem label="데미안 모드 (AI 대화)" description="내 예전 글쓰기 스타일을 닮은 AI가 소크라테스식으로 묻고 답해요 (API 키 필요)" enabled={lw.alterEgoEnabled} onChange={() => handleToggle('alterEgoEnabled')} />
           </div>
         </section>
       </div>
@@ -1514,8 +1514,9 @@ export function SettingsModal() {
 
   return (
     <>
-      <Dialog open={isOpen} onClose={closeModal} size="4xl" noPadding>
-        <div className="flex flex-col h-[90dvh] fold:h-[75dvh] sm:h-auto sm:max-h-[800px]">
+      <Dialog open={isOpen} onClose={closeModal} size="4xl" noPadding full>
+        {/* 폰에서는 화면 전체, 넓은 화면에서는 내용만큼(가장 높아도 800px) */}
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-none sm:max-h-[800px]">
           {/* Header */}
           <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5 sm:pb-4">
             <DialogHeader title="설정" onClose={closeModal} />
@@ -1524,7 +1525,7 @@ export function SettingsModal() {
           {/* Body: Sidebar Tabs + Content */}
           <DialogBody className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
             {/* 탭: 키트의 Scrollable 탭이에요 */}
-            <div className="mw-tab-group mw-tab-group--scrollable px-4 sm:px-6" role="tablist" aria-label="설정 탭">
+            <div className="mw-tab-group mw-tab-group--scrollable shrink-0 px-4 sm:px-6" role="tablist" aria-label="설정 탭">
               {tabs.map((tab, index) => (
                 <button
                   key={tab.id}
@@ -1566,8 +1567,8 @@ export function SettingsModal() {
           setPendingRestore(null)
         }}
         onConfirm={handleRestoreConfirm}
-        title="데이터 복원"
-        description={`백업 파일에서 데이터를 복원합니다.\n\n버전: ${pendingRestore?.validation.metadata?.version || 'unknown'}\n백업 날짜: ${formatDate(pendingRestore?.validation.metadata?.exportDate)}\n메모 수: ${pendingRestore?.validation.metadata?.memoCount || 0}개\n\n현재 데이터는 덮어쓰기됩니다. 계속하시겠습니까?`}
+        title="데이터를 복원할까요?"
+        description={`백업 파일의 데이터로 복원해요.\n\n버전: ${pendingRestore?.validation.metadata?.version || '미상'}\n백업 날짜: ${formatDate(pendingRestore?.validation.metadata?.exportDate)}\n메모 수: ${pendingRestore?.validation.metadata?.memoCount || 0}개\n\n지금 있는 데이터는 백업 파일의 데이터로 덮어써요.`}
         confirmText="복원"
         variant="warning"
         isLoading={isRestoring}
@@ -1578,9 +1579,9 @@ export function SettingsModal() {
         open={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
         onConfirm={handleClearAllData}
-        title="모든 데이터 삭제"
-        description={'정말로 모든 데이터를 삭제하시겠습니까?\n\n모든 메모와 설정이 영구적으로 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.'}
-        confirmText="모두 삭제"
+        title="모든 데이터를 지울까요?"
+        description={'모든 메모와 설정을 완전히 지워요.\n지운 데이터는 되돌릴 수 없어요.'}
+        confirmText="모두 지우기"
         variant="danger"
       />
 
@@ -1592,9 +1593,9 @@ export function SettingsModal() {
           setPendingDeleteFolder(null)
         }}
         onConfirm={handleDeleteFolderConfirm}
-        title="폴더 삭제"
-        description={`'${pendingDeleteFolder?.name}' 폴더를 삭제하시겠습니까?\n\n폴더 안의 메모는 삭제되지 않고 기본 폴더로 이동합니다.`}
-        confirmText="삭제"
+        title="폴더를 지울까요?"
+        description={`'${pendingDeleteFolder?.name}' 폴더를 지워요.\n안에 있던 메모는 기본 폴더로 옮겨져요.`}
+        confirmText="지우기"
         variant="danger"
       />
     </>

@@ -327,8 +327,8 @@ export function SlideView() {
           <button type="button"
             onClick={() => setSlideTheme(isDark ? 'light' : 'dark')}
             className="mw-button mw-button--tertiary-subtle mw-button--medium"
-            title={isDark ? '라이트 테마' : '다크 테마'}
-            aria-label={isDark ? '라이트 테마' : '다크 테마'}
+            title={isDark ? '밝은 테마' : '어두운 테마'}
+            aria-label={isDark ? '밝은 테마' : '어두운 테마'}
           >
             {isDark ? <IcMwSun size={20} /> : <IcMwMoon size={20} />}
           </button>

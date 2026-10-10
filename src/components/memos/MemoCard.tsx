@@ -278,7 +278,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
         console.error('Failed to delete memo:', err)
         if (mountedRef.current) {
           setIsDeleting(false)
-          useToastStore.getState().showToast('메모 삭제에 실패했습니다', 'error')
+          useToastStore.getState().showToast('메모를 지우지 못했어요. 다시 시도해 주세요', 'error')
         }
       }
     }, 300)
@@ -291,7 +291,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     swipeActionTimerRef.current = setTimeout(async () => {
       if (!mountedRef.current) return
       await restore(memoId)
-      useToastStore.getState().showToast('메모가 복원되었습니다', 'success')
+      useToastStore.getState().showToast('메모를 복원했어요', 'success')
     }, 300)
   }, [memo.id, restore])
 
@@ -302,7 +302,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     swipeActionTimerRef.current = setTimeout(async () => {
       if (!mountedRef.current) return
       await permanentDelete(memoId)
-      useToastStore.getState().showToast('메모가 영구 삭제되었습니다', 'info')
+      useToastStore.getState().showToast('메모를 완전히 지웠어요', 'info')
     }, 300)
   }, [memo.id, permanentDelete])
 
@@ -597,7 +597,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                 <button
                   type="button"
                   onClick={runPermanentDelete}
-                  aria-label="영구 삭제"
+                  aria-label="완전히 지우기"
                   className="mw-icon-button"
                 >
                   <IcLineTrash size={16} />
@@ -616,7 +616,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
                 <button
                   type="button"
                   onClick={runSoftDelete}
-                  aria-label="삭제"
+                  aria-label="지우기"
                   className="mw-icon-button"
                 >
                   <IcLineTrash size={16} />

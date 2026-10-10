@@ -36,7 +36,7 @@ export function OAuthCallback() {
 
         <Spinner size="md" className="w-6 h-6 text-primary-500" label="" />
         <p className="mt-4 text-sm text-[var(--color-text-secondary)]" role="status">
-          로그인 처리 중...
+          로그인하고 있어요
         </p>
 
         {/* 지연 시 복귀 경로 제공 */}

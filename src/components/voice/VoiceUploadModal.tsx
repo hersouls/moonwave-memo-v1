@@ -84,11 +84,11 @@ function StepFileSelect({
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
     const validExts = ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg']
     if (!validExts.includes(ext)) {
-      setFileError(`지원하지 않는 파일 형식입니다. 지원: ${validExts.join(', ')}`)
+      setFileError(`지원하지 않는 파일 형식이에요. 쓸 수 있는 형식: ${validExts.join(', ')}`)
       return
     }
     if (file.size > 25 * 1024 * 1024) {
-      setFileError(`파일 크기가 25MB를 초과합니다 (${(file.size / (1024 * 1024)).toFixed(1)}MB)`)
+      setFileError(`25MB가 넘는 파일은 올릴 수 없어요 (지금 파일: ${(file.size / (1024 * 1024)).toFixed(1)}MB)`)
       return
     }
     setSelectedFile(file)
@@ -121,7 +121,7 @@ function StepFileSelect({
       {/* Tab bar */}
       <div className="mw-tab-group mw-tab-group--fixed" role="tablist" aria-label="넣는 방법">
         <button type="button" role="tab" aria-selected={activeTab === 'upload'} onClick={() => setActiveTab('upload')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'upload' ? 'selected' : 'default'}`}>
-          파일 업로드
+          파일 올리기
         </button>
         <button type="button" role="tab" aria-selected={activeTab === 'record'} onClick={() => setActiveTab('record')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'record' ? 'selected' : 'default'}`}>
           직접 녹음
@@ -133,7 +133,7 @@ function StepFileSelect({
           {/* Drop zone */}
           <div
             role="group"
-            aria-label="음성 파일 선택"
+            aria-label="음성 파일 고르기"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
@@ -189,7 +189,7 @@ function StepFileSelect({
               </div>
               <button type="button"
                 onClick={(e) => { e.stopPropagation(); setSelectedFile(null) }}
-                aria-label="선택한 파일 제거"
+                aria-label="고른 파일 빼기"
                 className="mw-icon-button shrink-0 -m-2"
               >
                 <IcLineClose size={16} />
@@ -203,7 +203,7 @@ function StepFileSelect({
               className="w-full"
               onClick={() => onFileSelect(selectedFile)}
             >
-              변환 시작
+              받아 적기
             </Button>
           )}
         </div>
@@ -214,7 +214,7 @@ function StepFileSelect({
             <IcLineMic size={32} className="text-danger-500 dark:text-danger-400" aria-hidden="true" />
           </div>
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            마이크를 사용할 수 없습니다
+            마이크를 쓸 수 없어요
           </p>
           <p className="text-xs text-[var(--color-text-tertiary)] max-w-xs">
             {recorder.error}
@@ -298,12 +298,12 @@ function StepFileSelect({
 
           {recorder.status === 'idle' && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              버튼을 눌러 녹음을 시작하세요
+              버튼을 누르면 녹음을 시작해요
             </p>
           )}
           {recorder.status === 'requesting-permission' && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400" role="status">
-              마이크 권한을 확인하는 중...
+              마이크 권한을 확인하고 있어요
             </p>
           )}
         </div>
@@ -325,10 +325,10 @@ function StepTranscribing({
       <WaveformAnimation />
       <div className="text-center">
         <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          음성을 텍스트로 변환하고 있습니다...
+          음성을 글로 받아 적고 있어요
         </p>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-          파일 크기에 따라 시간이 걸릴 수 있습니다
+          파일 크기에 따라 시간이 걸릴 수 있어요
         </p>
       </div>
 
@@ -387,7 +387,7 @@ function StepResult({
             onClick={onTimestampToggle}
             className={`mw-select-chip mw-select-chip--${includeTimestamps ? 'on' : 'off'}`}
           >
-            타임스탬프 {includeTimestamps ? 'ON' : 'OFF'}
+            타임스탬프 {includeTimestamps ? '켬' : '끔'}
           </button>
         )}
       </div>
@@ -482,10 +482,10 @@ export function VoiceUploadModal() {
     try {
       const newId = await transcription.saveAsNewMemo(editedText)
       closeModal()
-      showToast('음성 메모가 저장되었습니다', 'success')
+      showToast('음성 메모를 저장했어요', 'success')
       if (newId) navigate(`/memo/${newId}`)
     } catch {
-      showToast('저장 중 오류가 발생했습니다', 'error')
+      showToast('저장하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsSaving(false)
     }
@@ -494,16 +494,16 @@ export function VoiceUploadModal() {
   const handleAppend = async () => {
     const memoId = routeMemoId ? Number(routeMemoId) : null
     if (!memoId) {
-      showToast('편집 중인 메모가 없습니다', 'warning')
+      showToast('편집하고 있는 메모가 없어요. 메모를 연 뒤 다시 시도해 주세요', 'warning')
       return
     }
     setIsSaving(true)
     try {
       await transcription.appendToCurrentMemo(memoId, editedText)
       closeModal()
-      showToast('메모에 추가되었습니다', 'success')
+      showToast('메모에 추가했어요', 'success')
     } catch {
-      showToast('추가 중 오류가 발생했습니다', 'error')
+      showToast('메모에 추가하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsSaving(false)
     }
@@ -513,17 +513,19 @@ export function VoiceUploadModal() {
 
   const stepTitles: Record<ModalStep, string> = {
     1: '음성 입력',
-    2: '변환 중',
-    3: '변환 결과',
+    2: '받아 적는 중',
+    3: '받아 적은 글',
   }
 
   return (
     <Dialog open={isOpen} onClose={step === 2 ? handleCancel : closeModal} size="lg" noPadding>
       <div className="flex flex-col max-h-[85dvh] fold:max-h-[70dvh]">
-        <DialogHeader
-          title={stepTitles[step]}
-          onClose={step === 2 ? undefined : closeModal}
-        />
+        <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
+          <DialogHeader
+            title={stepTitles[step]}
+            onClose={step === 2 ? undefined : closeModal}
+          />
+        </div>
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 px-6 pb-3">

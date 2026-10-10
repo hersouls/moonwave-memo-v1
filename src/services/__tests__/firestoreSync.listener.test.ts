@@ -40,7 +40,7 @@ const MEMOS = 'users/u1/memos'
 const memoSubs = () => subs.filter((s) => s.path === MEMOS)
 const latestMemoSub = () => memoSubs().at(-1)!
 const disconnectToasts = () =>
-  useToastStore.getState().toasts.filter((t) => t.message === '메모 동기화 연결이 끊어졌습니다').length
+  useToastStore.getState().toasts.filter((t) => t.message === '메모 동기화 연결이 끊겼어요. 다시 연결하고 있어요').length
 
 describe('live listener re-subscription', () => {
   beforeEach(async () => {

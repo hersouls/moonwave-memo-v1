@@ -53,11 +53,11 @@ function StepImageSelect({
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
     const validExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
     if (!validExts.includes(ext) && !file.type.startsWith('image/')) {
-      setFileError(`지원하지 않는 파일 형식입니다. 지원: ${validExts.join(', ')}`)
+      setFileError(`지원하지 않는 파일 형식이에요. 쓸 수 있는 형식: ${validExts.join(', ')}`)
       return
     }
     if (file.size > 20 * 1024 * 1024) {
-      setFileError(`파일 크기가 20MB를 초과합니다 (${(file.size / (1024 * 1024)).toFixed(1)}MB)`)
+      setFileError(`20MB가 넘는 파일은 올릴 수 없어요 (지금 파일: ${(file.size / (1024 * 1024)).toFixed(1)}MB)`)
       return
     }
     setSelectedFile(file)
@@ -91,7 +91,7 @@ function StepImageSelect({
       {/* Tab bar */}
       <div className="mw-tab-group mw-tab-group--fixed" role="tablist" aria-label="넣는 방법">
         <button type="button" role="tab" aria-selected={activeTab === 'upload'} onClick={() => setActiveTab('upload')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'upload' ? 'selected' : 'default'}`}>
-          이미지 업로드
+          이미지 올리기
         </button>
         <button type="button" role="tab" aria-selected={activeTab === 'camera'} onClick={() => setActiveTab('camera')} className={`mw-tab mw-tab--fixed mw-tab--${activeTab === 'camera' ? 'selected' : 'default'}`}>
           카메라 촬영
@@ -103,7 +103,7 @@ function StepImageSelect({
           {/* Drop zone */}
           <div
             role="group"
-            aria-label="이미지 파일 선택"
+            aria-label="이미지 파일 고르기"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
@@ -149,14 +149,14 @@ function StepImageSelect({
             <IcLineCamera size={32} className="text-primary-500" />
           </div>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center">
-            카메라로 사진을 촬영하여<br />텍스트를 추출합니다
+            카메라로 사진을 찍어<br />글자를 읽어 내요
           </p>
           <Button
             variant="primary"
             onClick={() => cameraInputRef.current?.click()}
           >
             <IcLineCamera size={16} className="mr-1.5" />
-            사진 촬영
+            사진 찍기
           </Button>
           <input
             ref={cameraInputRef}
@@ -184,12 +184,12 @@ function StepImageSelect({
           <div className="relative rounded-xl overflow-hidden border border-[var(--color-border-subtle)] bg-zinc-50 dark:bg-zinc-800/50">
             <img
               src={preview}
-              alt="선택된 이미지"
+              alt="고른 이미지"
               className="w-full max-h-48 object-contain"
             />
             <button type="button"
               onClick={(e) => { e.stopPropagation(); clearSelection() }}
-              aria-label="선택한 이미지 제거"
+              aria-label="고른 이미지 빼기"
               className="mw-button mw-button--tertiary-subtle mw-button--medium absolute top-2 right-2 -m-1"
             >
               <span className="flex items-center justify-center w-7 h-7 rounded-full bg-black/50 group-hover/clear:bg-black/70 transition-colors">
@@ -209,7 +209,7 @@ function StepImageSelect({
             onClick={() => onImageSelect(selectedFile)}
           >
             <IcLineCamera size={16} className="mr-1.5" />
-            OCR 시작
+            글자 읽기
           </Button>
         </div>
       )}
@@ -239,10 +239,10 @@ function StepProcessing({
 
       <div className="text-center">
         <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          이미지에서 텍스트를 추출하고 있습니다...
+          이미지에서 글자를 읽고 있어요
         </p>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-          이미지 내용에 따라 시간이 걸릴 수 있습니다
+          이미지 내용에 따라 시간이 걸릴 수 있어요
         </p>
       </div>
 
@@ -297,7 +297,7 @@ function StepResult({
             className="w-12 h-12 rounded-lg object-cover border border-[var(--color-border-subtle)]"
           />
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            원본 이미지가 메모에 함께 저장됩니다
+            원본 이미지도 메모에 함께 저장해요
           </p>
         </div>
       )}
@@ -309,10 +309,10 @@ function StepResult({
             <IcLineCamera size={24} className="text-zinc-500 dark:text-zinc-400" />
           </div>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            이미지에서 텍스트를 찾지 못했습니다
+            이미지에서 글자를 찾지 못했어요
           </p>
           <Button variant="ghost" size="sm" onClick={onRetry}>
-            다른 이미지 시도
+            다른 이미지 고르기
           </Button>
         </div>
       )}
@@ -414,10 +414,10 @@ export function ImageOCRModal() {
     try {
       const newId = await ocr.saveAsNewMemo(editedText)
       closeModal()
-      showToast('이미지 OCR 메모가 저장되었습니다', 'success')
+      showToast('이미지 OCR 메모를 저장했어요', 'success')
       if (newId) navigate(`/memo/${newId}`)
     } catch {
-      showToast('저장 중 오류가 발생했습니다', 'error')
+      showToast('저장하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsSaving(false)
     }
@@ -426,16 +426,16 @@ export function ImageOCRModal() {
   const handleAppend = async () => {
     const memoId = routeMemoId ? Number(routeMemoId) : null
     if (!memoId) {
-      showToast('편집 중인 메모가 없습니다', 'warning')
+      showToast('편집하고 있는 메모가 없어요. 메모를 연 뒤 다시 시도해 주세요', 'warning')
       return
     }
     setIsSaving(true)
     try {
       await ocr.appendToCurrentMemo(memoId, editedText)
       closeModal()
-      showToast('메모에 추가되었습니다', 'success')
+      showToast('메모에 추가했어요', 'success')
     } catch {
-      showToast('추가 중 오류가 발생했습니다', 'error')
+      showToast('메모에 추가하지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setIsSaving(false)
     }
@@ -445,17 +445,19 @@ export function ImageOCRModal() {
 
   const stepTitles: Record<ModalStep, string> = {
     1: '이미지 OCR',
-    2: '텍스트 추출 중',
-    3: '추출 결과',
+    2: '글자 읽는 중',
+    3: '읽어 낸 글',
   }
 
   return (
     <Dialog open={isOpen} onClose={step === 2 ? handleCancel : closeModal} size="lg" noPadding>
       <div className="flex flex-col max-h-[85dvh] fold:max-h-[70dvh]">
-        <DialogHeader
-          title={stepTitles[step]}
-          onClose={step === 2 ? undefined : closeModal}
-        />
+        <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
+          <DialogHeader
+            title={stepTitles[step]}
+            onClose={step === 2 ? undefined : closeModal}
+          />
+        </div>
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 px-6 pb-3">

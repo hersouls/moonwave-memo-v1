@@ -97,7 +97,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
 
   const handleAIEnhanceClick = async () => {
     if (!body || body.trim().length < 20) {
-      useToastStore.getState().showToast('내용이 너무 짧습니다 (20자 이상 필요)', 'warning')
+      useToastStore.getState().showToast('내용이 너무 짧아요. 20자 이상 적어 주세요', 'warning')
       return
     }
     if (isEnhancing) return
@@ -105,7 +105,8 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
     const result = await enhanceReadability(body)
     setIsEnhancing(false)
     if (result.error) {
-      useToastStore.getState().showToast(`AI 편집 실패: ${result.error}`, 'error')
+      // 하루 한도에 걸렸을 때는 한도 알림이 이미 떴어요. 안쪽 코드 이름을 다시 보여 주지 않아요
+      if (result.error !== 'daily_limit_exceeded') useToastStore.getState().showToast(`AI 편집을 하지 못했어요. ${result.error}`, 'error')
       return
     }
     if (result.enhanced && onAIEnhance) {
@@ -264,8 +265,8 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
       >
         {onUndo && (
           <>
-            <button onClick={onUndo} disabled={!canUndo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="실행취소"><IcLineUndo className={toolIcon} /></button>
-            <button onClick={onRedo} disabled={!canRedo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="다시실행"><IcLineRedo className={toolIcon} /></button>
+            <button onClick={onUndo} disabled={!canUndo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="실행 취소"><IcLineUndo className={toolIcon} /></button>
+            <button onClick={onRedo} disabled={!canRedo} className={clsx(toolBtnBase, toolBtnDefault)} aria-label="다시 실행"><IcLineRedo className={toolIcon} /></button>
             <div className={toolSep} />
           </>
         )}
@@ -308,22 +309,22 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
         {/* Group: history */}
         {onUndo && (
           <>
-            <Tooltip content={tip('실행취소', 'Ctrl+Z')}>
+            <Tooltip content={tip('실행 취소', 'Ctrl+Z')}>
               <button
                 onClick={onUndo}
                 disabled={!canUndo}
                 className={clsx(toolBtnBase, toolBtnDefault)}
-                aria-label="실행취소"
+                aria-label="실행 취소"
               >
                 <IcLineUndo className={toolIcon} />
               </button>
             </Tooltip>
-            <Tooltip content={tip('다시실행', 'Ctrl+Shift+Z')}>
+            <Tooltip content={tip('다시 실행', 'Ctrl+Shift+Z')}>
               <button
                 onClick={onRedo}
                 disabled={!canRedo}
                 className={clsx(toolBtnBase, toolBtnDefault)}
-                aria-label="다시실행"
+                aria-label="다시 실행"
               >
                 <IcLineRedo className={toolIcon} />
               </button>
@@ -427,7 +428,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
           </Tooltip>
         )}
         {onToggleOutline && (
-          <Tooltip content="목차 (Outline)">
+          <Tooltip content="목차">
             <button
               onClick={onToggleOutline}
               className={clsx(toolBtnBase, toolBtnDefault)}

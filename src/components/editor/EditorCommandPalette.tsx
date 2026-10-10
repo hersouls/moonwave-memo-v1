@@ -108,7 +108,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
       open={open}
       onClose={requestClose}
       className="relative z-[var(--z-modal)]"
-      aria-label="에디터 명령 팔레트"
+      aria-label="편집기 명령 팔레트"
     >
       <DialogBackdrop
         transition
@@ -134,7 +134,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
           </div>
           <div className="max-h-[50vh] overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">결과 없음</div>
+              <div className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">찾지 못했어요</div>
             ) : (
               groups.map(([group, cmds]) => (
                 <div key={group}>

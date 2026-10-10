@@ -10,6 +10,7 @@ import { getMemoImage } from '@/services/database'
 import { useMemoStore } from '@/stores/memoStore'
 import '@/styles/markdown.css'
 import { Checkbox } from '@/mw/Checkbox'
+import { taskLineIndexes } from '@/utils/checklistParser'
 
 // Module-level cache to avoid re-fetching images (capped to prevent memory leaks)
 const IMAGE_CACHE_MAX = 50
@@ -54,7 +55,7 @@ function MemoImageRenderer({ imageId, alt }: { imageId: number; alt: string }) {
   if (!dataUrl) {
     return (
       <span className="text-zinc-500 dark:text-zinc-400 text-sm italic">
-        [이미지를 찾을 수 없습니다]
+        [이미지를 찾지 못했어요]
       </span>
     )
   }
@@ -133,7 +134,7 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
     return (
       <div className={`memo-markdown-preview ${className ?? ''}`}>
         <p className="text-zinc-500 dark:text-zinc-400 italic">
-          미리보기할 내용이 없습니다.
+          미리 볼 내용이 아직 없어요.
         </p>
       </div>
     )
@@ -175,46 +176,22 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
           td: ({ children }) => <td className="mw-table__cell">{children}</td>,
           input: ({ type, checked, value: _value, ...props }) => {
             if (type === 'checkbox') {
+              // 미리보기에서 할 일을 눌러 마칠 수 있어요. 누른 체크가 화면에서 몇 번째인지로 본문의 줄을 찾아요.
+              // (GFM은 이 체크를 늘 disabled로 내려 줘서, 바꿀 수 있을 때는 그 값을 덮어요.)
               return (
                 <Checkbox
                   value="task"
                   aria-label={checked ? '마친 일' : '할 일'}
                   checked={!!checked}
-                  onChange={() => {
-                    if (!onCheckboxToggle) return
-                    // Find the nth checkbox occurrence to determine the line index
-                    const checkboxes = content.split('\n')
-                    let checkboxIndex = 0
-                    const allCheckboxEls = document.querySelectorAll('.memo-markdown-preview input[type="checkbox"]')
-                    const currentEl = props as any
-                    for (let i = 0; i < allCheckboxEls.length; i++) {
-                      if (allCheckboxEls[i] === (currentEl?.ref?.current ?? null)) {
-                        checkboxIndex = i
-                        break
-                      }
-                    }
-                    // Count through lines to find the matching checkbox
-                    let count = 0
-                    for (let i = 0; i < checkboxes.length; i++) {
-                      if (/^\s*-\s\[[ xX]\]/.test(checkboxes[i])) {
-                        if (count === checkboxIndex) {
-                          onCheckboxToggle(i, !checked)
-                          return
-                        }
-                        count++
-                      }
-                    }
-                    // Fallback: toggle by sequential index
-                    let idx = 0
-                    for (let i = 0; i < checkboxes.length; i++) {
-                      if (/^\s*-\s\[[ xX]\]/.test(checkboxes[i])) {
-                        idx = i
-                        break
-                      }
-                    }
-                    onCheckboxToggle(idx, !checked)
-                  }}
                   {...props}
+                  disabled={!onCheckboxToggle}
+                  onChange={(event) => {
+                    if (!onCheckboxToggle) return
+                    const root = event.currentTarget.closest('.memo-markdown-preview')
+                    const boxes = root ? Array.from(root.querySelectorAll('input[type="checkbox"]')) : []
+                    const line = taskLineIndexes(content)[boxes.indexOf(event.currentTarget)]
+                    if (line != null) onCheckboxToggle(line, !checked)
+                  }}
                 />
               )
             }

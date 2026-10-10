@@ -15,7 +15,7 @@ const spinnerSizes = {
 }
 
 /** 로딩 스피너 — Loader2 + animate-spin 조합의 공용 프리미티브 */
-export function Spinner({ size = 'md', className, label = '로딩 중' }: SpinnerProps) {
+export function Spinner({ size = 'md', className, label = '불러오고 있어요' }: SpinnerProps) {
   return (
     <span role={label ? 'status' : undefined} className="inline-flex items-center justify-center">
       <IcLineLoading aria-hidden className={clsx('animate-spin', spinnerSizes[size], className)} />

@@ -57,7 +57,7 @@ export default createHandler(POLICIES.insights, async (req: VercelRequest, res: 
 - mood: 감정 패턴
 
 규칙:
-- 한국어로 작성
+- 한국어 해요체로 작성 (예: "저녁에 가장 많이 써요"). 합니다체 · 반말은 쓰지 않음
 - 최대 5개의 인사이트
 - 각 인사이트는 1문장, 구체적 데이터 포함
 - 단순한 통계보다 의미 있는 관찰에 집중

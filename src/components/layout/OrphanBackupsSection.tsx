@@ -55,7 +55,7 @@ export function OrphanBackupsSection() {
       downloadBackup(file, 'Memo_Previous_Account_Backup')
     } catch (err) {
       console.error('Account backup download failed:', err)
-      useToastStore.getState().showToast('백업 파일을 만들지 못했습니다', 'error')
+      useToastStore.getState().showToast('백업 파일을 만들지 못했어요. 다시 시도해 주세요', 'error')
     } finally {
       setBusyId(null)
     }
@@ -67,7 +67,7 @@ export function OrphanBackupsSection() {
     setPendingDelete(null)
     await deleteOrphanBackup(target.id)
     await reload()
-    useToastStore.getState().showToast('이전 계정 백업을 삭제했습니다', 'info')
+    useToastStore.getState().showToast('이전 계정 백업을 지웠어요', 'info')
   }
 
   return (
@@ -77,9 +77,9 @@ export function OrphanBackupsSection() {
         <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">이전 계정 로컬 백업</h4>
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400 px-1">
-        다른 계정으로 로그인할 때 이 기기에 남아 있던 이전 계정의 메모는 새 계정에 올리지 않고 여기에 보관합니다.
-        그 계정으로 다시 로그인하면 자동으로 복원됩니다. 내려받은 파일을 &lsquo;데이터 복원&rsquo;으로 불러오면
-        그때 로그인한 계정으로 동기화되니 주의하세요.
+        다른 계정으로 로그인할 때 이 기기에 남아 있던 이전 계정의 메모는 새 계정에 올리지 않고 여기에 보관해요.
+        그 계정으로 다시 로그인하면 자동으로 복원해요. 내려받은 파일을 &lsquo;데이터 복원&rsquo;으로 불러오면
+        그때 로그인한 계정으로 동기화되니 주의해 주세요.
       </p>
       <ul className="space-y-2">
         {backups.map((b) => (
@@ -110,7 +110,7 @@ export function OrphanBackupsSection() {
             <button
               type="button"
               onClick={() => setPendingDelete(b)}
-              aria-label={`${b.ownerEmail || '이전 계정'} 백업 삭제`}
+              aria-label={`${b.ownerEmail || '이전 계정'} 백업 지우기`}
               className="mw-icon-button"
             >
               <IcLineTrash size={16} aria-hidden="true" />
@@ -123,13 +123,13 @@ export function OrphanBackupsSection() {
         open={pendingDelete !== null}
         onClose={() => setPendingDelete(null)}
         onConfirm={handleDelete}
-        title="이전 계정 백업 삭제"
+        title="이전 계정 백업을 지울까요?"
         description={
           pendingDelete && pendingDelete.unsyncedMemoCount > 0
-            ? `동기화되지 않은 메모 ${pendingDelete.unsyncedMemoCount}개가 포함되어 있어 삭제하면 되돌릴 수 없습니다. 먼저 내려받는 것을 권장합니다.`
-            : '이 기기에 보관된 이전 계정의 로컬 데이터를 삭제합니다. 클라우드에 동기화된 메모는 영향을 받지 않습니다.'
+            ? `동기화하지 않은 메모 ${pendingDelete.unsyncedMemoCount}개가 들어 있어 지우면 되돌릴 수 없어요. 먼저 내려받는 것을 권해요.`
+            : '이 기기에 보관한 이전 계정의 로컬 데이터를 지워요. 클라우드에 동기화한 메모는 그대로 남아요.'
         }
-        confirmText="삭제"
+        confirmText="지우기"
         variant="danger"
       />
     </div>

@@ -149,7 +149,7 @@ export function TemplateSelectModal() {
                             <button type="button"
                               onClick={() => handleDeleteClick(template.id)}
                               className="mw-icon-button"
-                              title="삭제"
+                              title="지우기"
                             >
                               <IcLineTrash size={16} />
                             </button>
@@ -191,9 +191,9 @@ export function TemplateSelectModal() {
               onClick={() => setDeleteConfirm(null)}
             />
             <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-w-xs w-full animate-in fade-in zoom-in-95 duration-200 ease-enter">
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">템플릿 삭제</h3>
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">템플릿을 지울까요?</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5">
-                이 템플릿을 삭제하시겠습니까?
+                지운 템플릿은 되돌릴 수 없어요.
               </p>
               <div className="flex justify-end gap-2">
                 <button type="button"
@@ -206,7 +206,7 @@ export function TemplateSelectModal() {
                   onClick={confirmDelete}
                   className="mw-button mw-button--primary mw-button--medium"
                 >
-                  삭제
+                  지우기
                 </button>
               </div>
             </div>

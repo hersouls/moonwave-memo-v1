@@ -13,10 +13,10 @@ export function LockScreen() {
     <div className="fixed inset-0 z-[var(--z-lock)] flex flex-col items-center justify-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl">
       <IcLineLock size={48} className="text-zinc-500 dark:text-zinc-400 mb-4" />
       <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-        앱이 잠겨 있습니다
+        앱이 잠겨 있어요
       </h2>
       <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-        생체 인증으로 잠금 해제하세요
+        생체 인증으로 잠금을 풀어 주세요
       </p>
       <button type="button"
         onClick={unlock}
@@ -24,11 +24,11 @@ export function LockScreen() {
         className="mw-button mw-button--primary mw-button--large"
       >
         {isAuthenticating ? (
-          <Spinner size="md" label="인증 중" />
+          <Spinner size="md" label="인증하고 있어요" />
         ) : (
           <IcMwFingerprint size={20} />
         )}
-        잠금 해제
+        잠금 풀기
       </button>
     </div>
   )
