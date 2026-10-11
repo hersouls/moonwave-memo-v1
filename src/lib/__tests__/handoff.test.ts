@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { deflateRawSync } from 'node:zlib'
-import { DRIVE_RECEIVE, localDay, open, packedFromDrive, seal, withoutTitleHeading } from '../handoff'
+import { DRIVE_RECEIVE, incomingRoute, localDay, open, packedFromDrive, seal, withoutTitleHeading } from '../handoff'
 
 const base64Url = (buf: Buffer) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
@@ -60,6 +60,17 @@ describe('handoff — Memo와 Drive가 주고받는 봉투', () => {
     expect(withoutTitleHeading('# 다른 제목\n\n본문', '오사카 준비물')).toBe('# 다른 제목\n\n본문')
     expect(withoutTitleHeading('## 오사카 준비물\n본문', '오사카 준비물')).toBe('## 오사카 준비물\n본문')
     expect(withoutTitleHeading('본문만', '')).toBe('본문만')
+  })
+
+  it('열려 있는 앱이 다시 불리면 받는 화면으로 온 것만 따라가요', () => {
+    const origin = 'https://memo.moonwave.kr'
+    expect(incomingRoute(`${origin}/share-target#drive=abc`, origin)).toBe('/share-target#drive=abc')
+    expect(incomingRoute(`${origin}/share-target?title=t&text=x`, origin)).toBe('/share-target?title=t&text=x')
+    expect(incomingRoute(`${origin}/`, origin)).toBeNull()
+    expect(incomingRoute(`${origin}/memo/3`, origin)).toBeNull()
+    expect(incomingRoute('https://example.com/share-target#drive=abc', origin)).toBeNull()
+    expect(incomingRoute('주소 아님', origin)).toBeNull()
+    expect(incomingRoute(undefined, origin)).toBeNull()
   })
 
   it('시각을 그 기기의 날짜로 바꿔요', () => {

@@ -5,10 +5,19 @@ import { Capacitor } from '@capacitor/core'
 import { router } from './router'
 import { usePwaUpdateStore } from './stores/pwaUpdateStore'
 import { initSentry } from './lib/sentry'
+import { incomingRoute } from './lib/handoff'
 import './index.css'
 
 // Initialize Sentry error monitoring (no-op if DSN not configured)
 initSentry()
+
+// 설치한 PWA가 이미 열려 있을 때 Drive의 ‘Memo로 보내기’나 공유 받기로 다시 불리면, 열려던 주소를 받아 그 화면으로 가요.
+// (launch_handler: focus-existing은 창만 앞으로 가져오고 주소는 바꾸지 않아요.)
+const launchQueue = (window as { launchQueue?: { setConsumer(consumer: (launch: { targetURL?: string }) => void): void } }).launchQueue
+launchQueue?.setConsumer(({ targetURL }) => {
+  const to = incomingRoute(targetURL, window.location.origin)
+  if (to && to !== window.location.pathname + window.location.search + window.location.hash) void router.navigate(to)
+})
 
 // Service Worker for PWA — skipped in the packaged shells (§4.8): Electron and
 // Capacitor serve the bundle locally, so the offline SW adds nothing there and

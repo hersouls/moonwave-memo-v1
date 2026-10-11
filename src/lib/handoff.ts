@@ -103,6 +103,22 @@ export function packedFromDrive(hash: string): string | null {
 }
 
 /**
+ * 설치한 PWA가 열려 있는 채로 링크나 공유로 다시 불렸을 때, 앱 안에서 가야 할 주소를 돌려줘요.
+ * manifest의 `launch_handler: focus-existing` 때문에 그때는 창이 앞으로 오기만 하고 주소가 바뀌지 않아요.
+ * 받는 화면(`/share-target`)으로 온 것만 따라가요. 아이콘을 다시 누른 것(`/`)은 보던 화면을 그대로 둬요.
+ */
+export function incomingRoute(targetURL: string | undefined, origin: string): string | null {
+  if (!targetURL) return null
+  let url: URL
+  try {
+    url = new URL(targetURL)
+  } catch {
+    return null
+  }
+  return url.origin === origin && url.pathname === '/share-target' ? url.pathname + url.search + url.hash : null
+}
+
+/**
  * 글이 `# 제목` 줄로 시작하고 그 제목이 메모의 제목과 같으면 그 줄을 뺀 글을 돌려줘요.
  * Memo는 제목을 따로 두고 Drive의 마크다운 파일은 첫 줄에 두기 때문에, 오갈 때 제목이 두 번 쌓이지 않게 해요.
  */
