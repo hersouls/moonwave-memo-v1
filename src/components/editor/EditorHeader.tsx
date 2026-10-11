@@ -6,9 +6,10 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
 import type { EditorMode } from '@/lib/types'
 import { useCloseRequest } from '@/mw/close'
+import { DRIVE_RECEIVE, localDay, seal, withoutTitleHeading } from '@/lib/handoff'
 import { ShareCardModal } from './ShareCardModal'
 import { ShareLinkModal } from './ShareLinkModal'
-import { IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwHistory, IcMwList, IcMwStar, IcMwStarFill } from '@/mw/icons'
+import { IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwDrive, IcMwHistory, IcMwList, IcMwStar, IcMwStarFill } from '@/mw/icons'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 
@@ -102,6 +103,27 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
     useToastStore.getState().showToast(
       ok ? '전체 텍스트를 복사했어요' : '복사하지 못했어요. 다시 시도해 주세요',
       ok ? 'success' : 'warning',
+    )
+  }
+
+  // Drive(Tailscale 기기 전용)에 마크다운 파일로 보내요. 글은 주소의 # 뒤에 실려 가서 서버를 거치지 않고,
+  // Drive가 열리면 거기서 저장을 눌러야 파일이 돼요. 이름과 폴더는 Drive의 정리 규칙을 따라요.
+  const handleSendToDrive = async () => {
+    setIsMenuOpen(false)
+    const { useToastStore } = await import('@/stores/toastStore')
+    if (!title?.trim() && !body) {
+      useToastStore.getState().showToast('보낼 내용이 없어요', 'info')
+      return
+    }
+    // 제목이 없는 메모는 제목 없이 보내요. Drive가 글을 읽고 이름을 지어요.
+    const name = title?.trim() ?? ''
+    const memo = memoId ? useMemoStore.getState().memos.find((m) => m.id === memoId) : undefined
+    const text = name ? `# ${name}\n\n${withoutTitleHeading(body || '', name)}` : body || ''
+    const { packed, cut } = await seal({ title: name, text, date: localDay(memo?.createdAt) })
+    window.open(DRIVE_RECEIVE + packed, '_blank', 'noopener')
+    useToastStore.getState().showToast(
+      cut ? 'Drive를 열었어요. 글이 길어서 앞부분만 보냈어요' : 'Drive를 열었어요. 거기서 저장을 눌러 주세요',
+      'info',
     )
   }
 
@@ -312,6 +334,14 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                 >
                   <IcLineDownload size={16} />
                   마크다운 내보내기
+                </button>
+                <button
+                  onClick={handleSendToDrive}
+                  className="ctx-menu__item w-full"
+                  role="menuitem"
+                >
+                  <IcMwDrive size={16} />
+                  Drive로 보내기
                 </button>
                 <button
                   onClick={handleDelete}

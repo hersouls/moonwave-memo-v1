@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMemoStore } from '@/stores/memoStore'
 import { useToastStore } from '@/stores/toastStore'
 import { Spinner } from '@/components/ui/Spinner'
+import { open, packedFromDrive, withoutTitleHeading } from '@/lib/handoff'
 import { IcMwNote } from '@/mw/icons'
 
 export function ShareTargetPage() {
@@ -14,6 +15,28 @@ export function ShareTargetPage() {
   useEffect(() => {
     if (created.current) return
     created.current = true
+
+    // Drive의 ‘Memo로 보내기’: 글이 주소의 # 뒤에 실려 와요. 그 부분은 서버로 가지 않아요.
+    const packed = packedFromDrive(window.location.hash)
+    if (packed !== null) {
+      open(packed)
+        .then((note) =>
+          addMemo({ title: note.title, body: withoutTitleHeading(note.text, note.title), folderId: null }).then((id) => ({ id, cut: note.cut })),
+        )
+        .then(({ id, cut }) => {
+          if (!id) throw new Error('not created')
+          useToastStore.getState().showToast(
+            cut ? 'Drive에서 온 글로 메모를 만들었어요. 글이 길어서 앞부분만 왔어요' : 'Drive에서 온 글로 메모를 만들었어요',
+            'success',
+          )
+          navigate(`/memo/${id}`, { replace: true })
+        })
+        .catch(() => {
+          useToastStore.getState().showToast('Drive에서 온 글로 메모를 만들지 못했어요. Drive에서 다시 보내 주세요', 'error')
+          navigate('/', { replace: true })
+        })
+      return
+    }
 
     const title = searchParams.get('title') || ''
     const text = searchParams.get('text') || ''
