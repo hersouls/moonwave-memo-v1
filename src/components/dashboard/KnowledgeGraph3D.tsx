@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import ForceGraph3D, {
   type ForceGraphMethods,
   type NodeObject,
@@ -6,6 +6,7 @@ import ForceGraph3D, {
 } from 'react-force-graph-3d'
 import type { GraphLink, GraphNode, LinkKind } from '@/hooks/useGraphData'
 import { resolveCssColor } from '@/utils/cssColor'
+import { useTheme } from '@/mw/theme'
 
 /* 지식 그래프 3D 뷰 (Three.js/WebGL — react-force-graph-3d)
    - 모달의 "3D" 토글에서만 lazy-load되는 무거운 청크. 2D(SVG)가 기본.
@@ -50,8 +51,8 @@ export default function KnowledgeGraph3D({
 }: KnowledgeGraph3DProps) {
   const fgRef = useRef<ForceGraphMethods<FGNode, FGLink> | undefined>(undefined)
   const didFitRef = useRef(false)
-  // 테마는 마운트 시점 기준 (모달 안에서 테마 전환은 드묾 — 재열면 반영)
-  const [isDark] = useState(() => document.documentElement.dataset.theme === 'dark')
+  // 테마는 키트의 테마 엔진을 따라요: 열어 둔 채로 해가 지거나 테마를 바꿔도 색을 다시 풀어요
+  const { dark: isDark } = useTheme()
 
   // 라이브러리가 x/y/z를 주입하며 객체를 변형하므로 복사본 전달.
   // 직전 복사본(라이브러리가 좌표를 기록해 둔 객체)에서 x/y/z/속도를 이어받아

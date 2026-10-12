@@ -61,8 +61,8 @@ export function SlideView() {
     setViewMode('scroll')
     setIsClosing(false)
 
-    const isDark = document.documentElement.dataset.theme === 'dark'
-    setSlideTheme(isDark ? 'dark' : 'light')
+    // 슬라이드의 밝기는 열 때 앱의 테마(키트의 테마 엔진)에서 시작해요
+    setSlideTheme(window.mwTheme?.dark() ? 'dark' : 'light')
   }, [slideViewMemoId])
 
   // Animated close: play exit animation, then actually unmount (reduced-motion skips straight to close)

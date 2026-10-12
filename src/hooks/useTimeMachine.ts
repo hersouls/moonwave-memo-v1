@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { ContextSnapshot, WeatherCondition } from '@/lib/types'
 import { useThemeOrchestrator } from '@/stores/themeOrchestratorStore'
-import { applyTheme } from '@/stores/settingsStore'
 
 type ExtendedPalette =
   | 'default' | 'ocean' | 'rose' | 'purple' | 'forest'
@@ -138,8 +137,6 @@ export function useTimeMachine(
       stopAudioRef.current()
       stopAudioRef.current = null
     }
-    // Remove dark mode attribute if it was applied
-    document.documentElement.removeAttribute('data-time-machine-dark')
   }, [])
 
   useEffect(() => {
@@ -155,11 +152,8 @@ export function useTimeMachine(
       useThemeOrchestrator.getState().setManualOverride(palette)
     }
 
-    // Apply dark mode if snapshot solar mode is dark
-    if (contextSnapshot.solarMode === 'dark') {
-      applyTheme('dark')
-      document.documentElement.setAttribute('data-time-machine-dark', 'true')
-    }
+    // 테마는 바꾸지 않아요: 화면의 밝기는 키트의 테마 엔진만 정해요 (https://ux.moonwave.kr/patterns/theme#rule).
+    // 예전에는 밤에 쓴 메모를 열면 어두운 테마로 바꿨고, 그 값이 이 기기가 고른 테마로 남았어요.
 
     // Start ambient sound
     if (contextSnapshot.weather) {
@@ -187,7 +181,6 @@ export function useTimeMachine(
           audioCtxRef.current = null
           setTimeout(() => ctx.close().catch(() => {}), 1500)
         }
-        document.documentElement.removeAttribute('data-time-machine-dark')
       }
     }
   }, [enabled, contextSnapshot])

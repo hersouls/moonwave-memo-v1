@@ -1,12 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ThemeMode, FontSize, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState, LivingWorkspaceSettings, AIProvider } from '@/lib/types'
+import type { FontSize, InputStartPosition, Settings, UserProfile, STTLanguage, OCRProvider, EditorMode, GamificationState, LivingWorkspaceSettings, AIProvider } from '@/lib/types'
 import { FONT_SIZES } from '@/utils/constants'
 
 interface SettingsState {
   settings: Settings
   initialize: () => void
-  setTheme: (theme: ThemeMode) => void
   setFontSize: (size: FontSize) => void
   setDefaultFolder: (folderId: number | null) => void
   setInputStartPosition: (pos: InputStartPosition) => void
@@ -29,22 +28,9 @@ interface SettingsState {
   updateAppLock: (data: Partial<Settings['appLock']>) => void
 }
 
-/** 기기마다 기억하는 테마의 열쇠예요. public/theme-init.js가 첫 화면 전에 같은 열쇠를 읽어요. */
-const THEME_KEY = 'memo-theme'
-
-/** 테마는 <html>의 data-theme 하나로 정해요 (https://ux.moonwave.kr/patterns/theme#rule). */
-export function applyTheme(theme: ThemeMode) {
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
-  // 브라우저 위쪽 막대와 홈 화면 앱의 상태 표시줄 색
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', isDark ? '#232425' : '#ffffff'))
-  try {
-    if (theme === 'system') localStorage.removeItem(THEME_KEY)
-    else localStorage.setItem(THEME_KEY, theme)
-  } catch { /* 저장소를 못 쓰면 이번 화면에만 적용돼요 */ }
-}
+// 테마는 이 스토어의 일이 아니에요. 키트의 테마 엔진(public/theme-init.js, window.mwTheme)이 정하고 기기마다
+// localStorage의 memo-theme에 기억해요. 화면은 src/mw/theme.ts의 useTheme()으로 읽고 바꿔요
+// (https://ux.moonwave.kr/patterns/theme).
 
 export function applyFontSize(sizeId: FontSize) {
   const sizeDef = FONT_SIZES.find((s) => s.id === sizeId)
@@ -53,14 +39,10 @@ export function applyFontSize(sizeId: FontSize) {
   }
 }
 
-// Stable reference for system theme listener to prevent duplicate registrations
-let systemThemeListenerRegistered = false
-
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       settings: {
-        theme: 'system',
         colorPalette: 'default',
         fontFamily: 'pretendard',
         fontSize: 'md',
@@ -132,26 +114,7 @@ export const useSettingsStore = create<SettingsState>()(
       initialize: () => {
         const state = get()
         // 저장된 colorPalette · fontFamily는 읽지 않아요 (개인화 기능을 없앴어요. 값은 지우지 않아요)
-        const { theme, fontSize } = state.settings
-        applyTheme(theme)
-        applyFontSize(fontSize)
-
-        // Guard against multiple registrations
-        if (!systemThemeListenerRegistered) {
-          systemThemeListenerRegistered = true
-          window
-            .matchMedia('(prefers-color-scheme: dark)')
-            .addEventListener('change', () => {
-              if (get().settings.theme === 'system') {
-                applyTheme('system')
-              }
-            })
-        }
-      },
-
-      setTheme: (theme) => {
-        set((state) => ({ settings: { ...state.settings, theme } }))
-        applyTheme(theme)
+        applyFontSize(state.settings.fontSize)
       },
 
       setFontSize: (size) => {
@@ -331,7 +294,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'memo-settings',
-      version: 5,
+      version: 6,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as { settings: Record<string, unknown> & { ai?: Record<string, unknown> } }
         if (version < 1 && state?.settings?.ai) {
@@ -411,6 +374,14 @@ export const useSettingsStore = create<SettingsState>()(
         // v4→v5: 테마의 기본은 시스템 설정 따르기예요. 예전 기본값 'light'는 고른 값과 가를 수 없어 시스템으로 돌려요.
         if (version < 5 && state?.settings && state.settings.theme === 'light') {
           state.settings.theme = 'system'
+        }
+        // v5→v6: 테마는 키트의 테마 엔진이 기기마다 기억해요(localStorage의 memo-theme). 설정에 따로 들고 있던 값은
+        // 더 읽지 않아요. 엔진이 모르는 고른 값(밝게 · 어둡게)만 한 번 넘겨주고, '시스템 설정 따르기'는 자동이 돼요.
+        if (version < 6 && state?.settings && 'theme' in state.settings) {
+          const chosen = state.settings.theme
+          const engine = typeof window === 'undefined' ? undefined : window.mwTheme
+          if ((chosen === 'light' || chosen === 'dark') && engine?.mode() === 'auto') engine.set(chosen)
+          delete state.settings.theme
         }
         return state
       },

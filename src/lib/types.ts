@@ -120,7 +120,6 @@ export interface AmbientImage {
 }
 
 // ─── Settings Types ────────────────────────────────
-export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = 'pretendard' | 'nanum-square' | 'nanum-square-neo' | 'nanum-square-round' | 'nanum-barun-pen' | 'maruburi'
 export type FontSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl'
 export type SortBy = 'updatedAt' | 'createdAt' | 'title'
@@ -156,7 +155,6 @@ export interface UserProfile {
 }
 
 export interface Settings {
-  theme: ThemeMode
   colorPalette: ColorPalette
   fontFamily: FontFamily
   fontSize: FontSize

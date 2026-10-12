@@ -6,6 +6,7 @@ import { AppTabbar } from './components/layout/AppTabbar'
 import { PullRefresh } from './mw/PullRefresh'
 import { FloatingActionButton } from './mw/FloatingActionButton'
 import { IcLineWifi, IcLineWrite } from './mw/icons'
+import { themeHint, useTheme } from './mw/theme'
 import { UndoToast } from './components/ui/UndoToast'
 import { ToastContainer } from './components/ui/Toast'
 import { UpdateBanner } from './components/ui/UpdateBanner'
@@ -130,18 +131,18 @@ export default function App() {
   }, [])
 
   // A11Y: Theme change sr-only announcement
-  const theme = useSettingsStore((state) => state.settings.theme)
+  // 고른 값(자동 · 밝게 · 어둡게)이 바뀔 때만 알려요. 자동일 때 해가 져서 바뀌는 것은 알리지 않아요.
+  const { mode: theme, dark: themeDark } = useTheme()
   const [themeAnnouncement, setThemeAnnouncement] = useState('')
   const prevTheme = useRef(theme)
   useEffect(() => {
     if (prevTheme.current !== theme) {
-      const labels: Record<string, string> = { light: '밝게', dark: '어둡게', system: '시스템 설정 따르기' }
-      setThemeAnnouncement(`테마를 ${labels[theme] || theme}(으)로 바꿨어요`)
+      setThemeAnnouncement(`테마를 바꿨어요. 지금은 ${themeHint(theme, themeDark)}`)
       prevTheme.current = theme
       const t = setTimeout(() => setThemeAnnouncement(''), 3000)
       return () => clearTimeout(t)
     }
-  }, [theme])
+  }, [theme, themeDark])
 
   useEffect(() => {
     const initApp = async () => {

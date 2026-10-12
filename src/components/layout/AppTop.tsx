@@ -2,26 +2,21 @@
    규격: https://ux.moonwave.kr/patterns/app-shell#topbar */
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
 import { WeatherWidget } from '@/components/ui/WeatherWidget'
-import { IcLineCloud, IcLineDesktop, IcLineSearch, IcLineSetting, IcMwMoon, IcMwSun } from '@/mw/icons'
+import { IcLineCloud, IcLineSearch, IcLineSetting, IcMwDayNight, IcMwMoon, IcMwSun } from '@/mw/icons'
 import { TextButton } from '@/mw/TextButton'
 import { useCloseRequest } from '@/mw/close'
-import type { ThemeMode } from '@/lib/types'
+import { themeHint, useTheme } from '@/mw/theme'
 
-const THEME_LABEL: Record<ThemeMode, string> = { system: '시스템 설정 따르기', light: '밝게', dark: '어둡게' }
-const NEXT_THEME: Record<ThemeMode, ThemeMode> = { system: 'light', light: 'dark', dark: 'system' }
-
-/** 시스템 → 밝게 → 어둡게를 돌려요 (https://ux.moonwave.kr/patterns/theme#rule) */
+/** 자동 → 밝게 → 어둡게를 돌려요. 자동은 집의 해를 따라요 (https://ux.moonwave.kr/patterns/theme#hook) */
 function ThemeButton() {
-  const theme = useSettingsStore((s) => s.settings.theme)
-  const setTheme = useSettingsStore((s) => s.setTheme)
-  const Icon = theme === 'system' ? IcLineDesktop : theme === 'light' ? IcMwSun : IcMwMoon
+  const { mode, dark, cycle } = useTheme()
+  const Icon = mode === 'auto' ? IcMwDayNight : mode === 'light' ? IcMwSun : IcMwMoon
   return (
-    <button type="button" className="mw-icon-button" onClick={() => setTheme(NEXT_THEME[theme])} title={`테마: ${THEME_LABEL[theme]}`} aria-label={`테마 바꾸기. 지금은 ${THEME_LABEL[theme]}`}>
+    <button type="button" className="mw-icon-button" onClick={cycle} title={`테마: ${themeHint(mode, dark)}`} aria-label={`테마 바꾸기. 지금은 ${themeHint(mode, dark)}`}>
       <Icon size={20} />
     </button>
   )

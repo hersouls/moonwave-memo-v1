@@ -1,7 +1,7 @@
 #!/bin/zsh
 # Moonwave Memo for Android: a signed release APK from this checkout, and (with --publish) on GitHub Releases.
 #
-#   ./scripts/build-android.sh                         build → release/android/moonwave-memo.apk (+ android.json)
+#   ./scripts/build-android.sh                         build → release/android/memo_v<version>_<YYMMDD>.apk (+ android.json)
 #   ./scripts/build-android.sh --publish               …and upload both to the rolling GitHub release "android"
 #   ./scripts/build-android.sh --if-changed --publish  the nightly job: skip when the published APK already holds
 #                                                      everything of this commit that goes into the app
@@ -10,6 +10,10 @@
 # a change to the web app reaches the phone only through a new APK. That is why this is built automatically
 # (LaunchAgent com.moonwave.memo.apk, from a clone of origin/master — see Vector_DB_Memo_v1.0/deploy).
 #
+# The file is named <service>_v<versionName>_<the day it was built, YYMMDD>.apk: memo_v1.0.2_261012.apk
+# (Moonwave UX, build/build-frontend#apk). The name changes with every build, so nothing has it written in: the record
+# beside the file (android.json, "file") names it, and the files of earlier builds are removed, here and on the release.
+#
 # Needs, on this Mac: JDK 21, the Android SDK (~/Library/Android/sdk, platform 36), and
 #   ~/Library/Application Support/Moonwave/memo-android.env   (mode 600, never printed)
 #     MEMO_APK_KEYSTORE, MEMO_APK_STORE_PASS, MEMO_APK_KEY_ALIAS   the release key "CN=Moonwave Memo"
@@ -17,7 +21,8 @@
 # The key's SHA-1/SHA-256 are registered on the Firebase Android app (Google sign-in checks them). Lose the key and
 # every phone has to remove the app and install again, so keep a copy of the .jks and the env file somewhere safe.
 #
-# Download: https://github.com/hersouls/moonwave-memo-v1/releases/download/android/moonwave-memo.apk
+# Download: https://memo.moonwave.kr/api/download-android (api/download-android.ts reads android.json on the release
+# and redirects to the file it names; the web's 설정 › Android 앱 goes there)
 set -u
 setopt pipefail
 cd "${0:A:h}/.."
@@ -85,31 +90,46 @@ APK=android/app/build/outputs/apk/release/app-release.apk
 badge=$("$BT/aapt2" dump badging "$APK" 2>/dev/null | head -1)
 [[ "$badge" == *"versionCode='$CODE'"* && "$badge" == *"name='kr.moonwave.memo'"* ]] || die "APK의 버전이나 패키지가 달라요: $badge"
 
+# the file a person keeps, named by the rule, and the record that names it. One clock for both: the day in the name
+# is the record's builtAt. The files of earlier builds go.
 mkdir -p "$OUT"
-cp "$APK" "$OUT/moonwave-memo.apk"
-python3 - "$OUT" "$VERSION" "$CODE" "$SHA" <<'PY'
-import datetime, hashlib, json, os, sys
-out, version, code, sha = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
-apk = os.path.join(out, "moonwave-memo.apk")
-data = open(apk, "rb").read()
-info = {"versionName": version, "versionCode": code, "sha": sha,
-        "builtAt": datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).isoformat(timespec="seconds"),
-        "sizeBytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "file": "moonwave-memo.apk"}
+FILE=$(python3 - "$APK" "$OUT" "$VERSION" "$CODE" "$SHA" <<'PY'
+import datetime, hashlib, json, os, re, shutil, sys
+built, out, version, code, sha = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5]
+now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+three = re.match(r"\d+\.\d+\.\d+", version)          # versionName's three numbers (1.0.3-beta → 1.0.3)
+if not three: sys.exit(f"package.json의 version이 세 자리가 아니에요: {version}")
+name = f"memo_v{three.group(0)}_{now:%y%m%d}.apk"
+for old in os.listdir(out):
+    if old.endswith(".apk"): os.remove(os.path.join(out, old))
+shutil.copyfile(built, os.path.join(out, name))
+data = open(os.path.join(out, name), "rb").read()
+info = {"versionName": version, "versionCode": code, "sha": sha, "builtAt": now.isoformat(timespec="seconds"),
+        "sizeBytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "file": name}
 json.dump(info, open(os.path.join(out, "android.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-print(f"[android] 만들었어요: {apk} · {len(data) // 1024 // 1024} MB")
+print(name)
 PY
+) || die "APK 파일과 기록(android.json)을 쓰지 못했어요"
+[[ -n "$FILE" && -s "$OUT/$FILE" ]] || die "APK 파일이 없어요: $OUT/$FILE"
+say "만들었어요: $OUT/$FILE · $(( $(stat -f %z "$OUT/$FILE") / 1024 / 1024 )) MB"
 (( PUBLISH )) || { say "게시하지 않았어요 (--publish를 붙이면 GitHub Releases에 올려요)"; exit 0 }
 
-# ── 3. the rolling release "android": one stable download address, replaced by each build
+# ── 3. the rolling release "android": one release, the newest build's file on it, and the record that names it
 NOTES="Moonwave Memo for Android $VERSION (빌드 $CODE, ${SHA[1,7]})
 
-휴대폰에서 moonwave-memo.apk를 내려받아 설치해요. 새 빌드가 나오면 같은 파일을 다시 받아 덮어 설치하면 돼요.
-이 릴리스는 빌드할 때마다 같은 주소에서 새 파일로 바뀌어요. android.json에 버전 · 커밋 · sha256이 있어요.
+휴대폰에서 $FILE 을 내려받아 설치해요. 새 빌드가 나오면 새 파일을 받아 덮어 설치하면 돼요.
+이 릴리스는 빌드할 때마다 새 파일로 바뀌어요. 파일 이름은 memo_v버전_빌드한 날이고, android.json에 그 이름 · 버전 · 커밋 · sha256이 있어요.
 2026-10-10보다 앞선 설치본은 다른 키로 서명돼 있어서, 처음 한 번은 예전 앱을 지우고 설치해야 해요."
 if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
   gh release edit "$TAG" -R "$REPO" --title "Moonwave Memo for Android" --notes "$NOTES" --latest=false >/dev/null || die "릴리스 설명 갱신"
 else
   gh release create "$TAG" -R "$REPO" --target "$SHA" --title "Moonwave Memo for Android" --notes "$NOTES" --latest=false >/dev/null || die "릴리스 만들기"
 fi
-gh release upload "$TAG" -R "$REPO" "$OUT/moonwave-memo.apk" "$OUT/android.json" --clobber >/dev/null || die "APK 올리기"
-say "게시했어요: https://github.com/$REPO/releases/download/$TAG/moonwave-memo.apk"
+# the file first, then the record that names it (the web's download route follows the record), then the earlier files go
+gh release upload "$TAG" -R "$REPO" "$OUT/$FILE" --clobber >/dev/null || die "APK 올리기"
+gh release upload "$TAG" -R "$REPO" "$OUT/android.json" --clobber >/dev/null || die "기록(android.json) 올리기"
+for old in ${(f)"$(gh release view "$TAG" -R "$REPO" --json assets --jq '.assets[].name' 2>/dev/null)"}; do
+  [[ "$old" == *.apk && "$old" != "$FILE" ]] || continue
+  gh release delete-asset "$TAG" "$old" -R "$REPO" -y >/dev/null 2>&1 || say "앞선 파일을 지우지 못했어요: $old"
+done
+say "게시했어요: https://github.com/$REPO/releases/download/$TAG/$FILE"

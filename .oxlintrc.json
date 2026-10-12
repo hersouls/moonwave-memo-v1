@@ -4,5 +4,13 @@
     "correctness": "deny",
     "suspicious": "warn",
     "perf": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["public/theme-init.js"],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    }
+  ]
 }

@@ -21,20 +21,22 @@ import {
 } from '@/services/backup'
 import { stopSync } from '@/services/firestoreSync'
 import { useToastStore } from '@/stores/toastStore'
-import type { ThemeMode, InputStartPosition, STTLanguage } from '@/lib/types'
+import type { InputStartPosition, STTLanguage } from '@/lib/types'
 import type { SyncStatus } from '@/lib/types'
 import { SyncFolderSection } from './SyncFolderSection'
 import { OrphanBackupsSection } from './OrphanBackupsSection'
 import { DesktopDownloadSection } from './DesktopDownloadSection'
 import { AndroidDownloadSection } from './AndroidDownloadSection'
-import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDesktop, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineFolder, IcLineLoading, IcLineMoblie, IcLineMy, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwMoon, IcMwNote, IcMwSun, IcMwUpload } from '@/mw/icons'
+import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineFolder, IcLineLoading, IcLineMoblie, IcLineMy, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwDayNight, IcMwMoon, IcMwNote, IcMwSun, IcMwUpload } from '@/mw/icons'
+import { THEME_LABEL, sunToday, useTheme, type ThemeMode } from '@/mw/theme'
 import { TextField } from '@/mw/TextField'
 
 // ─── Theme Options ──────────────────────────────────
-const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-  { value: 'system', label: '시스템 설정 따르기', icon: <IcLineDesktop size={16} /> },
-  { value: 'light', label: '밝게', icon: <IcMwSun size={16} /> },
-  { value: 'dark', label: '어둡게', icon: <IcMwMoon size={16} /> },
+// 자동 · 밝게 · 어둡게. 자동은 집의 해를 따라요 (https://ux.moonwave.kr/patterns/theme#rule)
+const themeOptions: { value: ThemeMode; icon: React.ReactNode }[] = [
+  { value: 'auto', icon: <IcMwDayNight size={16} /> },
+  { value: 'light', icon: <IcMwSun size={16} /> },
+  { value: 'dark', icon: <IcMwMoon size={16} /> },
 ]
 
 // ─── Sync Status Badge ──────────────────────────────
@@ -275,7 +277,7 @@ export function SettingsModal() {
   const closeModal = useUIStore((state) => state.closeSettingsModal)
 
   const settings = useSettingsStore((s) => s.settings)
-  const setTheme = useSettingsStore((s) => s.setTheme)
+  const { mode: themeMode, set: setThemeMode } = useTheme()
   const setFontSize = useSettingsStore((s) => s.setFontSize)
   const setDefaultFolder = useSettingsStore((s) => s.setDefaultFolder)
   const setInputStartPosition = useSettingsStore((s) => s.setInputStartPosition)
@@ -448,11 +450,6 @@ export function SettingsModal() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localGeminiKey])
 
-  // 테마는 고르는 즉시 적용해요
-  const handleThemeSelect = (theme: ThemeMode) => {
-    setTheme(theme)
-  }
-
   const handleInstallPWA = async () => {
     const installFn = (window as Window & { installPWA?: () => Promise<boolean> }).installPWA
     if (installFn) {
@@ -584,6 +581,7 @@ export function SettingsModal() {
 
   // ─── Tab Content: General ─────────────────────────
   const renderGeneralSettings = () => {
+    const sun = sunToday()
     return (
     <div className="space-y-8">
 
@@ -597,15 +595,20 @@ export function SettingsModal() {
             <button
               key={option.value}
               type="button"
-              onClick={() => handleThemeSelect(option.value)}
-              aria-pressed={settings.theme === option.value}
-              className={`mw-select-chip mw-select-chip--${settings.theme === option.value ? 'on' : 'off'}`}
+              onClick={() => setThemeMode(option.value)}
+              aria-pressed={themeMode === option.value}
+              className={`mw-select-chip mw-select-chip--${themeMode === option.value ? 'on' : 'off'}`}
             >
               {option.icon}
-              {option.label}
+              {THEME_LABEL[option.value]}
             </button>
           ))}
         </div>
+        {themeMode === 'auto' && sun && (
+          <p className="text-xs mt-3 px-1 text-[var(--text-tertiary)]">
+            자동은 {sun.place}의 해를 따라요. 오늘은 {sun.rise}에 밝아지고 {sun.set}에 어두워져요.
+          </p>
+        )}
       </section>
 
       <div className="border-t border-[var(--color-border-subtle)]" />

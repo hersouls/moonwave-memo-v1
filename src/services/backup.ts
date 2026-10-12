@@ -1,5 +1,5 @@
 import { db, getAllMemos, getAllFolders } from './database'
-import type { Memo, Folder, MemoImage, MemoVersion, AmbientImage, BackupFile } from '@/lib/types'
+import type { Memo, Folder, MemoImage, MemoVersion, AmbientImage, BackupFile, Settings } from '@/lib/types'
 import { BACKUP_CONFIG, DEFAULT_FOLDERS, SYSTEM_FOLDERS } from '@/utils/constants'
 import { nowISO } from '@/lib/dateUtils'
 import { generateSyncId } from '@/utils/id'
@@ -52,8 +52,8 @@ export async function createBackup(): Promise<BackupFile> {
       memoVersions,
       ambientImages,
       demianChats: demianChats.map((c) => ({ memoId: c.memoId, messages: c.messages, updatedAt: c.updatedAt })),
+      // 테마는 기기마다 고르는 값이라 백업에 넣지 않아요 (키트의 테마 엔진이 localStorage의 memo-theme에 기억해요)
       settings: {
-        theme: settings.theme || 'light',
         colorPalette: settings.colorPalette || 'default',
         fontFamily: settings.fontFamily || 'pretendard',
         fontSize: settings.fontSize || 'md',
@@ -223,9 +223,11 @@ export async function restoreFromBackup(
       try {
         const currentSettings = localStorage.getItem('memo-settings')
         const parsed = currentSettings ? JSON.parse(currentSettings) : { state: { settings: {} } }
+        // 예전 백업에 든 theme는 되살리지 않아요: 테마는 이 기기가 고른 값 그대로예요
+        const { theme: _deviceTheme, ...restored } = backup.data.settings as Partial<Settings> & { theme?: unknown }
         parsed.state.settings = {
           ...parsed.state.settings,
-          ...backup.data.settings,
+          ...restored,
         }
         localStorage.setItem('memo-settings', JSON.stringify(parsed))
       } catch { /* settings restore failed — non-critical */ }

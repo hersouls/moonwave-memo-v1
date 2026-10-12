@@ -44,11 +44,12 @@ cd android && JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" ./gradlew 
 APK는 웹 빌드를 안에 담고 있어서(`webDir: dist`) 웹 배포만으로는 갱신되지 않는다. 그래서 한 명령으로 만들고, 매일 자동으로 돈다.
 
 ```sh
-./scripts/build-android.sh              # release/android/moonwave-memo.apk + android.json (약 1~2분)
-./scripts/build-android.sh --publish    # GitHub의 고정 릴리스 "android"에 덮어 올림
+./scripts/build-android.sh              # release/android/memo_v<버전>_<YYMMDD>.apk + android.json (약 1~2분)
+./scripts/build-android.sh --publish    # GitHub의 고정 릴리스 "android"에 올리고 앞선 파일은 지움
 ```
 
-- **내려받는 곳**: <https://github.com/hersouls/moonwave-memo-v1/releases/download/android/moonwave-memo.apk> (웹의 설정 › Android 앱이 이 주소로 간다). 같은 릴리스의 `android.json`에 버전 · 커밋 · sha256.
+- **파일 이름**: `memo_v<versionName 세 자리>_<빌드한 날 YYMMDD>.apk` (예: `memo_v1.0.2_261012.apk`, Moonwave UX `build/build-frontend#apk`). 빌드할 때마다 이름이 바뀌므로 어디에도 고정해 적지 않는다. 파일 옆의 기록 `android.json`(`versionName` · `versionCode` · `builtAt` · `sizeBytes` · `sha256` · `file`)이 그 파일을 가리키고, 스크립트가 앞선 빌드의 파일을 `release/android`와 릴리스에서 지운다.
+- **내려받는 곳**: <https://memo.moonwave.kr/api/download-android> (웹의 설정 › Android 앱이 이 주소로 간다). `api/download-android.ts`가 릴리스의 `android.json`을 읽어 그 기록이 가리키는 파일로 넘긴다(302). `?info=1`은 기록을 답한다.
 - **버전**: `versionName` = `package.json`의 version, `versionCode` = 커밋 수(`git rev-list --count HEAD`) — 커밋마다 하나, 항상 커진다. `android/app/build.gradle`은 `-PmemoVersionCode/-PmemoVersionName`으로 받는다.
 - **서명 키**: `~/Library/Application Support/Moonwave/android/memo-release.jks` (`CN=Moonwave Memo`), 비밀번호와 별칭은 `~/Library/Application Support/Moonwave/memo-android.env`의 `MEMO_APK_*` (모드 600, 저장소에 없음). 같은 파일의 `VITE_FIREBASE_*`는 Vercel이 쓰는 공개 웹 설정으로, 로컬 웹 빌드에 넣는다. **이 키를 잃으면 모든 폰에서 앱을 지우고 다시 설치해야 한다** — 두 파일을 안전한 곳에 따로 보관할 것.
 - **Google 로그인**: 이 키의 SHA-1(`C8:30:C3:DD…`) · SHA-256(`40:F3:A2:FA…`)을 Firebase Android 앱에 등록했다(§6). 2026-10-10보다 앞선 설치본은 다른 PC의 디버그 키로 서명돼 있어 **처음 한 번은 예전 앱을 지우고 설치**해야 한다.

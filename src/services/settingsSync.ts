@@ -15,7 +15,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let lastSyncedJson = ''
 
 // Fields safe to sync (exclude API keys and device-specific data).
-// 테마는 기기마다 기억해요(localStorage의 memo-theme): 동기화하지 않아요. colorPalette · fontFamily는 저장된 값만
+// 테마는 설정에 없어요(키트의 테마 엔진이 기기마다 localStorage의 memo-theme에 기억해요). colorPalette · fontFamily는 저장된 값만
 // 그대로 실어 나르고 화면에는 적용하지 않아요 (개인화 기능을 없앴어요).
 type SyncableSettings = Pick<
   Settings,
@@ -172,7 +172,7 @@ function startStoreSubscription(uid: string) {
  * account switch the previous owner's profile (name …) and default-folder id (a local id of
  * their folders) are reset before pulling — otherwise, for an account with no cloud
  * settings yet, pullAndMergeSettings would push them into the new account. Visual
- * preferences (theme, fonts) are device taste and stay.
+ * preferences (fonts) are device taste and stay.
  */
 function resetAccountScopedSettings() {
   const initial = useSettingsStore.getInitialState().settings

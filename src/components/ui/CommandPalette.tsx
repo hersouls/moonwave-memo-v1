@@ -5,14 +5,13 @@ import { Dialog as HeadlessDialog, DialogBackdrop, DialogPanel } from '@headless
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
-import { useSettingsStore } from '@/stores/settingsStore'
-import { applyTheme } from '@/stores/settingsStore'
 import { useToastStore } from '@/stores/toastStore'
 import { analyzeMemo, classifyMemo } from '@/services/aiFeatures'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import { Kbd } from './Kbd'
 import { Spinner } from './Spinner'
-import { IcLineAdd, IcLineDocument, IcLineFolder, IcLineSearch, IcLineSetting, IcMwMoon, IcMwSparkles, IcMwSun, IcMwTag, IcMwStarFill } from '@/mw/icons'
+import { IcLineAdd, IcLineDocument, IcLineFolder, IcLineSearch, IcLineSetting, IcMwDayNight, IcMwMoon, IcMwSparkles, IcMwSun, IcMwTag, IcMwStarFill } from '@/mw/icons'
+import { themeHint, useTheme } from '@/mw/theme'
 import { TextArea } from '@/mw/TextArea'
 
 const itemClass =
@@ -27,8 +26,7 @@ export function CommandPalette() {
   const addMemo = useMemoStore((s) => s.addMemo)
   const batchGenerateTags = useMemoStore((s) => s.batchGenerateTags)
   const folders = useFolderStore((s) => s.folders)
-  const theme = useSettingsStore((s) => s.settings.theme)
-  const setTheme = useSettingsStore((s) => s.setTheme)
+  const { mode: themeMode, dark, cycle: cycleTheme } = useTheme()
   const openSettingsModal = useUIStore((s) => s.openSettingsModal)
   const [query, setQuery] = useState('')
   const [smartMode, setSmartMode] = useState(false)
@@ -110,12 +108,9 @@ export function CommandPalette() {
       case 'settings':
         openSettingsModal()
         break
-      case 'toggle-theme': {
-        const next = theme === 'dark' ? 'light' : 'dark'
-        setTheme(next)
-        applyTheme(next)
+      case 'toggle-theme':
+        cycleTheme() // 자동 → 밝게 → 어둡게
         break
-      }
       case 'dashboard':
         navigateWithTransition('/')
         break
@@ -337,16 +332,19 @@ export function CommandPalette() {
                     설정
                   </Command.Item>
                   <Command.Item
-                    value="테마 전환 다크모드 라이트모드"
+                    value="테마 바꾸기 전환 자동 밝게 어둡게 다크모드 라이트모드"
                     onSelect={() => handleSelect('toggle-theme')}
                     className={itemClass}
                   >
-                    {theme === 'dark' ? (
+                    {themeMode === 'auto' ? (
+                      <IcMwDayNight size={16} className="shrink-0 text-zinc-400" />
+                    ) : themeMode === 'light' ? (
                       <IcMwSun size={16} className="shrink-0 text-zinc-400" />
                     ) : (
                       <IcMwMoon size={16} className="shrink-0 text-zinc-400" />
                     )}
-                    테마 전환
+                    테마 바꾸기
+                    <span className="ml-auto text-xs text-zinc-400">{themeHint(themeMode, dark)}</span>
                   </Command.Item>
                 </Command.Group>
               </Command.List>
