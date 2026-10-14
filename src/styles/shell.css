@@ -101,3 +101,7 @@ button.mw-sheet__grab { min-height: var(--mw-touch); }
   .mw-popup__container:has(> .memo-dialog--full) { align-items: stretch; padding: 0; }
   .mw-popup.memo-dialog--full { width: 100%; max-width: none; height: 100dvh; max-height: none; border-radius: 0; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 }
+
+/* 관계 그래프의 노드(SVG 그룹): 초점 표시는 상자 테두리 대신 원의 선을 굵게 해요. */
+.memo-graph-node { outline: 0; }
+.memo-graph-node:focus-visible > circle { stroke-width: 3; }

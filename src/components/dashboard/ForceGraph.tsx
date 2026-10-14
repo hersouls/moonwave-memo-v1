@@ -168,7 +168,7 @@ const GraphContent = memo(function GraphContent({
               tabIndex={interactive ? 0 : undefined}
               role={interactive ? 'button' : undefined}
               aria-label={interactive ? `${n.label} — 연결 ${n.degree}개` : undefined}
-              className={interactive ? 'outline-none [&:focus-visible>circle]:stroke-[3]' : undefined}
+              className={interactive ? 'memo-graph-node' : undefined}
               style={{ cursor: interactive ? 'pointer' : 'default', willChange: 'transform' }}
             >
               <circle
