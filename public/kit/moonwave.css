@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.2.1 · all in one
+/*! Moonwave UX 1.3.0 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -3170,7 +3170,7 @@
   --mw-touch: 44px;
 
   /* 키트의 판: 서비스가 들고 있는 키트 사본이 지금 판인지 화면 점검이 이 값으로 알아요 */
-  --mw-kit: "1.2";
+  --mw-kit: "1.3";
 
   /* 정해진 자리의 값 — 공통 단계에 없고, 이름에 적힌 자리에만 써요 */
   --mw-font-size-11: 11px;
@@ -11453,6 +11453,32 @@
   }
 }
 
+/* 높이: 본문이 열릴 때 300ms, 닫힐 때 200ms로 자라고 줄어요(위의 나타남과 함께예요). 이 전환을 모르는 브라우저와
+   움직임을 줄인 기기에서는 바로 열리고 닫혀요. 같은 name을 준 항목은 하나만 열려요(<details name="…">). */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports selector(::details-content) and (interpolate-size: allow-keywords) {
+    .mw-accordion__item {
+      interpolate-size: allow-keywords;
+    }
+
+    .mw-accordion__item::details-content {
+      block-size: 0;
+      overflow: clip;
+      transition:
+        block-size var(--motion-duration-medium) var(--motion-easing-ease-out),
+        content-visibility var(--motion-duration-medium) allow-discrete;
+    }
+
+    .mw-accordion__item[open]::details-content {
+      block-size: auto;
+      transition:
+        block-size var(--motion-duration-long) var(--motion-easing-ease-out),
+        content-visibility var(--motion-duration-long) allow-discrete;
+    }
+  }
+}
+
 /* ── 어두운 테마의 대비 ──
    본문이 놓이는 면(--surface-secondary)이 어두운 테마에서는 밝은 회색이라, --text-secondary로는 4.35:1이에요.
    본문색으로 올려 4.5:1을 넘겨요 (foundations/accessibility 대비). 밝은 테마는 그대로예요. */
@@ -14844,6 +14870,433 @@
   .mw-date-picker__time-option,
   .mw-date-picker-field {
     transition: none;
+  }
+}
+
+/* ── FilterBar ── */
+/* Filter Bar — Moonwave UX extra component */
+
+/* 구조: 도구 줄(mw-data-toolbar)은 두 줄이에요. 윗줄이 거르기 묶음(mw-filter-bar), 아랫줄이 보기 묶음(정렬 · 뷰)과 정렬 상태 글이에요.
+   거르기 묶음: 자주 쓰는 필터(quick) · 통합 필드(field: 칩 + 검색 입력 + 모두 지우기) · 전체 필터 버튼(all).
+   정렬과 뷰는 거르기와 눈으로 갈라져요: 줄이 다르고 사이에 가는 선이 서요. 폰에서도 같아요.
+   전체 필터 패널은 새로 만들지 않아요. 앱 셸의 오른쪽 패널(mw-app-panel)이 그대로 서랍(601px부터)이고 시트(600px 이하)예요. */
+
+.mw-data-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12) var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+/* 윗줄은 거르기가 다 써요. 아랫줄은 보기(정렬 · 뷰)와 지금 정렬을 말하는 글이에요. 둘 사이에 가는 선이 서요 */
+.mw-data-toolbar__filters {
+  flex: 1 1 100%;
+  min-width: 0;
+  padding-bottom: var(--space-12);
+  border-bottom: var(--border-width-1) solid var(--border-secondary);
+}
+
+.mw-data-toolbar__view {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.mw-data-toolbar__status {
+  flex: 1 1 calc(var(--size-56) * 3);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+}
+
+.mw-data-toolbar__status b {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── 거르기 묶음 ── */
+
+.mw-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
+  min-width: 0;
+}
+
+.mw-filter-bar__quick {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mw-filter-bar__quick::-webkit-scrollbar {
+  display: none;
+}
+
+/* 통합 필드: 하나의 테두리 안에 칩, 입력, 지우기가 들어가요 */
+
+.mw-filter-bar__field {
+  flex: 1 1 calc(var(--size-56) * 4);
+  min-width: calc(var(--size-56) * 3);
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-8);
+  min-height: var(--size-48);
+  padding: var(--space-4) var(--space-8) var(--space-4) var(--space-12);
+  border: var(--border-width-1) solid var(--border-primary);
+  border-radius: var(--radius-12);
+  background: var(--surface-primary);
+  cursor: text;
+  transition: border-color var(--motion-duration-medium) var(--motion-easing-ease-out);
+}
+
+.mw-filter-bar__field:hover {
+  border-color: var(--border-accent-secondary);
+}
+
+.mw-filter-bar__field:focus-within {
+  border-color: var(--mw-focus);
+  box-shadow: 0 0 0 var(--border-width-2) var(--mw-accent-soft);
+}
+
+.mw-filter-bar__icon {
+  flex: none;
+  display: inline-flex;
+  color: var(--icon-secondary);
+}
+
+.mw-filter-bar__chips {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mw-filter-bar__chip {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  border-radius: var(--radius-circle);
+  background: var(--mw-accent-soft);
+  color: var(--text-accent-primary);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-medium);
+}
+
+.mw-filter-bar__chip-edit,
+.mw-filter-bar__chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mw-filter-bar__chip-edit {
+  min-width: 0;
+  min-height: var(--size-32);
+  padding: 0 var(--space-4) 0 var(--space-12);
+  border-radius: var(--radius-circle) 0 0 var(--radius-circle);
+}
+
+.mw-filter-bar__chip-edit span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mw-filter-bar__chip-edit b {
+  margin-right: var(--space-4);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.mw-filter-bar__chip-remove {
+  flex: none;
+  width: var(--size-32);
+  min-height: var(--size-32);
+  border-radius: 0 var(--radius-circle) var(--radius-circle) 0;
+}
+
+.mw-filter-bar__chip-edit:hover,
+.mw-filter-bar__chip-remove:hover {
+  background: var(--fill-secondary-hover);
+}
+
+.mw-filter-bar__chip-edit:active,
+.mw-filter-bar__chip-remove:active {
+  background: var(--fill-secondary-pressed);
+}
+
+.mw-filter-bar__chip-edit:focus-visible,
+.mw-filter-bar__chip-remove:focus-visible,
+.mw-filter-bar__clear:focus-visible,
+.mw-filter-bar__all:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+}
+
+.mw-filter-bar__input {
+  flex: 1 1 calc(var(--size-56) * 2);
+  min-width: calc(var(--size-56) * 2);
+  min-height: var(--size-32);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-15);
+}
+
+.mw-filter-bar__input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.mw-filter-bar__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* "/" 한 글자짜리 안내예요. 터치 화면에서는 보이지 않아요 */
+.mw-filter-bar__key {
+  flex: none;
+  min-width: var(--size-20);
+  box-sizing: border-box;
+  padding: 0 var(--space-6);
+  border: var(--border-width-1) solid var(--border-primary);
+  border-radius: var(--radius-4);
+  color: var(--text-tertiary);
+  font-family: var(--mw-font-mono);
+  font-size: var(--font-size-12);
+  line-height: var(--size-20);
+  text-align: center;
+}
+
+.mw-filter-bar__field:focus-within .mw-filter-bar__key {
+  display: none;
+}
+
+.mw-filter-bar__clear {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-32);
+  height: var(--size-32);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: transparent;
+  color: var(--icon-secondary);
+  cursor: pointer;
+}
+
+.mw-filter-bar__clear:hover {
+  background: var(--fill-secondary-hover);
+}
+
+.mw-filter-bar__clear[hidden] {
+  display: none;
+}
+
+/* 전체 필터 버튼: 적용한 개수가 뒤에 붙어요 */
+
+.mw-filter-bar__all {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--size-48);
+  box-sizing: border-box;
+  padding: 0 var(--space-16);
+  border: var(--border-width-1) solid var(--border-primary);
+  border-radius: var(--radius-12);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-15);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.mw-filter-bar__all:hover {
+  background: var(--fill-secondary-hover);
+}
+
+.mw-filter-bar__all[aria-expanded="true"] {
+  border-color: var(--mw-focus);
+}
+
+.mw-filter-bar__count {
+  min-width: var(--size-20);
+  box-sizing: border-box;
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-circle);
+  background: var(--mw-accent-fill);
+  color: var(--mw-on-accent);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--size-20);
+  text-align: center;
+}
+
+.mw-filter-bar__count[hidden] {
+  display: none;
+}
+
+/* ── 전체 필터 패널 안 ── */
+
+.mw-filter-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mw-filter-group + .mw-filter-group {
+  padding-top: var(--space-20);
+  border-top: var(--border-width-1) solid var(--border-secondary);
+}
+
+.mw-filter-group__legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 var(--space-12);
+  padding: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-15);
+  font-weight: var(--font-weight-bold);
+}
+
+.mw-filter-group__legend + * {
+  clear: both;
+}
+
+.mw-filter-group__list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.mw-filter-group__range {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--text-secondary);
+}
+
+.mw-filter-group__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-bottom: var(--space-12);
+}
+
+.mw-filter-group__input {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--size-48);
+  box-sizing: border-box;
+  padding: 0 var(--space-12);
+  border: var(--border-width-1) solid var(--border-primary);
+  border-radius: var(--radius-8);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-15);
+}
+
+.mw-filter-group__input:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+}
+
+/* ── 결과가 0건일 때 ── */
+
+.mw-filter-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-8);
+  padding: var(--space-40) var(--space-16);
+  text-align: center;
+}
+
+.mw-filter-empty__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-17);
+  font-weight: var(--font-weight-bold);
+}
+
+.mw-filter-empty__body {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+}
+
+.mw-filter-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+/* ── 폰 ── */
+
+@media (max-width: 600px) {
+  .mw-data-toolbar {
+    gap: var(--space-8);
+  }
+
+  .mw-filter-bar__key {
+    display: none;
+  }
+
+  /* 필드는 한 줄을 다 쓰고, 전체 필터 버튼이 그 옆에 서요 */
+  .mw-filter-bar__field {
+    flex-basis: 100%;
+  }
+
+  .mw-filter-bar__quick {
+    flex-basis: 100%;
+  }
+}
+
+@media (hover: none) {
+  .mw-filter-bar__key {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-filter-bar__field {
+    transition: none;
+  }
+}
+
+/* 상세 서랍(mw-app-panel--full): 폰에서 시트가 아니라 전체 화면이에요. 앱 셸의 폭 규칙과 같은 600px에서 바뀌어요 */
+@media (max-width: 600px) {
+  .mw-app-panel.mw-app-panel--full {
+    top: 0;
+    height: 100dvh;
+    border-radius: 0;
   }
 }
 
@@ -18740,6 +19193,329 @@
   opacity: 0.4;
 }
 
+/* ── SortControl ── */
+/* Sort Control — Moonwave UX extra component */
+
+/* 구조: 정렬 버튼(trigger) + 오름 · 내림 토글(dir) + 열리는 메뉴(mw-data-menu). 뷰 메뉴(mw-view-menu)도 같은 메뉴 모양을 써요.
+   표는 열 머리글을 눌러 정렬하는 것을 그대로 두어요(mw-data-table__header[aria-sort]). 카드와 목록에는 이 부품을 써요.
+   1순위와 2순위는 메뉴 안에서 각각 기준 하나와 방향 하나로 골라요. 지금 정렬은 글로(mw-sort-control__status) 늘 말해요. */
+
+.mw-sort-control,
+.mw-view-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.mw-sort-control__trigger,
+.mw-sort-control__dir,
+.mw-view-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--size-48);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 var(--space-12);
+  border: var(--border-width-1) solid var(--border-primary);
+  border-radius: var(--radius-12);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-15);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mw-sort-control__trigger b {
+  max-width: 10em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-accent-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mw-sort-control__dir {
+  justify-content: center;
+  width: var(--size-48);
+  padding: 0;
+}
+
+.mw-sort-control__trigger:hover,
+.mw-sort-control__dir:hover,
+.mw-view-menu__trigger:hover {
+  background: var(--fill-secondary-hover);
+}
+
+.mw-sort-control__trigger[aria-expanded="true"],
+.mw-view-menu__trigger[aria-expanded="true"] {
+  border-color: var(--mw-focus);
+}
+
+.mw-sort-control__trigger:focus-visible,
+.mw-sort-control__dir:focus-visible,
+.mw-view-menu__trigger:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+}
+
+/* 방향 아이콘은 뜻이 바뀌면 뒤집혀요: 오름은 위로, 내림은 아래로 (색이 아니라 모양으로 말해요) */
+.mw-sort-control__dir svg {
+  transition: transform var(--motion-duration-medium) var(--motion-easing-ease-out);
+}
+
+.mw-sort-control__dir[data-dir="asc"] svg {
+  transform: rotate(180deg);
+}
+
+/* 열리는 메뉴 */
+
+.mw-data-menu {
+  position: absolute;
+  top: calc(100% + var(--space-8));
+  right: 0;
+  z-index: 40;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: calc(var(--size-56) * 4);
+  max-width: min(calc(var(--size-56) * 7), 92vw);
+  padding: var(--space-8);
+  border: var(--border-width-1) solid var(--border-secondary);
+  border-radius: var(--radius-12);
+  background: var(--surface-floating);
+  box-shadow: var(--shadow-3);
+}
+
+.mw-data-menu[hidden] {
+  display: none;
+}
+
+.mw-data-menu__title {
+  margin: 0;
+  padding: var(--space-8) var(--space-8) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mw-data-menu__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-8) var(--space-8);
+}
+
+.mw-data-menu__select {
+  min-width: 0;
+  min-height: var(--size-48);
+  box-sizing: border-box;
+  padding: 0 var(--space-12);
+  border: var(--border-width-1) solid var(--border-primary);
+  border-radius: var(--radius-8);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-15);
+}
+
+.mw-data-menu__select:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+}
+
+.mw-data-menu__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mw-data-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  min-height: var(--size-48);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 var(--space-8);
+  border: 0;
+  border-radius: var(--radius-8);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-15);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mw-data-menu__item:hover,
+.mw-data-menu__item:focus-visible {
+  background: var(--fill-secondary-hover);
+  outline: none;
+}
+
+.mw-data-menu__item[aria-pressed="true"] {
+  color: var(--text-accent-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mw-data-menu__entry {
+  display: flex;
+  align-items: center;
+}
+
+.mw-data-menu__item-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mw-data-menu__hint {
+  margin: 0;
+  padding: var(--space-8);
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+}
+
+.mw-data-menu__foot {
+  margin-top: var(--space-4);
+  padding-top: var(--space-8);
+  border-top: var(--border-width-1) solid var(--border-secondary);
+}
+
+/* ── 표의 행 펼치기 (mw-data-table 안) ──
+   왼쪽 caret 버튼가 아래 상세 줄(mw-row-detail)을 여닫아요. 폰만이 아니라 어느 화면에서나 같아요: 행의 부가정보는 눌러야 보여요. */
+
+.mw-row-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-32);
+  height: var(--size-32);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: transparent;
+  color: var(--icon-secondary);
+  cursor: pointer;
+}
+
+.mw-row-expand:hover {
+  background: var(--fill-secondary-hover);
+}
+
+.mw-row-expand:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+}
+
+.mw-row-expand svg {
+  transition: transform var(--motion-duration-medium) var(--motion-easing-ease-out);
+}
+
+.mw-row-expand[aria-expanded="true"] {
+  color: var(--text-accent-primary);
+}
+
+.mw-row-expand[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+/* 상세 줄: 짧은 부가정보(메모, 하위 항목 3~5개). 2단계까지만 들어가요 */
+
+.mw-row-detail {
+  padding: var(--space-12) var(--space-16) var(--space-16) calc(var(--space-16) + var(--size-32) + var(--space-8));
+  background: var(--surface-secondary);
+  border-bottom: var(--border-width-1) solid var(--border-secondary);
+}
+
+.mw-row-detail[hidden] {
+  display: none;
+}
+
+.mw-row-detail__note {
+  margin: 0 0 var(--space-8);
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+}
+
+.mw-row-detail__items {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mw-row-detail__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--size-32);
+  color: var(--text-primary);
+  font-size: var(--font-size-14);
+}
+
+.mw-row-detail__item .mw-row-expand {
+  width: var(--size-24);
+  height: var(--size-24);
+}
+
+/* 둘째 단계: 한 칸 더 들여 쓰고, 그 아래로는 더 펼치지 않아요 */
+.mw-row-detail--nested {
+  margin-top: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: 0;
+  border-radius: var(--radius-8);
+  background: var(--surface-primary);
+}
+
+.mw-row-detail__more {
+  margin-top: var(--space-8);
+}
+
+@media (max-width: 600px) {
+  /* 폰에서는 메뉴가 아래에서 올라오는 시트 모양이에요 */
+  .mw-data-menu {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 72;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: var(--space-8) var(--space-16) calc(var(--space-16) + env(safe-area-inset-bottom));
+    border-width: var(--border-width-1) 0 0;
+    border-radius: var(--mw-radius-sheet) var(--mw-radius-sheet) 0 0;
+  }
+
+  .mw-row-detail {
+    padding-left: var(--space-16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-sort-control__dir svg,
+  .mw-row-expand svg {
+    transition: none;
+  }
+}
+
+/* 상세 줄이 들어가는 칸은 여백 없이 상세 줄이 직접 채워요 */
+.mw-data-table__cell--detail {
+  height: auto;
+  padding: 0;
+}
+
 /* ── Table ── */
 /* Table — Moonwave UX extra component */
 
@@ -18952,6 +19728,17 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-bottom-sheet-overlay { z-index: 70; }
 .mw-bottom-sheet-container { z-index: 71; }
 
+/* 펼치기(patterns/expand)와 만나는 곳 — 무언가를 펼치는 Filter 칩(aria-expanded)은 열리면 꺾쇠가 위를 향해요.
+   펼치는 곳(mw-expand) 안의 칩 묶음은 여러 줄로 감싸요: 펼쳤는데 또 옆으로 밀어야 보이면 펼친 것이 아니에요
+   (Calendar의 묶음 다섯, 2026.10.14: 360px 폰에서 마지막 칩이 화면 끝에 잘렸어요). */
+.mw-filter-chip[aria-expanded="true"] .mw-filter-chip__icon { rotate: 180deg; }
+.mw-expand .mw-chip-group-wrapper { overflow: visible; }
+.mw-expand .mw-chip-group { flex-wrap: wrap; row-gap: var(--space-8); overflow: visible; }
+.mw-expand .mw-chip-group__gradient { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .mw-filter-chip[aria-expanded] .mw-filter-chip__icon, .mw-expand__chevron { transition: rotate var(--motion-duration-long) var(--mw-ease); }
+}
+
 /* Moonwave 앱 레이어
  * 모든 Moonwave 서비스가 함께 쓰는 바탕과 뼈대예요: 글꼴, 초기화, 포커스, 앱 셸(사이드바 · 상단 바 · 하단 탭 · 패널 · 시트),
  * 페이지 머리말, 통계 타일, 상태 표시, 히어로, 안내, 빈 화면.
@@ -19087,6 +19874,9 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-app-panel--open { transform: none; visibility: visible; transition-delay: 0s; }
 .mw-app-panel__head { flex: none; display: flex; align-items: center; gap: var(--space-12); padding: var(--space-16) var(--space-12) var(--space-16) var(--space-20); border-bottom: var(--border-width-1) solid var(--border-secondary); }
 .mw-app-panel__head h2 { flex: 1; min-width: 0; font-size: var(--font-size-17); font-weight: var(--font-weight-bold); letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 상세 서랍(데이터 뷰): 머리에 이전 · 다음 단추와 "3 / 12"가 서요. 목록은 패널 옆에 그대로 남아요. */
+.mw-app-panel__nav { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); }
+.mw-app-panel__pos { min-width: 3.5em; color: var(--text-secondary); font-size: var(--font-size-13); text-align: center; font-variant-numeric: tabular-nums; }
 .mw-app-panel__body { flex: 1; overflow-y: auto; padding: var(--space-20); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-20); align-content: start; }
 .mw-app-panel__foot { flex: none; display: flex; gap: var(--space-8); justify-content: flex-end; padding: var(--space-12) var(--space-20) calc(var(--space-12) + env(safe-area-inset-bottom)); border-top: var(--border-width-1) solid var(--border-secondary); background: var(--surface-primary); }
 
@@ -19336,6 +20126,8 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
   .mw-app-panel { top: auto; width: 100%; height: 92dvh; padding-right: 0; border-left: 0; border-radius: var(--mw-radius-sheet) var(--mw-radius-sheet) 0 0; transform: translateY(105%); transition-duration: var(--mw-duration-sheet), 0s; transition-timing-function: var(--mw-ease-sheet), linear; transition-delay: 0s, var(--mw-duration-sheet); }
   .mw-app-panel--open { transform: none; transition-delay: 0s; }
   .mw-app-panel__head { padding-top: var(--space-16); }
+  /* 상세 서랍은 폰에서 시트가 아니라 전체 화면이에요 */
+  .mw-app-panel--full { top: 0; height: 100dvh; border-radius: 0; }
   /* 결정을 받는 팝업(Center)은 엄지가 닿는 아래에 떠요. 화면 가운데에 뜨는 것은 601px부터예요. */
   .mw-popup__container:has(> .mw-popup--center) { box-sizing: border-box; align-items: flex-end; padding: 0 var(--space-16) calc(var(--space-16) + env(safe-area-inset-bottom)); }
   .mw-popup--center { width: 100%; min-width: 0; }
@@ -19383,6 +20175,64 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
   .mw-fold { position: fixed; inset: 0; z-index: 65; grid-template-rows: env(viewport-segment-height 0 0) env(viewport-segment-height 0 1); row-gap: calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0)); background: var(--surface-primary); }
   .mw-fold__view { overflow: hidden; padding-top: env(safe-area-inset-top); }
   .mw-fold__controls { overflow-y: auto; overscroll-behavior: contain; padding: var(--space-16) max(var(--space-20), env(safe-area-inset-right)) calc(var(--space-16) + env(safe-area-inset-bottom)) max(var(--space-20), env(safe-area-inset-left)); }
+}
+
+/* ── 펼치기 (mw-expand): 폰에서 자리를 아끼려고 접어 두는 곳이에요. 그보다 넓은 화면(펼친 폴드, 태블릿, PC)에서는 자리가
+   있어서 늘 펼쳐져 있고 여는 버튼은 보이지 않아요 (patterns/expand).
+   여는 버튼(data-expand-opener · aria-expanded · aria-controls) + .mw-expand(펼쳐지는 곳) > .mw-expand__body(내용)예요.
+   여는 버튼과의 사이(8px)는 안쪽에 있어요: 닫힌 곳이 바깥의 gap을 한 칸 더 차지하지 않아요. ── */
+.mw-expand { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; scroll-margin-block: var(--space-16); }
+.mw-expand__body { display: flow-root; min-width: 0; min-height: 0; }
+.mw-expand__body::before { content: ''; display: block; height: var(--mw-expand-gap, var(--space-8)); }
+.mw-expand--flush > .mw-expand__body::before, .mw-expand--peek > .mw-expand__body::before { content: none; }
+/* 펼친 내용을 옅은 판에 담아 여는 버튼에 딸린 것임을 보여요 (어두운 테마의 이 면은 밝은 회색이라 글자는 본문색이에요) */
+.mw-expand__panel { padding: var(--space-12) var(--space-16); border-radius: var(--radius-12); background: var(--surface-secondary); color: var(--text-secondary); }
+[data-theme="dark"] .mw-expand__panel { color: var(--text-primary); }
+/* 여는 버튼 안의 아래 꺾쇠: 열리면 위를 향해요 */
+.mw-expand__chevron { flex: none; }
+[aria-expanded="true"] > .mw-expand__chevron, [aria-expanded="true"] > * > .mw-expand__chevron { rotate: 180deg; }
+/* 글자와 꺾쇠로 된 여는 버튼 (더 보기 · 접기) */
+.mw-expand-button { display: inline-flex; align-items: center; gap: var(--space-4); min-height: var(--mw-touch); margin: 0; padding: 0 var(--space-4); border: 0; border-radius: var(--radius-8); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: var(--font-size-14); font-weight: var(--font-weight-semibold); line-height: 1.4; text-align: left; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+.mw-expand-button[hidden] { display: none; }
+.mw-expand-button > svg { width: 16px; height: 16px; }
+.mw-expand-button__count { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.mw-expand-button:hover, .mw-expand-button:active { color: var(--text-primary); }
+.mw-expand-button:active { background: var(--fill-tertiary-pressed); }
+.mw-expand-button:focus-visible { outline: var(--border-width-2) solid var(--border-inverse); outline-offset: 2px; }
+.mw-expand-button--block { display: flex; justify-content: center; width: 100%; }
+/* 폰보다 넓은 화면: 접지 않아요. 펼치는 곳은 늘 열려 있고, 여는 버튼은 할 일이 없어서 보이지 않아요 */
+@media (min-width: 601px) {
+  .mw-expand-button, .mw-expand-button--block, [data-expand-opener][aria-expanded] { display: none; }
+}
+/* 폰: 접어 둬요. 닫힌 곳은 화면에 없고(display: none), 앞부분만 보이는 곳(--peek)은 세 줄을 보여 주고 아래가 흐려져요 */
+@media (max-width: 600px) {
+  .mw-expand { display: none; grid-template-rows: 0fr; }
+  .mw-expand--open { display: grid; grid-template-rows: 1fr; }
+  /* 높이가 자라는 동안 넘치는 내용을 잘라요. 다 열리면 자르지 않아서 포커스 테두리와 그림자가 온전히 보여요 */
+  .mw-expand__body { overflow: hidden; }
+  .mw-expand--open > .mw-expand__body { overflow: visible; }
+  .mw-expand--peek { display: grid; }
+  .mw-expand--peek > .mw-expand__body { min-height: var(--mw-expand-peek, calc(var(--mw-expand-lines, 3) * 1lh)); }
+  .mw-expand--peek:not(.mw-expand--open) > .mw-expand__body { -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--space-32)), transparent); mask-image: linear-gradient(to bottom, black calc(100% - var(--space-32)), transparent); }
+  /* 내용이 앞부분 안에 다 들어오면(--fits: 키트의 Expand와 expand.js가 재서 붙여요) 흐림도 없고 여는 버튼도 없어요 */
+  .mw-expand--fits { grid-template-rows: 1fr; }
+  .mw-expand--peek.mw-expand--fits > .mw-expand__body { min-height: 0; -webkit-mask-image: none; mask-image: none; }
+}
+/* 폰에서 펼치고 접는 움직임: 열릴 때 300ms, 닫힐 때 200ms예요. 격자의 줄이 0fr에서 1fr로 자라서 내용의 높이를 몰라도 아래 내용을 부드럽게 밀어요 */
+@media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+  /* (닫힌 곳(display: none)에서 시작하는 전환을 모르는 브라우저에서는 바로 열리고 닫혀요) */
+  @supports (transition-behavior: allow-discrete) {
+    .mw-expand { transition: grid-template-rows var(--motion-duration-medium) var(--mw-ease), display var(--motion-duration-medium) allow-discrete; }
+    .mw-expand--open { transition: grid-template-rows var(--motion-duration-long) var(--mw-ease), display var(--motion-duration-long) allow-discrete; }
+    .mw-expand__body { opacity: 0; translate: 0 calc(var(--space-8) * -1); transition: opacity var(--motion-duration-short) linear, translate var(--motion-duration-medium) var(--mw-ease); }
+    .mw-expand--open > .mw-expand__body { opacity: 1; translate: none; transition: opacity var(--motion-duration-medium) linear var(--motion-duration-short), translate var(--motion-duration-long) var(--mw-ease), overflow 0s linear var(--motion-duration-long) allow-discrete; }
+    .mw-expand--peek > .mw-expand__body { opacity: 1; translate: none; }
+    /* (--live: 손이 한 번이라도 여닫은 곳이에요. 화면이 뜰 때부터 열려 있는 곳은 움직이지 않고 그냥 서 있어요) */
+    @starting-style {
+      .mw-expand--live.mw-expand--open:not(.mw-expand--peek) { grid-template-rows: 0fr; }
+      .mw-expand--live.mw-expand--open:not(.mw-expand--peek) > .mw-expand__body { overflow: hidden; opacity: 0; translate: 0 calc(var(--space-8) * -1); }
+    }
+  }
 }
 
 /* ── 움직임 ── */

@@ -1,6 +1,6 @@
-import { useId, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import clsx from 'clsx'
-import { IcLineChevronDown, IcLineChevronUp } from '@/mw/icons'
+import { Expand, ExpandChevron, useExpand } from '@/mw/Expand'
 import type { IconType } from '@/components/ui/iconType'
 
 /* 대시보드 위젯 공용 카드 — 헤더 해부학 단일화
@@ -49,8 +49,8 @@ export function WidgetCard({
   className,
   children,
 }: WidgetCardProps) {
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
-  const bodyId = useId()
+  // 접는 일은 폰에서만이에요. 태블릿과 PC에서는 키트가 늘 펼쳐 두고 버튼을 숨겨요
+  const fold = useExpand({ defaultOpen: !defaultCollapsed })
 
   const headerContent = (
     <>
@@ -111,13 +111,11 @@ export function WidgetCard({
         </div>
         <button
           type="button"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          aria-expanded={!isCollapsed}
-          aria-controls={bodyId}
-          aria-label={isCollapsed ? '펼치기' : '접기'}
+          {...fold.button}
+          aria-label={fold.open ? '접기' : '펼치기'}
           className="mw-icon-button memo-widget__toggle"
         >
-          {isCollapsed ? <IcLineChevronDown size={20} /> : <IcLineChevronUp size={20} />}
+          <ExpandChevron size={20} />
         </button>
         {action && (
           <span className="absolute right-14 top-1/2 -translate-y-1/2">{action}</span>
@@ -126,20 +124,10 @@ export function WidgetCard({
 
       {subheader}
 
-      {/* grid-rows 트릭으로 부드러운 접기/펼치기 */}
-      <div
-        id={bodyId}
-        inert={isCollapsed}
-        className={clsx(
-          'grid transition-[grid-template-rows] duration-200 ease-standard motion-reduce:transition-none',
-          isCollapsed ? '[grid-template-rows:0fr]' : '[grid-template-rows:1fr]'
-        )}
-      >
+      <Expand {...fold.region} flush>
         {/* 펼칠 때 본문을 리마운트해 draw-in 류 등장 애니메이션이 재생되도록 key 부여 */}
-        <div key={isCollapsed ? 'collapsed' : 'expanded'} className="min-h-0 overflow-hidden">
-          {body}
-        </div>
-      </div>
+        <div key={fold.open ? 'expanded' : 'collapsed'}>{body}</div>
+      </Expand>
     </div>
   )
 }
