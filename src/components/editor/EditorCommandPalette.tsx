@@ -121,9 +121,11 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
           className="w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 transition duration-200 data-[closed]:-translate-y-2 data-[closed]:scale-[0.98] data-[closed]:opacity-0 data-[enter]:ease-out data-[leave]:duration-200 data-[leave]:ease-in"
         >
           <div className="flex border-b border-zinc-100 p-3 dark:border-zinc-800">
+            <div role="search" className="contents">
             <label className="mw-searchbar">
               <IcLineSearch size={20} />
               <input
+              enterKeyHint="search"
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -131,6 +133,7 @@ export function EditorCommandPalette({ commands, onClose }: EditorCommandPalette
                 aria-label="명령 찾기"
               />
             </label>
+            </div>
           </div>
           <div className="max-h-[50vh] overflow-y-auto py-1">
             {filtered.length === 0 ? (

@@ -199,7 +199,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         )}
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         {/* Desktop only: close button (modal). 조건부 렌더 — lg:inline-flex가
             .f-icon-btn 때문에 모바일에서도 새어 나와 뒤로가기와 중복되던 문제 수정. */}
         {isDesktop && (

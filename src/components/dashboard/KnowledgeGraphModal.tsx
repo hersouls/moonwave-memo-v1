@@ -296,6 +296,7 @@ export function KnowledgeGraphModal({
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
+            <div role="search" className="contents">
             <label className="mw-searchbar hidden sm:flex w-56 flex-none">
               <IcLineSearch size={20} />
               <input
@@ -312,6 +313,7 @@ export function KnowledgeGraphModal({
                 </span>
               )}
             </label>
+            </div>
 
             <button aria-pressed={is3D}
               type="button"
@@ -436,6 +438,7 @@ export function KnowledgeGraphModal({
 
           {/* 모바일 검색 */}
           <div className="absolute left-3 right-3 top-3 flex sm:hidden">
+            <div role="search" className="contents">
             <label className="mw-searchbar">
               <IcLineSearch size={20} />
               <input
@@ -447,6 +450,7 @@ export function KnowledgeGraphModal({
                 enterKeyHint="search"
               />
             </label>
+            </div>
           </div>
 
           {/* 링크가 하나도 없을 때 안내 */}
