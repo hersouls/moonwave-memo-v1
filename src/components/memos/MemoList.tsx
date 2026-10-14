@@ -17,11 +17,12 @@ import { useMemoFilters } from '@/hooks/useMemoFilters'
 import { CreateActions, PageHead } from '@/components/layout/PageHead'
 import { MEMOS_TITLE } from '@/components/layout/pages'
 import { Button } from '@/mw/Button'
+import { SelectChip } from '@/mw/Chip'
 import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
 import { useFolderStore } from '@/stores/folderStore'
-import { IcLineMore, IcLinePin, IcLineTrash, IcMwGrid, IcMwList, IcMwSort } from '@/mw/icons'
+import { IcLineMore, IcLinePin, IcLineTrash, IcMwSort } from '@/mw/icons'
 import type { SortBy } from '@/lib/types'
 
 // PERF-01: initial visible count
@@ -235,13 +236,9 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
           {emptyTrashButton}
           {!pane && (
             <>
-              <div role="group" aria-label="보기 방식" className="flex items-center">
-                <button type="button" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'} aria-label="목록으로 보기" title="목록으로 보기">
-                  <IcMwList size={20} />
-                </button>
-                <button type="button" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? 'mw-icon-button memo-tool--on' : 'mw-icon-button'} aria-label="격자로 보기" title="격자로 보기">
-                  <IcMwGrid size={20} />
-                </button>
+              <div role="group" aria-label="보기 방식" className="mw-chip-group">
+                <SelectChip active={viewMode === 'list' ? 'on' : 'off'} aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>목록</SelectChip>
+                <SelectChip active={viewMode === 'grid' ? 'on' : 'off'} aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}>격자</SelectChip>
               </div>
               <button type="button"
                 onClick={() => setSortBy(SORT_ORDER[(SORT_ORDER.indexOf(sortBy) + 1) % SORT_ORDER.length])}

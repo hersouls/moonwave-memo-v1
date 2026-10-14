@@ -37,7 +37,7 @@ const toolBtnBase = 'mw-icon-button'
 const toolBtnDefault = ''
 const toolBtnActive = 'memo-tool--on'
 const toolBtnAccent = 'memo-tool--accent'
-const toolSep = 'h-5 w-px bg-zinc-200/70 dark:bg-zinc-700/70 mx-1 shrink-0'
+const toolSep = 'h-5 w-px bg-zinc-200/70 dark:bg-zinc-700/70 shrink-0'
 const toolIcon = undefined
 
 // 툴팁 내용: 라벨 + (있으면) 단축키 칩 — 네이티브 title 대체
@@ -260,7 +260,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
       <div
         ref={edgeFade.ref}
         style={edgeFade.style}
-        className="flex items-center gap-0.5 px-4 py-1 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 overflow-x-auto scrollbar-none pb-[env(safe-area-inset-bottom,0px)]"
+        className="flex items-center gap-2 px-4 py-1 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 overflow-x-auto scrollbar-none pb-[env(safe-area-inset-bottom,0px)]"
         onMouseDown={(ev) => ev.preventDefault()}
       >
         {onUndo && (
@@ -305,7 +305,7 @@ export function EditorToolbar({ textareaRef, onContentChange, tiptapEditor, onUn
       style={edgeFade.style}
       className="bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200/60 dark:border-zinc-800 shrink-0 overflow-x-auto scrollbar-none"
     >
-      <div className="flex items-center justify-center gap-0.5 px-4 py-1.5 w-max min-w-full mx-auto">
+      <div className="flex items-center justify-center gap-2 px-4 py-1.5 w-max min-w-full mx-auto">
         {/* Group: history */}
         {onUndo && (
           <>

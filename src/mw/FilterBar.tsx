@@ -214,7 +214,7 @@ const num = (s: string): number | undefined => (s.trim() === '' || Number.isNaN(
  * 고르는 즉시 목록에 반영돼요. 닫는 버튼가 "결과 n건 보기"라서 눌러야 적용되는 일이 없어요.
  */
 export function FilterPanel({ open, onClose, fields, state, onFilter, onClear, resultCount, focusKey, id, title = '전체 필터' }: FilterPanelProps) {
-  const panel = useRef<HTMLElement>(null)
+  const panel = useRef<HTMLDivElement>(null)
   const titleId = useId()
   useCloseRequest(open, onClose)
   useSheetDrag(panel, open, onClose, () => matchMedia('(max-width: 600px)').matches)
@@ -227,7 +227,7 @@ export function FilterPanel({ open, onClose, fields, state, onFilter, onClear, r
   return (
     <>
       <button type="button" className={cx('mw-app-panel-scrim', open && 'mw-app-panel-scrim--on')} aria-label="패널 닫기" tabIndex={-1} onClick={onClose} />
-      <aside ref={panel} id={id} className={cx('mw-app-panel', open && 'mw-app-panel--open')} role="dialog" aria-modal="false" aria-labelledby={titleId} inert={!open}>
+      <div ref={panel} id={id} className={cx('mw-app-panel', open && 'mw-app-panel--open')} role="dialog" aria-modal="false" aria-labelledby={titleId} inert={!open}>
         <div className="mw-app-panel__head">
           <h2 id={titleId}>{title}</h2>
           <button type="button" className="mw-filter-bar__clear" aria-label="닫기" onClick={onClose}><IcLineClose /></button>
@@ -241,7 +241,7 @@ export function FilterPanel({ open, onClose, fields, state, onFilter, onClear, r
           <Button variant="tertiary" size="medium" onClick={onClear} disabled={!Object.values(state.filters).some((v) => !isEmptyValue(v))}>모두 지우기</Button>
           <Button variant="primary" size="medium" onClick={onClose}>{resultCount === 0 ? '결과가 없어요' : `결과 ${resultCount.toLocaleString('ko-KR')}건 보기`}</Button>
         </div>
-      </aside>
+      </div>
     </>
   )
 }
@@ -251,14 +251,16 @@ function FilterGroup({ field, value, onChange }: { field: FilterField; value: Fi
   const body = (): ReactNode => {
     if (field.type === 'text') {
       return (
-        <input
-          className="mw-filter-group__input"
-          type="text"
-          aria-label={`${field.label} 포함`}
-          placeholder="포함하는 글"
-          value={typeof value === 'string' ? value : ''}
-          onChange={(e) => onChange(e.target.value || undefined)}
-        />
+        <label className="mw-filter-group__field">
+          <span>{field.label} 포함</span>
+          <input
+            className="mw-filter-group__input"
+            type="text"
+            placeholder="포함하는 글"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(e.target.value || undefined)}
+          />
+        </label>
       )
     }
     if (field.type === 'check') {
@@ -267,7 +269,7 @@ function FilterGroup({ field, value, onChange }: { field: FilterField; value: Fi
         <div className="mw-filter-group__list">
           {field.options?.map((o) => (
             <CheckboxGroup key={o.value} value={o.value}>
-              <Checkbox value={o.value} checked={cur.includes(o.value)} onChange={(e) => onChange(e.target.checked ? [...cur, o.value] : cur.filter((x) => x !== o.value))} />
+              <Checkbox value={o.value} aria-label={o.label} checked={cur.includes(o.value)} onChange={(e) => onChange(e.target.checked ? [...cur, o.value] : cur.filter((x) => x !== o.value))} />
               <CheckboxLabel>{o.label}</CheckboxLabel>
             </CheckboxGroup>
           ))}
@@ -279,9 +281,9 @@ function FilterGroup({ field, value, onChange }: { field: FilterField; value: Fi
       const set = (patch: RangeValue) => onChange({ ...r, ...patch })
       return (
         <div className="mw-filter-group__range">
-          <input className="mw-filter-group__input" type="number" inputMode="numeric" aria-label={`${field.label} 최소`} placeholder="최소" value={r.min ?? ''} onChange={(e) => set({ min: num(e.target.value) })} />
+          <label className="mw-filter-group__field"><span>최소</span><input className="mw-filter-group__input" type="number" inputMode="numeric" value={r.min ?? ''} onChange={(e) => set({ min: num(e.target.value) })} /></label>
           <span aria-hidden="true">~</span>
-          <input className="mw-filter-group__input" type="number" inputMode="numeric" aria-label={`${field.label} 최대`} placeholder="최대" value={r.max ?? ''} onChange={(e) => set({ max: num(e.target.value) })} />
+          <label className="mw-filter-group__field"><span>최대</span><input className="mw-filter-group__input" type="number" inputMode="numeric" value={r.max ?? ''} onChange={(e) => set({ max: num(e.target.value) })} /></label>
         </div>
       )
     }
@@ -300,9 +302,9 @@ function FilterGroup({ field, value, onChange }: { field: FilterField; value: Fi
           })}
         </div>
         <div className="mw-filter-group__range">
-          <input className="mw-filter-group__input" type="date" aria-label={`${field.label} 시작`} value={d.from ?? ''} onChange={(e) => onChange({ ...d, from: e.target.value || undefined })} />
+          <label className="mw-filter-group__field"><span>시작</span><input className="mw-filter-group__input" type="date" value={d.from ?? ''} onChange={(e) => onChange({ ...d, from: e.target.value || undefined })} /></label>
           <span aria-hidden="true">~</span>
-          <input className="mw-filter-group__input" type="date" aria-label={`${field.label} 끝`} value={d.to ?? ''} onChange={(e) => onChange({ ...d, to: e.target.value || undefined })} />
+          <label className="mw-filter-group__field"><span>끝</span><input className="mw-filter-group__input" type="date" value={d.to ?? ''} onChange={(e) => onChange({ ...d, to: e.target.value || undefined })} /></label>
         </div>
       </>
     )

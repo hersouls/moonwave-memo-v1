@@ -31,7 +31,7 @@ export type DetailDrawerProps = {
 export function DetailDrawer({ open, onClose, title, index, total, onStep, footer, children, id }: DetailDrawerProps) {
   const own = useId()
   const titleId = useId()
-  const box = useRef<HTMLElement>(null)
+  const box = useRef<HTMLDivElement>(null)
   useCloseRequest(open, onClose)
   const paged = index !== undefined && total !== undefined && !!onStep
   const step = (d: -1 | 1) => {
@@ -45,7 +45,7 @@ export function DetailDrawer({ open, onClose, title, index, total, onStep, foote
   return (
     <>
       <button type="button" className={cx('mw-app-panel-scrim', open && 'mw-app-panel-scrim--on')} aria-label="상세 닫기" tabIndex={-1} onClick={onClose} />
-      <aside ref={box} id={id ?? own} className={cx('mw-app-panel', 'mw-app-panel--full', open && 'mw-app-panel--open')} role="dialog" aria-modal="false" aria-labelledby={titleId} inert={!open}>
+      <div ref={box} id={id ?? own} className={cx('mw-app-panel', 'mw-app-panel--full', open && 'mw-app-panel--open')} role="dialog" aria-modal="false" aria-labelledby={titleId} inert={!open}>
         <div className="mw-app-panel__head">
           {paged && (
             <div className="mw-app-panel__nav">
@@ -59,7 +59,7 @@ export function DetailDrawer({ open, onClose, title, index, total, onStep, foote
         </div>
         <div className="mw-app-panel__body">{children}</div>
         {footer && <div className="mw-app-panel__foot">{footer}</div>}
-      </aside>
+      </div>
     </>
   )
 }

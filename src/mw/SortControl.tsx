@@ -106,11 +106,11 @@ export function SortControl({ options, sort, onChange, statusId }: SortControlPr
           const cur = sort[level]
           return (
             <div key={level}>
-              <p className="mw-data-menu__title">{level === 0 ? '1순위' : '2순위 (1순위가 같을 때)'}</p>
+              <label className="mw-data-menu__title" htmlFor={`${id}-sort-${level}`}>{level === 0 ? '1순위' : '2순위 (1순위가 같을 때)'}</label>
               <div className="mw-data-menu__row">
                 <select
+                  id={`${id}-sort-${level}`}
                   className="mw-data-menu__select"
-                  aria-label={level === 0 ? '1순위 기준' : '2순위 기준'}
                   value={cur?.key ?? ''}
                   disabled={level === 1 && !first}
                   onChange={(e) => setLevel(level, e.target.value)}
@@ -190,12 +190,12 @@ export function ViewMenu({ views, currentId, onApply, onDelete, onSave, canSave 
         <div className="mw-data-menu__foot">
           {naming
             ? (
-              <form
-                className="mw-data-menu__row"
-                onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onSave(name.trim()); setOpen(false) } }}
-              >
-                <input ref={field} className="mw-data-menu__select" aria-label="뷰 이름" placeholder="뷰 이름 (예: 이번 달 진행 중)" maxLength={30} value={name} onChange={(e) => setName(e.target.value)} />
-                <Button variant="primary" size="medium" type="submit" disabled={!name.trim()}>저장하기</Button>
+              <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onSave(name.trim()); setOpen(false) } }}>
+                <label className="mw-data-menu__title" htmlFor={`${id}-name`}>뷰 이름</label>
+                <div className="mw-data-menu__row">
+                  <input id={`${id}-name`} ref={field} className="mw-data-menu__select" placeholder="예: 이번 달 진행 중" maxLength={30} value={name} onChange={(e) => setName(e.target.value)} />
+                  <Button variant="primary" size="medium" type="submit" disabled={!name.trim()}>저장하기</Button>
+                </div>
               </form>
             )
             : <Button variant="tertiary" size="medium" disabled={!canSave} onClick={() => setNaming(true)}>현재 상태 저장</Button>}

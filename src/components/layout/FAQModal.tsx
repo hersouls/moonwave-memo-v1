@@ -195,7 +195,8 @@ export function FAQModal() {
       <DialogHeader title="도움말" onClose={onClose} />
       <DialogBody className="min-h-0 flex-1 overflow-y-auto sm:max-h-[70dvh] sm:flex-none">
         {/* Search */}
-        <label className="mw-searchbar mb-4">
+        <div role="search" className="mb-4">
+        <label className="mw-searchbar">
           <IcLineSearch size={20} />
           <input
             type="search"
@@ -203,8 +204,10 @@ export function FAQModal() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="궁금한 것을 적어요"
             aria-label="도움말에서 찾기"
+            enterKeyHint="search"
           />
         </label>
+        </div>
 
         {/* FAQ Categories */}
         {filteredData.length === 0 ? (

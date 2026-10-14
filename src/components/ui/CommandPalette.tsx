@@ -238,6 +238,7 @@ export function CommandPalette() {
           ) : (
             <Command label="명령 팔레트" shouldFilter={true}>
               <div className="flex border-b border-zinc-200 p-3 dark:border-zinc-700">
+                <div role="search">
                 <label className="mw-searchbar">
                   <IcLineSearch size={20} />
                   <Command.Input
@@ -245,8 +246,10 @@ export function CommandPalette() {
                     onValueChange={setQuery}
                     placeholder="메모나 할 일을 찾아요"
                     aria-label="메모나 할 일 찾기"
+                    enterKeyHint="search"
                   />
                 </label>
+                </div>
               </div>
 
               <Command.List className="max-h-80 overflow-y-auto p-2">

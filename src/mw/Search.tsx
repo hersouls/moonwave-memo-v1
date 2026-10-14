@@ -32,7 +32,7 @@ export type SearchProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | '
 }
 
 /**
- * 검색어를 받는 입력 칸이에요.
+ * 검색어를 받는 입력 칸이에요. 스스로 찾기라고 말해요: 상자는 `role="search"`이고, 폰의 키보드에는 `검색` 키가 나와요.
  * 포커스와 값을 보고 default, focused, typing, complete 상태를 알아서 바꿔요.
  */
 export function Search({
@@ -87,7 +87,8 @@ export function Search({
     onChange?.(e.target.value)
   }
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') onSearch?.(currentValue)
+    // 한글을 조합하는 동안의 Enter는 글자를 끝내는 Enter예요. 찾기로 치지 않아요 (patterns/search-pattern#input)
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) onSearch?.(currentValue)
     onKeyDown?.(e)
   }
   const handleClear = (e: MouseEvent<HTMLButtonElement>) => {
@@ -108,7 +109,7 @@ export function Search({
   const shouldShowClearButton = showClearButton && !disabled && hasValue && isFocused
 
   return (
-    <div className={cx('mw-search-container', containerClassName)}>
+    <div className={cx('mw-search-container', containerClassName)} role="search">
       <div
         className={cx(
           'mw-search',
@@ -137,6 +138,10 @@ export function Search({
             ref={inputRef}
             type="text"
             className="mw-search__input"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={currentValue}
             onChange={handleChange}
             onFocus={handleFocus}

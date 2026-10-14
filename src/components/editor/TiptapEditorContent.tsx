@@ -85,7 +85,7 @@ function TiptapBubbleMenu({ editor }: { editor: Editor }) {
     <>
       <div
         ref={menuRef}
-        className="bubble-menu-enter flex items-center gap-0.5 rounded-xl border border-[var(--border-secondary)] bg-[var(--surface-floating)] px-1 py-1 shadow-md"
+        className="bubble-menu-enter flex items-center gap-2 rounded-xl border border-[var(--border-secondary)] bg-[var(--surface-floating)] px-1 py-1 shadow-md"
         style={{ visibility: 'hidden', position: 'absolute', zIndex: 'var(--z-modal)' }}
       >
         {tools.map((tool) => (

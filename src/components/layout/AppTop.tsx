@@ -73,6 +73,7 @@ export function AppTop({ narrow, inert }: { narrow: boolean; inert?: boolean }) 
       {narrow ? (
         <span className="mw-app-top__title">Moonwave <span>Memo</span></span>
       ) : (
+        <div role="search">
         <label className="mw-searchbar">
           <IcLineSearch size={20} />
           <input
@@ -90,6 +91,7 @@ export function AppTop({ narrow, inert }: { narrow: boolean; inert?: boolean }) 
             }}
           />
         </label>
+        </div>
       )}
       <span className="mw-app-top__spacer" />
       {!narrow && <WeatherWidget />}
