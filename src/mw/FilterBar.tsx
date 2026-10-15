@@ -268,9 +268,9 @@ function FilterGroup({ field, value, onChange }: { field: FilterField; value: Fi
       return (
         <div className="mw-filter-group__list">
           {field.options?.map((o) => (
-            <CheckboxGroup key={o.value} value={o.value}>
-              <Checkbox value={o.value} aria-label={o.label} checked={cur.includes(o.value)} onChange={(e) => onChange(e.target.checked ? [...cur, o.value] : cur.filter((x) => x !== o.value))} />
-              <CheckboxLabel>{o.label}</CheckboxLabel>
+            <CheckboxGroup key={o.value} value={o.value} htmlFor={`${uid}-${o.value}`}>
+              <Checkbox id={`${uid}-${o.value}`} value={o.value} aria-label={o.label} checked={cur.includes(o.value)} onChange={(e) => onChange(e.target.checked ? [...cur, o.value] : cur.filter((x) => x !== o.value))} />
+              <CheckboxLabel htmlFor={`${uid}-${o.value}`}>{o.label}</CheckboxLabel>
             </CheckboxGroup>
           ))}
         </div>

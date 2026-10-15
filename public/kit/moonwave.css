@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.4.3 · all in one
+/*! Moonwave UX 1.5.0 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -3170,7 +3170,7 @@
   --mw-touch: 44px;
 
   /* 키트의 판: 서비스가 들고 있는 키트 사본이 지금 판인지 화면 점검이 이 값으로 알아요 */
-  --mw-kit: "1.4";
+  --mw-kit: "1.5";
 
   /* 정해진 자리의 값 — 공통 단계에 없고, 이름에 적힌 자리에만 써요 */
   --mw-font-size-11: 11px;
@@ -15248,6 +15248,9 @@
   text-align: center;
 }
 
+/* 결과가 있을 때 숨겨 둔 안내는 보이지 않아요(위의 display가 hidden을 덮지 않게) */
+.mw-filter-empty[hidden] { display: none; }
+
 .mw-filter-empty__title {
   margin: 0;
   color: var(--text-primary);
@@ -15764,6 +15767,19 @@
 .mw-item-tile-grid--4 {
   --item-tile-columns: 4;
   column-gap: var(--desktop-gutter-spacing);
+}
+
+/* 보기 방식의 카드 · 그리드 (patterns/data-view#views): 같은 타일 묶음이 화면 너비에 따라 열을 바꿔요.
+   카드(값 내역이 있는 Card 타일)는 폰 한 열 · 태블릿 두 열 · 넓은 화면 세 열, 그리드(사진이 먼저인 타일)는 두 · 세 · 네 열이에요 */
+.mw-view-cards { --item-tile-columns: 1; }
+.mw-view-grid { --item-tile-columns: 2; }
+@media (min-width: 601px) {
+  .mw-view-cards { --item-tile-columns: 2; }
+  .mw-view-grid { --item-tile-columns: 3; }
+}
+@media (min-width: 1280px) {
+  .mw-view-cards { --item-tile-columns: 3; column-gap: var(--desktop-gutter-spacing); }
+  .mw-view-grid { --item-tile-columns: 4; column-gap: var(--desktop-gutter-spacing); }
 }
 
 .mw-item-tile-list {
@@ -19570,6 +19586,11 @@
   padding: 0;
 }
 
+/* 보기 방식 (ViewSwitch, patterns/data-view#views): 표 · 카드 · 그리드 칩 묶음이에요. 도구 줄에서 줄어들지 않고,
+   칩 안의 아이콘(16px)은 글자 앞에 놓여요 */
+.mw-view-switch { flex: none; }
+.mw-view-switch .mw-select-chip > svg { flex: none; }
+
 /* ── Table ── */
 /* Table — Moonwave UX extra component */
 
@@ -19800,7 +19821,7 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-expand .mw-chip-group__gradient { display: none; }
 /* 손가락으로 쓰는 화면에서 칩 사이는 8px이에요 (accessibility#touch). 칩 묶음이 읽는 토큰 하나를 바꿔요: 업스트림 값은 6px. */
 @media (pointer: coarse) {
-  :root { --chip-group-container-default-item-spacing: var(--space-8); }
+  :root, [data-theme], [data-mode] { --chip-group-container-default-item-spacing: var(--space-8); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .mw-filter-chip[aria-expanded] .mw-filter-chip__icon, .mw-expand__chevron { transition: rotate var(--motion-duration-long) var(--mw-ease); }

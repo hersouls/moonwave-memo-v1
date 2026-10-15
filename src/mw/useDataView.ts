@@ -1,4 +1,4 @@
-/* Moonwave UX — 데이터 뷰 상태 (거르기 · 정렬 · 보기 방식 · 저장한 뷰)
+/* Moonwave UX — 데이터 뷰 상태 (거르기 · 정렬 · 보기 방식 · 저장한 뷰). 보기 방식을 고르는 칩은 ViewSwitch.tsx예요
    규격: https://ux.moonwave.kr/patterns/data-view */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -25,7 +25,7 @@ export type DataViewState = {
   filters: Record<string, FilterValue>
   /** 1순위, 2순위 순서예요. 2개까지 써요. */
   sort: SortKey[]
-  /** 보기 방식이에요(`table` · `card` · `list`). */
+  /** 보기 방식이에요. 기본 세 가지는 `table`(표) · `card`(카드) · `grid`(그리드)이고, `list`(목록)는 넷째로 더할 때만 써요. */
   view: string
 }
 
@@ -171,7 +171,8 @@ export type UseDataViewOptions = {
   fields: FilterField[]
   /** 서비스 이름과 화면 이름이에요(`photo:list`). 저장한 뷰의 이름표예요. */
   name: string
-  /** 처음 보기 방식이에요. 기본은 `table`이에요. */
+  /** 처음 보기 방식이에요. 기본은 `table`이에요. 사진이 중심이면 `grid`, 글과 값 몇 개가 중심이면 `card`를 줘요.
+      사람이 고른 보기는 이 기기에 목록마다(`name`) 남아서, 다음에 열 때도 그 보기로 열려요. */
   defaultView?: string
   /** 처음 정렬이에요. 주소에 정렬이 없을 때만 써요. */
   defaultSort?: SortKey[]
@@ -182,9 +183,12 @@ export type UseDataViewOptions = {
 export function useDataView({ fields, name, defaultView = 'table', defaultSort = [], store }: UseDataViewOptions) {
   const fieldsRef = useRef(fields)
   useEffect(() => { fieldsRef.current = fields })
+  const viewKey = `mw:view:${name}`
   const [state, setState] = useState<DataViewState>(() => {
     const s = fromSearchParams(new URLSearchParams(location.search), fields, defaultView)
     if (!s.sort.length) s.sort = defaultSort
+    // 주소에 보기가 없으면 이 목록에서 지난번에 고른 보기로 열어요
+    if (!new URLSearchParams(location.search).has('view')) { try { s.view = localStorage.getItem(viewKey) ?? s.view } catch { /* 저장소를 쓸 수 없어요 */ } }
     return s
   })
 
@@ -222,6 +226,11 @@ export function useDataView({ fields, name, defaultView = 'table', defaultSort =
     return { ...s, filters }
   }), [])
   const setSort = useCallback((sort: SortKey[]) => setState((s) => ({ ...s, sort: sort.slice(0, MAX_SORT) })), [])
+  /** 보기 방식을 바꿔요. 키트의 ViewSwitch에 넘겨요. 사람이 고른 보기는 목록마다 남아요. */
+  const setView = useCallback((view: string) => {
+    try { localStorage.setItem(viewKey, view) } catch { /* 저장소를 쓸 수 없어요 */ }
+    setState((s) => ({ ...s, view }))
+  }, [viewKey])
   /** 표의 열 머리글을 눌렀을 때예요: 없음 → 오름 → 내림 → 없음. 누른 열이 1순위가 되고, 원래 1순위는 2순위로 밀려요. */
   const cycleSort = useCallback((key: string) => setState((s) => {
     const cur = s.sort.find((x) => x.key === key)
@@ -254,7 +263,7 @@ export function useDataView({ fields, name, defaultView = 'table', defaultSort =
   const deleteView = useCallback((id: string) => persist(saved.filter((v) => v.id !== id)), [saved, persist])
 
   return {
-    state, set, setQuery, setFilter, removeFilter, removeLast, clearAll, setSort, cycleSort,
+    state, set, setQuery, setFilter, removeFilter, removeLast, clearAll, setSort, cycleSort, setView,
     count: activeCount(state),
     saved, saveView, applyView, deleteView,
   }
