@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useUndoStore } from '@/stores/undoStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -9,7 +9,7 @@ import { useCloseRequest } from '@/mw/close'
 import { DRIVE_RECEIVE, localDay, seal, withoutTitleHeading } from '@/lib/handoff'
 import { ShareCardModal } from './ShareCardModal'
 import { ShareLinkModal } from './ShareLinkModal'
-import { IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwDrive, IcMwHistory, IcMwList, IcMwStar, IcMwStarFill } from '@/mw/icons'
+import { IcLineCheck, IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwDrive, IcMwHistory, IcMwList, IcMwStar, IcMwStarFill } from '@/mw/icons'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'modified' | 'error'
 
@@ -86,22 +86,29 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
     setIsMenuOpen(false)
   }
 
-  const handleCopyText = async () => {
+  // 복사 버튼은 잠깐 체크 모양으로 바뀌어 복사됐음을 보여줘요
+  const [copied, setCopied] = useState(false)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(copiedTimer.current), [])
+
+  const copyAll = async (plain: boolean) => {
     setIsMenuOpen(false)
-    const parts: string[] = []
-    if (title && title.trim()) parts.push(title.trim())
-    if (body && body.length) parts.push(body)
-    const fullText = parts.join('\n\n')
+    const { copyTextToClipboard, memoToText, memoToPlainText } = await import('@/utils/share')
+    const fullText = plain ? memoToPlainText(title, body) : memoToText(title, body)
 
     const { useToastStore } = await import('@/stores/toastStore')
     if (!fullText) {
       useToastStore.getState().showToast('복사할 내용이 없어요', 'info')
       return
     }
-    const { copyTextToClipboard } = await import('@/utils/share')
     const ok = await copyTextToClipboard(fullText)
+    if (ok) {
+      setCopied(true)
+      clearTimeout(copiedTimer.current)
+      copiedTimer.current = setTimeout(() => setCopied(false), 1800)
+    }
     useToastStore.getState().showToast(
-      ok ? '전체 텍스트를 복사했어요' : '복사하지 못했어요. 다시 시도해 주세요',
+      ok ? `${fullText.length.toLocaleString()}자를 복사했어요` : '복사하지 못했어요. 다시 시도해 주세요',
       ok ? 'success' : 'warning',
     )
   }
@@ -232,6 +239,17 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
         )}
 
         <button
+          onClick={() => copyAll(false)}
+          className="mw-icon-button"
+          aria-label="메모 전체 복사"
+          title="메모 전체 복사"
+        >
+          {copied
+            ? <IcLineCheck size={20} className="text-success-500" />
+            : <IcLineDuplicate size={20} className="text-zinc-500 dark:text-zinc-400" />}
+        </button>
+
+        <button
           onClick={onToggleStar}
           className="mw-icon-button"
           aria-label={isStarred ? '중요 해제' : '중요 표시'}
@@ -320,12 +338,12 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
                   링크로 공유
                 </button>
                 <button
-                  onClick={handleCopyText}
+                  onClick={() => copyAll(true)}
                   className="ctx-menu__item w-full"
                   role="menuitem"
                 >
                   <IcLineDuplicate size={16} />
-                  전체 텍스트 복사
+                  서식 없이 복사
                 </button>
                 <button
                   onClick={handleExportMarkdown}

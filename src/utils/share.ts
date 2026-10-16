@@ -95,3 +95,30 @@ export async function shareMemo(options: {
     return 'failed'
   }
 }
+
+// 메모 한 개의 전체 글. 제목과 본문 사이는 빈 줄 하나예요.
+export function memoToText(title: string | undefined, body: string | undefined): string {
+  const parts: string[] = []
+  if (title && title.trim()) parts.push(title.trim())
+  if (body && body.length) parts.push(body)
+  return parts.join('\n\n')
+}
+
+// 서식 없이 붙여 넣을 글. 줄바꿈과 코드 안의 글은 그대로 두고 마크다운 기호와 이미지 주소만 걷어내요.
+export function memoToPlainText(title: string | undefined, body: string | undefined): string {
+  const plain = (body ?? '')
+    .replace(/!\[[^\]]*\]\(memo-image:\d+\)/g, '[이미지]')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^```.*$/gm, '')
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/(\*\*|__)(.+?)\1/g, '$2')
+    .replace(/(\*|_)(.+?)\1/g, '$2')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/^(\s*)[-*+]\s+\[[ xX]\]\s+/gm, '$1')
+    .replace(/^(\s*)[-*+]\s+/gm, '$1· ')
+    .replace(/^>\s?/gm, '')
+    .replace(/^\s*([-*_])\1{2,}\s*$/gm, '')
+  return memoToText(title, plain).replace(/\n{3,}/g, '\n\n').trim()
+}
