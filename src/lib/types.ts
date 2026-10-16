@@ -123,7 +123,7 @@ export interface AmbientImage {
 export type FontFamily = 'pretendard' | 'nanum-square' | 'nanum-square-neo' | 'nanum-square-round' | 'nanum-barun-pen' | 'maruburi'
 export type FontSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl'
 export type SortBy = 'updatedAt' | 'createdAt' | 'title'
-export type ViewMode = 'list' | 'grid' | 'timeline' | 'kanban'
+export type ViewMode = 'table' | 'list' | 'grid' | 'timeline' | 'kanban'
 export type InputStartPosition = 'title' | 'body'
 export type ColorPalette = 'default' | 'ocean' | 'rose' | 'purple' | 'forest'
 export type AIProvider = 'openai' | 'anthropic' | 'gemini'

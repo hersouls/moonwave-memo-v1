@@ -17,7 +17,9 @@ import { useMemoFilters } from '@/hooks/useMemoFilters'
 import { CreateActions, PageHead } from '@/components/layout/PageHead'
 import { MEMOS_TITLE } from '@/components/layout/pages'
 import { Button } from '@/mw/Button'
-import { SelectChip } from '@/mw/Chip'
+import { ViewSwitch } from '@/mw/ViewSwitch'
+import type { ViewKind } from '@/mw/ViewSwitch'
+import { MemoTableView } from './MemoTableView'
 import { usePinchZoom } from '@/hooks/usePinchZoom'
 import { useUIStore } from '@/stores/uiStore'
 import { useMemoStore } from '@/stores/memoStore'
@@ -236,10 +238,10 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
           {emptyTrashButton}
           {!pane && (
             <>
-              <div role="group" aria-label="보기 방식" className="mw-chip-group">
-                <SelectChip active={viewMode === 'list' ? 'on' : 'off'} aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>목록</SelectChip>
-                <SelectChip active={viewMode === 'grid' ? 'on' : 'off'} aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}>격자</SelectChip>
-              </div>
+              <ViewSwitch
+                value={viewMode === 'table' ? 'table' : viewMode === 'grid' ? 'grid' : 'card'}
+                onChange={(v: ViewKind) => setViewMode(v === 'table' ? 'table' : v === 'grid' ? 'grid' : 'list')}
+              />
               <button type="button"
                 onClick={() => setSortBy(SORT_ORDER[(SORT_ORDER.indexOf(sortBy) + 1) % SORT_ORDER.length])}
                 className="mw-button mw-button--tertiary-subtle mw-button--small mw-button--icon-left"
@@ -284,6 +286,10 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
       ) : viewMode === 'kanban' ? (
         <div className="mt-3 pb-4">
           <KanbanView memos={filteredMemos} />
+        </div>
+      ) : viewMode === 'table' ? (
+        <div className="mt-3 pb-4">
+          <MemoTableView memos={visibleMemos} />
         </div>
       ) : viewMode === 'timeline' ? (
         <div className="mt-3 pb-4">

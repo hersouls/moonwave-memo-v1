@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom'
 import { Sheet } from '@/mw/Sheet'
 import { useUIStore } from '@/stores/uiStore'
 import type { SortBy } from '@/lib/types'
-import { IcMwCheckCircle, IcMwGrid, IcMwList, IcMwSort } from '@/mw/icons'
+import { IcMwCheckCircle, IcMwGrid, IcMwList, IcMwSort, IcMwTable } from '@/mw/icons'
 
 const SORT_LABELS: Record<SortBy, string> = {
   updatedAt: '수정 날짜순',
@@ -29,7 +29,7 @@ export function MemoContextMenu() {
   }
 
   const handleToggleView = () => {
-    setViewMode(viewMode === 'list' ? 'grid' : 'list')
+    setViewMode(viewMode === 'table' ? 'list' : viewMode === 'list' ? 'grid' : 'table')
     closeContextMenu()
   }
 
@@ -42,8 +42,8 @@ export function MemoContextMenu() {
 
   // UX-09: 넓은 화면은 버튼 아래에 뜨는 메뉴, 좁은 화면은 키트의 시트
   const isDesktop = useUIStore((s) => s.isDesktop)
-  const ViewIcon = viewMode === 'list' ? IcMwGrid : IcMwList
-  const viewLabel = viewMode === 'list' ? '목록' : '그리드'
+  const ViewIcon = viewMode === 'table' ? IcMwList : viewMode === 'list' ? IcMwGrid : IcMwTable
+  const viewLabel = viewMode === 'table' ? '카드' : viewMode === 'list' ? '그리드' : '표'
 
   // Desktop: dropdown popover — same enter motion as the card context menu
   if (isDesktop) {
