@@ -321,35 +321,35 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
           'flex items-center gap-1.5 px-1 pb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400',
           'col-span-full'
         )
-        // 날짜순일 때는 오늘 · 이번 주 · 그 전으로 소제목을 나눠요. 제목순이면 메모 개수 하나만 말해요
+        // 목록 전체가 h2, 그 아래 날짜순이면 오늘 · 이번 주 · 그 전을 h3로 나눠요. 제목순이면 이름순 하나예요
         const groupKey = (memo: Memo): string => {
           const at = new Date(sortBy === 'createdAt' ? memo.createdAt : memo.updatedAt).getTime()
           const age = Date.now() - at
           return age < 86_400_000 ? '오늘' : age < 7 * 86_400_000 ? '이번 주' : '그 전'
         }
+        const groupHeaderClass = 'col-span-full px-1 pb-1 text-xs text-zinc-500 dark:text-zinc-400'
         const renderGroups = (list: Memo[], offset: number) => {
-          if (sortBy === 'title') {
-            return (
-              <>
-                <h2 className={clsx(sectionHeaderClass, offset > 0 && 'mt-1.5')}>메모 {list.length}개</h2>
-                {list.map((memo, index) => renderMemoItem(memo, offset + index))}
-              </>
-            )
-          }
-          const labels = ['오늘', '이번 주', '그 전']
+          if (list.length === 0) return null
+          const groups = sortBy === 'title'
+            ? [{ label: '이름순', part: list }]
+            : ['오늘', '이번 주', '그 전'].map((label) => ({ label, part: list.filter((memo) => groupKey(memo) === label) }))
           let shown = offset
-          return labels.map((label, i) => {
-            const part = list.filter((memo) => groupKey(memo) === label)
-            if (part.length === 0) return null
-            const start = shown
-            shown += part.length
-            return (
-              <div key={label} className="contents">
-                <h2 className={clsx(sectionHeaderClass, (i > 0 || offset > 0) && 'mt-1.5')}>{label} · 메모 {part.length}개</h2>
-                {part.map((memo, index) => renderMemoItem(memo, start + index))}
-              </div>
-            )
-          })
+          return (
+            <>
+              <h2 className={clsx(sectionHeaderClass, offset > 0 && 'mt-1.5')}>메모 {list.length}개</h2>
+              {groups.map(({ label, part }) => {
+                if (part.length === 0) return null
+                const start = shown
+                shown += part.length
+                return (
+                  <div key={label} className="contents">
+                    <h3 className={groupHeaderClass}>{label} · {part.length}개</h3>
+                    {part.map((memo, index) => renderMemoItem(memo, start + index))}
+                  </div>
+                )
+              })}
+            </>
+          )
         }
         return (
           <div
