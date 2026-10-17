@@ -321,6 +321,36 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
           'flex items-center gap-1.5 px-1 pb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400',
           'col-span-full'
         )
+        // 날짜순일 때는 오늘 · 이번 주 · 그 전으로 소제목을 나눠요. 제목순이면 메모 개수 하나만 말해요
+        const groupKey = (memo: Memo): string => {
+          const at = new Date(sortBy === 'createdAt' ? memo.createdAt : memo.updatedAt).getTime()
+          const age = Date.now() - at
+          return age < 86_400_000 ? '오늘' : age < 7 * 86_400_000 ? '이번 주' : '그 전'
+        }
+        const renderGroups = (list: Memo[], offset: number) => {
+          if (sortBy === 'title') {
+            return (
+              <>
+                <h2 className={clsx(sectionHeaderClass, offset > 0 && 'mt-1.5')}>메모 {list.length}개</h2>
+                {list.map((memo, index) => renderMemoItem(memo, offset + index))}
+              </>
+            )
+          }
+          const labels = ['오늘', '이번 주', '그 전']
+          let shown = offset
+          return labels.map((label, i) => {
+            const part = list.filter((memo) => groupKey(memo) === label)
+            if (part.length === 0) return null
+            const start = shown
+            shown += part.length
+            return (
+              <div key={label} className="contents">
+                <h2 className={clsx(sectionHeaderClass, (i > 0 || offset > 0) && 'mt-1.5')}>{label} · 메모 {part.length}개</h2>
+                {part.map((memo, index) => renderMemoItem(memo, start + index))}
+              </div>
+            )
+          })
+        }
         return (
           <div
             ref={listRef}
@@ -338,14 +368,10 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
                   고정됨
                 </h2>
                 {pinnedMemos.map((memo, index) => renderMemoItem(memo, index))}
-                {unpinnedMemos.length > 0 && <h2 className={clsx(sectionHeaderClass, 'mt-1.5')}>메모 {unpinnedMemos.length}개</h2>}
-                {unpinnedMemos.map((memo, index) => renderMemoItem(memo, pinnedMemos.length + index))}
+                {renderGroups(unpinnedMemos, pinnedMemos.length)}
               </>
             ) : (
-              <>
-                <h2 className={sectionHeaderClass}>메모 {visibleMemos.length}개</h2>
-                {visibleMemos.map((memo, index) => renderMemoItem(memo, index))}
-              </>
+              renderGroups(visibleMemos, 0)
             )}
           </div>
         )
