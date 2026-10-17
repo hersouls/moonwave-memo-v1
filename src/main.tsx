@@ -6,6 +6,7 @@ import { router } from './router'
 import { usePwaUpdateStore } from './stores/pwaUpdateStore'
 import { initSentry } from './lib/sentry'
 import { incomingRoute } from './lib/handoff'
+import { GestureSettingsProvider } from './mw/gestures'
 import './index.css'
 
 // Initialize Sentry error monitoring (no-op if DSN not configured)
@@ -99,6 +100,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <GestureSettingsProvider>
+      <RouterProvider router={router} />
+    </GestureSettingsProvider>
   </StrictMode>
 )

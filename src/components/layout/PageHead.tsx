@@ -6,11 +6,12 @@ import { useUIStore } from '@/stores/uiStore'
 import { Button } from '@/mw/Button'
 import { IcLineCamera, IcLineDocumentAlt, IcLineMic, IcLineWrite } from '@/mw/icons'
 
-export function PageHead({ title, description, actions }: { title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
+// as: 나란히 보기의 왼쪽 칸처럼 화면 제목(h1)이 따로 있는 곳에서는 h2로 써요 (한 화면에 h1은 하나)
+export function PageHead({ title, description, actions, as: Title = 'h1' }: { title: ReactNode; description?: ReactNode; actions?: ReactNode; as?: 'h1' | 'h2' }) {
   return (
     <div className="mw-page__head">
       <div>
-        <h1>{title}</h1>
+        <Title>{title}</Title>
         {description && <p>{description}</p>}
       </div>
       {actions && <div className="mw-page__actions">{actions}</div>}

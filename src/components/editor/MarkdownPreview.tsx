@@ -148,6 +148,8 @@ export function MarkdownPreview({ content, className, onCheckboxToggle }: Markdo
         // rehype-highlight (so hljs classes, added later, survive).
         rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeHighlight]}
         components={{
+          // 화면 제목(h1)은 화면에 하나예요: 메모 안의 # 제목은 h2로 그려요
+          h1: ({ children, ...props }) => <h2 {...props}>{children}</h2>,
           img: ({ src, alt, ...props }) => {
             if (src?.startsWith('memo-image:')) {
               const imageId = parseInt(src.replace('memo-image:', ''), 10)

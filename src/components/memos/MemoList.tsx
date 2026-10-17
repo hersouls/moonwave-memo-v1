@@ -160,7 +160,7 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
   // so the split preserves visibleMemos indices for j/k focus and stagger delays
   const pinnedMemos = visibleMemos.filter((m) => m.isPinned)
   const unpinnedMemos = visibleMemos.filter((m) => !m.isPinned)
-  const showPinnedSections = pinnedMemos.length > 0 && unpinnedMemos.length > 0
+  const showPinnedSections = pinnedMemos.length > 0
 
   const handleLoadMore = useCallback(() => {
     setVisibleCount((c) => c + LOAD_MORE_COUNT)
@@ -202,6 +202,7 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
   return (
     <div className="mw-page">
       <PageHead
+        as={pane ? 'h2' : 'h1'}
         title={pageTitle}
         actions={
           <>
@@ -332,16 +333,19 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
           >
             {showPinnedSections ? (
               <>
-                <div className={sectionHeaderClass}>
+                <h2 className={sectionHeaderClass}>
                   <IcLinePin size={12} className="rotate-[-30deg]" />
                   고정됨
-                </div>
+                </h2>
                 {pinnedMemos.map((memo, index) => renderMemoItem(memo, index))}
-                <div className={clsx(sectionHeaderClass, 'mt-1.5')}>메모</div>
+                {unpinnedMemos.length > 0 && <h2 className={clsx(sectionHeaderClass, 'mt-1.5')}>메모 {unpinnedMemos.length}개</h2>}
                 {unpinnedMemos.map((memo, index) => renderMemoItem(memo, pinnedMemos.length + index))}
               </>
             ) : (
-              visibleMemos.map((memo, index) => renderMemoItem(memo, index))
+              <>
+                <h2 className={sectionHeaderClass}>메모 {visibleMemos.length}개</h2>
+                {visibleMemos.map((memo, index) => renderMemoItem(memo, index))}
+              </>
             )}
           </div>
         )

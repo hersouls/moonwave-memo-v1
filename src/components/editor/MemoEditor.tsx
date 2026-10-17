@@ -948,9 +948,9 @@ export function MemoEditor() {
   const previewContent = (
     <div className="flex-1 min-h-[300px] pb-8">
       {title && (
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+        <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
           {title}
-        </h1>
+        </h2>
       )}
       <MarkdownPreview content={body} onCheckboxToggle={handleCheckboxToggle} />
       {/* AI Summary + Backlinks — inside preview to avoid overlapping edit area */}

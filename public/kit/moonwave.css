@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.5.0 · all in one
+/*! Moonwave UX 1.6.0 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -3170,7 +3170,7 @@
   --mw-touch: 44px;
 
   /* 키트의 판: 서비스가 들고 있는 키트 사본이 지금 판인지 화면 점검이 이 값으로 알아요 */
-  --mw-kit: "1.5";
+  --mw-kit: "1.6";
 
   /* 정해진 자리의 값 — 공통 단계에 없고, 이름에 적힌 자리에만 써요 */
   --mw-font-size-11: 11px;
@@ -15356,6 +15356,249 @@
   }
 }
 
+/* ── Gestures ── */
+/* Moonwave UX — 손짓 (키트 1.6): 밀기 줄, 행동 메뉴, 미리 보기, 순서 바꾸기, 되돌리기 알림, 손짓 안내,
+   손짓 설정, 사진 보기, 높이 단계가 있는 시트, 화면 전환
+   규격: 패턴 › 손 닿는 곳과 손짓(patterns/touch-gestures)
+   움직임은 모두 토큰의 길이와 곡선을 써요. 기기의 움직임 줄이기(prefers-reduced-motion)와 설정의 움직임 줄이기
+   (<html data-mw-motion="reduce">)에서는 움직이지 않고 결과만 보여요. */
+
+/* ── 손짓을 받는 요소: iOS의 길게 누르기 메뉴와 글자 고르기를 끄고, 두 번 탭 확대를 꺼요 */
+[data-mw-press] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+[data-mw-double] { touch-action: manipulation; }
+[data-mw-tabswipe] { touch-action: pan-y pinch-zoom; }
+[data-mw-reorder] > * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
+/* ── 밀기 줄 */
+/* --mw-swipe-bg: 줄의 바탕(행동 줄을 가려요). 줄의 바탕이 다르면 줄에 이 값을 줘요. --mw-swipe-p: 드러난 정도(touch 손짓이 적어요) */
+.mw-swipe { --mw-swipe-bg: var(--surface-primary); --mw-swipe-p: 0; position: relative; display: block; overflow: hidden; list-style: none; }
+.mw-swipe__body { position: relative; z-index: 1; display: flex; align-items: center; gap: var(--space-8); background: var(--mw-swipe-bg); }
+.mw-swipe__body > :first-child { flex: 1; min-width: 0; }
+.mw-swipe[data-swipe-left] > .mw-swipe__body,
+.mw-swipe[data-swipe-right] > .mw-swipe__body { touch-action: pan-y pinch-zoom; }
+.mw-swipe--moving > .mw-swipe__body { -webkit-user-select: none; user-select: none; }
+/* ⋯ 버튼은 카드 전체를 덮는 링크(mw-item-tile__link)보다 위에 있어요 */
+.mw-swipe__more { z-index: 2; flex: none; margin-inline-end: var(--space-4); }
+
+.mw-swipe__tray { position: absolute; inset-block: 0; z-index: 0; display: flex; align-items: center; gap: var(--space-8); padding-inline: var(--space-12); visibility: hidden; transition: background-color var(--motion-duration-short) var(--motion-easing-ease-out); }
+.mw-swipe__tray--left { right: 0; }
+.mw-swipe__tray--right { left: 0; }
+.mw-swipe--moving > .mw-swipe__tray,
+.mw-swipe--hint > .mw-swipe__tray--left,
+.mw-swipe--open-left > .mw-swipe__tray--left,
+.mw-swipe--open-right > .mw-swipe__tray--right { visibility: visible; }
+.mw-swipe--open-left, .mw-swipe--open-right, .mw-swipe--hint { --mw-swipe-p: 1; }
+
+/* 원형 아이콘 버튼: 누르는 영역은 44px, 드러난 만큼(--mw-swipe-p) 커져요 */
+.mw-swipe__action { display: grid; justify-items: center; gap: var(--space-4); min-width: var(--mw-touch); padding: 0; border: 0; background: none; color: var(--text-secondary); font-size: var(--font-size-12); line-height: 1.2; }
+.mw-swipe__circle { width: var(--mw-touch); height: var(--mw-touch); display: grid; place-items: center; border-radius: var(--radius-circle); background: var(--background-secondary); color: var(--text-primary); transform: scale(calc(0.6 + 0.4 * var(--mw-swipe-p))); transition: transform var(--motion-duration-short) var(--motion-easing-ease-out), background-color var(--motion-duration-short) var(--motion-easing-ease-out); }
+.mw-swipe__action:active .mw-swipe__circle { background: var(--fill-secondary-default); }
+.mw-swipe__action--danger .mw-swipe__circle { background: var(--mw-critical); color: var(--static-white); }
+.mw-swipe__action--accent .mw-swipe__circle { background: var(--fill-accent-primary-default); color: var(--text-inverse); }
+/* 줄이 낮으면(68px 미만) 이름은 화면 읽기 프로그램에만 남겨요 */
+.mw-swipe[data-compact] .mw-swipe__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* 끝까지 민 자리를 넘으면: 맨 바깥 버튼이 커지고 줄의 바탕이 그 행동의 색으로 옅게 물들어요 */
+.mw-swipe--armed-left > .mw-swipe__tray--left > .mw-swipe__action:last-child .mw-swipe__circle,
+.mw-swipe--armed-right > .mw-swipe__tray--right > .mw-swipe__action:first-child .mw-swipe__circle { transform: scale(1.15); }
+.mw-swipe--armed-left[data-swipe-left='danger'] > .mw-swipe__tray--left,
+.mw-swipe--armed-right[data-swipe-right='danger'] > .mw-swipe__tray--right { background: var(--mw-critical-soft); }
+.mw-swipe--armed-left[data-swipe-left='accent'] > .mw-swipe__tray--left,
+.mw-swipe--armed-right[data-swipe-right='accent'] > .mw-swipe__tray--right { background: var(--mw-accent-soft); }
+.mw-swipe--armed-left[data-swipe-left='plain'] > .mw-swipe__tray--left,
+.mw-swipe--armed-right[data-swipe-right='plain'] > .mw-swipe__tray--right { background: var(--background-secondary); }
+
+/* 밀 수 있는 줄의 가장자리에 그 행동의 색이 살짝 비쳐요(손가락으로 쓰는 기기에서만) */
+@media (pointer: coarse) {
+  .mw-swipe[data-swipe-left]::after,
+  .mw-swipe[data-swipe-right]::before { content: ''; position: absolute; z-index: 2; inset-block: var(--space-16); width: 3px; opacity: 0.35; pointer-events: none; transition: opacity var(--motion-duration-short) var(--motion-easing-ease-out); }
+  .mw-swipe[data-swipe-left]::after { right: 0; border-radius: var(--radius-2) 0 0 var(--radius-2); background: var(--mw-swipe-hint-left, var(--border-secondary)); }
+  .mw-swipe[data-swipe-right]::before { left: 0; border-radius: 0 var(--radius-2) var(--radius-2) 0; background: var(--mw-swipe-hint-right, var(--border-secondary)); }
+  .mw-swipe[data-swipe-left='danger'] { --mw-swipe-hint-left: var(--mw-critical); }
+  .mw-swipe[data-swipe-left='accent'] { --mw-swipe-hint-left: var(--mw-accent); }
+  .mw-swipe[data-swipe-right='danger'] { --mw-swipe-hint-right: var(--mw-critical); }
+  .mw-swipe[data-swipe-right='accent'] { --mw-swipe-hint-right: var(--mw-accent); }
+  .mw-swipe--moving::after, .mw-swipe--moving::before,
+  .mw-swipe--open-left::after, .mw-swipe--open-left::before,
+  .mw-swipe--open-right::after, .mw-swipe--open-right::before { opacity: 0; }
+}
+
+/* 처음 한 번: 줄이 살짝 밀렸다 돌아와요 */
+.mw-swipe--hint > .mw-swipe__body { animation: mw-swipe-nudge calc(var(--motion-duration-long) * 4) var(--motion-easing-ease-in-out) both; }
+@keyframes mw-swipe-nudge {
+  0%, 100% { transform: none; }
+  35%, 60% { transform: translate3d(calc(var(--space-56) * -1), 0, 0); }
+}
+
+/* 두 번 탭: 누른 자리에서 하트가 튀어 오르고 점 여섯 개가 퍼져요 */
+.mw-burst { position: absolute; z-index: 3; width: 0; height: 0; color: var(--mw-accent); pointer-events: none; }
+.mw-burst svg { position: absolute; left: calc(var(--space-24) * -1); top: calc(var(--space-24) * -1); animation: mw-burst-heart calc(var(--motion-duration-long) * 2.5) var(--mw-ease-pop) both; }
+.mw-burst i { position: absolute; left: calc(var(--space-4) * -1); top: calc(var(--space-4) * -1); width: var(--space-8); height: var(--space-8); border-radius: var(--radius-circle); background: currentColor; animation: mw-burst-dot calc(var(--motion-duration-long) * 2) var(--motion-easing-ease-out) both; }
+.mw-burst i:nth-of-type(1) { --mw-burst-a: 0deg; }
+.mw-burst i:nth-of-type(2) { --mw-burst-a: 60deg; }
+.mw-burst i:nth-of-type(3) { --mw-burst-a: 120deg; }
+.mw-burst i:nth-of-type(4) { --mw-burst-a: 180deg; }
+.mw-burst i:nth-of-type(5) { --mw-burst-a: 240deg; }
+.mw-burst i:nth-of-type(6) { --mw-burst-a: 300deg; }
+@keyframes mw-burst-heart {
+  0% { opacity: 0; transform: scale(0.2); }
+  35% { opacity: 1; transform: scale(1.1); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translate3d(0, calc(var(--space-16) * -1), 0) scale(1); }
+}
+@keyframes mw-burst-dot {
+  0% { opacity: 0; transform: rotate(var(--mw-burst-a)) translate3d(0, calc(var(--space-16) * -1), 0) scale(1); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--mw-burst-a)) translate3d(0, calc(var(--space-48) * -1), 0) scale(0.3); }
+}
+
+/* ── 행동 메뉴: 넓은 화면의 작은 메뉴(폰에서는 Sheet) */
+.mw-action-menu { position: fixed; z-index: 75; min-width: 200px; max-width: min(320px, calc(100vw - var(--space-16))); display: grid; padding: var(--space-4); border: 1px solid var(--border-primary); border-radius: var(--radius-12); background: var(--surface-floating); box-shadow: var(--shadow-3); animation: mw-menu-in var(--motion-duration-medium) var(--motion-easing-ease-out) both; }
+.mw-action-menu__item { display: flex; align-items: center; gap: var(--space-12); min-height: var(--mw-touch); padding: 0 var(--space-12); border: 0; border-radius: var(--radius-8); background: none; color: var(--text-primary); font-size: var(--font-size-14); text-align: left; }
+.mw-action-menu__item svg { flex: none; color: var(--icon-secondary); }
+.mw-action-menu__item:hover, .mw-action-menu__item:focus-visible { background: var(--background-secondary); }
+.mw-action-menu__item:disabled { opacity: 0.4; }
+.mw-action-menu__item--danger svg { color: var(--mw-critical); }
+@keyframes mw-menu-in { from { opacity: 0; transform: translate3d(0, calc(var(--space-4) * -1), 0); } to { opacity: 1; transform: none; } }
+.mw-sheet__item--danger .mw-sheet__icon { background: var(--mw-critical-soft); color: var(--mw-critical); }
+.mw-sheet__item:disabled { opacity: 0.4; }
+.mw-action-sheet { padding-top: 0; }
+
+/* 길게 눌러 미리 보기: 메뉴 위에 내용이 먼저 떠올라요 */
+.mw-peek { flex: none; max-height: 40dvh; overflow: auto; margin: 0 var(--space-16) var(--space-8); padding: var(--space-16); border-radius: var(--radius-12); background: var(--background-secondary); animation: mw-peek-in var(--motion-duration-long) var(--mw-ease-pop) both; }
+@keyframes mw-peek-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+
+/* ── 높이 단계가 있는 시트(낮게 30% · 중간 60% · 전체)와 아래에 고정한 확인 버튼 */
+/* --mw-sheet-y: 지금 단계에서 시트가 아래로 내려가 있는 거리예요. Sheet와 시트 끌기가 적어요 */
+.mw-sheet.mw-sheet--detents { --mw-sheet-y: 0px; height: calc(100dvh - env(safe-area-inset-top) - var(--space-8)); max-height: none; }
+.mw-sheet.mw-sheet--detents.mw-sheet--open { transform: translate3d(0, var(--mw-sheet-y), 0); }
+.mw-sheet--detents > .mw-sheet__body { flex: 1; padding-bottom: calc(var(--space-20) + var(--mw-sheet-y)); }
+.mw-sheet--detents > .mw-sheet__body:has(+ .mw-sheet__foot) { padding-bottom: calc(var(--space-20) + var(--mw-touch) + var(--space-24) + var(--mw-sheet-y)); }
+.mw-sheet__foot { flex: none; display: flex; gap: var(--space-8); padding: var(--space-12) var(--space-16); border-top: 1px solid var(--border-primary); background: var(--surface-primary); }
+.mw-sheet__foot > * { flex: 1; }
+.mw-sheet--detents > .mw-sheet__foot { translate: 0 calc(var(--mw-sheet-y) * -1); transition: translate var(--mw-duration-sheet) var(--mw-ease-sheet); }
+
+/* ── 끌어서 순서 바꾸기 */
+.mw-sortable { --mw-sortable-gap: 0px; display: grid; gap: var(--mw-sortable-gap); margin: 0; padding: 0; list-style: none; }
+.mw-sortable__item { position: relative; }
+.mw-sortable--dragging > .mw-sortable__item { transition: transform var(--motion-duration-medium) var(--motion-easing-ease-in-out); }
+.mw-sortable--dragging > .mw-sortable__item--lifted { z-index: 5; transition: none; scale: 1.02; border-radius: var(--radius-12); box-shadow: var(--shadow-3); }
+
+/* ── 되돌리기 알림: 하단 탭과 주 행동 위 */
+.mw-undo { position: fixed; left: var(--space-16); right: var(--space-16); bottom: calc(var(--mw-tabbar-h) + var(--space-16) + env(safe-area-inset-bottom)); z-index: 65; display: grid; justify-items: center; pointer-events: none; }
+.mw-undo > * { width: min(100%, 480px); pointer-events: auto; }
+
+/* ── 처음 한 번 보이는 손짓 안내 */
+.mw-gesture-hint { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-8); padding: var(--space-8) var(--space-8) var(--space-8) var(--space-16); border-radius: var(--radius-12); background: var(--mw-accent-soft); color: var(--text-primary); font-size: var(--font-size-14); }
+.mw-gesture-hint > svg { flex: none; color: var(--icon-accent-primary); }
+.mw-gesture-hint > span { flex: 1; min-width: 12em; }
+.mw-gesture-hint__ok { min-height: var(--mw-touch); padding: 0 var(--space-12); border: 0; border-radius: var(--radius-8); background: none; color: var(--text-accent-primary); font-size: var(--font-size-14); font-weight: var(--font-weight-semibold); }
+.mw-gesture-hint__ok:active { background: var(--background-secondary); }
+
+/* ── 손짓 설정 */
+.mw-gesture-settings { display: grid; gap: var(--space-16); }
+.mw-gesture-settings__title { margin: 0; }
+.mw-gesture-settings__lead, .mw-gesture-settings__about { margin: 0; color: var(--text-secondary); font-size: var(--font-size-14); }
+.mw-gesture-settings__choice { flex-wrap: wrap; }
+.mw-gesture-settings__custom { pointer-events: none; }
+.mw-gesture-settings__now { display: grid; gap: var(--space-12); margin: 0; padding: 0; list-style: none; }
+.mw-gesture-settings__item { display: flex; align-items: center; gap: var(--space-12); }
+.mw-gesture-settings__item b, .mw-gesture-settings__row b { display: block; font-size: var(--font-size-15); font-weight: var(--font-weight-semibold); }
+.mw-gesture-settings__item small, .mw-gesture-settings__row small, .mw-gesture-settings__field small { display: block; margin-top: var(--space-2); color: var(--text-tertiary); font-size: var(--font-size-13); }
+.mw-gesture-settings__none { margin: 0; color: var(--text-secondary); }
+.mw-gesture-settings__body { display: grid; gap: var(--space-20); }
+.mw-gesture-settings__list { display: grid; margin: 0; padding: 0; list-style: none; }
+.mw-gesture-settings__row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); min-height: var(--space-56); padding: var(--space-8) 0; border-bottom: 1px solid var(--border-primary); }
+.mw-gesture-settings__row:last-child { border-bottom: 0; }
+.mw-gesture-settings__row > :last-child { flex: none; }
+.mw-gesture-settings__field { display: grid; gap: var(--space-8); }
+.mw-gesture-settings__label { font-size: var(--font-size-14); font-weight: var(--font-weight-semibold); }
+.mw-gesture-settings__actions { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+.mw-gesture-settings__sync { margin: 0; color: var(--text-tertiary); font-size: var(--font-size-13); }
+
+/* 손짓 하나의 짧은 움직임 그림: 고를 때 한 번 움직이고 멈춰요. 누르면 다시 움직여요 */
+.mw-gesture-demo { position: relative; flex: none; width: var(--space-64); height: var(--space-48); overflow: hidden; padding: 0; border: 0; border-radius: var(--radius-8); background: var(--background-secondary); }
+.mw-gesture-demo__card { position: absolute; inset: var(--space-12) var(--space-8); border-radius: var(--radius-4); background: var(--surface-primary); box-shadow: var(--shadow-1); }
+.mw-gesture-demo__finger { position: absolute; left: var(--space-40); top: var(--space-16); width: var(--space-12); height: var(--space-12); border-radius: var(--radius-circle); background: var(--mw-accent); opacity: 0.85; }
+.mw-gesture-demo__finger--two { display: none; }
+.mw-gesture-demo--zoom .mw-gesture-demo__finger--two,
+.mw-gesture-demo--pinchView .mw-gesture-demo__finger--two { display: block; left: var(--space-12); }
+.mw-gesture-demo--pull .mw-gesture-demo__finger, .mw-gesture-demo--sheet .mw-gesture-demo__finger { left: var(--space-24); top: var(--space-4); }
+.mw-gesture-demo--sheet .mw-gesture-demo__card { inset: var(--space-24) var(--space-4) calc(var(--space-12) * -1); }
+.mw-gesture-demo--tabSwipe .mw-gesture-demo__card { inset: auto var(--space-4) var(--space-4); height: var(--space-12); }
+.mw-gesture-demo--tabSwipe .mw-gesture-demo__finger { top: auto; bottom: var(--space-4); }
+.mw-gesture-demo[data-play] .mw-gesture-demo__card,
+.mw-gesture-demo[data-play] .mw-gesture-demo__finger { animation-duration: calc(var(--motion-duration-long) * 5); animation-timing-function: var(--motion-easing-ease-in-out); animation-fill-mode: both; }
+.mw-gesture-demo--swipe[data-play] .mw-gesture-demo__card, .mw-gesture-demo--fullSwipe[data-play] .mw-gesture-demo__card { animation-name: mw-demo-slide; }
+.mw-gesture-demo--swipe[data-play] .mw-gesture-demo__finger, .mw-gesture-demo--fullSwipe[data-play] .mw-gesture-demo__finger,
+.mw-gesture-demo--tabSwipe[data-play] .mw-gesture-demo__finger { animation-name: mw-demo-finger-left; }
+.mw-gesture-demo--fullSwipe[data-play] .mw-gesture-demo__card { animation-name: mw-demo-slide-out; }
+.mw-gesture-demo--tabSwipe[data-play] .mw-gesture-demo__card { animation-name: mw-demo-slide; }
+.mw-gesture-demo--pull[data-play] .mw-gesture-demo__card, .mw-gesture-demo--pull[data-play] .mw-gesture-demo__finger { animation-name: mw-demo-down; }
+.mw-gesture-demo--sheet[data-play] .mw-gesture-demo__card { animation-name: mw-demo-up; }
+.mw-gesture-demo--sheet[data-play] .mw-gesture-demo__finger { animation-name: mw-demo-up; }
+.mw-gesture-demo--menu[data-play] .mw-gesture-demo__finger, .mw-gesture-demo--peek[data-play] .mw-gesture-demo__finger,
+.mw-gesture-demo--reorder[data-play] .mw-gesture-demo__finger { animation-name: mw-demo-press; }
+.mw-gesture-demo--peek[data-play] .mw-gesture-demo__card { animation-name: mw-demo-grow; }
+.mw-gesture-demo--reorder[data-play] .mw-gesture-demo__card { animation-name: mw-demo-lift; }
+.mw-gesture-demo--favorite[data-play] .mw-gesture-demo__finger { animation-name: mw-demo-twice; }
+.mw-gesture-demo--zoom[data-play] .mw-gesture-demo__card { animation-name: mw-demo-grow; }
+.mw-gesture-demo--zoom[data-play] .mw-gesture-demo__finger { animation-name: mw-demo-apart-right; }
+.mw-gesture-demo--zoom[data-play] .mw-gesture-demo__finger--two { animation-name: mw-demo-apart-left; }
+.mw-gesture-demo--pinchView[data-play] .mw-gesture-demo__card { animation-name: mw-demo-shrink; }
+.mw-gesture-demo--pinchView[data-play] .mw-gesture-demo__finger { animation-name: mw-demo-apart-left; }
+.mw-gesture-demo--pinchView[data-play] .mw-gesture-demo__finger--two { animation-name: mw-demo-apart-right; }
+@keyframes mw-demo-slide { 0%, 15%, 100% { transform: none; } 45%, 75% { transform: translate3d(calc(var(--space-16) * -1), 0, 0); } }
+@keyframes mw-demo-slide-out { 0%, 15% { transform: none; opacity: 1; } 60% { transform: translate3d(calc(var(--space-64) * -1), 0, 0); opacity: 1; } 61%, 80% { opacity: 0; transform: none; } 100% { opacity: 1; transform: none; } }
+@keyframes mw-demo-finger-left { 0%, 15% { transform: none; opacity: 0.85; } 60% { transform: translate3d(calc(var(--space-24) * -1), 0, 0); opacity: 0.85; } 75%, 100% { opacity: 0; transform: translate3d(calc(var(--space-24) * -1), 0, 0); } }
+@keyframes mw-demo-down { 0%, 15%, 100% { transform: none; } 50%, 70% { transform: translate3d(0, var(--space-12), 0); } }
+@keyframes mw-demo-up { 0%, 15% { transform: translate3d(0, var(--space-16), 0); } 55%, 100% { transform: none; } }
+@keyframes mw-demo-press { 0%, 10% { transform: scale(1); } 45%, 75% { transform: scale(1.8); opacity: 0.5; } 100% { transform: scale(1); } }
+@keyframes mw-demo-twice { 0%, 10%, 30%, 50%, 100% { transform: scale(1); } 20%, 40% { transform: scale(1.6); } }
+@keyframes mw-demo-grow { 0%, 20%, 100% { transform: none; } 55%, 80% { transform: scale(1.25); } }
+@keyframes mw-demo-shrink { 0%, 20%, 100% { transform: none; } 55%, 80% { transform: scale(0.7); } }
+@keyframes mw-demo-lift { 0%, 20%, 100% { transform: none; box-shadow: var(--shadow-1); } 45% { transform: translate3d(0, calc(var(--space-4) * -1), 0) scale(1.05); box-shadow: var(--shadow-3); } 75% { transform: translate3d(0, var(--space-8), 0) scale(1.05); box-shadow: var(--shadow-3); } }
+@keyframes mw-demo-apart-left { 0%, 20%, 100% { transform: none; } 55%, 80% { transform: translate3d(calc(var(--space-8) * -1), 0, 0); } }
+@keyframes mw-demo-apart-right { 0%, 20%, 100% { transform: none; } 55%, 80% { transform: translate3d(var(--space-8), 0, 0); } }
+
+/* ── 사진 보기 */
+.mw-viewer { --mw-viewer-pull: 0; position: fixed; inset: 0; z-index: 80; color: var(--static-white); }
+.mw-viewer::before { content: ''; position: absolute; inset: 0; background: var(--static-black); opacity: calc(1 - var(--mw-viewer-pull) * 0.7); }
+.mw-viewer__top { position: absolute; top: env(safe-area-inset-top); left: 0; right: 0; z-index: 2; display: flex; align-items: center; gap: var(--space-8); padding: var(--space-8) var(--space-12); }
+.mw-viewer__pos { font-size: var(--font-size-14); font-variant-numeric: tabular-nums; }
+.mw-viewer__spacer { flex: 1; }
+.mw-viewer__button, .mw-viewer__nav { width: var(--mw-touch); height: var(--mw-touch); display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--radius-circle); background: color-mix(in srgb, var(--static-black) 45%, transparent); color: var(--static-white); }
+.mw-viewer__button:disabled, .mw-viewer__nav:disabled { opacity: 0.35; }
+.mw-viewer__nav { position: absolute; top: 50%; z-index: 2; margin-top: calc(var(--mw-touch) / -2); }
+.mw-viewer__nav--prev { left: var(--space-8); }
+.mw-viewer__nav--next { right: var(--space-8); }
+.mw-viewer__stage { position: absolute; inset: 0; z-index: 1; overflow: hidden; }
+.mw-viewer__stage[data-mw-hands] { touch-action: none; }
+.mw-viewer__track { position: absolute; inset: 0; }
+.mw-viewer__slide { position: absolute; top: 0; bottom: 0; width: 100%; display: grid; place-items: center; }
+.mw-viewer__img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* ── 화면 전환(View Transitions): 카드 → 상세, 카드 ↔ 그리드 */
+::view-transition-group(*) { animation-duration: var(--motion-duration-long); animation-timing-function: var(--motion-easing-ease-in-out); }
+::view-transition-group(mw-expand) { animation-timing-function: var(--mw-ease-sheet); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--motion-duration-medium); }
+.mw-vt .mw-app-panel, .mw-vt .mw-app-panel-scrim { transition: none; }
+
+/* ── 움직임 줄이기: 움직이지 않고 결과만 */
+@media (prefers-reduced-motion: reduce) {
+  .mw-swipe--hint > .mw-swipe__body, .mw-burst, .mw-peek, .mw-action-menu, .mw-gesture-demo * { animation: none; }
+  .mw-swipe__circle, .mw-sortable--dragging > .mw-sortable__item, .mw-sheet--detents > .mw-sheet__foot { transition: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none; }
+}
+[data-mw-motion='reduce'] .mw-swipe--hint > .mw-swipe__body,
+[data-mw-motion='reduce'] .mw-burst,
+[data-mw-motion='reduce'] .mw-peek,
+[data-mw-motion='reduce'] .mw-action-menu,
+[data-mw-motion='reduce'] .mw-gesture-demo * { animation: none; }
+[data-mw-motion='reduce'] .mw-swipe__circle,
+[data-mw-motion='reduce'] .mw-sortable--dragging > .mw-sortable__item,
+[data-mw-motion='reduce'] .mw-sheet--detents > .mw-sheet__foot { transition: none; }
+
 /* ── ItemTile ── */
 /* Item Tile — Moonwave UX extra component */
 
@@ -19989,7 +20232,8 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
   transform: translateY(105%); visibility: hidden; transition: transform var(--mw-duration-sheet) var(--mw-ease-sheet), visibility 0s var(--mw-duration-sheet);
 }
 .mw-sheet--open { transform: none; visibility: visible; transition-delay: 0s; }
-.mw-sheet__grab { flex: none; width: 100%; padding: 10px 0 6px; display: grid; place-items: center; border: 0; background: none; }
+/* 손잡이는 누르는 버튼이에요(닫기, 높이 바꾸기): 누르는 영역이 44px이에요. 보이는 막대는 40 × 5px 그대로예요 */
+.mw-sheet__grab { flex: none; width: 100%; min-height: var(--mw-touch); padding: 0; display: grid; place-items: center; border: 0; background: none; }
 .mw-sheet__grab i { width: 40px; height: 5px; border-radius: 3px; background: var(--border-secondary); }
 .mw-sheet__body { overflow-y: auto; padding: var(--space-8) var(--space-16) var(--space-20); display: grid; gap: var(--space-4); }
 .mw-sheet__item { display: flex; align-items: center; gap: 14px; min-height: var(--mw-touch); padding: var(--space-12); border: 0; border-radius: var(--radius-12); background: none; text-align: left; text-decoration: none; }
@@ -20003,7 +20247,7 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-sheet__item b { display: block; font-size: var(--font-size-16); font-weight: var(--font-weight-semibold); }
 .mw-sheet__item small { display: block; font-size: var(--font-size-13); color: var(--text-tertiary); margin-top: 2px; }
 .mw-sheet__icon { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: var(--radius-12); background: var(--background-secondary); }
-.mw-sheet__icon svg { width: 22px; height: 22px; }
+.mw-sheet__icon svg { width: 24px; height: 24px; }
 .mw-sheet__item[aria-current='page'] .mw-sheet__icon { background: var(--mw-accent-strong); color: var(--text-inverse); }
 
 /* ── 페이지 ── */

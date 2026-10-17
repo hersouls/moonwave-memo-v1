@@ -30,6 +30,7 @@ import { AndroidDownloadSection } from './AndroidDownloadSection'
 import { IcFillDelete, IcLineAdd, IcLineCheck, IcLineChevronDown, IcLineChevronRight, IcLineChevronUp, IcLineCloud, IcLineDownload, IcLineEdit, IcLineExternalLink, IcLineEye, IcLineFolder, IcLineLoading, IcLineMoblie, IcLineMy, IcLineShield, IcLineTime, IcLineTrash, IcLineWarning, IcMwCheckCircle, IcMwDayNight, IcMwMoon, IcMwNote, IcMwSun, IcMwUpload } from '@/mw/icons'
 import { THEME_LABEL, sunToday, useTheme, type ThemeMode } from '@/mw/theme'
 import { TextField } from '@/mw/TextField'
+import { GestureSettings } from '@/mw/GestureSettings'
 
 // ─── Theme Options ──────────────────────────────────
 // 자동 · 밝게 · 어둡게. 자동은 집의 해를 따라요 (https://ux.moonwave.kr/patterns/theme#rule)
@@ -609,6 +610,13 @@ export function SettingsModal() {
             자동은 {sun.place}의 해를 따라요. 오늘은 {sun.rise}에 밝아지고 {sun.set}에 어두워져요.
           </p>
         )}
+      </section>
+
+      <div className="border-t border-[var(--color-border-subtle)]" />
+
+      {/* 손짓 단계: 키트의 GestureSettings (touch-gestures#settings) */}
+      <section>
+        <GestureSettings />
       </section>
 
       <div className="border-t border-[var(--color-border-subtle)]" />

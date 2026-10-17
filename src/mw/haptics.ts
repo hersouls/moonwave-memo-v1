@@ -1,8 +1,10 @@
 /* Moonwave UX — 진동
    규격: https://ux.moonwave.kr/patterns/app-shell#haptics */
+import { getGestureSettings } from './gesture-settings'
 
-/** 한 번 떨어요. 진동이 없는 기기(iOS Safari, 데스크톱)에서는 아무 일도 하지 않아요. */
+/** 한 번 떨어요. 진동이 없는 기기(iOS Safari, 데스크톱)와, 설정의 손짓에서 진동을 끈 사람에게는 아무 일도 하지 않아요. */
 export function haptic(pattern: number | number[] = 6) {
+  if (!getGestureSettings().haptics) return
   try { navigator.vibrate?.(pattern) } catch { /* 막혀 있으면 조용히 넘어가요 */ }
 }
 
