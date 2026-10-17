@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import clsx from 'clsx'
-import { ContextMenu } from '@/components/ui/ContextMenu'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { Memo } from '@/lib/types'
 import { useFolderStore } from '@/stores/folderStore'
 import { useUIStore } from '@/stores/uiStore'
@@ -15,15 +15,15 @@ import { useViewTransition } from '@/hooks/useViewTransition'
 import { useMemoryDecay } from '@/hooks/useMemoryDecay'
 import { MemoHoverPreview } from './MemoHoverPreview'
 import { IcFillPlay, IcLinePin, IcLineTrash, IcLineUndo, IcMwCheckCircle, IcMwFlame, IcMwStar, IcMwStarFill } from '@/mw/icons'
+import { ItemMoreButton, SortSlotContext, SwipeItem, itemActions } from '@/mw/SwipeItem'
+import type { ItemAction } from '@/mw/SwipeItem'
+import { useGesture } from '@/mw/gestures'
+import { useLongPress } from '@/mw/useLongPress'
 
-// F-06: Dynamic swipe threshold for fold screens
-function getSwipeThreshold() {
-  return useUIStore.getState().isNarrowFold
-    ? Math.round(window.innerWidth * 0.25)
-    : 80
-}
-const LONG_PRESS_DURATION = 500
-const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window
+// 메모 줄은 길게 누르면 선택 모드가 열려요(patterns/selection-mode#press). 키트의 SwipeItem은 길게 누르기를 메뉴로 받으니,
+// 순서 바꾸는 목록 안의 줄과 같은 표시(dragging)를 줘서 그 길을 끄고 메뉴는 ⋯ 버튼과 오른쪽 클릭에 맡겨요.
+const OWN_PRESS = { index: 0, count: 1, moveTo: () => {}, dragging: true } as const
+
 
 // Highlight search query matches in text
 function HighlightText({ text, query }: { text: string; query: string }) {
@@ -68,9 +68,11 @@ interface MemoCardProps {
   memo: Memo
   viewMode?: 'list' | 'grid'
   isTrashView?: boolean
+  /** 목록의 첫 줄이면 처음 한 번 살짝 밀렸다 돌아와요 */
+  hint?: boolean
 }
 
-export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTrashView = false }: MemoCardProps) {
+export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTrashView = false, hint = false }: MemoCardProps) {
   const { navigateWithTransition } = useViewTransition()
   const location = useLocation()
   // PERF-02: Subscribe only to the needed folder, not entire array
@@ -86,6 +88,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
   const searchQuery = useUIStore((s) => s.searchQuery)
   const digitalGardenEnabled = useSettingsStore((s) => s.settings.livingWorkspace.digitalGardenEnabled)
   const toggleStar = useMemoStore((s) => s.toggleStar)
+  const togglePin = useMemoStore((s) => s.togglePin)
   const softDelete = useMemoStore((s) => s.softDelete)
   const restore = useMemoStore((s) => s.restore)
   const permanentDelete = useMemoStore((s) => s.permanentDelete)
@@ -97,7 +100,7 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
   const openSlideView = useUIStore((s) => s.openSlideView)
   const [starPulse, setStarPulse] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null)
+  const [permanentAsk, setPermanentAsk] = useState(false)
 
   // Hover preview state (desktop only)
   const [showHoverPreview, setShowHoverPreview] = useState(false)
@@ -105,22 +108,6 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
   const hoverLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cardContainerRef = useRef<HTMLDivElement>(null)
   const [hoverAnchorRect, setHoverAnchorRect] = useState<DOMRect | null>(null)
-
-  // Swipe gesture state
-  const [swipeX, setSwipeX] = useState(0)
-  const [isSwiping, setIsSwiping] = useState(false)
-  // Commit-threshold crossing feedback (icon pop + haptic tick while finger is down)
-  const [swipeCommitted, setSwipeCommitted] = useState(false)
-  const swipeCommittedRef = useRef(false)
-  const touchStartX = useRef(0)
-  const touchStartY = useRef(0)
-  const cardRef = useRef<HTMLDivElement>(null)
-
-  // Long-press state
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const longPressFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isLongPressed = useRef(false)
-  const [isLongPressing, setIsLongPressing] = useState(false)
 
   // Guard for post-unmount async operations
   const mountedRef = useRef(true)
@@ -177,90 +164,14 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     }
   }, [])
 
-  if (!memo.id) return null
-
-  const isSelected = selectedMemoIds.includes(memo.id)
+  const isSelected = memo.id != null && selectedMemoIds.includes(memo.id)
   const isActive = location.pathname === `/memo/${memo.id}`
   const isGrid = viewMode === 'grid'
-
-  // Haptic feedback with visual fallback for iOS (no Vibration API support)
-  const hapticFeedback = useCallback((intensity: number = 30) => {
-    if (navigator.vibrate) {
-      navigator.vibrate(intensity)
-    } else if (cardRef.current) {
-      // Visual bounce fallback for iOS
-      const el = cardRef.current
-      el.style.transition = 'transform var(--motion-duration-short) var(--mw-ease), opacity var(--motion-duration-short) var(--mw-ease)'
-      el.style.transform = 'scale(0.95)'
-      el.style.opacity = '0.7'
-      setTimeout(() => { el.style.transform = ''; el.style.opacity = '' }, 150)
-    }
-  }, [])
-
-  // Touch gesture handlers (mobile only)
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!isTouchDevice || isSelectionMode) return
-    const touch = e.touches[0]
-    if (!touch) return
-    // Ignore touches starting near screen edges (iOS Safari back/forward gesture zone)
-    const startX = touch.clientX
-    if (startX < 30 || startX > window.innerWidth - 30) return
-    touchStartX.current = startX
-    touchStartY.current = e.touches[0].clientY
-    isLongPressed.current = false
-    setIsSwiping(false)
-
-    // Visual feedback timer (150ms)
-    longPressFeedbackTimer.current = setTimeout(() => setIsLongPressing(true), 150)
-
-    // Long-press: enter selection mode (Gmail pattern)
-    longPressTimer.current = setTimeout(() => {
-      if (memo.id) {
-        enterSelectionMode(memo.id)
-        hapticFeedback(30)
-        isLongPressed.current = true
-        setIsLongPressing(false)
-      }
-    }, LONG_PRESS_DURATION)
-  }, [isSelectionMode, memo.id, enterSelectionMode])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isTouchDevice || isSelectionMode) return
-    const dx = e.touches[0].clientX - touchStartX.current
-    const dy = e.touches[0].clientY - touchStartY.current
-
-    // Cancel long-press on any movement (5px threshold)
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current)
-        longPressTimer.current = null
-      }
-      if (longPressFeedbackTimer.current) {
-        clearTimeout(longPressFeedbackTimer.current)
-        longPressFeedbackTimer.current = null
-      }
-      setIsLongPressing(false)
-    }
-
-    // Only swipe if horizontal movement > vertical
-    if (!isSwiping && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      setIsSwiping(true)
-      e.preventDefault() // Prevent iOS Safari back/forward gesture
-    }
-
-    if (isSwiping || Math.abs(dx) > 10) {
-      setSwipeX(dx)
-      if (isSwiping) e.preventDefault()
-
-      // Haptic-style tick + icon pop the moment the swipe crosses the commit threshold
-      const passed = Math.abs(dx) >= getSwipeThreshold()
-      if (passed !== swipeCommittedRef.current) {
-        swipeCommittedRef.current = passed
-        setSwipeCommitted(passed)
-        if (passed) navigator.vibrate?.(10)
-      }
-    }
-  }, [isSelectionMode, isSwiping])
+  const pressOn = useGesture('menu')
+  useLongPress(cardContainerRef, {
+    enabled: pressOn && !isSelectionMode && memo.id != null,
+    onPress: () => { if (memo.id != null) enterSelectionMode(memo.id) },
+  })
 
   // Shared card actions — used by both swipe gestures and the hover/focus quick-action cluster
   const runSoftDelete = useCallback(() => {
@@ -306,51 +217,8 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
     }, 300)
   }, [memo.id, permanentDelete])
 
-  const handleTouchEnd = useCallback(async () => {
-    if (!isTouchDevice || isSelectionMode) return
-
-    // Cancel long-press timer
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-    if (longPressFeedbackTimer.current) {
-      clearTimeout(longPressFeedbackTimer.current)
-      longPressFeedbackTimer.current = null
-    }
-    setIsLongPressing(false)
-
-    const threshold = getSwipeThreshold()
-    if (swipeX > threshold && memo.id) {
-      hapticFeedback(15)
-      if (isTrashView) {
-        // Right swipe in trash → restore
-        runRestore()
-      } else {
-        // Right swipe → toggle star
-        toggleStar(memo.id)
-      }
-    } else if (swipeX < -threshold && memo.id) {
-      hapticFeedback(25)
-      if (isTrashView) {
-        // Left swipe in trash → permanent delete
-        runPermanentDelete()
-      } else {
-        // Left swipe → soft delete with shrink animation
-        runSoftDelete()
-      }
-    }
-
-    setSwipeX(0)
-    setIsSwiping(false)
-    swipeCommittedRef.current = false
-    setSwipeCommitted(false)
-    // Reset long-press flag after a tick to prevent click
-    setTimeout(() => { isLongPressed.current = false }, 0)
-  }, [swipeX, memo.id, isSelectionMode, toggleStar, isTrashView, runRestore, runPermanentDelete, runSoftDelete, hapticFeedback])
-
   const handleClick = () => {
-    if (isSwiping || isLongPressed.current || !memo.id) return
+    if (!memo.id) return
     if (isSelectionMode) {
       toggleMemoSelection(memo.id)
     } else if (isTrashView) {
@@ -360,6 +228,21 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       navigateWithTransition(`/memo/${memo.id}`)
     }
   }
+
+  // 밀기 · 길게 누르기 · ⋯ · 오른쪽 클릭이 모두 같은 목록을 써요. 선택은 길게 누르기와 같은 문이에요
+  const actions: ItemAction[] = isTrashView
+    ? [
+        itemActions.done(runRestore, '복원'),
+        { kind: 'delete', label: '완전히 지우기', icon: IcLineTrash, tone: 'danger', run: () => setPermanentAsk(true) },
+        { label: '여러 개 고르기', icon: IcMwCheckCircle, run: () => { if (memo.id != null) enterSelectionMode(memo.id) } },
+      ]
+    : [
+        itemActions.pin(() => { if (memo.id != null) void togglePin(memo.id) }, memo.isPinned),
+        itemActions.delete(runSoftDelete),
+        { label: memo.isStarred ? '중요 해제' : '중요 표시', icon: memo.isStarred ? IcMwStarFill : IcMwStar, run: () => { if (memo.id != null) void toggleStar(memo.id) } },
+        { label: '슬라이드로 보기', icon: IcFillPlay, run: () => { if (memo.id != null) openSlideView(memo.id) } },
+        { label: '여러 개 고르기', icon: IcMwCheckCircle, run: () => { if (memo.id != null) enterSelectionMode(memo.id) } },
+      ]
 
   // PERF: Memoize expensive body text processing (regex + stripMarkdown + mask)
   const bodyText = useMemo(
@@ -386,63 +269,9 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
       onDragStart={handleDragStart}
       className={clsx('group relative h-full overflow-hidden rounded-2xl fold:rounded-xl', isDeleting && 'animate-card-shrink')}
     >
-      {/* Swipe action backgrounds with progressive visual feedback */}
-      {isTouchDevice && !isSelectionMode && (() => {
-        const swipeProgress = Math.min(Math.abs(swipeX) / getSwipeThreshold(), 1)
-        // Grows to 1.0 approaching the threshold, then pops to 1.3 at the commit point
-        const iconScale = swipeCommitted ? 1.3 : 0.7 + swipeProgress * 0.3
-        return (
-          <>
-            {/* Right swipe: star (normal) / restore (trash) */}
-            <div
-              className={clsx(
-                'absolute inset-0 flex items-center pl-5 rounded-2xl transition-opacity',
-                swipeX > 20 ? 'opacity-100' : 'opacity-0'
-              )}
-              style={{
-                background: swipeX > 0
-                  ? `linear-gradient(90deg, oklch(${isTrashView ? '0.65 0.17 145' : '0.78 0.18 70'} / ${swipeProgress * 0.9}), transparent 80%)`
-                  : undefined,
-              }}
-            >
-              {isTrashView ? (
-                <IcLineUndo
-                  className="text-white transition-transform duration-200 ease-spring"
-                  style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
-                />
-              ) : (
-                <IcMwStarFill
-                  className="text-white transition-transform duration-200 ease-spring"
-                  style={{ width: 20, height: 20, transform: `scale(${swipeX > 0 ? iconScale : 1})` }}
-                />
-              )}
-            </div>
-            {/* Left swipe: delete (normal) / permanent delete (trash) */}
-            <div
-              className={clsx(
-                'absolute inset-0 flex items-center justify-end pr-5 rounded-2xl transition-opacity',
-                swipeX < -20 ? 'opacity-100' : 'opacity-0'
-              )}
-              style={{
-                background: swipeX < 0
-                  ? `linear-gradient(270deg, color-mix(in srgb, var(--mw-critical) ${Math.round(swipeProgress * 90)}%, transparent), transparent 80%)`
-                  : undefined,
-              }}
-            >
-              <IcLineTrash
-                className="text-white transition-transform duration-200 ease-spring"
-                style={{ width: 20, height: 20, transform: `scale(${swipeX < 0 ? iconScale : 1})` }}
-              />
-            </div>
-          </>
-        )
-      })()}
-
+      <SortSlotContext.Provider value={OWN_PRESS}>
+      <SwipeItem label={memo.title || '제목 없음'} actions={actions} hint={hint} more="none" swipe={!isGrid && !isSelectionMode} className="h-full">
       <div
-        ref={cardRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         className={clsx(
           // Scoped transition list — never transition-all on list items (layout reflows must not animate)
           'memo-card relative flex w-full overflow-hidden rounded-2xl fold:rounded-xl text-left border border-[var(--card-hairline)] shadow-sm transition-[transform,box-shadow,border-color,background-color,filter] duration-200',
@@ -450,28 +279,13 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           isSelectionMode && 'hover:brightness-[0.97] dark:hover:brightness-110',
           // Hover stays neutral (shadow + hairline darkening) — accent is reserved for selected/active/starred
           !isSelectionMode && 'hover:shadow-md hover:-translate-y-0.5 hover:border-zinc-950/[0.12] dark:hover:border-white/[0.16] active:scale-[0.98]',
-          isLongPressing && 'scale-[0.97] brightness-[0.95] dark:brightness-125',
           isSelected && 'ring-2 ring-primary-500',
           // UX-07: stronger active highlight
           isActive && 'lg:ring-1 lg:ring-primary-300 lg:dark:ring-primary-700 lg:bg-primary-50/50 lg:dark:bg-primary-900/10',
           isGrid ? 'h-full flex-col' : 'h-full flex-row gap-0',
           isRecent && digitalGardenEnabled && 'memo-glow-active'
         )}
-        onContextMenu={(e) => {
-          e.preventDefault()
-          if (isDesktop && !isSelectionMode && !isTrashView && memo.id != null) {
-            setCtxMenu({ x: e.clientX, y: e.clientY })
-          }
-        }}
-        style={{
-          touchAction: 'pan-y',
-          ...decayStyle,
-          transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined,
-          // Spring snap-back on release (touch only — desktop keeps the class-scoped transition)
-          ...(isTouchDevice
-            ? { transition: isSwiping ? 'none' : 'transform var(--motion-duration-medium) var(--mw-ease-sheet)' }
-            : {}),
-        }}
+        style={decayStyle}
       >
         {/* Stretched primary action (sibling of tag/quick-action buttons — no nested interactives) */}
         <Link
@@ -524,6 +338,8 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
             {memo.isStarred && (
               <IcMwStarFill size={16} className={clsx('shrink-0 text-primary-500', starPulse && 'animate-star-pulse')} />
             )}
+            {/* 손짓 없이 여는 길: 이 메모의 메뉴예요 (넓은 화면은 아래 마우스 도구 줄이 맡아요) */}
+            {!isDesktop && !isSelectionMode && <ItemMoreButton className="relative z-[2] -my-2.5 -mr-2 shrink-0" />}
           </div>
 
           {/* Body preview */}
@@ -626,24 +442,21 @@ export const MemoCard = memo(function MemoCard({ memo, viewMode = 'list', isTras
           </div>
         )}
       </div>
+      </SwipeItem>
+      </SortSlotContext.Provider>
       {showHoverPreview && hoverAnchorRect && (
         <MemoHoverPreview memo={memo} anchorRect={hoverAnchorRect} />
       )}
 
-      {/* Right-click context menu — shared primitive (Esc/화살표 키/뷰포트 클램핑 내장) */}
-      {ctxMenu && (
-        <ContextMenu
-          position={ctxMenu}
-          items={[
-            {
-              label: '슬라이드로 보기',
-              icon: IcFillPlay,
-              onSelect: () => openSlideView(memo.id!),
-            },
-          ]}
-          onClose={() => setCtxMenu(null)}
-        />
-      )}
+      <ConfirmDialog
+        open={permanentAsk}
+        onClose={() => setPermanentAsk(false)}
+        onConfirm={() => { setPermanentAsk(false); runPermanentDelete() }}
+        title="완전히 지울까요?"
+        description="지운 메모는 되돌릴 수 없어요."
+        confirmText="완전히 지우기"
+        variant="danger"
+      />
     </div>
   )
 })

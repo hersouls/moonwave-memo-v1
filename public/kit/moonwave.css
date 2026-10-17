@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.6.0 · all in one
+/*! Moonwave UX 1.7.0 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -3170,7 +3170,7 @@
   --mw-touch: 44px;
 
   /* 키트의 판: 서비스가 들고 있는 키트 사본이 지금 판인지 화면 점검이 이 값으로 알아요 */
-  --mw-kit: "1.6";
+  --mw-kit: "1.7";
 
   /* 정해진 자리의 값 — 공통 단계에 없고, 이름에 적힌 자리에만 써요 */
   --mw-font-size-11: 11px;
@@ -19503,6 +19503,330 @@
   .mw-select-button__image
   img {
   opacity: 0.4;
+}
+
+/* ── Selection ── */
+/* Selection Mode — Moonwave UX extra component */
+
+/* 구조: 목록 · 그리드 위에서 길게 누르면 선택 모드가 열려요(patterns/selection-mode).
+   - 위쪽 줄(mw-select-bar): 전체 선택 · "N개 선택됨" · 취소. 앱 상단 바 자리를 대신해요.
+   - 묶음 머리글(mw-select-group): 날짜 같은 묶음마다 동그라미가 있어서 묶음 전체를 한 번에 골라요.
+   - 항목(mw-select-item): 선택 모드에서는 어두워지고 왼쪽 위에 동그라미가 떠요. 고르면 채워진 동그라미에 체크예요.
+   - 아래 작업 줄(mw-select-actions): 폰에서는 아래에 뜬 알약, 태블릿 · PC에서는 위쪽 줄 안에 놓여요.
+   동그라미는 진짜 체크박스(input[type="checkbox"])예요. 이름은 항목의 이름이고, 색이 아니라 체크 모양으로 말해요. */
+
+/* ── 동그라미 (체크박스) ── */
+
+.mw-select-check {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-24);
+  height: var(--size-24);
+}
+
+.mw-select-check__input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mw-select-check__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: var(--border-width-2) solid var(--static-white);
+  border-radius: var(--radius-circle);
+  background: transparent;
+  color: transparent;
+  pointer-events: none;
+}
+
+.mw-select-check__mark svg {
+  width: var(--size-16);
+  height: var(--size-16);
+}
+
+.mw-select-check__input:checked + .mw-select-check__mark,
+.mw-select-check__input:indeterminate + .mw-select-check__mark {
+  border-color: var(--fill-accent-primary-default);
+  background: var(--fill-accent-primary-default);
+  color: var(--static-white);
+}
+
+.mw-select-check__input:focus-visible + .mw-select-check__mark {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+}
+
+/* 모두 같은 모양으로 읽히는 줄 위(바 · 묶음 머리글)의 동그라미는 테두리가 글자색이에요 */
+.mw-select-bar .mw-select-check__mark,
+.mw-select-group .mw-select-check__mark {
+  border-color: var(--icon-secondary);
+}
+
+.mw-select-bar .mw-select-check__input:checked + .mw-select-check__mark,
+.mw-select-group .mw-select-check__input:checked + .mw-select-check__mark,
+.mw-select-bar .mw-select-check__input:indeterminate + .mw-select-check__mark,
+.mw-select-group .mw-select-check__input:indeterminate + .mw-select-check__mark {
+  border-color: var(--fill-accent-primary-default);
+}
+
+/* 일부만 골랐을 때는 체크 대신 가로 선이에요 */
+.mw-select-check__input:indeterminate + .mw-select-check__mark svg {
+  display: none;
+}
+
+.mw-select-check__input:indeterminate + .mw-select-check__mark::after {
+  content: "";
+  width: var(--space-8);
+  height: var(--border-width-2);
+  border-radius: var(--radius-4);
+  background: currentColor;
+}
+
+/* ── 위쪽 줄 ── */
+
+.mw-select-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: var(--size-56);
+  box-sizing: border-box;
+  padding: 0 var(--space-16);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+}
+
+.mw-select-bar[hidden] {
+  display: none;
+}
+
+.mw-select-bar__all {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+}
+
+.mw-select-bar__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.03em;
+}
+
+.mw-select-bar__cancel {
+  flex: none;
+  min-height: var(--size-48);
+  margin: 0;
+  padding: 0 var(--space-8);
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.mw-select-bar__cancel:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+  border-radius: var(--radius-8);
+}
+
+/* ── 묶음 머리글 ── */
+
+.mw-select-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--size-48);
+  margin: 0;
+  padding: var(--space-8) 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+}
+
+/* 선택 모드가 아닐 때 묶음의 동그라미는 숨어 있어요(자리는 비워 두지 않아요) */
+.mw-select-group .mw-select-check {
+  display: none;
+}
+
+[data-selecting] .mw-select-group .mw-select-check {
+  display: inline-flex;
+}
+
+/* ── 항목 ── */
+
+.mw-select-item {
+  position: relative;
+  min-width: 0;
+}
+
+/* 항목 안의 동그라미는 이미지 위에 떠요. 선택 모드에서만 보이고, 마우스에서는 올리거나 포커스를 줄 때도 보여요 */
+.mw-select-item .mw-select-check {
+  position: absolute;
+  top: var(--space-8);
+  left: var(--space-8);
+  z-index: 2;
+  opacity: 0;
+  transition: opacity var(--motion-duration-short) var(--motion-easing-ease-out);
+}
+
+[data-selecting] .mw-select-item .mw-select-check,
+.mw-select-item:focus-within .mw-select-check {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .mw-select-item:hover .mw-select-check {
+    opacity: 1;
+  }
+}
+
+.mw-select-item__body {
+  display: block;
+  border-radius: var(--radius-8);
+  overflow: hidden;
+}
+
+/* 선택 모드에서 안 고른 항목은 살짝 어두워지고, 고른 항목은 그대로 밝아요(둘의 차이는 체크로도 말해요) */
+[data-selecting] .mw-select-item__body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-8);
+  background: color-mix(in srgb, var(--static-black) 22%, transparent);
+  pointer-events: none;
+}
+
+[data-selecting] .mw-select-item[data-selected] .mw-select-item__body::after {
+  background: transparent;
+  box-shadow: inset 0 0 0 var(--border-width-2) var(--fill-accent-primary-default);
+}
+
+/* ── 작업 줄 ── */
+
+.mw-select-actions {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: var(--border-width-1) solid var(--border-secondary);
+  border-radius: var(--radius-circle);
+  background: var(--surface-floating);
+  box-shadow: var(--shadow-3);
+}
+
+.mw-select-actions[hidden] {
+  display: none;
+}
+
+.mw-select-actions__button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-width: var(--size-56);
+  min-height: var(--size-56);
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--space-4) var(--space-12);
+  border: 0;
+  border-radius: var(--radius-16);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mw-select-actions__button:hover {
+  background: var(--fill-secondary-hover);
+}
+
+.mw-select-actions__button:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+}
+
+.mw-select-actions__button:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.mw-select-actions__button:disabled:hover {
+  background: transparent;
+}
+
+/* 폰: 아래에 뜬 알약이에요. 하단 탭이 있으면 그 자리를 덮어요(선택 모드가 끝나면 탭이 돌아와요) */
+.mw-select-actions--float {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-16) + env(safe-area-inset-bottom));
+  z-index: 70;
+  transform: translateX(-50%);
+  max-width: calc(100vw - var(--space-32));
+}
+
+[data-selecting] .mw-app-tabbar {
+  visibility: hidden;
+}
+
+/* 태블릿 · PC: 위쪽 줄 안에 한 줄로 놓여요(알약이 아니라 모서리 없는 줄이에요) */
+@media (min-width: 601px) {
+  .mw-select-actions--float {
+    position: static;
+    z-index: auto;
+    transform: none;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mw-select-actions--float .mw-select-actions__button {
+    flex-direction: row;
+    gap: var(--space-8);
+    min-height: var(--size-48);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-select-item .mw-select-check {
+    transition: none;
+  }
+}
+
+/* 선택 모드가 열린 동안 위쪽 줄이 앱 상단 바를 대신해요. 화면이 상단 바에 hidden을 주면 정말 사라지게 해요 */
+.mw-app-top[hidden] {
+  display: none;
 }
 
 /* ── SortControl ── */

@@ -12,7 +12,7 @@ import { MemoEmptyState } from './MemoEmptyState'
 import { BatchActionBar } from './BatchActionBar'
 import { QuickMemoInput } from './QuickMemoInput'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { FeatureHint } from '@/components/ui/FeatureHint'
+import { GestureHint } from '@/mw/GestureHint'
 import { useMemoFilters } from '@/hooks/useMemoFilters'
 import { CreateActions, PageHead } from '@/components/layout/PageHead'
 import { MEMOS_TITLE } from '@/components/layout/pages'
@@ -166,14 +166,6 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
     setVisibleCount((c) => c + LOAD_MORE_COUNT)
   }, [])
 
-  // Swipe onboarding hint
-  const [showSwipeHint] = useState(() => {
-    try {
-      const dismissed = JSON.parse(localStorage.getItem('memo-dismissed-hints') || '[]')
-      return !dismissed.includes('swipe-onboarding')
-    } catch { return true }
-  })
-
   const trashFolder = getTrashFolder()
   const isTrashView = trashFolder != null && activeFolderId === trashFolder.id
 
@@ -275,9 +267,9 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
       )}
 
       {/* 손짓 안내: 손가락으로 쓰는 화면에서 한 번, 목록 위에 */}
-      {showSwipeHint && !isDesktop && filteredMemos.length > 0 && viewMode !== 'kanban' && (
+      {!isDesktop && filteredMemos.length > 0 && viewMode === 'list' && (
         <div className="mt-3">
-          <FeatureHint id="swipe-onboarding" message="카드를 옆으로 밀면 중요 표시를 하거나 지울 수 있어요. 길게 누르면 여러 개를 골라요." />
+          <GestureHint gesture="swipe">카드를 옆으로 밀면 고정하거나 지울 수 있어요. 길게 누르면 여러 개를 골라요.</GestureHint>
         </div>
       )}
 
@@ -305,8 +297,7 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
             data-memo-item
             className={clsx(
               'animate-in slide-in-from-bottom',
-              'h-full',
-              showSwipeHint && index === 0 && 'animate-wiggle'
+              'h-full'
             )}
             style={{
               animationDuration: 'var(--motion-duration-medium)',
@@ -314,7 +305,7 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
               animationFillMode: 'both',
             }}
           >
-            <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} isTrashView={isTrashView} />
+            <MemoCard memo={memo} viewMode={viewMode === 'grid' ? 'grid' : 'list'} isTrashView={isTrashView} hint={index === 0} />
           </div>
         )
         const sectionHeaderClass = clsx(
