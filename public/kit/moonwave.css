@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.7.0 · all in one
+/*! Moonwave UX 1.8.0 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -3170,7 +3170,7 @@
   --mw-touch: 44px;
 
   /* 키트의 판: 서비스가 들고 있는 키트 사본이 지금 판인지 화면 점검이 이 값으로 알아요 */
-  --mw-kit: "1.7";
+  --mw-kit: "1.8";
 
   /* 정해진 자리의 값 — 공통 단계에 없고, 이름에 적힌 자리에만 써요 */
   --mw-font-size-11: 11px;
@@ -13597,6 +13597,8 @@
   --data-visual-bar-size: 0%;
   --data-visual-segment: 1;
   --data-visual-reference: 50%;
+  --data-visual-label-x: 100%;
+  --data-visual-label-y: 50%;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -14345,6 +14347,185 @@
   .mw-data-visual__select {
     transition: none;
   }
+}
+
+/* ── 색만으로 구분하지 않아요 ──
+   계열마다 색 말고 한 가지를 더 달라요: 선은 모양(실선 · 파선 · 점선 · 일점쇄선)과 표식, 막대와 조각은 무늬(빗금 · 반대 빗금 · 점),
+   그리고 선 끝과 막대 끝에 이름을 직접 적어요. 범례의 견본도 같은 모양이라 범례와 그림이 서로 맞아요.
+   1번 계열은 실선, 2번은 파선, 3번은 점선, 4번은 일점쇄선 순서예요. */
+
+.mw-data-visual__line--dashed {
+  stroke-dasharray: 8 5;
+}
+
+.mw-data-visual__line--dotted {
+  stroke-dasharray: 0.1 6;
+}
+
+.mw-data-visual__line--dashdot {
+  stroke-dasharray: 10 4 1 4;
+}
+
+/* 표식: 선 위의 점이에요. 계열마다 다른 모양을 써요(동그라미 · 네모 · 마름모 · 세모) */
+.mw-data-visual__marker {
+  position: absolute;
+  z-index: 2;
+  width: var(--space-8);
+  height: var(--space-8);
+  box-sizing: border-box;
+  margin: calc(var(--space-4) * -1) 0 0 calc(var(--space-4) * -1);
+  border: var(--border-width-2) solid var(--data-visual-mark);
+  border-radius: var(--radius-circle);
+  background: var(--surface-primary);
+}
+
+.mw-data-visual__marker--square {
+  border-radius: var(--radius-2);
+}
+
+.mw-data-visual__marker--diamond {
+  border-radius: var(--radius-2);
+  transform: rotate(45deg);
+}
+
+.mw-data-visual__marker--triangle {
+  width: 0;
+  height: 0;
+  border: var(--space-4) solid transparent;
+  border-top: 0;
+  border-bottom: var(--space-8) solid var(--data-visual-mark);
+  border-radius: 0;
+  background: transparent;
+}
+
+/* 무늬: 빗금(hatched)에 더해 반대 방향 빗금과 점이에요. 막대 · 구간 · 범례 견본에 똑같이 붙어요 */
+.mw-data-visual__bar--cross,
+.mw-data-visual__segment--cross,
+.mw-data-visual__legend-dot--cross {
+  border: var(--border-width-1) solid var(--data-visual-mark);
+  background-color: var(--surface-primary);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--data-visual-mark) 0,
+    var(--data-visual-mark) var(--border-width-1),
+    transparent var(--border-width-1),
+    transparent var(--space-4)
+  );
+}
+
+.mw-data-visual__bar--dots,
+.mw-data-visual__segment--dots,
+.mw-data-visual__legend-dot--dots {
+  border: var(--border-width-1) solid var(--data-visual-mark);
+  background-color: var(--surface-primary);
+  background-image: radial-gradient(var(--data-visual-mark) 0, var(--data-visual-mark) var(--border-width-1), transparent var(--border-width-2));
+  background-size: var(--space-4) var(--space-4);
+}
+
+/* 범례 견본: 선 계열이면 짧은 선 모양으로, 막대 계열이면 같은 무늬의 점으로 보여요 */
+.mw-data-visual__legend-dot--line,
+.mw-data-visual__legend-dot--dash,
+.mw-data-visual__legend-dot--dot,
+.mw-data-visual__legend-dot--dashdot {
+  width: var(--space-24);
+  height: 0;
+  border-radius: 0;
+  background: transparent;
+  border-top: var(--border-width-2) solid var(--data-visual-mark);
+}
+
+.mw-data-visual__legend-dot--dash {
+  border-top-style: dashed;
+}
+
+.mw-data-visual__legend-dot--dot {
+  border-top-style: dotted;
+}
+
+.mw-data-visual__legend-dot--dashdot {
+  border-top: 0;
+  height: var(--border-width-2);
+  background: repeating-linear-gradient(
+    to right,
+    var(--data-visual-mark) 0,
+    var(--data-visual-mark) 10px,
+    transparent 10px,
+    transparent 14px,
+    var(--data-visual-mark) 14px,
+    var(--data-visual-mark) 15px,
+    transparent 15px,
+    transparent 19px
+  );
+}
+
+.mw-data-visual__legend-dot--square {
+  border-radius: var(--radius-2);
+}
+
+.mw-data-visual__legend-dot--diamond {
+  border-radius: var(--radius-2);
+  transform: rotate(45deg);
+}
+
+/* 직접 라벨: 선 끝이나 막대 위에 계열 이름과 값을 바로 적어요. 위치는 --data-visual-label-x · -y(%)로 넘겨요 */
+.mw-data-visual__direct-label {
+  position: absolute;
+  left: var(--data-visual-label-x);
+  bottom: var(--data-visual-label-y);
+  z-index: 2;
+  max-width: 40%;
+  margin: 0 0 var(--space-4) calc(var(--space-4) * -1);
+  color: var(--text-primary);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-default-148);
+  white-space: nowrap;
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.mw-data-visual__direct-label::before {
+  content: "";
+  display: inline-block;
+  width: var(--space-8);
+  height: var(--border-width-2);
+  margin-right: var(--space-4);
+  vertical-align: middle;
+  background: var(--data-visual-mark);
+}
+
+/* ── 차트 · 표 전환 ──
+   차트와 표는 한 화면에 같이 놓지 않고 하나만 보여요. 제목 줄 오른쪽의 Select Button 두 개(차트 · 표)로 바꿔요.
+   기본은 차트예요. 표를 고르면 차트와 범례가 숨고 같은 값의 표(mw-data-visual__table)가 나와요.
+   라디오(name은 차트마다 달라요)가 상태를 쥐고 있어서 스크립트 없이도 바뀌고, 앱은 값을 저장해 기억할 수 있어요. */
+
+.mw-data-visual .mw-data-visual__view {
+  display: inline-grid;
+  flex: none;
+  grid-auto-columns: auto;
+  width: auto;
+  margin-left: auto;
+}
+
+.mw-data-visual .mw-data-visual__view .mw-select-button {
+  width: auto;
+  min-height: var(--size-48);
+  padding: var(--space-8) var(--space-16);
+}
+
+.mw-data-visual .mw-data-visual__table {
+  display: none;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.mw-data-visual:has(.mw-data-visual__view input[value="table"]:checked) .mw-data-visual__chart,
+.mw-data-visual:has(.mw-data-visual__view input[value="table"]:checked) .mw-data-visual__legend {
+  display: none;
+}
+
+.mw-data-visual:has(.mw-data-visual__view input[value="table"]:checked) .mw-data-visual__table.mw-data-visual__table {
+  display: block;
 }
 
 /* ── DatePicker ── */
@@ -15372,11 +15553,12 @@
 /* ── 밀기 줄 */
 /* --mw-swipe-bg: 줄의 바탕(행동 줄을 가려요). 줄의 바탕이 다르면 줄에 이 값을 줘요. --mw-swipe-p: 드러난 정도(touch 손짓이 적어요) */
 .mw-swipe { --mw-swipe-bg: var(--surface-primary); --mw-swipe-p: 0; position: relative; display: block; overflow: hidden; list-style: none; }
-.mw-swipe__body { position: relative; z-index: 1; display: flex; align-items: center; gap: var(--space-8); background: var(--mw-swipe-bg); }
+.mw-swipe__body { position: relative; z-index: 1; display: flex; align-items: center; gap: var(--space-12); background: var(--mw-swipe-bg); }
 .mw-swipe__body > :first-child { flex: 1; min-width: 0; }
 .mw-swipe[data-swipe-left] > .mw-swipe__body,
 .mw-swipe[data-swipe-right] > .mw-swipe__body { touch-action: pan-y pinch-zoom; }
 .mw-swipe--moving > .mw-swipe__body { -webkit-user-select: none; user-select: none; }
+/* 줄과 ⋯ 버튼 사이는 12px예요. 8px로 두면 점검이 7.7px로 재서 누르는 것 사이의 틈에 걸려요(Calendar UX-1221) */
 /* ⋯ 버튼은 카드 전체를 덮는 링크(mw-item-tile__link)보다 위에 있어요 */
 .mw-swipe__more { z-index: 2; flex: none; margin-inline-end: var(--space-4); }
 
@@ -16732,6 +16914,149 @@
 .mw-pagination__page--selected[aria-disabled="true"] {
   background-color: var(--fill-primary-disabled);
   color: var(--text-disabled);
+}
+
+/* ── Pending ── */
+/* Pending — Moonwave UX extra component */
+
+/* 구조: 버튼을 눌렀는데 결과가 바로 나오지 않을 때(로컬 모델이 답을 만드는 5~25초, 모델을 처음 깨우면 거기에 10~20초 더)
+   화면이 멈춘 것처럼 보이지 않게 해요(patterns/long-wait).
+   1. 누른 버튼(mw-button[aria-busy="true"]): 0.1초 안에 앞에 도는 고리가 붙고 레이블이 `~하는 중이에요`로 바뀌어요.
+   2. 진행 칸(mw-pending): 1초가 지나면 결과가 나올 자리에 나와요. 제목(무엇을 하는지) · 지금 단계 · 막대 · 시간 · 취소.
+   막대는 몇 퍼센트인지 알 때만 값을 말해요(--pending-value). 모르면 흐르는 막대(--indeterminate)고, 지어낸 퍼센트는 쓰지 않아요.
+   움직임을 줄인 기기에서는 고리와 막대가 멈추고 글(`12초째`)이 진행을 말해요. */
+
+.mw-pending {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  box-sizing: border-box;
+  padding: var(--space-16);
+  border: var(--border-width-1) solid var(--border-secondary);
+  border-radius: var(--radius-16);
+  background: var(--surface-primary);
+  color: var(--text-primary);
+}
+
+.mw-pending__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.mw-pending__ring {
+  flex: none;
+  box-sizing: border-box;
+  width: var(--size-24);
+  height: var(--size-24);
+  border: var(--border-width-2) solid var(--border-secondary);
+  border-top-color: var(--fill-accent-primary-default);
+  border-radius: var(--radius-circle);
+}
+
+.mw-pending__title {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-default-148);
+  letter-spacing: -0.02em;
+}
+
+.mw-pending__step {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+  line-height: var(--line-height-default-148);
+}
+
+.mw-pending__bar {
+  --pending-value: 0%;
+  position: relative;
+  height: var(--space-6);
+  overflow: hidden;
+  border-radius: var(--radius-circle);
+  background: var(--background-secondary);
+}
+
+.mw-pending__bar > i {
+  display: block;
+  width: var(--pending-value);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--fill-accent-primary-default);
+  transition: width var(--motion-duration-medium) var(--motion-easing-ease-out);
+}
+
+.mw-pending__bar--indeterminate > i {
+  width: 40%;
+}
+
+.mw-pending__time {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+  font-variant-numeric: tabular-nums;
+}
+
+.mw-pending__note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-height-default-148);
+}
+
+.mw-pending__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mw-pending--error {
+  border-color: var(--mw-critical);
+}
+
+.mw-pending--error .mw-pending__title {
+  color: var(--mw-critical);
+}
+
+/* 누른 버튼: 고리가 앞에 붙고, 다시 눌러도 일을 두 번 시키지 않아요(눌림은 막되 포커스는 그대로예요) */
+.mw-button[aria-busy="true"] {
+  pointer-events: none;
+}
+
+.mw-button[aria-busy="true"]::before {
+  content: "";
+  flex: none;
+  box-sizing: border-box;
+  width: var(--size-16);
+  height: var(--size-16);
+  margin-inline-end: var(--space-8);
+  border: var(--border-width-2) solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-circle);
+}
+
+@keyframes mw-pending-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mw-pending__ring,
+  .mw-button[aria-busy="true"]::before {
+    animation: mw-turn 0.8s linear infinite;
+  }
+
+  .mw-pending__bar--indeterminate > i {
+    animation: mw-pending-slide 1.4s ease-in-out infinite;
+  }
+}
+
+[data-mw-motion='reduce'] .mw-pending__ring,
+[data-mw-motion='reduce'] .mw-button[aria-busy="true"]::before,
+[data-mw-motion='reduce'] .mw-pending__bar--indeterminate > i {
+  animation: none;
 }
 
 /* ── ProcessIndicator ── */
@@ -20158,6 +20483,264 @@
 .mw-view-switch { flex: none; }
 .mw-view-switch .mw-select-chip > svg { flex: none; }
 
+/* ── StatStrip ── */
+/* Stat Strip — Moonwave UX extra component */
+
+/* 구조: 줄(mw-stat-strip) > 칸(__item) > 아이콘(__icon) + 몸(__body: 숫자 줄 __value + 이름 __label).
+   페이지 맨 위에 가장 중요한 숫자 서너 개를 한 줄로 놓아요. 숫자 옆에는 증감 배지(mw-delta mw-delta--badge)가 와요.
+   배지는 ▲▼와 부호, 비교 대상을 글로 말하고 색은 거들 뿐이에요. 칸은 누르는 곳이 아니에요(누르면 통계 타일 mw-stat). */
+
+.mw-stat-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16) var(--space-32);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mw-stat-strip__item {
+  display: flex;
+  flex: 1 1 calc(var(--size-48) * 4);
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.mw-stat-strip__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-48);
+  height: var(--size-48);
+  border-radius: var(--radius-circle);
+  background: var(--background-secondary);
+  color: var(--icon-secondary);
+}
+
+.mw-stat-strip__icon svg {
+  width: var(--size-20);
+  height: var(--size-20);
+}
+
+.mw-stat-strip__body {
+  min-width: 0;
+}
+
+.mw-stat-strip__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-8);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-24);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-default-148);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mw-stat-strip__value small {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mw-stat-strip__label {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-height-default-148);
+}
+
+@media (max-width: 600px) {
+  .mw-stat-strip {
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .mw-stat-strip__item {
+    flex: none;
+  }
+}
+
+/* ── Steps ── */
+/* Steps — Moonwave UX extra component */
+
+/* 구조: 목록(ol.mw-steps) > 단계(li.mw-steps__item) > 표식(__marker) + 글(__text: 이름 __label + 상태 __state).
+   단계가 몇 개고 지금 어디인지 보여 줘요. 단계마다 상태를 글(완료 · 지금 · 다음)로도 말하고,
+   표식 모양도 달라요(완료는 체크, 지금은 굵은 고리와 숫자, 다음은 얇은 고리와 숫자, 막힘은 느낌표).
+   지금 단계에는 aria-current="step"을 붙여요. 너비가 601px 이상이면 가로(표식 아래에 글)로, 그 아래는 세로(표식 옆에 글)로 놓여요. */
+
+.mw-steps {
+  --steps-marker: var(--size-32);
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: mw-step;
+}
+
+.mw-steps__item {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  min-width: 0;
+  counter-increment: mw-step;
+}
+
+/* 잇는 선: 이 단계 표식 뒤에서 다음 단계 표식까지. 끝낸 단계 뒤는 실선, 아직은 점선이에요 */
+.mw-steps__item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--steps-marker) / 2);
+  left: calc(var(--steps-marker) + var(--space-8));
+  right: var(--space-8);
+  border-top: var(--border-width-2) dashed var(--border-primary);
+}
+
+.mw-steps__item--done:not(:last-child)::after {
+  border-top-style: solid;
+  border-top-color: var(--fill-accent-primary-default);
+}
+
+.mw-steps__marker {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--steps-marker);
+  height: var(--steps-marker);
+  box-sizing: border-box;
+  border: var(--border-width-1) solid var(--border-primary);
+  border-radius: var(--radius-circle);
+  background: var(--surface-primary);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.mw-steps__marker::before {
+  content: counter(mw-step);
+}
+
+.mw-steps__marker svg {
+  width: var(--size-16);
+  height: var(--size-16);
+}
+
+.mw-steps__marker svg + * {
+  display: none;
+}
+
+/* 표식 안에 아이콘(svg)을 넣으면 숫자는 숨겨요 */
+.mw-steps__marker:has(svg)::before,
+.mw-steps__marker:has(b)::before {
+  content: none;
+}
+
+.mw-steps__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-right: var(--space-8);
+}
+
+.mw-steps__label {
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-default-148);
+}
+
+.mw-steps__state {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-height-default-148);
+}
+
+.mw-steps__item--done .mw-steps__marker {
+  border-color: var(--fill-accent-primary-default);
+  background: var(--fill-accent-primary-default);
+  color: var(--static-white);
+}
+
+.mw-steps__item--todo .mw-steps__label {
+  color: var(--text-tertiary);
+}
+
+.mw-steps__item--current .mw-steps__marker {
+  border: var(--border-width-2) solid var(--fill-accent-primary-default);
+  color: var(--text-accent-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.mw-steps__item--current .mw-steps__label {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.mw-steps__item--current .mw-steps__state {
+  color: var(--text-accent-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mw-steps__item--error .mw-steps__marker {
+  border: var(--border-width-2) solid var(--mw-critical);
+  color: var(--mw-critical);
+}
+
+.mw-steps__item--error .mw-steps__state {
+  color: var(--mw-critical);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 좁은 화면: 세로로 놓고 선도 아래로 내려가요 */
+@media (max-width: 600px) {
+  .mw-steps {
+    flex-direction: column;
+  }
+
+  .mw-steps__item {
+    flex: none;
+    flex-direction: row;
+    padding-bottom: var(--space-16);
+  }
+
+  .mw-steps__item:last-child {
+    padding-bottom: 0;
+  }
+
+  .mw-steps__item:not(:last-child)::after {
+    top: var(--steps-marker);
+    right: auto;
+    bottom: 0;
+    left: calc(var(--steps-marker) / 2 - var(--border-width-1));
+    border-top: 0;
+    border-left: var(--border-width-2) dashed var(--border-primary);
+  }
+
+  .mw-steps__item--done:not(:last-child)::after {
+    border-left-style: solid;
+    border-left-color: var(--fill-accent-primary-default);
+  }
+}
+
+/* 위에 한 줄 요약: "3단계 중 2단계" */
+.mw-steps__summary {
+  margin: 0 0 var(--space-12);
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Table ── */
 /* Table — Moonwave UX extra component */
 
@@ -20624,6 +21207,10 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-delta--flat { color: var(--mw-flat); }
 .mw-delta--gain::before { content: '▲ '; font-size: 0.72em; vertical-align: 0.08em; }
 .mw-delta--loss::before { content: '▼ '; font-size: 0.72em; vertical-align: 0.08em; }
+/* 배지 모양: 숫자 옆에 알약으로 놓아요. ▲▼와 부호는 그대로고, 색은 글자와 옅은 바탕에만 써요 */
+.mw-delta--badge { display: inline-flex; align-items: center; padding: var(--space-2) var(--space-8); border-radius: var(--radius-circle); background: var(--background-secondary); font-size: var(--font-size-13); line-height: var(--line-height-default-148); }
+.mw-delta--badge.mw-delta--gain { background: color-mix(in srgb, var(--mw-gain) 12%, transparent); }
+.mw-delta--badge.mw-delta--loss { background: color-mix(in srgb, var(--mw-loss) 12%, transparent); }
 
 /* ── 상태 ── */
 .mw-state { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-size-13); font-weight: var(--font-weight-semibold); white-space: nowrap; color: var(--text-tertiary); }
