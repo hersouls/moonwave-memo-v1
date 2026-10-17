@@ -32,6 +32,8 @@
 /* 키트의 시트(더보기 · 메모 목록 메뉴): 손잡이는 시트를 닫는 버튼이라 누르는 상자를 44px로 둬요(키트의 것은 21px이에요).
    ::before로 영역만 넓히면 첫 줄 위에 겹치니 상자 자체를 키워요. 항목의 아이콘은 정해진 일곱 크기 가운데 24px이에요(키트의 것은 22px). */
 button.mw-sheet__grab { min-height: var(--mw-touch); }
+/* 시트 안의 누르는 줄 사이는 8px 이상이에요(키트의 것은 4px이에요). */
+.mw-sheet__body { gap: var(--space-8); }
 .mw-sheet__icon svg { width: var(--size-24); height: var(--size-24); }
 
 /* 여러 줄로 감싸는 칩 묶음(설정의 테마 · 글자 크기 · AI 선택): 줄 사이를 12px 띄워요.
