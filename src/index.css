@@ -402,17 +402,6 @@ body {
   overflow: hidden;
 }
 
-/* Wiggle animation for swipe onboarding hint */
-@keyframes wiggle {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
-}
-
-.animate-wiggle {
-  animation: wiggle var(--motion-duration-long) var(--motion-easing-ease-in-out) 4;
-}
-
 /* Page enter transition — View Transitions 미지원 브라우저 전용 폴백.
    지원 브라우저는 navigateWithTransition의 VT 크로스페이드가 페이지 전환을 소유한다 (App.tsx). */
 @keyframes pageEnter {
