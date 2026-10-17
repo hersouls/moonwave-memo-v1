@@ -105,3 +105,14 @@ button.mw-sheet__grab { min-height: var(--mw-touch); }
 /* 관계 그래프의 노드(SVG 그룹): 초점 표시는 상자 테두리 대신 원의 선을 굵게 해요. */
 .memo-graph-node { outline: 0; }
 .memo-graph-node:focus-visible > circle { stroke-width: 3; }
+
+/* 스위치(48 × 28px): 보이는 크기는 그대로 두고 누르는 영역만 44px로 넓혀요(accessibility › 누르는 영역). */
+.mw-switch::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, var(--mw-touch));
+  height: var(--mw-touch);
+  transform: translate(-50%, -50%);
+}
