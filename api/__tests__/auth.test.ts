@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { SignJWT, base64url, errors, type JWTVerifyGetKey } from 'jose'
 import type { VercelRequest } from '@vercel/node'
-import { AuthError, allowedUids, bearerToken, verifyFirebaseIdToken, type AuthFailure } from '../lib/auth.js'
+import { AuthError, allowedUids, bearerToken, verifyFirebaseIdToken, type AuthFailure } from '../_lib/auth.js'
 import { GOOGLE_JWKS_URL, makeKeys, mintToken, type TestKeys } from './firebaseTokens.js'
 
 let keys: TestKeys
@@ -98,7 +98,7 @@ describe('verifyFirebaseIdToken (default remote Google JWKS)', () => {
     vi.resetModules()
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(keys.jwks), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
-    const auth = await import('../lib/auth.js')
+    const auth = await import('../_lib/auth.js')
 
     await expect(auth.verifyFirebaseIdToken(await mintToken(keys, { sub: 'remote-user' }))).resolves.toMatchObject({ uid: 'remote-user' })
     await expect(auth.verifyFirebaseIdToken(await mintToken(keys))).resolves.toMatchObject({ uid: 'user-1' })
@@ -111,7 +111,7 @@ describe('verifyFirebaseIdToken (default remote Google JWKS)', () => {
     vi.resetModules()
     vi.spyOn(console, 'error').mockImplementation(() => {})
     vi.stubGlobal('fetch', vi.fn(async () => new Response('oops', { status: 500 })))
-    const auth = await import('../lib/auth.js')
+    const auth = await import('../_lib/auth.js')
     const err = await auth.verifyFirebaseIdToken(await mintToken(keys)).catch((e: unknown) => e)
     expect(err).toBeInstanceOf(auth.AuthError)
     expect((err as InstanceType<typeof auth.AuthError>).reason).toBe('auth_unavailable')

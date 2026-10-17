@@ -1,7 +1,7 @@
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
-import { createChatModel, type Provider } from '../lib/models.js'
-import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
-import { POLICIES } from '../lib/guard.js'
+import { createChatModel, type Provider } from '../_lib/models.js'
+import { resolveApiKey, createHandler, errorResponse } from '../_lib/tools.js'
+import { POLICIES } from '../_lib/guard.js'
 
 export default createHandler(POLICIES.classify, async (req, res) => {
   const { content, folderNames = [], provider = 'openai', userApiKey } = req.body || {}

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyCors } from './lib/cors.js'
-import { guardAiRequest, POLICIES } from './lib/guard.js'
-import { providerError, sendUpstreamError } from './lib/upstream.js'
+import { applyCors } from './_lib/cors.js'
+import { guardAiRequest, POLICIES } from './_lib/guard.js'
+import { providerError, sendUpstreamError } from './_lib/upstream.js'
 
 const MODELS = {
   openai: 'gpt-4.1-nano',

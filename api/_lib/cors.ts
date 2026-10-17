@@ -5,7 +5,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
  * (capacitor://localhost on iOS). Web/Electron load the hosted site and stay
  * same-origin, so no other origins are allowed. These endpoints are publicly
  * reachable either way — CORS here only lets the APK's in-browser fetch read
- * responses; it is not an authentication layer (that is api/lib/auth.ts, which
+ * responses; it is not an authentication layer (that is api/_lib/auth.ts, which
  * needs the `Authorization` request header allowed below).
  */
 const ALLOWED_ORIGINS = ['https://localhost', 'capacitor://localhost'] as const

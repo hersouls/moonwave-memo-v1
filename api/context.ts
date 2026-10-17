@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyCors } from './lib/cors.js'
-import { rateLimiter } from './lib/rateLimit.js'
+import { applyCors } from './_lib/cors.js'
+import { rateLimiter } from './_lib/rateLimit.js'
 
 /**
  * Where the caller roughly is and what the weather is there: what a memo's context record

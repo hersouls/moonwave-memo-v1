@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyCors } from './lib/cors.js'
-import { guardAiRequest, POLICIES } from './lib/guard.js'
-import { providerError, sendUpstreamError } from './lib/upstream.js'
+import { applyCors } from './_lib/cors.js'
+import { guardAiRequest, POLICIES } from './_lib/guard.js'
+import { providerError, sendUpstreamError } from './_lib/upstream.js'
 
 // NOTE: `api.bodyParser.sizeLimit` is a Next.js pages/api convention and is IGNORED by
 // @vercel/node functions — Vercel enforces a hard ~4.5MB request-body limit regardless.

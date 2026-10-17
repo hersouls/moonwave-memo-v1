@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import context, { clearWeatherMemory } from '../context.js'
-import { rateLimiter } from '../lib/rateLimit.js'
+import { rateLimiter } from '../_lib/rateLimit.js'
 import { callHandler } from './harness.js'
 
 const SEOUL = { 'x-vercel-ip-latitude': '37.5665', 'x-vercel-ip-longitude': '126.9780', 'x-real-ip': '203.0.113.7' }

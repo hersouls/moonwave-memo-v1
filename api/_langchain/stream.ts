@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
-import { createChatModel, type Provider } from '../lib/models.js'
-import { resolveApiKey } from '../lib/tools.js'
-import { ensureTracing } from '../lib/tracing.js'
-import { applyCors } from '../lib/cors.js'
-import { guardAiRequest, POLICIES } from '../lib/guard.js'
-import { GENERIC_AI_ERROR, logUpstreamError } from '../lib/upstream.js'
+import { createChatModel, type Provider } from '../_lib/models.js'
+import { resolveApiKey } from '../_lib/tools.js'
+import { ensureTracing } from '../_lib/tracing.js'
+import { applyCors } from '../_lib/cors.js'
+import { guardAiRequest, POLICIES } from '../_lib/guard.js'
+import { GENERIC_AI_ERROR, logUpstreamError } from '../_lib/upstream.js'
 
 const PROMPTS: Record<string, string> = {
   readability: `You are a readability enhancement assistant for a memo app. Reformat the given memo content to improve readability using Markdown formatting. Rules:

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createEmbeddingModel } from '../lib/models.js'
-import { resolveApiKey, createHandler, errorResponse } from '../lib/tools.js'
-import { POLICIES } from '../lib/guard.js'
+import { createEmbeddingModel } from '../_lib/models.js'
+import { resolveApiKey, createHandler, errorResponse } from '../_lib/tools.js'
+import { POLICIES } from '../_lib/guard.js'
 
 // ─── LangChain Embedding Endpoint ───────────────────
 

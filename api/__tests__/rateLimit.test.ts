@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { SlidingWindowLimiter } from '../lib/rateLimit.js'
-import { measureInput } from '../lib/guard.js'
+import { SlidingWindowLimiter } from '../_lib/rateLimit.js'
+import { measureInput } from '../_lib/guard.js'
 
 const MIN = 60_000
 

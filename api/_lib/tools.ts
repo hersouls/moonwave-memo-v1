@@ -42,7 +42,7 @@ type HandlerFn = (req: VercelRequest, res: VercelResponse) => Promise<void | Ver
 
 /**
  * Wrap a LangChain route: CORS → POST only → guardAiRequest (Firebase ID token, input
- * shape/size caps, per-uid rate limit — see api/lib/guard.ts) → handler. The policy is
+ * shape/size caps, per-uid rate limit — see api/_lib/guard.ts) → handler. The policy is
  * required so no paid route can be added without the gate.
  */
 export function createHandler(policy: RoutePolicy, fn: HandlerFn) {

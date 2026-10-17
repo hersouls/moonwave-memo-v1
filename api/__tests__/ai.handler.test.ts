@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from '../ai.js'
-import { rateLimiter } from '../lib/rateLimit.js'
+import { rateLimiter } from '../_lib/rateLimit.js'
 import { GOOGLE_JWKS_URL, makeKeys, mintToken, type TestKeys } from './firebaseTokens.js'
 import { callHandler } from './harness.js'
 

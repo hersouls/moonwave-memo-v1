@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyCors } from '../lib/cors.js'
+import { applyCors } from '../_lib/cors.js'
 import { fakeRes } from './harness.js'
 
 function run(method: string, origin?: unknown) {

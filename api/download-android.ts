@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyCors } from './lib/cors.js'
+import { applyCors } from './_lib/cors.js'
 
 /**
  * Download of the Android app: the signed APK on the rolling GitHub release "android".
