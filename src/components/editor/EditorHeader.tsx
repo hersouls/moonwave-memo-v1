@@ -6,6 +6,8 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
 import type { EditorMode } from '@/lib/types'
 import { useCloseRequest } from '@/mw/close'
+import { Sheet } from '@/mw/Sheet'
+import type { IconType } from '@/components/ui/iconType'
 import { driveReceiveUrl, localDay, seal, withoutTitleHeading } from '@/lib/handoff'
 import { ShareCardModal } from './ShareCardModal'
 import { ShareLinkModal } from './ShareLinkModal'
@@ -30,8 +32,9 @@ interface EditorHeaderProps {
 
 export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, tags, isPinned, heading }: EditorHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  // 메뉴는 Esc와 폰의 뒤로 가기로도 닫혀요
-  useCloseRequest(isMenuOpen, () => setIsMenuOpen(false))
+  const isDesktop = useUIStore((s) => s.isDesktop)
+  // 메뉴는 Esc와 폰의 뒤로 가기로도 닫혀요(폰의 시트는 키트가 직접 닫아요)
+  useCloseRequest(isMenuOpen && isDesktop, () => setIsMenuOpen(false))
   const [showShareCard, setShowShareCard] = useState(false)
   const [showShareLink, setShowShareLink] = useState(false)
   const softDelete = useMemoStore((s) => s.softDelete)
@@ -41,7 +44,6 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
   const editorMode = useSettingsStore((s) => s.settings.memoSettings.editorMode)
   const setEditorMode = useSettingsStore((s) => s.setEditorMode)
   const navigate = useNavigate()
-  const isDesktop = useUIStore((s) => s.isDesktop)
   const isMdUp = isDesktop
   // Mode toggle is tier-aware: split needs desktop width, so tablet cycles tabs↔WYSIWYG only.
   const editorModeCycle: EditorMode[] = isDesktop ? ['tabs', 'split', 'tiptap'] : ['tabs', 'tiptap']
@@ -153,6 +155,21 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
     URL.revokeObjectURL(url)
     setIsMenuOpen(false)
   }
+
+  const menuItems: { key: string; label: string; Icon: IconType; onSelect: () => void; danger?: boolean }[] = [
+    { key: 'focus', label: '집중 모드', Icon: IcLineExpand, onSelect: () => { toggleFocusMode(); setIsMenuOpen(false) } },
+    // UX-19: Pin/unpin toggle
+    ...(memoId ? [{ key: 'pin', label: isPinned ? '고정 해제' : '상단 고정', Icon: IcLinePin, onSelect: handleTogglePin }] : []),
+    ...(memoId && onOpenVersionHistory ? [{ key: 'history', label: '버전 기록', Icon: IcMwHistory, onSelect: () => { onOpenVersionHistory(); setIsMenuOpen(false) } }] : []),
+    { key: 'move', label: '폴더 이동', Icon: IcLineFolder, onSelect: handleMove },
+    { key: 'share', label: '공유', Icon: IcLineShare, onSelect: handleShare },
+    { key: 'card', label: '카드로 공유', Icon: IcLineGallery, onSelect: () => { setShowShareCard(true); setIsMenuOpen(false) } },
+    { key: 'link', label: '링크로 공유', Icon: IcMwCode, onSelect: () => { setShowShareLink(true); setIsMenuOpen(false) } },
+    { key: 'plain', label: '서식 없이 복사', Icon: IcLineDuplicate, onSelect: () => copyAll(true) },
+    { key: 'md', label: '마크다운 내보내기', Icon: IcLineDownload, onSelect: handleExportMarkdown },
+    { key: 'drive', label: 'Drive로 보내기', Icon: IcMwDrive, onSelect: handleSendToDrive },
+    { key: 'delete', label: '지우기', Icon: IcLineTrash, onSelect: handleDelete, danger: true },
+  ]
 
   return (
     // 페이지 머리: 화면 제목(h1)과 행동. 편집기가 스크롤돼도 머리는 위에 남아요. bg-zinc-50은 앱 바탕과 같아요.
@@ -280,109 +297,44 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
             <IcLineMore size={20} className="text-zinc-700 dark:text-zinc-300" />
           </button>
 
-          {isMenuOpen && (
+          {/* 넓은 화면은 버튼 아래에 뜨는 메뉴, 폰은 키트의 시트예요: 항목이 열한 개라 글자를 키운 폰에서는 떠 있는 메뉴가 화면 밖으로 나가요 */}
+          {isMenuOpen && isDesktop && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setIsMenuOpen(false)} />
               {/* A11Y-06: role="menu" + role="menuitem" */}
               <div className="ctx-menu absolute right-0 top-full mt-1 z-30 min-w-[170px]" role="menu">
-                <button
-                  onClick={() => { toggleFocusMode(); setIsMenuOpen(false) }}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcLineExpand size={16} />
-                  집중 모드
-                </button>
-                {/* UX-19: Pin/unpin toggle */}
-                {memoId && (
+                {menuItems.map(({ key, label, Icon, onSelect, danger }) => (
                   <button
-                    onClick={handleTogglePin}
-                    className="ctx-menu__item w-full"
+                    key={key}
+                    onClick={onSelect}
+                    className={danger ? 'ctx-menu__item ctx-menu__item--danger w-full' : 'ctx-menu__item w-full'}
                     role="menuitem"
                   >
-                    <IcLinePin size={16} />
-                    {isPinned ? '고정 해제' : '상단 고정'}
+                    <Icon size={16} />
+                    {label}
                   </button>
-                )}
-                {memoId && onOpenVersionHistory && (
-                  <button
-                    onClick={() => { onOpenVersionHistory(); setIsMenuOpen(false) }}
-                    className="ctx-menu__item w-full"
-                    role="menuitem"
-                  >
-                    <IcMwHistory size={16} />
-                    버전 기록
-                  </button>
-                )}
-                <button
-                  onClick={handleMove}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcLineFolder size={16} />
-                  폴더 이동
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcLineShare size={16} />
-                  공유
-                </button>
-                <button
-                  onClick={() => { setShowShareCard(true); setIsMenuOpen(false) }}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcLineGallery size={16} />
-                  카드로 공유
-                </button>
-                <button
-                  onClick={() => { setShowShareLink(true); setIsMenuOpen(false) }}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcMwCode size={16} />
-                  링크로 공유
-                </button>
-                <button
-                  onClick={() => copyAll(true)}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcLineDuplicate size={16} />
-                  서식 없이 복사
-                </button>
-                <button
-                  onClick={handleExportMarkdown}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcLineDownload size={16} />
-                  마크다운 내보내기
-                </button>
-                <button
-                  onClick={handleSendToDrive}
-                  className="ctx-menu__item w-full"
-                  role="menuitem"
-                >
-                  <IcMwDrive size={16} />
-                  Drive로 보내기
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="ctx-menu__item ctx-menu__item--danger w-full"
-                  role="menuitem"
-                >
-                  <IcLineTrash size={16} />
-                  지우기
-                </button>
+                ))}
               </div>
             </>
           )}
         </div>
       </div>
+      {!isDesktop && (
+        <Sheet open={isMenuOpen} onClose={() => setIsMenuOpen(false)} label="메모 메뉴">
+          <div className="mw-sheet__body">
+            {menuItems.map(({ key, label, Icon, onSelect, danger }) => (
+              <button
+                key={key}
+                type="button"
+                className={danger ? 'mw-sheet__item mw-sheet__item--danger' : 'mw-sheet__item'}
+                onClick={onSelect}
+              >
+                <span className="mw-sheet__icon"><Icon size={24} /></span><span><b>{label}</b></span>
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
       {showShareCard && (
         <ShareCardModal
           isOpen={showShareCard}
