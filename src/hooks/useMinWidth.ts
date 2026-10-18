@@ -1,22 +1,19 @@
 import { useEffect, useState } from 'react'
-import type { RefObject } from 'react'
 
 /**
- * 요소가 `min`px 이상으로 넓은지 알려 줘요. 화면이 아니라 그 요소가 놓인 자리의 너비를 봐요:
- * 편집기는 화면 전체에 놓일 때도, 목록 옆의 칸에 놓일 때도 있어서 화면 너비로는 알 수 없어요.
- * 너비는 Moonwave UX가 정한 넷(380 · 600 · 900 · 1280) 가운데에서 골라요.
+ * 화면(창)이 `min`px 이상으로 넓은지 알려 줘요. 편집기가 놓인 자리의 너비가 아니라 화면을 봐요:
+ * 정보 서랍이 열리면 서랍이 편집기를 옆으로 밀어서 자리가 줄어드는데, 그 너비를 따라 서랍을 여닫으면 열렸다 닫혔다 해요.
  */
-export function useMinWidth(ref: RefObject<HTMLElement | null>, min: number): boolean {
-  const [wide, setWide] = useState(false)
+export function useViewportMin(min: number): boolean {
+  const query = `(min-width: ${min}px)`
+  const [wide, setWide] = useState(() => window.matchMedia(query).matches)
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const read = () => setWide(el.clientWidth >= min)
+    const mql = window.matchMedia(query)
+    const read = () => setWide(mql.matches)
     read()
-    const observer = new ResizeObserver(read)
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [ref, min])
+    mql.addEventListener('change', read)
+    return () => mql.removeEventListener('change', read)
+  }, [query])
   return wide
 }
 

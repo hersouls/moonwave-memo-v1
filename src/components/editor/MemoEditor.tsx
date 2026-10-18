@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useViewTransition } from '@/hooks/useViewTransition'
 import clsx from 'clsx'
@@ -17,7 +18,9 @@ const VersionHistory = lazy(() => import('./VersionHistory').then((m) => ({ defa
 const RelatedMemosPanel = lazy(() => import('./RelatedMemosPanel').then((m) => ({ default: m.RelatedMemosPanel })))
 import { TagInput } from './TagInput'
 import { EditorInspector } from './EditorInspector'
-import { useMinWidth, useSettled } from '@/hooks/useMinWidth'
+import { DetailDrawer } from '@/mw/DetailDrawer'
+import { Button } from '@/mw/Button'
+import { useViewportMin, useSettled } from '@/hooks/useMinWidth'
 import { TagEditModal } from './TagEditModal'
 import { FeatureHint } from '@/components/ui/FeatureHint'
 import { Spinner } from '@/components/ui/Spinner'
@@ -46,7 +49,7 @@ import { toggleChecklistItem, getChecklistStats } from '@/utils/checklistParser'
 import { getAllTemplates } from '@/utils/memoTemplates'
 import { buildRuleTitle, composeTitle, getCategoryLabel, resolveTitleDate } from '@/utils/memoTitle'
 import { isAIAvailable, summarizeTitleKeyword } from '@/services/aiFeatures'
-import { IcFillPlay, IcLineClose, IcLineDownload, IcLineExpand, IcLineLoading, IcLineMinus, IcLineRewrite, IcMwCheckSquare, IcMwCode, IcMwHistory, IcMwList, IcMwQuote, IcMwSpark, IcMwSparkles } from '@/mw/icons'
+import { IcFillPlay, IcLineClose, IcLineDownload, IcLineExpand, IcLineLoading, IcLineMinus, IcLineRewrite, IcMwCheckSquare, IcMwCode, IcMwHistory, IcMwList, IcMwQuote, IcMwSpark, IcMwSparkles, IcMwTag } from '@/mw/icons'
 import { FormatGlyph } from '@/components/editor/FormatGlyph'
 import { TextField } from '@/mw/TextField'
 import { TextArea } from '@/mw/TextArea'
@@ -148,10 +151,12 @@ export function MemoEditor() {
   const isTiptapRef = useRef(isTiptap)
   isTiptapRef.current = isTiptap
   const isSplit = editorMode === 'split' && isLg && !isFocusMode
-  // 편집기가 놓인 자리가 넓으면(900px부터, 나란히 보기에서는 1280px부터) 오른쪽에 정보 칸을 둬요
+  // 화면이 넓으면(사이드바 옆에 편집기가 900px 이상 놓이는 1150px부터, 나란히 보기에서는 1280px 이상 놓이는 1530px부터)
+  // 오른쪽에 정보 서랍(키트의 DetailDrawer)을 열 수 있어요.
+  // 1280px부터는 서랍이 편집기를 옆으로 밀고, 그보다 좁으면 위에 덮으므로 좁을 때는 닫아 둔 채 시작해요.
   const rootRef = useRef<HTMLDivElement>(null)
-  const isRoomy = useMinWidth(rootRef, isSplit ? 1280 : 900)
-  const [inspectorOpen, setInspectorOpen] = useState(true)
+  const isRoomy = useViewportMin(isSplit ? 1530 : 1150)
+  const [inspectorOpen, setInspectorOpen] = useState(() => window.matchMedia('(min-width: 1280px)').matches)
 
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
@@ -780,6 +785,10 @@ export function MemoEditor() {
   const readingTime = Math.max(1, Math.ceil(charCount / 400)) // Korean: ~400 chars/min
   const checklistStats = useMemo(() => getChecklistStats(body), [body])
   // 정보 칸: 자리가 넓고, 집중 모드가 아니고, 데미안 창이 그 자리를 쓰고 있지 않을 때
+  const drawerHost = document.querySelector<HTMLElement>('.mw-app-main')
+  // 서랍의 이전 · 다음: 지우지 않은 메모를 목록의 차례대로 넘겨요 (Ctrl+[ · Ctrl+]도 같아요)
+  const stepIds = useMemo(() => memos.filter((m) => !m.deletedAt).map((m) => m.id), [memos])
+  const stepIndex = memoId ? stepIds.indexOf(memoId) : -1
   const showInspector = isRoomy && inspectorOpen && !isFocusMode && !(showAlterEgo && alterEgoEnabled)
   // 도구 줄의 목차 버튼: 넓은 자리에서는 정보 칸(목차가 그 안에 있어요)을, 좁은 자리에서는 목차 칸을 여닫아요
   const toggleSidePanel = () => { if (isRoomy) setInspectorOpen((open) => !open); else setShowOutline((open) => !open) }
@@ -1147,9 +1156,18 @@ export function MemoEditor() {
           {/* AI Summary + Backlinks moved into previewContent and tiptap section above */}
         </div>
 
-        {/* 정보 칸 — 편집기 자리가 넓을 때 (분량 · 태그 · 목차 · 이어진 메모) */}
-        {showInspector && (
-          <EditorInspector
+        {/* 정보 서랍 — 편집기 자리가 넓을 때 (분량 · 태그 · 목차 · 이어진 메모). 서랍은 앱 셸의 오른쪽 패널이라 내용 영역 밖(.mw-app-main)에 그려요 */}
+        {isRoomy && !isFocusMode && drawerHost && createPortal(
+          <DetailDrawer
+            open={showInspector}
+            onClose={() => setInspectorOpen(false)}
+            title="메모 정보"
+            index={stepIndex >= 0 ? stepIndex : undefined}
+            total={stepIndex >= 0 ? stepIds.length : undefined}
+            onStep={(delta) => navigate(`/memo/${stepIds[stepIndex + delta]}`)}
+            footer={<Button variant="primary" size="medium" onClick={() => setIsTagEditOpen(true)}><IcMwTag size={20} />태그 편집</Button>}
+          >
+            <EditorInspector
             body={body}
             folder={currentFolder}
             tags={currentTags}
@@ -1158,7 +1176,6 @@ export function MemoEditor() {
             checklist={checklistStats}
             createdAt={memo?.createdAt}
             updatedAt={memo?.updatedAt}
-            onEditTags={() => setIsTagEditOpen(true)}
             onScrollToLine={handleOutlineScrollToLine}
             onScrollToHeadingIndex={isTiptap ? handleOutlineScrollToHeadingIndex : undefined}
           >
@@ -1170,7 +1187,9 @@ export function MemoEditor() {
                 </Suspense>
               </>
             )}
-          </EditorInspector>
+            </EditorInspector>
+          </DetailDrawer>,
+          drawerHost,
         )}
 
         {/* Outline panel — desktop only */}

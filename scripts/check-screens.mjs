@@ -203,18 +203,22 @@ try {
     if (used < 0.85) fail('목록', `카드가 내용 영역 너비의 ${Math.round(used * 100)}%만 써요 (옆이 비어 있어요)`)
     await overflow('목록')
 
-    // 메모를 열었을 때: 편집기와 그 옆 칸이 내용 영역을 채워요
+    // 메모를 열었을 때: 편집기가 내용 영역을 채워요 (정보 서랍은 키트의 오른쪽 패널이라 내용 영역을 밀어요)
     await go('/memo/' + firstId, 2800)
     const ed = await page.evaluate(() => {
       const rect = (el) => el?.getBoundingClientRect()
-      const box = rect(document.querySelector('.mw-textarea')), insp = rect(document.querySelector('.memo-inspector')), dialog = document.querySelector('[role="dialog"]:not([inert])')
+      const box = rect(document.querySelector('.mw-textarea')), insp = rect(document.querySelector('.memo-inspector')), dialog = document.querySelector('[role="dialog"]:not([inert]):not(.mw-app-panel)')
       return { box: box ? { left: box.left, right: box.right, width: box.width } : null, inspector: insp ? Math.round(insp.width) : 0, dialog: !!dialog }
     })
     if (ed.dialog) fail('편집기', '편집기가 가림막 위의 창으로 떠요 (내용 영역을 그대로 써야 해요)')
     if (!ed.box) fail('편집기', '내용 칸을 찾지 못했어요')
     else {
-      const filled = (ed.box.width + ed.inspector) / a.width
-      if (filled < 0.7) fail('편집기', `편집기와 그 옆 칸이 내용 영역 너비의 ${Math.round(filled * 100)}%만 써요`)
+      // 정보 서랍이 열려 있으면 서랍이 내용 영역을 옆으로 밀어요: 목록 화면이 아니라 편집기 화면의 내용 영역으로 재요
+      if (size.width >= 1280) await page.waitForSelector('.mw-app-panel--open', { timeout: 4000 }).catch(() => {})
+      await sleep(600)
+      const ea = await area()
+      const filled = ed.box.width / ea.width
+      if (filled < 0.7) fail('편집기', `편집기가 내용 영역 너비의 ${Math.round(filled * 100)}%만 써요`)
       if (size.width >= 1900 && !ed.inspector) fail('편집기', '넓은 화면인데 정보 칸(분량 · 태그 · 목차)이 없어요')
     }
     await overflow('편집기')
