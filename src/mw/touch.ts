@@ -266,7 +266,7 @@ export interface LongPressOptions {
  */
 export function longPress(node: HTMLElement, { onPress, ignore = OWN_DRAG }: LongPressOptions): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined
-  let id = -1, x0 = 0, y0 = 0, fired = 0
+  let id = -1, x0 = 0, y0 = 0, fired = -Infinity
   node.setAttribute('data-mw-press', '')
   const cancel = () => { clearTimeout(timer); timer = undefined; id = -1 }
   const down = (event: PointerEvent) => {
@@ -291,7 +291,7 @@ export function longPress(node: HTMLElement, { onPress, ignore = OWN_DRAG }: Lon
   }
   const up = (event: PointerEvent) => { if (event.pointerId === id) cancel() }
   const click = (event: MouseEvent) => {
-    if (performance.now() - fired < 800) { event.preventDefault(); event.stopImmediatePropagation(); fired = 0 }
+    if (performance.now() - fired < 800) { event.preventDefault(); event.stopImmediatePropagation(); fired = -Infinity }
   }
   const menu = (event: MouseEvent) => { if (timer || performance.now() - fired < 1000) event.preventDefault() }
   node.addEventListener('pointerdown', down, { passive: true })

@@ -6,7 +6,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useNavigate } from 'react-router-dom'
 import type { EditorMode } from '@/lib/types'
 import { useCloseRequest } from '@/mw/close'
-import { DRIVE_RECEIVE, localDay, seal, withoutTitleHeading } from '@/lib/handoff'
+import { driveReceiveUrl, localDay, seal, withoutTitleHeading } from '@/lib/handoff'
 import { ShareCardModal } from './ShareCardModal'
 import { ShareLinkModal } from './ShareLinkModal'
 import { IcLineCheck, IcLineChevronLeft, IcLineClose, IcLineDownload, IcLineDuplicate, IcLineExpand, IcLineFolder, IcLineGallery, IcLineMore, IcLinePin, IcLineShare, IcLineTextAdjust, IcLineTrash, IcMwCode, IcMwColumns, IcMwDrive, IcMwHistory, IcMwList, IcMwStar, IcMwStarFill } from '@/mw/icons'
@@ -127,7 +127,12 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
     const memo = memoId ? useMemoStore.getState().memos.find((m) => m.id === memoId) : undefined
     const text = name ? `# ${name}\n\n${withoutTitleHeading(body || '', name)}` : body || ''
     const { packed, cut } = await seal({ title: name, text, date: localDay(memo?.createdAt) })
-    window.open(DRIVE_RECEIVE + packed, '_blank', 'noopener')
+    const url = driveReceiveUrl(packed)
+    if (!url) {
+      useToastStore.getState().showToast('Drive가 쉬고 있어요. 잠시 뒤에 다시 보내 주세요', 'info')
+      return
+    }
+    window.open(url, '_blank', 'noopener')
     useToastStore.getState().showToast(
       cut ? 'Drive를 열었어요. 글이 길어서 앞부분만 보냈어요' : 'Drive를 열었어요. 거기서 저장을 눌러 주세요',
       'info',

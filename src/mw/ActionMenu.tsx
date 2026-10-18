@@ -26,6 +26,9 @@ export type ItemAction = {
   tone?: 'danger' | 'accent'
   /** 지금 할 수 없으면 참이에요. 메뉴에서 흐리게 보이고 밀기에는 놓이지 않아요. */
   disabled?: boolean
+  /** 다른 Moonwave 서비스의 화면으로 가는 줄이면 그 주소예요(OpenIn.tsx의 openInActions()가 채워요). 줄이 링크가 되어 새 탭에서
+      열리고, 밀기에는 놓이지 않아요. 주소를 직접 적지 않아요. */
+  href?: string
 }
 
 /** 자주 쓰는 다섯 행동이에요. 이름과 아이콘이 서비스마다 같아요. */
@@ -101,7 +104,12 @@ function MenuBody({ open, onClose, label, actions, at, anchor, preview, sheet }:
       <Sheet open={open} onClose={onClose} label={`${label} 메뉴`}>
         {preview && open && <div className="mw-peek">{preview}</div>}
         <div className="mw-sheet__body mw-action-sheet">
-          {actions.map((a) => (
+          {actions.map((a) => a.href && !a.disabled ? (
+            <a key={a.label} className="mw-sheet__item mw-open-in__row" href={a.href} target="_blank" rel="noopener noreferrer" onClick={() => run(a)}>
+              <span className="mw-sheet__icon"><a.icon size={24} /></span>
+              <span><b>{a.label}</b></span><span className="mw-sr-only">(새 탭)</span>
+            </a>
+          ) : (
             <button key={a.label} type="button" className={cx('mw-sheet__item', a.tone === 'danger' && 'mw-sheet__item--danger')} disabled={a.disabled} onClick={() => run(a)}>
               <span className="mw-sheet__icon"><a.icon size={24} /></span>
               <span><b>{a.label}</b></span>
@@ -157,7 +165,11 @@ function MenuPopover({ label, actions, at, anchor, onClose, onRun }: { label: st
   return (
     <div ref={box} id={id} className="mw-action-menu" role="menu" aria-label={`${label} 메뉴`} onKeyDown={keys}
       style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}>
-      {actions.map((a) => (
+      {actions.map((a) => a.href && !a.disabled ? (
+        <a key={a.label} role="menuitem" className="mw-action-menu__item mw-open-in__row" href={a.href} target="_blank" rel="noopener noreferrer" onClick={() => onRun(a)}>
+          <a.icon size={20} />{a.label}<span className="mw-sr-only">(새 탭)</span>
+        </a>
+      ) : (
         <button key={a.label} type="button" role="menuitem" className={cx('mw-action-menu__item', a.tone === 'danger' && 'mw-action-menu__item--danger')} disabled={a.disabled} onClick={() => onRun(a)}>
           <a.icon size={20} />{a.label}
         </button>

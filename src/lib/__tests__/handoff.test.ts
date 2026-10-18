@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { deflateRawSync } from 'node:zlib'
-import { DRIVE_RECEIVE, incomingRoute, localDay, open, packedFromDrive, seal, withoutTitleHeading } from '../handoff'
+import { driveReceiveUrl, incomingRoute, localDay, open, packedFromDrive, seal, withoutTitleHeading } from '../handoff'
 
 const base64Url = (buf: Buffer) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
@@ -51,7 +51,8 @@ describe('handoff — Memo와 Drive가 주고받는 봉투', () => {
     expect(packedFromDrive('#drive=abc_-123')).toBe('abc_-123')
     expect(packedFromDrive('#other=abc')).toBeNull()
     expect(packedFromDrive('')).toBeNull()
-    expect(DRIVE_RECEIVE).toBe('https://drive.moonwave.kr/#/receive/')
+    expect(driveReceiveUrl('abc_-123')).toBe('https://drive.moonwave.kr/#/receive/abc_-123')
+    expect(driveReceiveUrl('a'.repeat(5000))).toBe('https://drive.moonwave.kr/#/receive/' + 'a'.repeat(5000))
   })
 
   it('글 첫 줄의 제목이 메모 제목과 같을 때만 그 줄을 빼요', () => {

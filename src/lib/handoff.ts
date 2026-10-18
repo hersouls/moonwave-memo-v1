@@ -1,3 +1,5 @@
+import { openIn } from '@/mw/open-in'
+
 /**
  * Memo와 Drive가 글을 주고받는 봉투.
  *
@@ -15,8 +17,16 @@ export interface Handoff {
   cut?: boolean
 }
 
-/** Drive가 봉투를 받는 주소. 받은 메모는 Drive에서 사람이 저장을 눌러야 파일이 돼요. */
-export const DRIVE_RECEIVE = 'https://drive.moonwave.kr/#/receive/'
+/**
+ * Drive가 봉투를 받는 주소(키트의 열기 표). 받은 메모는 Drive에서 사람이 저장을 눌러야 파일이 돼요.
+ * 표의 값 모양은 2000자까지라 긴 봉투는 openIn()에 그대로 못 넘겨요. 표가 만든 주소에서 봉투 자리만 비워 이어 붙여요.
+ * Drive가 쉬고 있으면 null이에요.
+ */
+export function driveReceiveUrl(packed: string): string | null {
+  const stub = 'x'
+  const base = openIn('drive', 'receive', { packed: stub })
+  return base?.endsWith(stub) ? base.slice(0, -stub.length) + packed : null
+}
 /** Drive가 보낸 봉투가 실려 오는 # 뒤의 이름: `/share-target#drive=…`. */
 const FROM_DRIVE = '#drive='
 // 폰에서 다른 앱으로 넘길 수 있는 주소 길이 안쪽이에요.

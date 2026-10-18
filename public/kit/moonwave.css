@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.8.0 · all in one
+/*! Moonwave UX 1.9.0 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -3170,7 +3170,7 @@
   --mw-touch: 44px;
 
   /* 키트의 판: 서비스가 들고 있는 키트 사본이 지금 판인지 화면 점검이 이 값으로 알아요 */
-  --mw-kit: "1.8";
+  --mw-kit: "1.9";
 
   /* 정해진 자리의 값 — 공통 단계에 없고, 이름에 적힌 자리에만 써요 */
   --mw-font-size-11: 11px;
@@ -16714,6 +16714,18 @@
     transition: transform var(--motion-duration-medium) var(--motion-easing-ease-out);
   }
 }
+
+/* ── OpenIn ── */
+/* OpenIn — Moonwave UX extra component */
+/* 서비스 간 열기: 다른 Moonwave 서비스의 화면으로 가는 링크(OpenInLink)와 ⋯ 메뉴의 링크 줄. 규격: /patterns/open-in
+   링크는 손가락 크기(--mw-touch)이고 글자는 본문 색이에요. 강조 색을 쓰지 않아요: 화면의 주된 행동이 아니에요. */
+.mw-open-in { display: inline-flex; align-items: center; gap: var(--space-8); min-height: var(--mw-touch); padding: 0 var(--space-12); border-radius: var(--radius-8); color: var(--text-primary); font-size: var(--font-size-14); font-weight: var(--font-weight-medium); text-decoration: none; }
+.mw-open-in svg { flex: none; color: var(--icon-secondary); }
+.mw-open-in:hover, .mw-open-in:active { background: var(--background-secondary); }
+/* OpenIn 메뉴를 여는 버튼: 키트 Button(tertiary) 위의 표시예요 */
+.mw-open-in__button svg { flex: none; }
+/* ActionMenu의 줄이 링크일 때(openInActions): 버튼 줄과 같은 모양이에요 */
+.mw-open-in__row { color: var(--text-primary); text-decoration: none; }
 
 /* ── Pagination ── */
 /* Pagination — Moonwave UX extra component */
