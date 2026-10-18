@@ -1020,9 +1020,9 @@ export function MemoEditor() {
       ref={rootRef}
       className="flex flex-col h-full min-h-0"
     >
-      <h1 className="mw-sr-only">{editorTitle(!memoId)}</h1>
-      {!isFocusMode && !isKeyboardOpen && (
+      {!isFocusMode && !isKeyboardOpen ? (
         <EditorHeader
+          heading={editorTitle(!memoId)}
           isStarred={isStarred}
           onBack={handleBack}
           onToggleStar={handleToggleStar}
@@ -1034,6 +1034,9 @@ export function MemoEditor() {
           tags={currentTags}
           isPinned={memo?.isPinned ?? false}
         />
+      ) : (
+        // 집중 모드와 키보드가 올라온 때는 머리를 그리지 않아요. 화면 낭독기에는 제목을 그대로 알려요.
+        <div className="mw-page__head mw-sr-only"><div><h1>{editorTitle(!memoId)}</h1></div></div>
       )}
 
       {/* Time Machine banner */}

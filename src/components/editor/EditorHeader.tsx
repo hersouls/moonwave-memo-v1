@@ -24,9 +24,11 @@ interface EditorHeaderProps {
   body?: string
   tags?: string[]
   isPinned?: boolean
+  /** 화면 제목(h1)이에요. */
+  heading: string
 }
 
-export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, tags, isPinned }: EditorHeaderProps) {
+export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHistory, memoId, saveStatus, title, body, tags, isPinned, heading }: EditorHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   // 메뉴는 Esc와 폰의 뒤로 가기로도 닫혀요
   useCloseRequest(isMenuOpen, () => setIsMenuOpen(false))
@@ -153,8 +155,9 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
   }
 
   return (
-    // UX-21: bg-zinc-50 matches app background
-    <div className="flex items-center justify-between px-4 py-2 bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10">
+    // 페이지 머리: 화면 제목(h1)과 행동. 편집기가 스크롤돼도 머리는 위에 남아요. bg-zinc-50은 앱 바탕과 같아요.
+    <div className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-900 px-4 pt-2 lg:px-8">
+    <div className="mw-page__head items-center">
       <div className="flex items-center gap-2">
         {/* Mobile/tablet: back arrow. 조건부 렌더 — .f-icon-btn이 display를 강제해
             lg:hidden 유틸리티가 무력화되므로 CSS 대신 tier 플래그로 분기한다. */}
@@ -168,6 +171,10 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           </button>
         )}
 
+        <h1>{heading}</h1>
+      </div>
+
+      <div className="mw-page__actions">
         {saveStatus && saveStatus !== 'idle' && (
           <span className="flex items-center gap-1.5 transition-opacity duration-200" aria-live="polite" role="status">
             {saveStatus === 'saving' && (
@@ -209,9 +216,6 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
             )}
           </span>
         )}
-      </div>
-
-      <div className="flex items-center gap-2">
         {/* Desktop only: close button (modal). 조건부 렌더 — lg:inline-flex가
             .f-icon-btn 때문에 모바일에서도 새어 나와 뒤로가기와 중복되던 문제 수정. */}
         {isDesktop && (
@@ -398,6 +402,7 @@ export function EditorHeader({ isStarred, onBack, onToggleStar, onOpenVersionHis
           tags={tags || []}
         />
       )}
+    </div>
     </div>
   )
 }

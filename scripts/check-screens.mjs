@@ -208,16 +208,14 @@ try {
     const ed = await page.evaluate(() => {
       const rect = (el) => el?.getBoundingClientRect()
       const box = rect(document.querySelector('.mw-textarea')), insp = rect(document.querySelector('.memo-inspector')), dialog = document.querySelector('[role="dialog"]:not([inert])')
-      const pane = [...document.querySelectorAll('.memo-card')].length > 0
-      return { box: box ? { left: box.left, right: box.right, width: box.width } : null, inspector: insp ? Math.round(insp.width) : 0, dialog: !!dialog, pane }
+      return { box: box ? { left: box.left, right: box.right, width: box.width } : null, inspector: insp ? Math.round(insp.width) : 0, dialog: !!dialog }
     })
     if (ed.dialog) fail('편집기', '편집기가 가림막 위의 창으로 떠요 (내용 영역을 그대로 써야 해요)')
     if (!ed.box) fail('편집기', '내용 칸을 찾지 못했어요')
     else {
-      const filled = (ed.box.width + ed.inspector + (ed.pane ? 360 : 0)) / a.width
+      const filled = (ed.box.width + ed.inspector) / a.width
       if (filled < 0.7) fail('편집기', `편집기와 그 옆 칸이 내용 영역 너비의 ${Math.round(filled * 100)}%만 써요`)
       if (size.width >= 1900 && !ed.inspector) fail('편집기', '넓은 화면인데 정보 칸(분량 · 태그 · 목차)이 없어요')
-      if (size.width >= 1280 && !ed.pane) fail('편집기', '1280px부터는 편집기 왼쪽에 메모 목록이 있어야 해요')
     }
     await overflow('편집기')
 

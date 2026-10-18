@@ -11,11 +11,10 @@ export const BREAKPOINTS = {
 } as const
 
 // Pre-built media query strings for JS matchMedia calls.
-// 두 단계예요: 좁은 화면(900px 이하, 하단 탭) · 넓은 화면(901px부터, 사이드바). 1280px부터는 목록과 편집기를 나란히 둬요.
+// 두 단계예요: 좁은 화면(900px 이하, 하단 탭) · 넓은 화면(901px부터, 사이드바).
 export const MEDIA = {
   mobile: `(max-width: ${BREAKPOINTS.md - 1}px)`,
   desktop: `(min-width: ${BREAKPOINTS.lg}px)`,
-  wideDesktop: `(min-width: ${BREAKPOINTS.xl}px)`,
   tablet: `(min-width: ${BREAKPOINTS.md}px)`,
   fold: `(max-width: ${BREAKPOINTS.fold}px)`,
 } as const

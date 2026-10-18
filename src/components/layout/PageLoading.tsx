@@ -6,7 +6,6 @@
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Skeleton } from '@/mw/Skeleton'
-import { usePanelWidth } from '@/components/memos/panelWidth'
 import { CreateActions, PageHead } from './PageHead'
 import { CALENDAR_HEAD, MEMOS_TITLE, editorTitle, timeGreeting, todayLine } from './pages'
 
@@ -24,23 +23,23 @@ function Cards({ count }: { count: number }) {
   )
 }
 
-/** 메모 목록의 자리. pane: 넓은 화면에서 편집기 왼쪽에 놓이는 좁은 칸 */
-function MemosLoading({ pane = false }: { pane?: boolean }) {
+/** 메모 목록의 자리 */
+function MemosLoading() {
   return (
     <div className="mw-page">
-      <PageHead title={MEMOS_TITLE} actions={<CreateActions compact={pane} />} />
-      {!pane && <Saying>메모를 불러오고 있어요</Saying>}
-      <Cards count={pane ? 4 : 6} />
+      <PageHead title={MEMOS_TITLE} actions={<CreateActions />} />
+      <Saying>메모를 불러오고 있어요</Saying>
+      <Cards count={6} />
     </div>
   )
 }
 
-/** 편집기의 자리: 제목은 보이지 않는 h1이고(편집기와 같아요), 내용 칸의 자리와 너비도 편집기와 같아요. */
+/** 편집기의 자리: 페이지 머리는 편집기와 같고, 내용 칸의 자리와 너비도 편집기와 같아요. */
 export function EditorLoading() {
   const { pathname } = useLocation()
   return (
     <div className="flex flex-col flex-1 min-w-0 min-h-0">
-      <h1 className="mw-sr-only">{editorTitle(pathname === '/memo/new')}</h1>
+      <div className="px-4 lg:px-8"><PageHead title={editorTitle(pathname === '/memo/new')} /></div>
       <Saying>메모를 불러오고 있어요</Saying>
       <div className="px-4 pt-3 lg:px-8 max-w-[var(--editor-measure)] mx-auto w-full">
         <Skeleton type="text" className="memo-loading__line memo-loading__line--title" />
@@ -55,19 +54,8 @@ export function EditorLoading() {
 /** 지금 주소의 화면을 불러오는 동안의 모습. 앱이 기기의 메모를 읽는 동안과, 화면의 코드를 받는 동안에 써요. */
 export function RouteLoading() {
   const { pathname } = useLocation()
-  const [listWidth] = usePanelWidth()
-
-  // 메모를 연 화면: 1280px부터는 왼쪽에 목록, 오른쪽에 편집기예요 (MemosLayout과 같은 틀). 그보다 좁으면 편집기만 있어요
-  if (pathname.startsWith('/memo/')) {
-    return (
-      <div className="h-full flex flex-row">
-        <div className="hidden xl:block shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-hidden" style={{ width: listWidth }}>
-          <MemosLoading pane />
-        </div>
-        <EditorLoading />
-      </div>
-    )
-  }
+  // 메모를 연 화면: 편집기가 내용 영역 전체를 써요 (MemosLayout과 같은 틀)
+  if (pathname.startsWith('/memo/')) return <EditorLoading />
 
   if (pathname === '/memos') return <MemosLoading />
 

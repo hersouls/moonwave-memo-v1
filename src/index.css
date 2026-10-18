@@ -214,7 +214,7 @@
   --breakpoint-2xl: 1280px;
 
   /* Editor reading measure — optimal line length for comfortable writing/reading */
-  --editor-measure: 48rem;
+  --editor-measure: clamp(48rem, 46vw, 60rem);
 }
 
 /* 이름을 Tailwind가 지우지 않게 static으로 둬요 (일반 CSS에서 var()로 불러요) */
@@ -228,6 +228,8 @@
 /* Memo에만 있는 값 */
 :root {
   --memo-saved-hold: 1400ms; /* '저장했어요' 표시가 사라지기 전에 머무는 시간 */
+  --memo-breathe-tracking: 0.03em; /* 숨 쉬는 글자가 한껏 벌어졌을 때의 자간 */
+  --memo-breathe-leading: 185%; /* 그때의 줄 높이 */
   --memo-breathe-cycle: 10s; /* 숨 쉬는 글자(설정에서 켰을 때)의 한 호흡 */
   /* 간격 단계(2 4 8 12 …)에 없는 값: 글 본문과 편집기의 촘촘한 자리에서만 써요 */
   --memo-space-6: 6px;
@@ -240,7 +242,7 @@
   --memo-card-min-expanded: 280px;
   --memo-card-min-wide: 220px; /* 넓은 내용 영역(900px부터)에서 격자 카드의 가장 좁은 너비 */
   --memo-row-min: 340px; /* 목록 보기의 가로로 긴 카드 한 장의 가장 좁은 너비 */
-  --memo-inspector-w: 320px; /* 넓은 화면에서 편집기 옆에 놓이는 정보 칸 */
+  --memo-inspector-w: clamp(320px, 22vw, 420px); /* 넓은 화면에서 편집기 옆에 놓이는 정보 칸 */
   --memo-calendar-w: 400px; /* 넓은 화면에서 달력이 차지하는 너비 (나머지는 그날의 메모가 써요) */
   /* 화면을 불러오는 동안 내용의 자리(Skeleton)의 높이: 메모 카드 한 장, 달력 한 장 */
   --memo-loading-card-h: 128px;
@@ -435,8 +437,8 @@ body {
    ======================================== */
 
 @keyframes breathe {
-  0%, 100% { letter-spacing: 0; line-height: 1.6; }
-  50% { letter-spacing: 0.03em; line-height: 1.85; }
+  0%, 100% { letter-spacing: var(--letter-spacing-default); line-height: var(--line-height-reading-158); }
+  50% { letter-spacing: var(--memo-breathe-tracking); line-height: var(--memo-breathe-leading); }
 }
 
 .breathing-active textarea {
@@ -543,7 +545,7 @@ body {
 .memo-inspector__hint {
   margin-top: var(--space-8);
   font-size: var(--font-size-13);
-  line-height: 1.5;
+  line-height: var(--line-height-default-148);
   color: var(--text-tertiary);
 }
 .memo-inspector__facts {

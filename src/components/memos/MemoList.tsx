@@ -70,8 +70,7 @@ function SkeletonMemoCard() {
   )
 }
 
-/** `pane`: 넓은 화면에서 편집기 옆의 좁은 칸에 놓였을 때예요. 머리와 도구 줄을 줄여요. */
-export function MemoList({ pane = false }: { pane?: boolean } = {}) {
+export function MemoList() {
   const filteredMemos = useMemoFilters()
   const viewMode = useUIStore((s) => s.viewMode)
   const setViewMode = useUIStore((s) => s.setViewMode)
@@ -194,12 +193,11 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
   return (
     <div className="mw-page">
       <PageHead
-        as={pane ? 'h2' : 'h1'}
         title={pageTitle}
         actions={
           <>
             <Button variant="tertiary-subtle" size="medium" onClick={() => setShowQuickMemo(true)}>빠른 메모</Button>
-            <CreateActions compact={pane} />
+            <CreateActions />
           </>
         }
       />
@@ -229,8 +227,7 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
         </div>
         <div className="relative ml-auto hidden shrink-0 items-center gap-1 lg:flex">
           {emptyTrashButton}
-          {!pane && (
-            <>
+          <>
               <ViewSwitch
                 value={viewMode === 'table' ? 'table' : viewMode === 'grid' ? 'grid' : 'card'}
                 onChange={(v: ViewKind) => setViewMode(v === 'table' ? 'table' : v === 'grid' ? 'grid' : 'list')}
@@ -243,8 +240,7 @@ export function MemoList({ pane = false }: { pane?: boolean } = {}) {
                 <IcMwSort size={16} />
                 {SORT_LABELS[sortBy]}
               </button>
-            </>
-          )}
+          </>
           <button
             onClick={openContextMenu}
             className="mw-icon-button"

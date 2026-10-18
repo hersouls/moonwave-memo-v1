@@ -90,7 +90,7 @@ export const SlideRenderer = memo(function SlideRenderer({
         style={{
           fontSize: `calc(var(--font-size-18) * ${fontSize})`,
           color: 'var(--text-secondary)',
-          lineHeight: 1.8,
+          lineHeight: 'var(--line-height-reading-170)',
         }}
       >
         <MarkdownPreview content={slide.content} />

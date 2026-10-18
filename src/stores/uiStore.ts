@@ -35,7 +35,6 @@ interface UIState {
   isMobile: boolean
   // Tablet sidebar starts collapsed (rail); independent of the persisted desktop state.
   isDesktop: boolean
-  isWideDesktop: boolean
   isKeyboardOpen: boolean
   keyboardHeight: number
   searchFilters: SearchFilters
@@ -119,7 +118,6 @@ export const useUIStore = create<UIState>()(
       isNarrowFold: false,
       isMobile: false,
       isDesktop: false,
-      isWideDesktop: false,
       isKeyboardOpen: false,
       keyboardHeight: 0,
       searchFilters: { dateRange: 'all', starredOnly: false, colorFilter: null },

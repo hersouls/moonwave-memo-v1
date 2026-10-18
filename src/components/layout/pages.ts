@@ -5,7 +5,7 @@ export const MEMOS_TITLE = '메모'
 
 export const CALENDAR_HEAD = { title: '캘린더', description: '날짜를 누르면 그날 쓴 메모를 볼 수 있어요.' }
 
-/** 편집기의 제목: 화면에는 보이지 않고 화면 낭독기가 읽어요. */
+/** 편집기의 제목: 편집기 맨 위의 페이지 머리에 보여요. */
 export function editorTitle(isNew: boolean): string {
   return isNew ? '새 메모 쓰기' : '메모 고치기'
 }

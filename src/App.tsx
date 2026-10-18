@@ -266,17 +266,6 @@ export default function App() {
     return () => mql.removeEventListener('change', handleChange)
   }, [])
 
-  // Wide desktop breakpoint detection (xl: 1280px+)
-  useEffect(() => {
-    const mql = window.matchMedia(MEDIA.wideDesktop)
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      useUIStore.setState({ isWideDesktop: e.matches })
-    }
-    handleChange(mql)
-    mql.addEventListener('change', handleChange)
-    return () => mql.removeEventListener('change', handleChange)
-  }, [])
-
   // 좁은 화면(900px 이하: 하단 탭). 뼈대가 바뀌는 너비는 키트와 같은 900px 하나예요.
   useEffect(() => {
     const mql = window.matchMedia(MEDIA.mobile)

@@ -39,9 +39,9 @@
    ---------------------------------------- */
 .memo-markdown-preview h1 {
   font-size: var(--font-size-24);
-  line-height: 1.3;
+  line-height: var(--line-height-default-148);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--letter-spacing-tight);
   text-wrap: balance;
   color: var(--color-zinc-900, #18181b);
   margin-top: var(--memo-space-28);
@@ -50,9 +50,9 @@
 
 .memo-markdown-preview h2 {
   font-size: var(--font-size-20);
-  line-height: 1.35;
+  line-height: var(--line-height-default-148);
   font-weight: 700;
-  letter-spacing: -0.015em;
+  letter-spacing: var(--letter-spacing-tight);
   text-wrap: balance;
   color: var(--color-zinc-900, #18181b);
   margin-top: var(--memo-space-28);
@@ -61,9 +61,9 @@
 
 .memo-markdown-preview h3 {
   font-size: var(--font-size-18);
-  line-height: 1.4;
+  line-height: var(--line-height-default-148);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--letter-spacing-tight);
   text-wrap: balance;
   color: var(--color-zinc-900, #18181b);
   margin-top: var(--space-20);
@@ -74,7 +74,7 @@
 .memo-markdown-preview h5,
 .memo-markdown-preview h6 {
   font-size: var(--font-size-16);
-  line-height: 1.5;
+  line-height: var(--line-height-default-148);
   font-weight: 500;
   color: var(--color-zinc-900, #18181b);
   margin-top: var(--memo-space-14);
@@ -95,7 +95,7 @@
    ---------------------------------------- */
 .memo-markdown-preview p {
   color: var(--color-zinc-700, #3f3f46);
-  line-height: 1.75;
+  line-height: var(--line-height-reading-170);
   text-wrap: pretty;
   margin-top: 0;
   margin-bottom: var(--memo-space-14);
@@ -159,7 +159,7 @@
 
 .memo-markdown-preview li {
   color: var(--color-zinc-700, #3f3f46);
-  line-height: 1.75;
+  line-height: var(--line-height-reading-170);
   text-wrap: pretty;
   margin-bottom: var(--space-4);
 }
@@ -227,7 +227,7 @@
   padding: var(--space-12) var(--space-16);
   overflow-x: auto;
   font-size: var(--font-size-14);
-  line-height: 1.625;
+  line-height: var(--line-height-reading-158);
   font-family: var(--font-mono);
   font-variant-ligatures: none;
   tab-size: 2;

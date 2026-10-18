@@ -82,7 +82,7 @@
   font-size: var(--empty-title-size);
   font-weight: var(--empty-title-weight);
   color: var(--empty-title-color);
-  line-height: 1.4;
+  line-height: var(--line-height-default-148);
   margin-bottom: var(--space-8);
 }
 
@@ -90,7 +90,7 @@
   font-size: var(--empty-desc-size);
   color: var(--empty-desc-color);
   max-width: var(--empty-desc-max-width);
-  line-height: 1.5;
+  line-height: var(--line-height-default-148);
 }
 
 .empty-state__action {

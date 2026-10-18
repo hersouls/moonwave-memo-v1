@@ -69,7 +69,7 @@ button.mw-sheet__grab { min-height: var(--mw-touch); }
 }
 
 /* 서식 글자(B · I · S · H): 아이콘 자리에 놓는 글자예요 */
-.memo-glyph { display: inline-grid; place-items: center; min-width: var(--space-20); font-size: var(--font-size-15); font-weight: var(--font-weight-bold); line-height: 1; }
+.memo-glyph { display: inline-grid; place-items: center; min-width: var(--space-20); font-size: var(--font-size-15); font-weight: var(--font-weight-bold); line-height: var(--line-height-default-148); }
 .memo-glyph--italic { font-style: italic; }
 .memo-glyph--strike { text-decoration: line-through; }
 
