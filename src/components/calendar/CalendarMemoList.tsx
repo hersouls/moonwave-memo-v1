@@ -31,16 +31,16 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
   const isSelectedToday = isToday(selected)
 
   return (
-    // .card는 overflow:hidden — 스크롤은 내부 요소로 분리해야 동작한다
-    <div className="card">
-      <div className="p-4">
+    // 안쪽이 카드 목록(memo-card)이라 바깥 상자를 두지 않아요: 면은 한 겹이라 목록이 페이지에 바로 놓여요
+    <div>
+      <div>
       {/* 날짜 변경 시 콘텐츠 전체가 부드럽게 등장 */}
       <div
         key={selectedDate}
         className="animate-in fade-in duration-200 ease-enter motion-safe:slide-in-from-bottom-1"
       >
         {/* 헤더: 날짜 위계 + 오늘 배지 + 카운트 필, 데스크톱 내부 스크롤에서 sticky */}
-        <div className="-mx-4 mb-3 border-b border-[var(--card-hairline)] px-4 pb-3">
+        <div className="mb-3 border-b border-[var(--card-hairline)] pb-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-baseline gap-1.5">
               <h3 className="shrink-0 text-15 font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100">
