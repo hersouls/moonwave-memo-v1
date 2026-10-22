@@ -32,10 +32,12 @@ interface AndroidRecord {
 }
 
 let kept: { record: AndroidRecord; at: number } | null = null
+let keptHistory: { list: AndroidRecord[]; at: number } | null = null
 
 /** Forget the remembered record (tests). */
 export function clearRecordMemory(): void {
   kept = null
+  keptHistory = null
 }
 
 class RecordError extends Error {
@@ -73,12 +75,63 @@ async function readRecord(): Promise<AndroidRecord> {
   return record
 }
 
+function toRecord(data: Partial<AndroidRecord> & { notes?: unknown }): (AndroidRecord & { notes?: string }) | null {
+  const file = typeof data.file === 'string' ? data.file.split('/').pop() ?? '' : ''
+  if (!APK_FILE.test(file)) return null
+  return {
+    versionName: String(data.versionName ?? ''),
+    versionCode: Number(data.versionCode) || 0,
+    builtAt: String(data.builtAt ?? ''),
+    sizeBytes: Number(data.sizeBytes) || 0,
+    file,
+    ...(typeof data.notes === 'string' && data.notes ? { notes: data.notes } : {}),
+  }
+}
+
+/** history.json on the release: every build so far, newest first. Missing or unreadable → just no history. */
+async function readHistory(): Promise<AndroidRecord[]> {
+  const now = Date.now()
+  if (keptHistory && now - keptHistory.at < RECORD_TTL_MS) return keptHistory.list
+  let list: AndroidRecord[] = []
+  try {
+    const upstream = await fetch(`${BASE}/history.json`, { signal: AbortSignal.timeout(8000) })
+    if (upstream.ok) {
+      const data = (await upstream.json().catch(() => null)) as unknown
+      if (Array.isArray(data)) list = data.map((d) => toRecord(d as Partial<AndroidRecord>)).filter((d): d is AndroidRecord => d != null)
+    }
+  } catch {
+    list = []
+  }
+  keptHistory = { list, at: now }
+  return list
+}
+
+/** The kit's AppInstall reads version.json / history.json whose `file` is where the screen links to: this route, by name. */
+const viaRoute = <T extends AndroidRecord>(r: T): T => ({ ...r, file: `/api/download-android?file=${encodeURIComponent(r.file)}` })
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
+    const file = typeof req.query.file === 'string' ? req.query.file : ''
+    if (file) {
+      // an earlier build kept on the release: a bare file name, nothing else
+      if (!APK_FILE.test(file)) return res.status(400).json({ error: '파일 이름이 맞지 않아요.' })
+      res.setHeader('Cache-Control', 'no-store')
+      res.setHeader('Location', `${BASE}/${encodeURIComponent(file)}`)
+      return res.status(302).end()
+    }
     const record = await readRecord()
+    if (req.query.doc === 'version') {
+      res.setHeader('Cache-Control', 'no-store')
+      return res.status(200).json(viaRoute(record))
+    }
+    if (req.query.doc === 'history') {
+      const list = await readHistory()
+      res.setHeader('Cache-Control', 'no-store')
+      return res.status(200).json((list.some((h) => h.versionCode === record.versionCode) ? list : [record, ...list]).map(viaRoute))
+    }
     if (req.query.info != null) {
       res.setHeader('Cache-Control', 'public, max-age=300')
       return res.status(200).json(record)

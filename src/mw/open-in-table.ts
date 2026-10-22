@@ -93,6 +93,10 @@ export const OPENS = {
       receive: { path: '/#/receive/{packed}', label: '메모 받기', need: { packed: 'text' }, may: {} },
     },
   },
+  drop: {
+    short: 'Drop', host: 'drop.moonwave.kr', on: true,
+    opens: {},
+  },
   folder: {
     short: 'Folder', host: 'folder.moonwave.kr', on: true,
     opens: {},
@@ -107,13 +111,21 @@ export const OPENS = {
       exercise: { path: '/#/p/{person}/exercise{?week}', label: '운동 기록 보기', need: { person: 'id' }, may: { week: 'date' } },
     },
   },
+  kpx: {
+    short: 'KPX', host: 'kpx.moonwave.kr', on: true,
+    opens: {},
+  },
+  kpxo: {
+    short: 'KPXO', host: 'kpxo.moonwave.kr', on: true,
+    opens: {},
+  },
   mail: {
     short: 'Mail', host: 'mail.moonwave.kr', on: true,
     opens: {
       message: { path: '/#/folder/{folder}{?uid}', label: '메일 열기', need: { folder: 'text' }, may: { uid: 'number' } },
       deliveries: { path: '/#/deliveries', label: '발송 관리 보기', need: {}, may: {} },
       drafts: { path: '/#/drafts', label: '임시보관함 보기', need: {}, may: {} },
-      write: { path: '/#/write{?to,subject}', label: '메일 쓰기', need: {}, may: { to: 'text', subject: 'text' } },
+      write: { path: '/#/write{?to,subject,drive}', label: '메일 쓰기', need: {}, may: { to: 'text', subject: 'text', drive: 'text' } },
     },
   },
   mca: {
@@ -181,10 +193,12 @@ export const OPENS = {
       plan: { path: '/#/plan/{id}{?day,tab}', label: '계획 보기', need: { id: 'id' }, may: { day: 'date', tab: 'text' } },
       journey: { path: '/#/journey/{date}', label: '여정 보기', need: { date: 'date' }, may: {} },
       camp: { path: '/#/camp/{id}', label: '캠핑 예약 보기', need: { id: 'id' }, may: {} },
+      stay: { path: '/#/stay/{code}', label: '숙소 예약 보기', need: { code: 'id' }, may: {} },
       photo: { path: '/#/photo/{id}', label: '사진의 여행 보기', need: { id: 'number' }, may: {} },
       trips: { path: '/#/trips', label: '여행 목록 보기', need: {}, may: {} },
       plans: { path: '/#/plans', label: '계획 목록 보기', need: {}, may: {} },
       camps: { path: '/#/camps', label: '캠핑 목록 보기', need: {}, may: {} },
+      stays: { path: '/#/stays', label: '숙소 목록 보기', need: {}, may: {} },
     },
   },
   ux: {
@@ -192,6 +206,12 @@ export const OPENS = {
     opens: {
       monitor: { path: '/monitor', label: '화면 점검 보기', need: {}, may: {} },
       audit: { path: '/monitor/{id}', label: '점검 결과 보기', need: { id: 'id' }, may: {} },
+      trends: { path: '/monitor/trends/{week}', label: '주간 UX 동향 보기', need: { week: 'id' }, may: {} },
+      trend: { path: '/monitor/trends/{week}#{item}', label: '동향 제안 보기', need: { week: 'id', item: 'id' }, may: {} },
+      fixes: { path: '/monitor/fixes', label: '조치 결과 보기', need: {}, may: {} },
+      day: { path: '/monitor/{id}/{date}', label: '그날 점검 결과 보기', need: { id: 'id', date: 'date' }, may: {} },
+      page: { path: '/{section}/{slug}', label: '기준 보기', need: { section: 'id', slug: 'id' }, may: {} },
+      rule: { path: '/{section}/{slug}#{part}', label: '기준 항목 보기', need: { section: 'id', slug: 'id', part: 'id' }, may: {} },
     },
   },
   wavie: {

@@ -13,6 +13,14 @@
   },
   "rewrites": [
     {
+      "source": "/app/version.json",
+      "destination": "/api/download-android?doc=version"
+    },
+    {
+      "source": "/app/history.json",
+      "destination": "/api/download-android?doc=history"
+    },
+    {
       "source": "/((?!api|.*\\..*).*)",
       "destination": "/index.html"
     }

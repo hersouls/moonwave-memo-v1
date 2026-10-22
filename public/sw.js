@@ -94,6 +94,7 @@ self.addEventListener('fetch', (event) => {
   // Skip API / Firebase requests (network-only)
   if (
     url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/app/') ||
     url.hostname.includes('firestore.googleapis.com') ||
     url.hostname.includes('identitytoolkit.googleapis.com') ||
     url.hostname.includes('securetoken.googleapis.com')

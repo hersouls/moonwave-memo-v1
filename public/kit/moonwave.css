@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.9.0 · all in one
+/*! Moonwave UX 1.9.5 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -2981,6 +2981,30 @@
   --top-navigation-item-title-text-default-typography-letter-spacing: var(--letter-spacing-default);
   --top-navigation-item-title-text-default-typography-line-height: var(--line-height-default-148);
 
+}
+
+:root, [data-theme], [data-mode] {
+  --teal-200: #a9e5e1; 
+  --teal-300: #4cc8c3; 
+  --teal-400: #00a39b; 
+  --blue-100: #d9f2ff; 
+  --blue-200: #80d4ff; 
+  --blue-300: #50b6fe; 
+  --blue-400: #148aff; 
+  --blue-500: #005ccc; 
+  --blue-600: #0049a3; 
+  --blue-700: #003676; 
+  --blue-800: #001e42; 
+  --yellow-300: #fe9d38; 
+  --yellow-400: #e57300; 
+}
+:root:not([data-theme]), [data-theme="light"], [data-theme="light-white"] {
+  --fill-primary-hover: var(--gray-750); 
+  --fill-primary-pressed: var(--gray-700); 
+}
+[data-theme="dark"] {
+  --fill-primary-hover: var(--gray-150); 
+  --fill-primary-pressed: var(--gray-200); 
 }
 
 /* ── 4. Moonwave 브랜드 레이어 ── */
@@ -15054,6 +15078,112 @@
   }
 }
 
+/* ── Facts ── */
+/* Facts — Moonwave UX extra component (이름-값 줄) */
+
+/* 구조: 이름과 값의 짝을 한 줄에 하나씩 늘어놓는 정의 목록(dl)이에요. 상세 화면 · 패널 · 설정의 정보 칸처럼 읽기만 하는 짝이에요
+   (계정, 마지막 동기화, 청구금액). 누르거나 바꾸는 줄은 List · Settings예요.
+   - 줄(mw-facts__row): dt(이름) + dd(값). 이름은 왼쪽에 보조색, 값은 오른쪽 끝에 본문색이고 숫자는 고정폭이에요.
+   - mw-facts--column: 값이 글(주소 · 설명 · 문장)이면 값을 이름 칸 다음에 왼쪽으로 맞춰요. 이름 칸은 가장 긴 이름만큼(최대 40%).
+   - mw-facts--lined: 줄 사이에 선을 그어요. 줄이 다섯 개를 넘거나 금액을 견줄 때예요.
+   - mw-facts__row--lead: 묶음의 대표 값 하나만 크게 보여 줘요. 한 묶음에 하나예요.
+   위계는 크기보다 색으로 나눠요: 이름과 값이 같은 크기(목록 줄의 제목과 같은 15px)이고, 이름이 한 단계 옅어요. */
+
+.mw-facts {
+  display: grid;
+  gap: var(--space-8);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.mw-facts__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.mw-facts__name,
+.mw-facts__value {
+  margin: 0;
+  font-size: var(--font-size-15);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-default-148);
+}
+
+.mw-facts__name {
+  flex: none;
+  max-width: 50%;
+  color: var(--text-secondary);
+}
+
+.mw-facts__value {
+  min-width: 0;
+  color: var(--text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* 대표 값: 한 묶음에 하나, 크게 굵게 */
+.mw-facts__row--lead .mw-facts__name {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.mw-facts__row--lead .mw-facts__value {
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-bold);
+}
+
+/* 값이 글이면: 이름 칸 다음에 왼쪽 정렬 */
+.mw-facts--column {
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  column-gap: var(--space-16);
+}
+
+.mw-facts--column .mw-facts__row {
+  display: contents;
+}
+
+.mw-facts--column .mw-facts__name {
+  max-width: none;
+}
+
+.mw-facts--column .mw-facts__value {
+  text-align: left;
+}
+
+/* 줄 사이의 선 */
+.mw-facts--lined {
+  gap: 0;
+}
+
+.mw-facts--lined .mw-facts__row {
+  padding: var(--space-12) 0;
+  border-bottom: var(--border-width-1) solid var(--border-secondary);
+}
+
+.mw-facts--lined .mw-facts__row:last-child {
+  border-bottom: 0;
+}
+
+.mw-facts--lined.mw-facts--column {
+  row-gap: 0;
+}
+
+.mw-facts--lined.mw-facts--column .mw-facts__name,
+.mw-facts--lined.mw-facts--column .mw-facts__value {
+  padding: var(--space-12) 0;
+  border-bottom: var(--border-width-1) solid var(--border-secondary);
+}
+
+.mw-facts--lined.mw-facts--column .mw-facts__row:last-child > * {
+  border-bottom: 0;
+}
+
 /* ── FilterBar ── */
 /* Filter Bar — Moonwave UX extra component */
 
@@ -19849,6 +19979,7 @@
    - 위쪽 줄(mw-select-bar): 전체 선택 · "N개 선택됨" · 취소. 앱 상단 바 자리를 대신해요.
    - 묶음 머리글(mw-select-group): 날짜 같은 묶음마다 동그라미가 있어서 묶음 전체를 한 번에 골라요.
    - 항목(mw-select-item): 선택 모드에서는 어두워지고 왼쪽 위에 동그라미가 떠요. 고르면 채워진 동그라미에 체크예요.
+     글자가 있는 목록 줄은 mw-select-item--row예요: 어두워지지 않고, 동그라미가 줄의 앞자리 가운데에 서요.
    - 아래 작업 줄(mw-select-actions): 폰에서는 아래에 뜬 알약, 태블릿 · PC에서는 위쪽 줄 안에 놓여요.
    동그라미는 진짜 체크박스(input[type="checkbox"])예요. 이름은 항목의 이름이고, 색이 아니라 체크 모양으로 말해요. */
 
@@ -20062,6 +20193,45 @@
   box-shadow: inset 0 0 0 var(--border-width-2) var(--fill-accent-primary-default);
 }
 
+/* 어둡게 덮는 것은 그림 위에서만이에요. 그림이 없는 항목(글자만 있는 타일 · 줄)은 덮지 않아요: 덮으면 글자까지 어두워져요.
+   빈 동그라미도 그림 위의 흰 테두리 대신 글자색 테두리예요(흰 테두리는 밝은 바탕에서 보이지 않아요) */
+[data-selecting] .mw-select-item:not(:has(img, video, picture, canvas, [role="img"])) .mw-select-item__body::after {
+  background: transparent;
+}
+
+.mw-select-item:not(:has(img, video, picture, canvas, [role="img"])) .mw-select-check__input:not(:checked):not(:indeterminate) + .mw-select-check__mark {
+  border-color: var(--icon-secondary);
+}
+
+/* ── 목록 줄 (mw-select-item--row · SelectItem shape="row") ──
+   글자가 있는 줄(파일 · 메일 · 일정 · 대화)이에요. 사진 타일처럼 덮으면 글자까지 어두워져 대비가 무너지고(어두운 테마의 보조
+   글 3.4:1), 흰 동그라미는 밝은 줄 위에서 보이지 않아요(1.7:1). 그래서 줄은 덮지 않고, 동그라미는 줄의 앞자리 가운데에 서서
+   글자색 테두리를 둘러요. 고른 줄은 채운 동그라미와 강조색 테두리로 말해요. 줄의 글은 동그라미 자리만큼 물러나요:
+   폰에서는 모드가 열렸을 때, 올릴 수 있는 기기(PC)에서는 동그라미가 올리면 뜨므로 늘 그 자리를 비워 둬요. */
+.mw-select-item--row .mw-select-check {
+  top: 50%;
+  left: var(--space-16);
+  transform: translateY(-50%);
+}
+
+.mw-select-item--row .mw-select-check__mark {
+  border-color: var(--icon-secondary);
+}
+
+[data-selecting] .mw-select-item--row .mw-select-item__body {
+  padding-inline-start: calc(var(--space-16) + var(--size-24));
+}
+
+[data-selecting] .mw-select-item--row .mw-select-item__body::after {
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .mw-select-item--row .mw-select-item__body {
+    padding-inline-start: calc(var(--space-16) + var(--size-24));
+  }
+}
+
 /* ── 작업 줄 ── */
 
 .mw-select-actions {
@@ -20165,6 +20335,31 @@
 .mw-app-top[hidden] {
   display: none;
 }
+
+/* ── Settings ── */
+/* 설정 화면 (patterns/settings). 설정은 주제별 탭 → 묶음 카드 → 설정 줄이에요.
+   묶음(.mw-settings-group)은 카드(.mw-surface) 위에 놓여 제목 · 한 줄 설명 · 줄을 담아요.
+   줄(.mw-setting)은 이름과 한 줄 설명이 왼쪽, 스위치 · 값 · 꺾쇠 · 작은 버튼 하나가 오른쪽 끝이에요.
+   칩이나 입력 칸처럼 줄의 폭이 필요한 컨트롤은 .mw-setting--block으로 이름 아래에 놓아요. */
+.mw-settings { display: grid; gap: var(--space-16); max-width: var(--mw-reading-max); min-width: 0; }
+.mw-settings-group { display: grid; min-width: 0; }
+.mw-settings-group__head { display: grid; gap: var(--space-4); margin-bottom: var(--space-8); }
+.mw-settings-group__title { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-8); margin: 0; font-size: var(--font-size-17); font-weight: var(--font-weight-bold); letter-spacing: -0.02em; color: var(--text-primary); }
+.mw-settings-group__title small { font-size: var(--font-size-13); font-weight: var(--font-weight-medium); letter-spacing: 0; color: var(--text-tertiary); }
+.mw-settings-group__lead { margin: 0; font-size: var(--font-size-14); line-height: var(--line-height-default-148); color: var(--text-tertiary); }
+.mw-settings-group__foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-8); margin-top: var(--space-12); }
+.mw-setting { display: flex; align-items: center; gap: var(--space-12); min-height: calc(var(--mw-touch) + var(--space-12)); padding-block: var(--space-12); min-width: 0; }
+.mw-setting + .mw-setting { border-top: var(--border-width-1) solid var(--border-secondary); }
+.mw-setting__text { flex: 1 1 auto; min-width: 0; display: grid; gap: var(--space-2); }
+.mw-setting__label { font-size: var(--font-size-15); font-weight: var(--font-weight-medium); line-height: var(--line-height-default-148); color: var(--text-primary); overflow-wrap: anywhere; }
+.mw-setting__desc { font-size: var(--font-size-13); line-height: var(--line-height-default-148); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.mw-setting__control { flex: none; display: flex; align-items: center; gap: var(--space-8); margin-left: auto; max-width: 60%; }
+.mw-setting__value { font-size: var(--font-size-15); font-weight: var(--font-weight-bold); color: var(--text-primary); text-align: right; overflow-wrap: anywhere; }
+.mw-setting__value--muted { font-weight: var(--font-weight-medium); color: var(--text-tertiary); }
+.mw-setting--block { display: grid; align-items: start; gap: var(--space-8); }
+.mw-setting--block .mw-setting__control { margin-left: 0; max-width: none; flex-wrap: wrap; }
+.mw-setting__more { display: flex; justify-content: flex-start; padding-top: var(--space-4); }
+.mw-settings-fields { display: grid; gap: var(--space-16); padding-block: var(--space-8); min-width: 0; }
 
 /* ── SortControl ── */
 /* Sort Control — Moonwave UX extra component */
@@ -21049,6 +21244,10 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-num { font-variant-numeric: tabular-nums; }
 .mw-mono { font-family: var(--mw-font-mono); font-size: 0.93em; letter-spacing: 0; }
 .mw-muted { color: var(--text-tertiary); }
+/* 길면 끝이 말줄임표예요 (typography#truncate). 한 줄로 두는 이름 · 제목은 mw-ellipsis, 두 줄까지 두는 보조 정보는 mw-clamp-2.
+   둘 다 블록이 되고 flex 줄 안에서도 줄어들어요. 인라인 span에 준 overflow는 아무것도 자르지 못해요. */
+.mw-ellipsis { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mw-clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; min-width: 0; overflow: hidden; }
 .mw-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .mw-skip { position: absolute; left: var(--space-16); top: var(--space-8); z-index: 500; display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-8) var(--space-16); border-radius: var(--radius-8); background: var(--fill-primary-default); color: var(--text-inverse); font-weight: var(--font-weight-semibold); text-decoration: none; transform: translateY(-200%); }
 .mw-skip:focus { transform: none; }

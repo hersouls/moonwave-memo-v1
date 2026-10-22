@@ -61,7 +61,7 @@ export function SelectGroup({ name, title, selection }: { name: string; title: R
  * 선택할 수 있는 항목이에요. 길게 누르면 선택 모드가 열리고, 열린 뒤에는 누르면 켜고 꺼요(열기 · 이동은 하지 않아요).
  * 모드가 닫혀 있을 때의 짧은 누르기는 `onOpen`이에요. Shift + 누르기는 범위예요.
  */
-export function SelectItem({ id, label, selection, onOpen, children, enabled = true }: {
+export function SelectItem({ id, label, selection, onOpen, children, enabled = true, shape = 'tile' }: {
   id: string
   label: string
   selection: Selection
@@ -69,12 +69,17 @@ export function SelectItem({ id, label, selection, onOpen, children, enabled = t
   children: ReactNode
   /** 설정에서 길게 누르기를 끄면 false예요. 이때도 동그라미와 `선택` 버튼으로 골라요. */
   enabled?: boolean
+  /**
+   * `tile`은 사진 · 그림 타일이에요: 동그라미가 왼쪽 위에 뜨고, 안 고른 것은 살짝 어두워져요.
+   * `row`는 글자가 있는 목록 줄(파일 · 메일 · 일정 · 대화)이에요: 동그라미가 줄의 앞자리 가운데에 서고, 줄은 어두워지지 않아요.
+   */
+  shape?: 'tile' | 'row'
 }) {
   const ref = useRef<HTMLDivElement>(null)
   useLongPress(ref, { onPress: () => selection.start(id), enabled })
   const on = selection.isSelected(id)
   return (
-    <div ref={ref} className="mw-select-item" data-selected={on ? '' : undefined}
+    <div ref={ref} className={shape === 'row' ? 'mw-select-item mw-select-item--row' : 'mw-select-item'} data-selected={on ? '' : undefined}
       onClick={(e) => {
         if (selection.active) { e.preventDefault(); selection.toggle(id, { range: e.shiftKey }) } else onOpen?.()
       }}>

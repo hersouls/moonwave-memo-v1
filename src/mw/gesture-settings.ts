@@ -5,11 +5,11 @@
    규격: https://ux.moonwave.kr/patterns/touch-gestures#levels */
 
 /** 키트가 아는 손짓이에요. */
-export type GestureId = 'pull' | 'sheet' | 'menu' | 'swipe' | 'favorite' | 'zoom' | 'fullSwipe' | 'reorder' | 'pinchView' | 'tabSwipe' | 'peek'
+export type GestureId = 'pull' | 'sheet' | 'menu' | 'swipe' | 'favorite' | 'zoom' | 'fullSwipe' | 'reorder' | 'pinchView' | 'tabSwipe' | 'peek' | 'sequenceSwipe'
 /** 0 끔 · 1 기본 · 2 표준(처음 값) · 3 파워예요. */
 export type GestureLevel = 0 | 1 | 2 | 3
 /** 밀기에 둘 수 있는 행동이에요. */
-export type SwipeAction = 'done' | 'pin' | 'archive' | 'delete' | 'share'
+export type SwipeAction = 'done' | 'pin' | 'archive' | 'delete' | 'share' | 'snooze' | 'move'
 /** 밀기 민감도예요. 높을수록 조금만 밀어도 걸려요. */
 export type SwipeSensitivity = 'low' | 'normal' | 'high'
 /** 길게 누르기가 받아들여지기까지의 시간이에요. */
@@ -62,6 +62,7 @@ export const GESTURES: readonly GestureInfo[] = [
   { id: 'reorder', level: 3, label: '끌어서 순서 바꾸기', how: '길게 누른 채 위아래로 끌어요.', instead: '메뉴의 위로 · 아래로 옮기기' },
   { id: 'pinchView', level: 3, label: '모아서 보기 바꾸기', how: '목록 위에서 두 손가락을 모으면 그리드, 벌리면 카드로 보여요.', instead: '보기 방식 칩' },
   { id: 'tabSwipe', level: 3, label: '탭 줄 밀기', how: '아래의 탭 줄을 옆으로 밀면 옆 탭으로 가요.', instead: '탭 누르기' },
+  { id: 'sequenceSwipe', level: 3, label: '상세 제목 밀어 넘기기', how: '상세 화면의 제목을 옆으로 밀면 이전·다음 항목으로 가요.', instead: '이전 · 다음 버튼' },
   { id: 'peek', level: 3, label: '길게 눌러 미리 보기', how: '길게 누르면 메뉴 위에 내용이 먼저 보여요.', instead: '항목 열기' },
 ]
 export const GESTURE_IDS: readonly GestureId[] = GESTURES.map((g) => g.id)
@@ -78,8 +79,8 @@ export const DEFAULT_LEVEL: GestureLevel = 2
 /** 손짓 단계를 고르는 묶음의 이름이에요. 화면 점검이 이 이름으로 설정을 찾아요. */
 export const LEVEL_GROUP_LABEL = '손짓 단계'
 
-export const SWIPE_ACTIONS: readonly SwipeAction[] = ['done', 'pin', 'archive', 'delete', 'share']
-export const SWIPE_ACTION_LABEL: Record<SwipeAction, string> = { done: '완료', pin: '고정', archive: '보관', delete: '지우기', share: '공유' }
+export const SWIPE_ACTIONS: readonly SwipeAction[] = ['done', 'pin', 'archive', 'delete', 'share', 'snooze', 'move']
+export const SWIPE_ACTION_LABEL: Record<SwipeAction, string> = { done: '완료', pin: '고정', archive: '보관', delete: '지우기', share: '공유', snooze: '나중에 보기', move: '폴더로 옮기기' }
 export const SENSITIVITY_LABEL: Record<SwipeSensitivity, string> = { low: '낮음', normal: '보통', high: '높음' }
 export const PRESS_LABEL: Record<PressTime, string> = { short: '짧게', normal: '보통', long: '길게' }
 

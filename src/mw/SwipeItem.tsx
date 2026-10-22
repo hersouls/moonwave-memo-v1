@@ -22,8 +22,8 @@ export type { ItemAction }
 export { itemActions } from './ActionMenu'
 
 /** 줄 끝의 행동 줄에 놓는 순서예요(앞이 바깥쪽). 설정에서 고른 것이 늘 맨 바깥이에요. */
-const LEFT_ORDER: readonly SwipeAction[] = ['delete', 'archive', 'share', 'pin', 'done']
-const RIGHT_ORDER: readonly SwipeAction[] = ['done', 'pin', 'archive', 'share', 'delete']
+const LEFT_ORDER: readonly SwipeAction[] = ['delete', 'archive', 'share', 'snooze', 'move', 'pin', 'done']
+const RIGHT_ORDER: readonly SwipeAction[] = ['done', 'pin', 'archive', 'share', 'snooze', 'move', 'delete']
 /** 왼쪽으로 밀 때 함께 드러나는 행동은 셋까지예요. 더 많은 것은 ⋯ 메뉴에 있어요. */
 const TRAY_MAX = 3
 

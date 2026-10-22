@@ -12,7 +12,8 @@
 #
 # The file is named <service>_v<versionName>_<the day it was built, YYMMDD>.apk: memo_v1.0.2_261012.apk
 # (Moonwave UX, build/build-frontend#apk). The name changes with every build, so nothing has it written in: the record
-# beside the file (android.json, "file") names it, and the files of earlier builds are removed, here and on the release.
+# beside the file (android.json, "file") names it. Earlier builds stay (the 설정 › 이력 receives them), listed newest first
+# in history.json beside it, here and on the release.
 #
 # Needs, on this Mac: JDK 21, the Android SDK (~/Library/Android/sdk, platform 36), and
 #   ~/Library/Application Support/Moonwave/memo-android.env   (mode 600, never printed)
@@ -91,7 +92,7 @@ badge=$("$BT/aapt2" dump badging "$APK" 2>/dev/null | head -1)
 [[ "$badge" == *"versionCode='$CODE'"* && "$badge" == *"name='kr.moonwave.memo'"* ]] || die "APK의 버전이나 패키지가 달라요: $badge"
 
 # the file a person keeps, named by the rule, and the record that names it. One clock for both: the day in the name
-# is the record's builtAt. The files of earlier builds go.
+# is the record's builtAt. The files of earlier builds stay.
 mkdir -p "$OUT"
 FILE=$(python3 - "$APK" "$OUT" "$VERSION" "$CODE" "$SHA" <<'PY'
 import datetime, hashlib, json, os, re, shutil, sys
@@ -100,13 +101,20 @@ now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
 three = re.match(r"\d+\.\d+\.\d+", version)          # versionName's three numbers (1.0.3-beta → 1.0.3)
 if not three: sys.exit(f"package.json의 version이 세 자리가 아니에요: {version}")
 name = f"memo_v{three.group(0)}_{now:%y%m%d}.apk"
-for old in os.listdir(out):
-    if old.endswith(".apk"): os.remove(os.path.join(out, old))
 shutil.copyfile(built, os.path.join(out, name))
 data = open(os.path.join(out, name), "rb").read()
 info = {"versionName": version, "versionCode": code, "sha": sha, "builtAt": now.isoformat(timespec="seconds"),
         "sizeBytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "file": name}
 json.dump(info, open(os.path.join(out, "android.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+# history.json: every build, newest first; a build made again under the same versionCode replaces its line
+hist_path = os.path.join(out, "history.json")
+try: hist = json.load(open(hist_path, encoding="utf-8"))
+except Exception: hist = []
+entry = {k: info[k] for k in ("versionName", "versionCode", "builtAt", "sizeBytes", "file")}
+entry["builtAt"] = now.strftime("%Y-%m-%d")
+entry["notes"] = os.environ.get("MEMO_APK_NOTES", "")
+hist = [entry] + [h for h in hist if h.get("versionCode") != code]
+json.dump(hist, open(hist_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 print(name)
 PY
 ) || die "APK 파일과 기록(android.json)을 쓰지 못했어요"
@@ -125,11 +133,8 @@ if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
 else
   gh release create "$TAG" -R "$REPO" --target "$SHA" --title "Moonwave Memo for Android" --notes "$NOTES" --latest=false >/dev/null || die "릴리스 만들기"
 fi
-# the file first, then the record that names it (the web's download route follows the record), then the earlier files go
+# the file first, then the record that names it (the web's download route follows the record), then the history that lists them all
 gh release upload "$TAG" -R "$REPO" "$OUT/$FILE" --clobber >/dev/null || die "APK 올리기"
+gh release upload "$TAG" -R "$REPO" "$OUT/history.json" --clobber >/dev/null || die "이력(history.json) 올리기"
 gh release upload "$TAG" -R "$REPO" "$OUT/android.json" --clobber >/dev/null || die "기록(android.json) 올리기"
-for old in ${(f)"$(gh release view "$TAG" -R "$REPO" --json assets --jq '.assets[].name' 2>/dev/null)"}; do
-  [[ "$old" == *.apk && "$old" != "$FILE" ]] || continue
-  gh release delete-asset "$TAG" "$old" -R "$REPO" -y >/dev/null 2>&1 || say "앞선 파일을 지우지 못했어요: $old"
-done
 say "게시했어요: https://github.com/$REPO/releases/download/$TAG/$FILE"
