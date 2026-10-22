@@ -103,6 +103,7 @@ export function Expand({ open, live = false, peek = false, flush = false, onFits
   const [fits, setFits] = useState(false)
   const told = useRef(onFits)
   const last = useRef(false)
+  const floor = useRef(0)
   useEffect(() => { told.current = onFits })
   const setRef = (el: HTMLDivElement | null) => {
     node.current = el
@@ -131,7 +132,9 @@ export function Expand({ open, live = false, peek = false, flush = false, onFits
     if (!b || !peek) return
     const measure = () => {
       if (node.current?.classList.contains('mw-expand--open')) return
-      const now = b.scrollHeight <= (parseFloat(getComputedStyle(b).minHeight) || 0) + 8
+      // 다 보이면 키트의 CSS가 최소 높이를 0으로 풀어요. 그 값으로 다시 재면 "안 보임"이 되어 끝없이 뒤집히니, 접힌 채로 잰 값을 써요
+      if (!node.current?.classList.contains('mw-expand--fits')) floor.current = parseFloat(getComputedStyle(b).minHeight) || 0
+      const now = b.scrollHeight <= floor.current + 8
       if (now === last.current) return
       last.current = now
       setFits(now)

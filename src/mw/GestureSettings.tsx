@@ -6,8 +6,8 @@ import type { KeyboardEvent, ReactNode } from 'react'
 import { Button } from './Button'
 import { cx } from './cx'
 import {
-  canVibrate, GESTURES, LEVEL_GROUP_LABEL, LEVELS, PRESS_LABEL, PRESS_MS, SENSITIVITY_LABEL, SWIPE_ACTION_LABEL, SWIPE_ACTIONS,
-  SWIPE_DISTANCE, systemReducedMotion,
+  canVibrate, GESTURES, LEVEL_GROUP_LABEL, LEVELS, MOTION_STEPS, motionStepOf, PRESS_LABEL, PRESS_MS, SENSITIVITY_LABEL, STEP_OF_LEVEL,
+  SWIPE_ACTION_LABEL, SWIPE_ACTIONS, SWIPE_DISTANCE, systemReducedMotion,
 } from './gesture-settings'
 import type { GestureId, GestureLevel, PressTime, SwipeAction, SwipeSensitivity } from './gesture-settings'
 import { useGestureSettings, useGestureSync, useReducedMotion } from './gestures'
@@ -99,9 +99,12 @@ export function GestureSettings({ headingLevel = 2, className }: GestureSettings
   const shownLevel: GestureLevel = level === 'custom' ? 3 : level
   const onNow = GESTURES.filter((g) => settings.on[g.id])
   const say = (text: string) => { setTold(''); requestAnimationFrame(() => setTold(text)) }
-  const pickLevel = (l: GestureLevel) => { setLevel(l); setPlay((n) => n + 1); say(`${LEVELS[l].label} 단계로 바꿨어요.`) }
+  const pickLevel = (l: GestureLevel) => { setLevel(l); setPlay((n) => n + 1); say(`${LEVELS[l].label} 단계로 바꿨어요. 움직임은 ${MOTION_STEPS.find((m) => m.step === STEP_OF_LEVEL[l])!.label}예요.`) }
   const actionOptions = SWIPE_ACTIONS.map((a) => ({ value: a, label: SWIPE_ACTION_LABEL[a] }))
   const about = level === 'custom' ? '손짓을 하나씩 골랐어요. 단계를 고르면 그 단계의 손짓으로 돌아가요.' : LEVELS[level].about
+  // 손짓 단계가 움직임의 결도 정해요(키트 1.10). 줄이기를 켜면 단계와 상관없이 결과만 보여요
+  const step = MOTION_STEPS.find((m) => m.step === motionStepOf(settings))!
+  const motionLine = settings.motion === 'reduce' || still ? '움직임을 줄이고 있어서 움직이지 않고 결과만 보여요.' : step.about
 
   return (
     <section className={cx('mw-gesture-settings', className)} aria-labelledby={title}>
@@ -111,6 +114,7 @@ export function GestureSettings({ headingLevel = 2, className }: GestureSettings
       <Choice<GestureLevel> label={LEVEL_GROUP_LABEL} value={level === 'custom' ? null : level} onChange={pickLevel}
         options={LEVELS.map((l) => ({ value: l.level, label: l.label }))} extra={level === 'custom' ? '커스텀' : undefined} />
       <p className="mw-gesture-settings__about">{about}</p>
+      <p className="mw-gesture-settings__motion"><b>움직임 · {settings.motion === 'reduce' || still ? '줄임' : step.label}</b>{motionLine}</p>
 
       {suggest && (
         <div className="mw-gesture-hint" role="note">
@@ -181,7 +185,7 @@ export function GestureSettings({ headingLevel = 2, className }: GestureSettings
               <Switch checked={settings.confirmDelete} onChange={(on) => set({ confirmDelete: on })} aria-labelledby={`${title}-confirm`} />
             </li>
             <li className="mw-gesture-settings__row">
-              <span id={`${title}-motion`}><b>움직임 줄이기</b><small>{settings.motion === 'reduce' ? '손짓의 움직임 없이 결과만 보여요.' : still ? '기기 설정에 따라 지금 줄이고 있어요.' : '기기의 움직임 줄이기 설정을 따라요.'}</small></span>
+              <span id={`${title}-motion`}><b>움직임 줄이기</b><small>{settings.motion === 'reduce' ? '손짓 단계와 상관없이 움직임 없이 결과만 보여요.' : still ? '기기 설정에 따라 지금 줄이고 있어요.' : '기기의 움직임 줄이기 설정을 따라요.'}</small></span>
               <Switch checked={settings.motion === 'reduce'} onChange={(on) => set({ motion: on ? 'reduce' : 'auto' })} aria-labelledby={`${title}-motion`} />
             </li>
           </ul>

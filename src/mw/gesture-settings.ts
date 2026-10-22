@@ -76,6 +76,20 @@ export const LEVELS: readonly LevelInfo[] = [
 ]
 /** 처음 값이에요. */
 export const DEFAULT_LEVEL: GestureLevel = 2
+
+/**
+ * 움직임 단계예요(키트 1.10). 손짓 단계가 움직임의 결도 정해요: 끔 → calm, 기본 → light, 표준 → standard, 파워 → rich.
+ * `<html data-mw-motion>`에 적혀서 키트의 CSS가 따라요. 설정의 움직임 줄이기를 켜면 단계와 상관없이 `reduce`예요.
+ */
+export type MotionStep = 'calm' | 'light' | 'standard' | 'rich'
+export type MotionStepInfo = { step: MotionStep; label: string; about: string }
+export const MOTION_STEPS: readonly MotionStepInfo[] = [
+  { step: 'calm', label: '차분히', about: '넘쳤다 돌아오는 움직임과 화면 전환 없이, 한 단계 짧게 움직여요.' },
+  { step: 'light', label: '가볍게', about: '넘쳤다 돌아오는 움직임과 화면 전환 없이 움직여요.' },
+  { step: 'standard', label: '표준', about: '놓은 줄이 튕기며 제자리로 가고, 카드가 상세로 펼쳐져요.' },
+  { step: 'rich', label: '풍부하게', about: '표준에 더해 팝업 · 시트 · 토스트가 살짝 넘쳤다 자리 잡고, 고른 동그라미와 스위치가 톡 튀어요.' },
+]
+export const STEP_OF_LEVEL: Record<GestureLevel, MotionStep> = { 0: 'calm', 1: 'light', 2: 'standard', 3: 'rich' }
 /** 손짓 단계를 고르는 묶음의 이름이에요. 화면 점검이 이 이름으로 설정을 찾아요. */
 export const LEVEL_GROUP_LABEL = '손짓 단계'
 
@@ -159,6 +173,21 @@ export function withLevel(s: GestureSettings, level: GestureLevel): GestureSetti
   return { ...s, level, on: levelOn(level) }
 }
 
+/** 켜진 손짓이 모두 갖춘 가장 높은 단계예요. 커스텀일 때 움직임 단계를 이것으로 정해요. */
+function coveredLevel(on: Record<GestureId, boolean>): GestureLevel {
+  let got: GestureLevel = 0
+  for (const level of [1, 2, 3] as const) {
+    if (GESTURES.filter((g) => g.level <= level).every((g) => on[g.id])) got = level
+    else break
+  }
+  return got
+}
+
+/** 설정이 고르는 움직임 단계예요(움직임 줄이기는 보지 않아요). */
+export function motionStepOf(s: GestureSettings): MotionStep {
+  return STEP_OF_LEVEL[s.level === 'custom' ? coveredLevel(s.on) : s.level]
+}
+
 /** 손짓 하나를 켜거나 꺼요. 어느 단계와도 같지 않게 되면 단계가 `custom`이 돼요. */
 export function withGesture(s: GestureSettings, id: GestureId, on: boolean): GestureSettings {
   const next = { ...s.on, [id]: on }
@@ -180,12 +209,10 @@ function load(): GestureSettings {
   } catch { return defaultGestureSettings() }
 }
 
-/** 키트의 CSS가 움직임을 줄이게 `<html data-mw-motion="reduce">`를 붙여요. */
+/** 키트의 CSS가 따르게 `<html data-mw-motion>`에 움직임 단계(calm · light · standard · rich)나 `reduce`를 적어요. */
 function paint(s: GestureSettings) {
   if (typeof document === 'undefined') return
-  const root = document.documentElement
-  if (s.motion === 'reduce') root.setAttribute('data-mw-motion', 'reduce')
-  else root.removeAttribute('data-mw-motion')
+  document.documentElement.setAttribute('data-mw-motion', s.motion === 'reduce' ? 'reduce' : motionStepOf(s))
 }
 
 /** 지금 설정이에요. 같은 값이면 같은 객체를 돌려줘요(useSyncExternalStore가 그대로 써요). */
@@ -247,6 +274,11 @@ export function systemReducedMotion(): boolean {
 /** 손짓의 움직임을 줄여야 하는지예요: 설정에서 줄이기를 골랐거나, 기기가 그렇게 해 두었어요. */
 export function reducedMotion(): boolean {
   return getGestureSettings().motion === 'reduce' || systemReducedMotion()
+}
+
+/** 지금의 움직임 단계예요. 설정이나 기기가 움직임을 줄이고 있으면 `reduce`예요. */
+export function motionStep(): MotionStep | 'reduce' {
+  return reducedMotion() ? 'reduce' : motionStepOf(getGestureSettings())
 }
 
 /**

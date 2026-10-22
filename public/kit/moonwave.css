@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.9.5 · all in one
+/*! Moonwave UX 1.10.0 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -3194,7 +3194,7 @@
   --mw-touch: 44px;
 
   /* 키트의 판: 서비스가 들고 있는 키트 사본이 지금 판인지 화면 점검이 이 값으로 알아요 */
-  --mw-kit: "1.9";
+  --mw-kit: "1.10";
 
   /* 정해진 자리의 값 — 공통 단계에 없고, 이름에 적힌 자리에만 써요 */
   --mw-font-size-11: 11px;
@@ -3206,6 +3206,8 @@
   --mw-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --mw-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
   --mw-ease-pop: cubic-bezier(0.32, 1.6, 0.5, 1);
+  /* 큰 면이 자리에 올 때 살짝 넘쳤다 멈추는 곡선이에요. 움직임 단계가 풍부하게일 때만 팝업 · 시트 · 토스트가 써요(gestures.css) */
+  --mw-ease-land: cubic-bezier(0.34, 1.26, 0.5, 1);
   --mw-duration-sheet: 420ms;
   --mw-duration-modal: 380ms;
 
@@ -15672,7 +15674,7 @@
    손짓 설정, 사진 보기, 높이 단계가 있는 시트, 화면 전환
    규격: 패턴 › 손 닿는 곳과 손짓(patterns/touch-gestures)
    움직임은 모두 토큰의 길이와 곡선을 써요. 기기의 움직임 줄이기(prefers-reduced-motion)와 설정의 움직임 줄이기
-   (<html data-mw-motion="reduce">)에서는 움직이지 않고 결과만 보여요. */
+   (<html data-mw-motion="reduce">)에서는 움직이지 않고 결과만 보여요. 손짓 단계가 움직임 단계도 정해요(아래 ‘움직임 단계’, 키트 1.10). */
 
 /* ── 손짓을 받는 요소: iOS의 길게 누르기 메뉴와 글자 고르기를 끄고, 두 번 탭 확대를 꺼요 */
 [data-mw-press] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
@@ -15811,6 +15813,9 @@
 .mw-gesture-settings { display: grid; gap: var(--space-16); }
 .mw-gesture-settings__title { margin: 0; }
 .mw-gesture-settings__lead, .mw-gesture-settings__about { margin: 0; color: var(--text-secondary); font-size: var(--font-size-14); }
+/* 고른 단계의 움직임 한 줄: 이름은 굵게, 설명은 보조색 */
+.mw-gesture-settings__motion { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-8); margin: 0; color: var(--text-secondary); font-size: var(--font-size-14); }
+.mw-gesture-settings__motion b { color: var(--text-primary); font-weight: var(--font-weight-semibold); }
 .mw-gesture-settings__choice { flex-wrap: wrap; }
 .mw-gesture-settings__custom { pointer-events: none; }
 .mw-gesture-settings__now { display: grid; gap: var(--space-12); margin: 0; padding: 0; list-style: none; }
@@ -15895,6 +15900,38 @@
 ::view-transition-group(mw-expand) { animation-timing-function: var(--mw-ease-sheet); }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--motion-duration-medium); }
 .mw-vt .mw-app-panel, .mw-vt .mw-app-panel-scrim { transition: none; }
+
+/* ── 움직임 단계 (키트 1.10): 손짓 단계가 움직임의 결도 정해요. 키트의 손짓 설정이 <html data-mw-motion>에 적어요.
+   끔 → calm(차분히) · 기본 → light(가볍게) · 표준 → standard · 파워 → rich(풍부하게). 설정의 움직임 줄이기는 reduce예요.
+   - calm · light: 넘쳤다 돌아오는 곡선이 없어요. --mw-ease-pop이 --mw-ease가 돼서 놓은 줄 · 하트 · 미리 보기가 튕기지 않고
+     미끄러져 멈춰요. 카드 → 상세, 카드 ↔ 그리드 같은 화면 전환은 바로 바뀌어요(키트의 화면 전환 스크립트가 쉬어요).
+   - calm은 길이도 한 단계 짧아요: 긴 것 300 → 200ms, 시트 420 → 300ms, 모달 380 → 260ms, 팝업 · 토스트 200ms.
+   - standard: 키트의 모션 그대로예요.
+   - rich: 팝업 · 시트 · 토스트가 자리에 올 때 살짝 넘쳤다 멈추고(--mw-ease-land), 고른 동그라미와 스위치가 톡 튀어요.
+   기기의 움직임 줄이기(prefers-reduced-motion)는 어느 단계에서든 결과만 보여요. 단계는 움직임의 결만 바꾸고 결과는 같아요. */
+[data-mw-motion='calm'], [data-mw-motion='light'],
+[data-mw-motion='calm'] [data-theme], [data-mw-motion='light'] [data-theme] { --mw-ease-pop: var(--mw-ease); }
+[data-mw-motion='calm'], [data-mw-motion='calm'] [data-theme] {
+  --motion-duration-long: var(--motion-duration-medium);
+  --mw-duration-sheet: 300ms;
+  --mw-duration-modal: 260ms;
+}
+[data-mw-motion='calm'] .mw-popup--center[data-state="open"] { animation-duration: var(--motion-duration-medium); }
+[data-mw-motion='calm'] .mw-bottom-sheet[data-state="open"] { animation-duration: var(--mw-duration-sheet); }
+[data-mw-motion='calm'] .mw-toast { transition-duration: var(--motion-duration-medium); }
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-mw-motion='rich'], [data-mw-motion='rich'] [data-theme] { --mw-ease-sheet: var(--mw-ease-land); }
+  [data-mw-motion='rich'] .mw-popup--center[data-state="open"],
+  [data-mw-motion='rich'] .mw-bottom-sheet[data-state="open"] { animation-timing-function: var(--mw-ease-land); }
+  [data-mw-motion='rich'] .mw-toast { transition-timing-function: var(--motion-easing-ease-out), var(--mw-ease-land); }
+  [data-mw-motion='rich'] .mw-switch__handle { transition-timing-function: var(--mw-ease-pop); }
+  [data-mw-motion='rich'] .mw-select-check__input:checked + .mw-select-check__mark { animation: mw-step-pop var(--motion-duration-medium) var(--mw-ease-pop); }
+}
+@keyframes mw-step-pop {
+  from { transform: scale(0.6); }
+  to { transform: none; }
+}
 
 /* ── 움직임 줄이기: 움직이지 않고 결과만 */
 @media (prefers-reduced-motion: reduce) {
@@ -21705,3 +21742,5 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   .mw-root *, .mw-root *::before, .mw-root *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+/* 손짓 설정의 움직임 줄이기(<html data-mw-motion="reduce">)도 기기의 것과 같아요: 키트 안의 모든 움직임이 결과만 보여요 */
+[data-mw-motion='reduce'] .mw-root *, [data-mw-motion='reduce'] .mw-root *::before, [data-mw-motion='reduce'] .mw-root *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

@@ -1,15 +1,16 @@
 /* Moonwave UX — 화면 전환: 카드가 상세로 펼쳐지고, 보기 방식이 바뀔 때 타일이 제자리로 옮겨 가요
-   브라우저의 View Transitions로 해요. 그것이 없거나 움직임을 줄이면 바로 바뀌어요(같은 결과, 움직임만 없어요).
+   브라우저의 View Transitions로 해요. 그것이 없거나, 움직임을 줄이거나, 움직임 단계가 차분히 · 가볍게면 바로 바뀌어요(같은 결과, 움직임만 없어요).
    규격: https://ux.moonwave.kr/patterns/touch-gestures#transition */
 import { flushSync } from 'react-dom'
-import { reducedMotion } from './gesture-settings'
+import { motionStep } from './gesture-settings'
 
 type Transition = { finished: Promise<void> }
 type WithTransition = Document & { startViewTransition?: (update: () => void) => Transition }
 
-/** 지금 움직여 바꿀 수 있는지예요. */
+/** 지금 움직여 바꿀 수 있는지예요. 화면 전환은 움직임 단계가 표준 · 풍부하게일 때만이에요(차분히 · 가볍게 · 줄이기는 바로 바뀌어요). */
 export function canTransition(): boolean {
-  return typeof document !== 'undefined' && typeof (document as WithTransition).startViewTransition === 'function' && !reducedMotion()
+  const step = motionStep()
+  return typeof document !== 'undefined' && typeof (document as WithTransition).startViewTransition === 'function' && (step === 'standard' || step === 'rich')
 }
 
 /** 바꾸는 동안 `<html class="mw-vt">`를 붙여요. 키트의 CSS가 그동안 패널의 제 전환을 쉬게 해요(두 움직임이 겹치지 않게). */
