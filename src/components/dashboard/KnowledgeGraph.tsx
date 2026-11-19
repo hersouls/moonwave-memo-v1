@@ -1,57 +1,56 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useGraphData } from '@/hooks/useGraphData'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useKnowledgeGraph } from '@/services/graph/graphEngine'
+import type { GraphNode } from '@/services/graph/types'
 import { useFolderStore } from '@/stores/folderStore'
 import { WidgetCard } from './WidgetCard'
-import { ForceGraph, GROUP_COLORS } from './ForceGraph'
+import { ForceGraph } from './ForceGraph'
 import { KnowledgeGraphModal } from './KnowledgeGraphModal'
+import { GROUP_COLORS, NONE_COLOR } from './graphColors'
 import { IcLineExpand, IcLineShare } from '@/mw/icons'
 
-const NONE_COLOR = 'var(--mw-cat-other)'
 
 export function KnowledgeGraph() {
-  const { nodes, links, groups, total, truncated } = useGraphData()
+  const { result } = useKnowledgeGraph()
   const folders = useFolderStore((s) => s.folders)
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [modalOpen, setModalOpen] = useState(false)
 
+  const nodes = result?.nodes ?? []
   const hasGraph = nodes.length >= 3
 
-  // 폴더(group) → 색상·이름 맵. 폴더 고유색을 쓰되 없으면 팔레트로 폴백.
+  // 폴더 → 색 · 이름. 폴더 고유색을 쓰고, 없으면 팔레트로.
   const { colorMap, groupNames } = useMemo(() => {
     const folderById = new Map(folders.map((f) => [String(f.id), f]))
-    const colorMap = new Map<string, string>()
-    const groupNames = new Map<string, string>()
-    groups.forEach((g, i) => {
+    const colors = new Map<string, string>()
+    const names = new Map<string, string>()
+    ;(result?.groups ?? []).forEach((g, i) => {
       if (g === 'none') {
-        colorMap.set(g, NONE_COLOR)
-        groupNames.set(g, '폴더 없음')
+        colors.set(g, NONE_COLOR)
+        names.set(g, '폴더 없음')
         return
       }
       const f = folderById.get(g)
-      colorMap.set(g, f?.color || GROUP_COLORS[i % GROUP_COLORS.length])
-      groupNames.set(g, f?.name || '폴더')
+      colors.set(g, f?.color || GROUP_COLORS[i % GROUP_COLORS.length])
+      names.set(g, f?.name || '폴더')
     })
-    return { colorMap, groupNames }
-  }, [groups, folders])
+    return { colorMap: colors, groupNames: names }
+  }, [result?.groups, folders])
 
-  // 그래프가 사라지면(메모 3개 미만) 모달 상태를 닫아 재등장 시 스스로 열리는 것 방지
+  const colorOf = useCallback((n: GraphNode) => colorMap.get(n.group) || NONE_COLOR, [colorMap])
+
+  // 그래프가 사라지면(메모 3개 미만) 크게 보기를 닫아 다시 생길 때 저절로 열리지 않게
   useEffect(() => {
     if (!hasGraph) setModalOpen(false)
   }, [hasGraph])
 
-  // 미리보기 영역 크기 측정 (좁은 masonry 컬럼 대응)
+  // 미리보기 크기 (좁은 칸에도 맞게)
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     const observer = new ResizeObserver((entries) => {
       const rect = entries[0]?.contentRect
-      if (rect) {
-        setSize({
-          width: Math.round(rect.width),
-          height: Math.round(Math.max(rect.width * 0.62, 220)),
-        })
-      }
+      if (rect) setSize({ width: Math.round(rect.width), height: Math.round(Math.max(rect.width * 0.62, 220)) })
     })
     observer.observe(el)
     return () => observer.disconnect()
@@ -61,7 +60,7 @@ export function KnowledgeGraph() {
     <button
       type="button"
       onClick={() => setModalOpen(true)}
-      aria-label="지식 그래프 확대"
+      aria-label="지식 그래프 크게 보기"
       title="크게 펼쳐 살펴보기"
       className="mw-icon-button"
     >
@@ -72,7 +71,12 @@ export function KnowledgeGraph() {
   return (
     <>
       <WidgetCard icon={IcLineShare} title="지식 그래프" action={expandAction} bodyClassName="px-2 py-2.5">
-        {!hasGraph ? (
+        {!result ? (
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <IcLineShare size={20} className="text-zinc-400" aria-hidden="true" />
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">메모 사이의 연결을 찾고 있어요</p>
+          </div>
+        ) : !hasGraph ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <IcLineShare size={20} className="text-zinc-400" aria-hidden="true" />
             <p className="text-sm text-zinc-500 dark:text-zinc-400">메모가 3개 이상 필요해요</p>
@@ -83,10 +87,11 @@ export function KnowledgeGraph() {
               {size.width > 0 && (
                 <ForceGraph
                   nodes={nodes}
-                  links={links}
-                  colorMap={colorMap}
+                  links={result.links}
+                  colorOf={colorOf}
                   width={size.width}
                   height={size.height}
+                  label={`지식 그래프 미리보기 — 메모 ${nodes.length}개, 연결 ${result.links.length}개`}
                 />
               )}
             </div>
@@ -94,17 +99,13 @@ export function KnowledgeGraph() {
         )}
       </WidgetCard>
 
-      {hasGraph && (
+      {hasGraph && result && (
         <KnowledgeGraphModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          nodes={nodes}
-          links={links}
-          groups={groups}
+          result={result}
           colorMap={colorMap}
           groupNames={groupNames}
-          total={total}
-          truncated={truncated}
         />
       )}
     </>

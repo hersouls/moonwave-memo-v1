@@ -1,16 +1,14 @@
 import {
   forwardRef,
-  memo,
   useCallback,
   useEffect,
-  useId,
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
-  type MutableRefObject,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
-import { useGesture } from '@use-gesture/react'
 import {
   forceCollide,
   forceLink,
@@ -18,30 +16,30 @@ import {
   forceSimulation,
   forceX,
   forceY,
+  type Simulation,
   type SimulationLinkDatum,
   type SimulationNodeDatum,
 } from 'd3-force'
-import { toPng } from 'html-to-image'
-import type { GraphLink, GraphNode, LinkKind } from '@/hooks/useGraphData'
+import { nodeRadius } from '@/services/graph/compute'
+import type { GraphLink, GraphNode, LinkKind } from '@/services/graph/types'
 import { resolveCssColor } from '@/utils/cssColor'
+import { useTheme } from '@/mw/theme'
+import { useGesture, useReducedMotion } from '@/mw/gestures'
+import { EDGE_PX } from '@/mw/gesture-settings'
 
 /* ────────────────────────────────────────────────────────────────
-   지식 그래프 렌더 엔진 (ForceGraph)
+   지식 그래프 그리기 (Canvas)
 
-   d3-force로 레이아웃만 계산하고, DOM은 React가 구조만 그린 뒤
-   위치·강조는 ref를 통해 명령형으로 갱신한다("구조는 React, 애니메이션은
-   명령형" 패턴). 팬/줌/노드 드래그는 @use-gesture로 마우스·터치 모두 지원.
-
-   핵심 개선:
-   - 레이아웃 정착 후 fit-to-view로 뷰포트에 항상 맞춤 → "안 보이는" 문제 해결
-   - forceX/forceY 약한 중심 인력 + distanceMax로 분산 억제
-   - 팬/줌은 뷰포트 <g>의 transform만 setAttribute → React 리렌더 없이 부드럽게
+   - 자리는 워커가 계산해 오고, 여기서는 캔버스 한 장에 그리기만 해요.
+     SVG처럼 노드마다 DOM을 두지 않아 메모 수천 개도 부드러워요.
+   - 그리기는 필요할 때만 한 프레임에 한 번(requestDraw).
+   - 연결은 모양이 같은 것끼리 묶어 한 번에 그려요(stroke 호출 수 최소화).
+   - 라벨은 화면 좌표에서 그리고, 큰 노드부터 자리를 잡아 겹치는 라벨은 건너뛰어요.
+   - 새 레이아웃이 오면 옛 자리에서 새 자리로 옮겨 가요(움직임 줄이기면 바로).
+   - 노드를 끌면 그때만 화면 쪽에서 작은 시뮬레이션을 돌려 이웃이 따라와요.
+   - 키보드: 그래프에 포커스 → 화살표로 가까운 메모로, Enter로 고르고 한 번 더 Enter로 열기.
    ──────────────────────────────────────────────────────────────── */
 
-// 폴더 고유색이 없을 때의 팔레트 폴백 (KnowledgeGraph 위젯에서 사용)
-export const GROUP_COLORS = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `var(--mw-cat-${n})`)
-
-// auto: 줌 레벨에 따라 허브→말단 순으로 라벨이 서서히 나타남 (옵시디언식)
 export type LabelMode = 'none' | 'auto' | 'all'
 
 export interface ForceGraphHandle {
@@ -56,657 +54,605 @@ export interface ForceGraphHandle {
 interface ForceGraphProps {
   nodes: GraphNode[]
   links: GraphLink[]
-  colorMap: Map<string, string>
+  /** 노드 색 (var(--…) 그대로 줘도 돼요) */
+  colorOf: (n: GraphNode) => string
   width: number
   height: number
-  /** 팬/줌/드래그·호버 상호작용 활성화 (모달=true, 위젯 미리보기=false) */
+  /** 팬/줌/드래그·키보드 (크게 보기=true, 위젯 미리보기=false) */
   interactive?: boolean
   labelMode?: LabelMode
-  /** 검색 강조 — 일치하지 않는 노드를 흐리게 */
+  /** 제목에 이 말이 없는 노드는 흐리게 */
   query?: string
-  /** 범례에서 선택된 그룹만 강조 */
-  highlightGroup?: string | null
-  /** 부모가 소유한 선택 상태(제어형) — 상세 패널 표시용 */
+  /** 범례에서 고른 묶음 — false인 노드는 흐리게 */
+  highlight?: ((n: GraphNode) => boolean) | null
   selectedId?: string | null
   onSelect?: (id: string | null) => void
-  /** 이미 선택된 노드를 다시 탭하거나 상세에서 열기 → 메모로 이동 */
+  /** 고른 노드를 다시 누르거나 Enter → 메모 열기 */
   onActivate?: (id: string) => void
   onZoomChange?: (pct: number) => void
+  /** 노드를 끌어 바뀐 자리 */
+  onMoved?: (nodes: Array<{ id: string; x: number; y: number }>) => void
+  label?: string
   className?: string
 }
 
-interface SimNode extends SimulationNodeDatum, GraphNode {
+interface RNode extends SimulationNodeDatum {
+  id: string
+  label: string
+  degree: number
+  ref: GraphNode
   x: number
   y: number
+  r: number
+  /** 옮겨 가는 중일 때의 출발 · 도착 자리 */
+  fromX?: number
+  fromY?: number
+  toX?: number
+  toY?: number
 }
-interface SimLink extends SimulationLinkDatum<SimNode> {
-  weight: number
+interface RLink extends SimulationLinkDatum<RNode> {
+  source: RNode
+  target: RNode
   kind: LinkKind
+  weight: number
 }
 
-// 연결 종류별 기본 불투명도 — 명시적([[링크]])은 진하게, 자동(언급·태그·AI)은 옅게
-const linkBaseOpacity = (kind: LinkKind) => (kind === 'wiki' ? 0.25 : 0.15)
-
-interface GraphInternal {
-  simulation: ReturnType<typeof forceSimulation<SimNode>>
-  simNodes: SimNode[]
-  simLinks: SimLink[]
-  simNodeById: Map<string, SimNode>
-  adjacency: Map<string, Set<string>>
-  maxDegree: number
-}
-
-const MIN_K = 0.2
+const MIN_K = 0.08
 const MAX_K = 4
-
-const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
-
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-function nodeRadius(degree: number, interactive: boolean): number {
-  const base = interactive ? 5.5 : 4
-  const grow = interactive ? 2 : 1.3
-  const cap = interactive ? 11 : 7
-  return base + Math.min(Math.sqrt(degree) * grow, cap)
-}
+const TRANSITION_MS = 450
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+const ease = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2)
 
 function truncate(label: string, max: number): string {
   return label.length > max ? label.slice(0, max) + '…' : label
 }
 
-/* 구조 전용 레이어 — 데이터가 바뀔 때만 리렌더(memo).
-   상호작용(선택/호버/줌)은 이 레이어를 다시 그리지 않고 ref로 갱신한다. */
-interface GraphContentProps {
-  nodes: GraphNode[]
-  links: GraphLink[]
-  colorMap: Map<string, string>
-  interactive: boolean
-  nodeRefs: MutableRefObject<Map<string, SVGGElement>>
-  circleRefs: MutableRefObject<Map<string, SVGCircleElement>>
-  labelRefs: MutableRefObject<Map<string, SVGTextElement>>
-  linkRefs: MutableRefObject<(SVGLineElement | null)[]>
-}
-
-const GraphContent = memo(function GraphContent({
-  nodes,
-  links,
-  colorMap,
-  interactive,
-  nodeRefs,
-  circleRefs,
-  labelRefs,
-  linkRefs,
-}: GraphContentProps) {
-  return (
-    <>
-      <g className="text-zinc-400 dark:text-zinc-500">
-        {links.map((l, i) => (
-          <line
-            key={`${l.source}-${l.target}-${i}`}
-            ref={(el) => {
-              linkRefs.current[i] = el
-            }}
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeDasharray={l.kind !== 'wiki' ? '5 4' : undefined}
-            style={{ strokeOpacity: linkBaseOpacity(l.kind), strokeWidth: Math.min(1 + l.weight * 0.5, 3) }}
-          />
-        ))}
-      </g>
-      <g>
-        {nodes.map((n) => {
-          const color = colorMap.get(n.group) || 'var(--mw-cat-other)'
-          return (
-            <g
-              key={n.id}
-              data-node-id={n.id}
-              ref={(el) => {
-                if (el) nodeRefs.current.set(n.id, el)
-                else nodeRefs.current.delete(n.id)
-              }}
-              tabIndex={interactive ? 0 : undefined}
-              role={interactive ? 'button' : undefined}
-              aria-label={interactive ? `${n.label} — 연결 ${n.degree}개` : undefined}
-              className={interactive ? 'memo-graph-node' : undefined}
-              style={{ cursor: interactive ? 'pointer' : 'default', willChange: 'transform' }}
-            >
-              <circle
-                ref={(el) => {
-                  if (el) circleRefs.current.set(n.id, el)
-                  else circleRefs.current.delete(n.id)
-                }}
-                r={nodeRadius(n.degree, interactive)}
-                fill={color}
-                fillOpacity={0.6}
-                stroke={color}
-                strokeWidth={1.5}
-              />
-              <text
-                ref={(el) => {
-                  if (el) labelRefs.current.set(n.id, el)
-                  else labelRefs.current.delete(n.id)
-                }}
-                x={nodeRadius(n.degree, interactive) + 4}
-                y={4}
-                className="fill-zinc-700 dark:fill-zinc-200"
-                // opacity transition 없음 — 자동 라벨의 k-램프 자체가 페이드 역할
-                // (transition을 두면 매 프레임 재시작되어 램프보다 180ms 뒤처짐)
-                style={{ fontSize: 'var(--font-size-12)', opacity: 0, pointerEvents: 'none', paintOrder: 'stroke' }}
-                stroke="var(--dialog-bg, transparent)"
-                strokeWidth={3}
-              >
-                {truncate(n.label, 16)}
-              </text>
-            </g>
-          )
-        })}
-      </g>
-    </>
-  )
-})
-
 export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function ForceGraph(
   {
     nodes,
     links,
-    colorMap,
+    colorOf,
     width,
     height,
     interactive = false,
     labelMode = 'none',
     query = '',
-    highlightGroup = null,
+    highlight = null,
     selectedId = null,
     onSelect,
     onActivate,
     onZoomChange,
+    onMoved,
+    label = '지식 그래프',
     className,
   },
   ref
 ) {
-  const svgRef = useRef<SVGSVGElement>(null)
-  const viewRef = useRef<SVGGElement>(null)
-  const exportRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { dark } = useTheme()
+  const reduced = useReducedMotion()
+  const pinchOn = useGesture('zoom')
 
-  const nodeRefs = useRef(new Map<string, SVGGElement>())
-  const circleRefs = useRef(new Map<string, SVGCircleElement>())
-  const labelRefs = useRef(new Map<string, SVGTextElement>())
-  const linkRefs = useRef<(SVGLineElement | null)[]>([])
-
-  const graphRef = useRef<GraphInternal | null>(null)
-  const viewTransform = useRef({ x: 0, y: 0, k: 1 })
-  const rafRef = useRef<number | null>(null)
-  const hoveredRef = useRef<string | null>(null)
-  // 재구성 사이에 노드 위치를 이어받기 위한 저장소 — 데이터 변경 시 레이아웃 유지
-  const positionsRef = useRef(new Map<string, { x: number; y: number }>())
-  // 줌 변화에 따른 라벨 재페인트를 rAF 한 번으로 합치는 스로틀 (paint는 뒤에 정의되므로 ref 경유)
-  const paintRef = useRef<() => void>(() => {})
-  const paintRafRef = useRef<number | null>(null)
-  // 도트 그리드 패턴 — 뷰 transform과 동기화해 무한 캔버스 이동감 제공
-  const patternRef = useRef<SVGPatternElement>(null)
-  const dotsId = `kg-dots-${useId().replace(/:/g, '')}`
-  // 마지막으로 라벨에 쓴 폰트 크기 — 재구성 시 0으로 리셋해 첫 페인트에서 반드시 기록
-  const lastFontRef = useRef(0)
-  // 직전 제스처가 실제 드래그(팬/노드 이동)였는지 — 드래그 직후 OS가 합성하는
-  // dblclick이 fit을 오발동시키는 것을 막는다 (OS는 이동량과 무관하게 클릭 수를 셈)
-  const draggedRef = useRef(false)
+  const rnodesRef = useRef<RNode[]>([])
+  const rlinksRef = useRef<RLink[]>([])
+  const byIdRef = useRef(new Map<string, RNode>())
+  const adjRef = useRef(new Map<string, Set<string>>())
+  const maxDegRef = useRef(0)
+  const view = useRef({ x: 0, y: 0, k: 1 })
+  const hoverRef = useRef<string | null>(null)
+  const [keyFocus, setKeyFocus] = useState<string | null>(null)
+  const keyFocusRef = useRef<string | null>(null)
+  keyFocusRef.current = keyFocus
+  const fittedRef = useRef(false)
+  /** 전체 보기 배율 — 자동 라벨은 이 배율을 기준으로 나타나요 */
+  const fitKRef = useRef(1)
   const sizeRef = useRef({ width, height })
   sizeRef.current = { width, height }
+  const propsRef = useRef({ labelMode, query, highlight, selectedId, interactive, colorOf, reduced })
+  propsRef.current = { labelMode, query, highlight, selectedId, interactive, colorOf, reduced }
 
-  // 호버/이펙트에서 항상 최신 prop을 읽도록 미러링
-  const propsRef = useRef({ labelMode, query, highlightGroup, selectedId, interactive })
-  propsRef.current = { labelMode, query, highlightGroup, selectedId, interactive }
+  /* ── 색: var(--…)를 테마마다 한 번만 풀어요 ── */
+  const colorCache = useRef(new Map<string, string>())
+  const themeColors = useRef({ link: '', label: '', halo: '', dot: '', focus: '', bg: '', font: '' })
+  useLayoutEffect(() => {
+    colorCache.current.clear()
+    const font = canvasRef.current ? getComputedStyle(canvasRef.current).fontFamily : 'sans-serif'
+    themeColors.current = {
+      link: resolveCssColor('var(--text-tertiary)'),
+      label: resolveCssColor('var(--text-primary)'),
+      halo: resolveCssColor('var(--background-primary)'),
+      dot: resolveCssColor('var(--text-tertiary)'),
+      focus: resolveCssColor('var(--mw-focus)'),
+      bg: resolveCssColor('var(--background-primary)'),
+      font: font || 'sans-serif',
+    }
+    requestDraw()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dark])
+  const resolve = (c: string) => {
+    let v = colorCache.current.get(c)
+    if (!v) {
+      v = resolveCssColor(c)
+      colorCache.current.set(c, v)
+    }
+    return v
+  }
 
-  const hasSize = width > 4 && height > 4
-  const enoughNodes = nodes.length >= 1
+  /* ── 그리기 ── */
+  const rafRef = useRef<number | null>(null)
+  const transitionRef = useRef<{ t0: number } | null>(null)
 
-  // 구조(노드·링크 집합) 서명 — 라벨만 바뀌는 변경에는 시뮬레이션을 재구성하지 않도록.
-  // 순서와 무관하게 안정적이도록 정렬한다.
-  const structureKey = useMemo(() => {
-    const ns = nodes.map((n) => n.id).sort().join(',')
-    const ls = links
-      .map((l) => (l.source < l.target ? `${l.source}~${l.target}` : `${l.target}~${l.source}`))
-      .sort()
-      .join(',')
-    return `${ns}||${ls}`
-  }, [nodes, links])
+  const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number, dpr: number, background: boolean) => {
+    const { labelMode: lm, query: q, highlight: hl, selectedId: sel, interactive: itv, colorOf: colorFn } = propsRef.current
+    const tc = themeColors.current
+    const { x: vx, y: vy, k } = view.current
+    const rnodes = rnodesRef.current
+    const rlinks = rlinksRef.current
 
-  /* ── 뷰포트 transform 적용 (명령형, 리렌더 없음) ── */
-  const applyTransform = useCallback(() => {
-    const g = viewRef.current
-    if (!g) return
-    const { x, y, k } = viewTransform.current
-    g.setAttribute('transform', `translate(${x},${y}) scale(${k})`)
-    // 배경 도트 그리드도 같은 변환으로 — 빈 영역에서도 팬/줌이 느껴지도록
-    patternRef.current?.setAttribute('patternTransform', `translate(${x} ${y}) scale(${k})`)
-  }, [])
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, w, h)
+    if (background) {
+      ctx.fillStyle = tc.bg
+      ctx.fillRect(0, 0, w, h)
+    }
 
-  // 줌 중 라벨(자동 표시·크기 역보정) 갱신 — 프레임당 1회로 스로틀
-  const schedulePaint = useCallback(() => {
-    if (paintRafRef.current !== null) return
-    paintRafRef.current = requestAnimationFrame(() => {
-      paintRafRef.current = null
-      paintRef.current()
-    })
-  }, [])
+    // 도트 격자 — 빈 곳에서도 움직임이 느껴지게 (너무 촘촘하면 생략)
+    if (itv) {
+      const step = 22 * k
+      if (step >= 10) {
+        ctx.fillStyle = tc.dot
+        ctx.globalAlpha = dark ? 0.16 : 0.12
+        const ox = ((vx % step) + step) % step
+        const oy = ((vy % step) + step) % step
+        for (let gx = ox; gx < w; gx += step) {
+          for (let gy = oy; gy < h; gy += step) ctx.fillRect(gx - 0.6, gy - 0.6, 1.2, 1.2)
+        }
+        ctx.globalAlpha = 1
+      }
+    }
 
-  // 정수 %가 실제로 바뀔 때만 부모에 통지 — 휠/핀치 이벤트 속도의 setState 리렌더 방지
-  const lastPctRef = useRef(-1)
+    let active = hoverRef.current ?? keyFocusRef.current ?? sel ?? null
+    if (active != null && !byIdRef.current.has(active)) active = null
+    const hood = active != null ? adjRef.current.get(active) : undefined
+    const ql = q.trim().toLowerCase()
+    const passes = (n: RNode) => (!hl || hl(n.ref)) && (!ql || n.label.toLowerCase().includes(ql))
+    const pass = new Map<string, boolean>()
+    for (const n of rnodes) pass.set(n.id, passes(n))
+
+    // 화면 안에 있는지 (그래프 좌표 여유 포함)
+    const left = -vx / k - 40
+    const top = -vy / k - 40
+    const right = (w - vx) / k + 40
+    const bottom = (h - vy) / k + 40
+    const inView = (n: RNode) => n.x >= left && n.x <= right && n.y >= top && n.y <= bottom
+
+    ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * vx, dpr * vy)
+
+    // 연결 — 모양(점선 · 불투명도 · 굵기)이 같은 것끼리 묶어 한 번에
+    const batches = new Map<string, number[]>()
+    for (let i = 0; i < rlinks.length; i++) {
+      const l = rlinks[i]
+      const s = l.source
+      const t = l.target
+      if (!inView(s) && !inView(t)) continue
+      const touches = active != null && (s.id === active || t.id === active)
+      let op = active != null ? (touches ? (l.kind === 'wiki' ? 0.6 : 0.45) : 0.05) : l.kind === 'wiki' ? 0.28 : 0.16
+      if (!pass.get(s.id) || !pass.get(t.id)) op = Math.min(op, 0.04)
+      const lw = touches ? Math.min(1.4 + l.weight * 0.7, 4) : Math.min(1 + l.weight * 0.5, 3)
+      const key = `${l.kind === 'wiki' ? 's' : 'd'}|${Math.round(op * 100)}|${Math.round(lw * 2)}`
+      const arr = batches.get(key)
+      if (arr) arr.push(i)
+      else batches.set(key, [i])
+    }
+    ctx.strokeStyle = tc.link
+    ctx.lineCap = 'round'
+    for (const [key, idx] of batches) {
+      const [dash, op, lw2] = key.split('|')
+      ctx.globalAlpha = Number(op) / 100
+      ctx.lineWidth = Number(lw2) / 2
+      ctx.setLineDash(dash === 'd' ? [5, 4] : [])
+      ctx.beginPath()
+      for (const i of idx) {
+        const l = rlinks[i]
+        ctx.moveTo(l.source.x, l.source.y)
+        ctx.lineTo(l.target.x, l.target.y)
+      }
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+    ctx.globalAlpha = 1
+
+    // 노드
+    const dimOf = (n: RNode) => !pass.get(n.id) || (active != null && n.id !== active && !hood?.has(n.id))
+    for (const n of rnodes) {
+      if (!inView(n)) continue
+      const color = resolve(colorFn(n.ref))
+      const isActive = n.id === active
+      const isSel = n.id === sel
+      const dim = dimOf(n)
+      const r = n.r * (isActive ? 1.45 : 1)
+      ctx.globalAlpha = dim ? 0.14 : 1
+      if (isActive) {
+        ctx.shadowColor = color
+        ctx.shadowBlur = 14
+      }
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2)
+      ctx.fillStyle = color
+      ctx.globalAlpha = (dim ? 0.14 : 1) * (isActive ? 0.92 : 0.6)
+      ctx.fill()
+      ctx.shadowBlur = 0
+      ctx.globalAlpha = dim ? 0.14 : 1
+      ctx.lineWidth = isSel ? 2.5 : isActive ? 2 : 1.5
+      ctx.strokeStyle = color
+      ctx.stroke()
+      if (n.id === keyFocusRef.current) {
+        ctx.globalAlpha = 1
+        ctx.lineWidth = 2 / k
+        ctx.strokeStyle = tc.focus
+        ctx.beginPath()
+        ctx.arc(n.x, n.y, r + 4 / k, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+    }
+    ctx.globalAlpha = 1
+
+    // 라벨 — 화면 좌표, 중요한 노드부터 자리를 잡고 겹치면 건너뛰어요
+    if (lm !== 'none' || active != null) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      const fontSize = 12
+      ctx.font = `${fontSize}px ${tc.font}`
+      ctx.textBaseline = 'middle'
+      ctx.lineJoin = 'round'
+      const maxDeg = maxDegRef.current
+      // 전체 보기에서도 큰 허브는 이름이 보이고, 확대할수록 작은 메모까지 (겹치는 라벨은 아래에서 건너뛰어요)
+      const base = Math.min(fitKRef.current, 1)
+      const span = rnodes.length <= 40 ? 0.6 : 2.2
+      const candidates: Array<{ n: RNode; op: number; pri: number }> = []
+      for (const n of rnodes) {
+        if (!inView(n) || dimOf(n)) continue
+        let op = 0
+        const near = active != null && (n.id === active || hood?.has(n.id))
+        if (lm === 'all') op = 1
+        else if (lm === 'auto') {
+          const ratio = maxDeg > 0 ? n.degree / maxDeg : 0
+          const threshold = base * (0.6 + (1 - ratio) * span)
+          op = clamp((k - threshold) / (base * 0.35), 0, 1)
+        }
+        if (near) op = 1
+        if (op <= 0.02) continue
+        candidates.push({ n, op, pri: (n.id === active ? 1e6 : near ? 1e5 : 0) + n.degree })
+      }
+      candidates.sort((a, b) => b.pri - a.pri)
+      const boxes: Array<[number, number, number, number]> = []
+      const budget = 400
+      let drawn = 0
+      ctx.lineWidth = 3
+      ctx.strokeStyle = tc.halo
+      ctx.fillStyle = tc.label
+      for (const { n, op } of candidates) {
+        if (drawn >= budget) break
+        const text = truncate(n.label, 18)
+        const sx = n.x * k + vx + n.r * k + 4
+        const sy = n.y * k + vy
+        const tw = ctx.measureText(text).width
+        const box: [number, number, number, number] = [sx - 2, sy - fontSize / 2 - 1, sx + tw + 2, sy + fontSize / 2 + 1]
+        if (boxes.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue
+        boxes.push(box)
+        ctx.globalAlpha = op
+        ctx.strokeText(text, sx, sy)
+        ctx.fillText(text, sx, sy)
+        drawn++
+      }
+      ctx.globalAlpha = 1
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dark])
+
+  const frame = useCallback(() => {
+    rafRef.current = null
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    // 옮겨 가는 중이면 자리를 한 걸음 진행
+    const tr = transitionRef.current
+    if (tr) {
+      const p = Math.min((performance.now() - tr.t0) / TRANSITION_MS, 1)
+      const e = ease(p)
+      for (const n of rnodesRef.current) {
+        if (n.toX == null || n.fromX == null) continue
+        n.x = n.fromX + (n.toX - n.fromX) * e
+        n.y = n.fromY! + (n.toY! - n.fromY!) * e
+        if (p >= 1) n.fromX = n.fromY = n.toX = n.toY = undefined
+      }
+      if (p >= 1) transitionRef.current = null
+    }
+    const dpr = window.devicePixelRatio || 1
+    draw(ctx, sizeRef.current.width, sizeRef.current.height, dpr, false)
+    if (transitionRef.current) requestDraw()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draw])
+
+  const requestDraw = useCallback(() => {
+    if (rafRef.current !== null) return
+    rafRef.current = requestAnimationFrame(frame)
+  }, [frame])
+  const drawRef = useRef(requestDraw)
+  drawRef.current = requestDraw
+
+  /* ── 뷰 ── */
+  const lastPct = useRef(-1)
   const notifyZoom = useCallback(() => {
-    const pct = Math.round(viewTransform.current.k * 100)
-    if (pct === lastPctRef.current) return
-    lastPctRef.current = pct
+    const pct = Math.round(view.current.k * 100)
+    if (pct === lastPct.current) return
+    lastPct.current = pct
     onZoomChange?.(pct)
   }, [onZoomChange])
 
-  // 진행 중인 fit/focus 애니메이션 취소 — 제스처가 애니메이션에 덮어써지지 않도록
-  const cancelAnim = useCallback(() => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-    }
-  }, [])
+  const viewAnim = useRef<number | null>(null)
+  const cancelViewAnim = () => {
+    if (viewAnim.current !== null) cancelAnimationFrame(viewAnim.current)
+    viewAnim.current = null
+  }
 
-  /* ── fit-to-view: 모든 노드가 뷰포트에 들어오도록 스케일/이동 ── */
   const computeFit = useCallback((): { x: number; y: number; k: number } | null => {
-    const g = graphRef.current
-    if (!g || g.simNodes.length === 0) return null
+    const list = rnodesRef.current
+    if (!list.length) return null
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-    for (const n of g.simNodes) {
-      const r = nodeRadius(n.degree, interactive)
-      if (n.x - r < minX) minX = n.x - r
-      if (n.y - r < minY) minY = n.y - r
-      if (n.x + r > maxX) maxX = n.x + r
-      if (n.y + r > maxY) maxY = n.y + r
+    for (const n of list) {
+      const x = n.toX ?? n.x
+      const y = n.toY ?? n.y
+      if (x - n.r < minX) minX = x - n.r
+      if (y - n.r < minY) minY = y - n.r
+      if (x + n.r > maxX) maxX = x + n.r
+      if (y + n.r > maxY) maxY = y + n.r
     }
     const { width: w, height: h } = sizeRef.current
-    const pad = interactive ? 56 : 28
-    const gw = Math.max(maxX - minX, 1)
-    const gh = Math.max(maxY - minY, 1)
-    const maxFitK = interactive ? 1.6 : 1.1
-    const k = clamp(Math.min((w - pad * 2) / gw, (h - pad * 2) / gh), MIN_K, maxFitK)
-    const cx = (minX + maxX) / 2
-    const cy = (minY + maxY) / 2
-    return { x: w / 2 - cx * k, y: h / 2 - cy * k, k }
-  }, [interactive])
+    const pad = propsRef.current.interactive ? 56 : 20
+    const k = clamp(
+      Math.min((w - pad * 2) / Math.max(maxX - minX, 1), (h - pad * 2) / Math.max(maxY - minY, 1)),
+      MIN_K,
+      propsRef.current.interactive ? 1.6 : 1.1
+    )
+    return { x: w / 2 - ((minX + maxX) / 2) * k, y: h / 2 - ((minY + maxY) / 2) * k, k }
+  }, [])
 
-  const animateTo = useCallback(
+  const animateView = useCallback(
     (target: { x: number; y: number; k: number }, duration = 400) => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-      if (prefersReducedMotion() || duration <= 0) {
-        viewTransform.current = { ...target }
-        applyTransform()
+      cancelViewAnim()
+      if (propsRef.current.reduced || duration <= 0) {
+        view.current = { ...target }
         notifyZoom()
-        schedulePaint()
+        requestDraw()
         return
       }
-      const start = { ...viewTransform.current }
+      const start = { ...view.current }
       const t0 = performance.now()
-      const ease = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2)
       const step = (now: number) => {
         const p = Math.min((now - t0) / duration, 1)
         const e = ease(p)
-        viewTransform.current = {
+        view.current = {
           x: start.x + (target.x - start.x) * e,
           y: start.y + (target.y - start.y) * e,
           k: start.k + (target.k - start.k) * e,
         }
-        applyTransform()
-        notifyZoom() // % 표시가 애니메이션을 실시간 추적
-        schedulePaint() // k 변화에 따른 자동 라벨 갱신
-        if (p < 1) rafRef.current = requestAnimationFrame(step)
-        else rafRef.current = null
+        notifyZoom()
+        requestDraw()
+        viewAnim.current = p < 1 ? requestAnimationFrame(step) : null
       }
-      rafRef.current = requestAnimationFrame(step)
+      viewAnim.current = requestAnimationFrame(step)
     },
-    [applyTransform, notifyZoom, schedulePaint]
+    [notifyZoom, requestDraw]
   )
 
   const fit = useCallback(
     (animate = true) => {
-      const target = computeFit()
-      if (!target) return
-      animateTo(target, animate ? 400 : 0)
+      const t = computeFit()
+      if (!t) return
+      fitKRef.current = t.k
+      animateView(t, animate ? 400 : 0)
     },
-    [computeFit, animateTo]
+    [computeFit, animateView]
   )
 
-  /* ── 좌표 변환 ── */
-  const clientToLocal = useCallback((clientX: number, clientY: number): [number, number] => {
-    const svg = svgRef.current
-    if (!svg) return [0, 0]
-    const rect = svg.getBoundingClientRect()
-    const sx = ((clientX - rect.left) / (rect.width || 1)) * sizeRef.current.width
-    const sy = ((clientY - rect.top) / (rect.height || 1)) * sizeRef.current.height
-    return [sx, sy]
-  }, [])
-
-  const localToGraph = useCallback((sx: number, sy: number): [number, number] => {
-    const t = viewTransform.current
-    return [(sx - t.x) / t.k, (sy - t.y) / t.k]
-  }, [])
-
-  const zoomTo = useCallback(
+  const zoomAt = useCallback(
     (newK: number, sx: number, sy: number) => {
-      cancelAnim()
-      const t = viewTransform.current
+      cancelViewAnim()
+      const t = view.current
       const k = clamp(newK, MIN_K, MAX_K)
       const gx = (sx - t.x) / t.k
       const gy = (sy - t.y) / t.k
-      t.x = sx - gx * k
-      t.y = sy - gy * k
-      t.k = k
-      applyTransform()
+      view.current = { x: sx - gx * k, y: sy - gy * k, k }
       notifyZoom()
-      schedulePaint()
+      requestDraw()
     },
-    [applyTransform, notifyZoom, cancelAnim, schedulePaint]
+    [notifyZoom, requestDraw]
   )
 
-  // 키보드 포커스 시 노드가 화면 밖이면 뷰 안으로 이동
+  const centerOn = useCallback(
+    (id: string, k?: number) => {
+      const n = byIdRef.current.get(id)
+      if (!n) return
+      const kk = k ?? view.current.k
+      const x = n.toX ?? n.x
+      const y = n.toY ?? n.y
+      animateView({ x: sizeRef.current.width / 2 - x * kk, y: sizeRef.current.height / 2 - y * kk, k: kk })
+    },
+    [animateView]
+  )
+
   const ensureVisible = useCallback(
     (id: string) => {
-      const sn = graphRef.current?.simNodeById.get(id)
-      if (!sn) return
-      const t = viewTransform.current
-      const { width: w, height: h } = sizeRef.current
-      const sx = sn.x * t.k + t.x
-      const sy = sn.y * t.k + t.y
+      const n = byIdRef.current.get(id)
+      if (!n) return
+      const { x, y, k } = view.current
+      const sx = n.x * k + x
+      const sy = n.y * k + y
       const pad = 48
-      if (sx < pad || sx > w - pad || sy < pad || sy > h - pad) {
-        animateTo({ x: w / 2 - sn.x * t.k, y: h / 2 - sn.y * t.k, k: t.k })
-      }
+      const { width: w, height: h } = sizeRef.current
+      if (sx < pad || sx > w - pad || sy < pad || sy > h - pad) centerOn(id)
     },
-    [animateTo]
+    [centerOn]
   )
 
-  /* ── 강조·라벨 페인트 (명령형) ── */
-  const paint = useCallback(() => {
-    const g = graphRef.current
-    if (!g) return
-    const { simNodes, simLinks, adjacency, maxDegree } = g
-    const { labelMode: lm, query: q, highlightGroup: hg, selectedId: sel, interactive: itv } =
-      propsRef.current
-    // 존재하지 않는 id(삭제·동기화로 사라진 선택/호버)를 active로 두면 전체가 흐려지므로 방어
-    let active = hoveredRef.current ?? sel ?? null
-    if (active != null && !g.simNodeById.has(active)) active = null
-    const ql = q.trim().toLowerCase()
-    const activeNeighbors = active != null ? adjacency.get(active) : undefined
-
-    const passes = (n: SimNode) => {
-      if (hg && n.group !== hg) return false
-      if (ql && !n.label.toLowerCase().includes(ql)) return false
-      return true
-    }
-
-    // 자동 라벨: 줌 k가 노드별 임계값을 넘으면 서서히 표시 — 허브(연결多)일수록 먼저.
-    // 작은 그래프는 fit 배율에서도 대부분 보이도록 임계 범위를 좁힌다.
-    const k = viewTransform.current.k
-    const span = simNodes.length <= 40 ? 0.5 : 0.9
-    const labelFontSize = clamp(11 / Math.pow(k, 0.35), 7.5, 14) // 줌 역보정 — 화면상 크기 일정하게
-    const fontChanged = labelFontSize !== lastFontRef.current // k 불변(호버 등) 페인트에서 250개 setAttribute 생략
-
-    for (const n of simNodes) {
-      const grp = nodeRefs.current.get(n.id)
-      if (!grp) continue
-      const inHood = active == null || n.id === active || activeNeighbors?.has(n.id)
-      const filteredOut = !passes(n)
-      const dim = filteredOut || (active != null && !inHood)
-      grp.style.opacity = dim ? '0.12' : '1'
-
-      const circle = circleRefs.current.get(n.id)
-      if (circle) {
-        const isActive = active != null && n.id === active
-        const isSel = sel === n.id
-        circle.setAttribute('r', String(nodeRadius(n.degree, itv) * (isActive ? 1.45 : 1)))
-        circle.setAttribute('fill-opacity', isActive ? '0.92' : dim ? '0.4' : '0.6')
-        circle.setAttribute('stroke-width', isSel ? '2.5' : isActive ? '2' : '1.5')
-        // 활성 노드 글로우 — 초점을 즉각 인지시키는 하이라이트
-        circle.style.filter = isActive
-          ? `drop-shadow(0 0 6px ${circle.getAttribute('fill') ?? 'transparent'})`
-          : ''
-      }
-
-      const label = labelRefs.current.get(n.id)
-      if (label) {
-        let op = 0
-        if (!dim) {
-          if (lm === 'all') op = 1
-          else if (lm === 'auto') {
-            const ratio = maxDegree > 0 ? n.degree / maxDegree : 0
-            const threshold = 0.5 + (1 - ratio) * span
-            op = clamp((k - threshold) / 0.3, 0, 1)
-          }
-          if (active != null && (n.id === active || activeNeighbors?.has(n.id))) op = 1
-        }
-        label.style.opacity = String(op)
-        if (fontChanged) label.setAttribute('font-size', String(labelFontSize))
-      }
-    }
-    lastFontRef.current = labelFontSize
-
-    simLinks.forEach((l, i) => {
-      const line = linkRefs.current[i]
-      if (!line) return
-      const s = l.source as SimNode
-      const t = l.target as SimNode
-      const eitherDim = !passes(s) || !passes(t)
-      const connectsActive = active != null && (s.id === active || t.id === active)
-      let op =
-        active != null
-          ? connectsActive
-            ? l.kind === 'wiki'
-              ? 0.6
-              : 0.45
-            : 0.05
-          : linkBaseOpacity(l.kind)
-      if (eitherDim) op = Math.min(op, 0.04)
-      line.style.strokeOpacity = String(op)
-      line.style.strokeWidth = String(
-        connectsActive ? Math.min(1.4 + l.weight * 0.7, 4) : Math.min(1 + l.weight * 0.5, 3)
-      )
-    })
-  }, [])
-  paintRef.current = paint // schedulePaint(정의가 앞선)에서 최신 paint를 호출하도록 연결
-
-  /* ── 시뮬레이션 구성 — 구조(structureKey) 또는 최초 사이즈 확보 시에만 재구성 ── */
+  /* ── 데이터 → 그리기용 노드 (옛 자리에서 새 자리로 옮겨 가요) ── */
+  const dragSim = useRef<Simulation<RNode, RLink> | null>(null)
   useLayoutEffect(() => {
-    if (!hasSize || !enoughNodes) return
-    const { width: w, height: h } = sizeRef.current
-
-    // 이전 레이아웃 위치를 이어받음 — 구조가 바뀌어도 기존 노드는 제자리를 유지하고
-    // 데이터 변경으로 인한 전체 재배치·화면 리셋을 방지한다.
-    const prevPositions = positionsRef.current
-    const hadPrevLayout = prevPositions.size > 0
-
-    const simNodes: SimNode[] = nodes.map((n) => {
-      const p = prevPositions.get(n.id)
-      return {
-        ...n,
-        x: p ? p.x : w / 2 + (Math.random() - 0.5) * w * 0.6,
-        y: p ? p.y : h / 2 + (Math.random() - 0.5) * h * 0.6,
+    const prev = byIdRef.current
+    const next = new Map<string, RNode>()
+    let moved = 0
+    const rnodes: RNode[] = nodes.map((n) => {
+      const old = prev.get(n.id)
+      const r = nodeRadius(n.degree, interactive)
+      if (old) {
+        const far = Math.abs(old.x - n.x) + Math.abs(old.y - n.y) > 0.5
+        const rn: RNode = { id: n.id, label: n.label, degree: n.degree, ref: n, r, x: old.x, y: old.y }
+        if (far) {
+          rn.fromX = old.x
+          rn.fromY = old.y
+          rn.toX = n.x
+          rn.toY = n.y
+          moved++
+        }
+        next.set(n.id, rn)
+        return rn
       }
+      const rn: RNode = { id: n.id, label: n.label, degree: n.degree, ref: n, r, x: n.x, y: n.y }
+      next.set(n.id, rn)
+      return rn
     })
-    const simNodeById = new Map(simNodes.map((n) => [n.id, n]))
-
-    // 현재 노드 집합만 남기도록 위치 맵 재구성 (제거된 노드 정리)
-    const nextPositions = new Map<string, { x: number; y: number }>()
-    for (const n of simNodes) nextPositions.set(n.id, { x: n.x, y: n.y })
-    positionsRef.current = nextPositions
-
-    const simLinks: SimLink[] = links.map((l) => ({
-      source: l.source,
-      target: l.target,
-      weight: l.weight,
-      kind: l.kind,
-    }))
-
-    const adjacency = new Map<string, Set<string>>()
-    for (const n of simNodes) adjacency.set(n.id, new Set())
+    const adj = new Map<string, Set<string>>()
+    for (const n of rnodes) adj.set(n.id, new Set())
+    const rlinks: RLink[] = []
     for (const l of links) {
-      adjacency.get(l.source)?.add(l.target)
-      adjacency.get(l.target)?.add(l.source)
+      const s = next.get(l.source)
+      const t = next.get(l.target)
+      if (!s || !t) continue
+      rlinks.push({ source: s, target: t, kind: l.kind, weight: l.weight })
+      adj.get(s.id)!.add(t.id)
+      adj.get(t.id)!.add(s.id)
     }
-    const maxDegree = simNodes.reduce((m, n) => Math.max(m, n.degree), 0)
+    dragSim.current?.stop()
+    dragSim.current = null
+    rnodesRef.current = rnodes
+    rlinksRef.current = rlinks
+    byIdRef.current = next
+    adjRef.current = adj
+    maxDegRef.current = rnodes.reduce((m, n) => Math.max(m, n.degree), 0)
 
-    const renderPositions = () => {
-      for (const n of simNodes) {
-        const el = nodeRefs.current.get(n.id)
-        if (el) el.setAttribute('transform', `translate(${n.x},${n.y})`)
-        nextPositions.set(n.id, { x: n.x, y: n.y })
+    if (moved > 0) {
+      if (propsRef.current.reduced || !fittedRef.current) {
+        for (const n of rnodes) {
+          if (n.toX == null) continue
+          n.x = n.toX
+          n.y = n.toY!
+          n.fromX = n.fromY = n.toX = n.toY = undefined
+        }
+        transitionRef.current = null
+      } else transitionRef.current = { t0: performance.now() }
+    }
+    // 처음엔 맞춰 보기. 미리보기(위젯)는 결과가 바뀔 때마다 다시 맞춰요.
+    if ((!fittedRef.current || !interactive) && rnodes.length && sizeRef.current.width > 4) {
+      fittedRef.current = true
+      fit(false)
+    }
+    requestDraw()
+  }, [nodes, links, interactive, fit, requestDraw])
+
+  // 고른 것 · 찾는 말 · 범례 · 라벨 방식이 바뀌면 다시 그려요
+  useEffect(() => {
+    requestDraw()
+  }, [selectedId, query, highlight, labelMode, keyFocus, colorOf, requestDraw])
+
+  // 크기 — 캔버스 해상도(devicePixelRatio)를 맞추고 다시 맞춰 보기
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || width < 4 || height < 4) return
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = Math.round(width * dpr)
+    canvas.height = Math.round(height * dpr)
+    if (rnodesRef.current.length) {
+      fittedRef.current = true
+      fit(false)
+    }
+    requestDraw()
+  }, [width, height, fit, requestDraw])
+
+  /* ── 노드 끌기: 그때만 작은 시뮬레이션 ── */
+  const startDrag = useCallback(() => {
+    if (!dragSim.current) {
+      const rnodes = rnodesRef.current
+      for (const n of rnodes) {
+        if (n.toX != null) {
+          n.x = n.toX
+          n.y = n.toY!
+          n.fromX = n.fromY = n.toX = n.toY = undefined
+        }
       }
-      simLinks.forEach((l, i) => {
-        const line = linkRefs.current[i]
-        if (!line) return
-        const s = l.source as SimNode
-        const t = l.target as SimNode
-        line.setAttribute('x1', String(s.x))
-        line.setAttribute('y1', String(s.y))
-        line.setAttribute('x2', String(t.x))
-        line.setAttribute('y2', String(t.y))
-      })
-    }
-
-    const simulation = forceSimulation<SimNode>(simNodes)
-      .stop()
-      .force(
-        'link',
-        forceLink<SimNode, SimLink>(simLinks)
-          .id((d) => d.id)
-          // 자동 연결(언급·태그·AI)은 느슨하게 — 명시적 링크가 구조를 주도
-          .distance((l) => (l.kind === 'wiki' ? (interactive ? 70 : 52) : interactive ? 95 : 70))
-          .strength(
-            (l) =>
-              clamp(l.weight * 0.25, 0.05, 0.8) *
-              (l.kind === 'wiki' ? 1 : l.kind === 'semantic' ? 0.5 : 0.35)
-          )
-      )
-      .force('charge', forceManyBody().strength(interactive ? -170 : -90).distanceMax(interactive ? 600 : 360))
-      .force('x', forceX(w / 2).strength(0.07))
-      .force('y', forceY(h / 2).strength(0.07))
-      .force('collide', forceCollide<SimNode>().radius((d) => nodeRadius(d.degree, interactive) + (interactive ? 8 : 4)).strength(0.9))
-
-    simulation.on('tick', renderPositions)
-
-    // 애니메이션 없이 즉시 정착. 이전 위치 이어받기·노드 수에 따라 반복 수 조절(대규모 프리즈 방지).
-    const baseIter = hadPrevLayout ? 120 : 300
-    const iterations =
-      simNodes.length > 160 ? Math.round(baseIter * 0.5) : simNodes.length > 90 ? Math.round(baseIter * 0.7) : baseIter
-    for (let i = 0; i < iterations; i++) simulation.tick()
-    renderPositions()
-
-    graphRef.current = { simulation, simNodes, simLinks, simNodeById, adjacency, maxDegree }
-
-    // 최초 구성에서만 뷰를 맞춤 — 이후 데이터 변경 시 사용자의 팬/줌 보존
-    if (!hadPrevLayout) fit(false)
-    lastFontRef.current = 0 // 새 <text> 요소들이 반드시 현재 폰트 크기를 받도록
-    paint()
-
-    // 최초 등장 페이드인 — 정착 완료된 레이아웃이 부드럽게 나타나도록 (reduced-motion 제외)
-    if (!hadPrevLayout && svgRef.current && !prefersReducedMotion()) {
-      const el = svgRef.current
-      el.style.opacity = '0'
-      el.style.transition = 'opacity var(--motion-duration-long) var(--motion-easing-ease-out)'
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          el.style.opacity = '1'
+      transitionRef.current = null
+      const home = new Map(rnodes.map((n) => [n.id, [n.x, n.y] as const]))
+      dragSim.current = forceSimulation<RNode>(rnodes)
+        .stop()
+        .force(
+          'link',
+          forceLink<RNode, RLink>(rlinksRef.current)
+            .distance((l) => (l.kind === 'wiki' ? 60 : 85))
+            .strength((l) => clamp(l.weight * 0.25, 0.05, 0.8) * (l.kind === 'wiki' ? 1 : l.kind === 'semantic' ? 0.5 : 0.35))
+        )
+        .force('charge', forceManyBody<RNode>().strength(-100).distanceMax(500).theta(0.9))
+        .force('x', forceX<RNode>((d) => home.get(d.id)![0]).strength(0.08))
+        .force('y', forceY<RNode>((d) => home.get(d.id)![1]).strength(0.08))
+        .force('collide', forceCollide<RNode>().radius((d) => d.r + 7).strength(0.8))
+        .alphaDecay(0.06)
+        .on('tick', () => {
+          // 끈 자리를 결과 노드에도 적어 두어요 — 필터를 바꿔도 제자리로 튀지 않게
+          for (const n of rnodesRef.current) {
+            n.ref.x = n.x
+            n.ref.y = n.y
+          }
+          drawRef.current()
         })
-      })
+        .on('end', () => onMovedRef.current?.(rnodesRef.current.map((n) => ({ id: n.id, x: n.x, y: n.y }))))
     }
-
-    return () => {
-      simulation.on('tick', null)
-      simulation.stop()
-      graphRef.current = null
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [structureKey, hasSize, interactive])
-
-  // prop(선택/검색/그룹/라벨) 변경 시 재페인트
-  useEffect(() => {
-    paint()
-  }, [selectedId, query, highlightGroup, labelMode, paint])
-
-  // 사이즈 변경 시 재-fit (시뮬레이션 재구성 없이 뷰만 갱신)
-  useEffect(() => {
-    if (!hasSize || !graphRef.current) return
-    fit(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width, height])
-
-  /* ── 호버 강조 (이벤트 위임, 상호작용 모드에서만) ── */
-  useEffect(() => {
-    if (!interactive) return
-    const layer = svgRef.current
-    if (!layer) return
-    const nodeIdFrom = (el: EventTarget | null) =>
-      (el as Element | null)?.closest?.('[data-node-id]')?.getAttribute('data-node-id') ?? null
-    const onOver = (e: PointerEvent) => {
-      const id = nodeIdFrom(e.target)
-      if (id !== hoveredRef.current) {
-        hoveredRef.current = id
-        paint()
-      }
-    }
-    const onOut = (e: PointerEvent) => {
-      const next = nodeIdFrom(e.relatedTarget)
-      if (next !== hoveredRef.current) {
-        hoveredRef.current = next
-        paint()
-      }
-    }
-    // 키보드 포커스도 호버와 동일하게 강조 + 화면 밖이면 뷰 안으로
-    const onFocusIn = (e: FocusEvent) => {
-      const id = nodeIdFrom(e.target)
-      if (id && id !== hoveredRef.current) {
-        hoveredRef.current = id
-        paint()
-        ensureVisible(id)
-      }
-    }
-    const onFocusOut = (e: FocusEvent) => {
-      const next = nodeIdFrom(e.relatedTarget)
-      if (next !== hoveredRef.current) {
-        hoveredRef.current = next
-        paint()
-      }
-    }
-    layer.addEventListener('pointerover', onOver)
-    layer.addEventListener('pointerout', onOut)
-    layer.addEventListener('focusin', onFocusIn)
-    layer.addEventListener('focusout', onFocusOut)
-    return () => {
-      layer.removeEventListener('pointerover', onOver)
-      layer.removeEventListener('pointerout', onOut)
-      layer.removeEventListener('focusin', onFocusIn)
-      layer.removeEventListener('focusout', onFocusOut)
-      hoveredRef.current = null
-    }
-  }, [interactive, paint, ensureVisible])
-
-  /* ── 제스처: 팬 / 노드 드래그 / 줌(휠·핀치) ── */
-  const dragNode = useCallback(
-    (id: string, gx: number, gy: number) => {
-      const sn = graphRef.current?.simNodeById.get(id)
-      if (!sn) return
-      sn.fx = gx
-      sn.fy = gy
-    },
-    []
-  )
-  const startNodeDrag = useCallback(() => {
-    graphRef.current?.simulation.alphaTarget(0.3).restart()
+    dragSim.current.alphaTarget(0.25).restart()
   }, [])
-  const endNodeDrag = useCallback((id: string) => {
-    const g = graphRef.current
-    if (!g) return
-    const sn = g.simNodeById.get(id)
-    if (sn) {
-      sn.fx = null
-      sn.fy = null
+  const onMovedRef = useRef(onMoved)
+  onMovedRef.current = onMoved
+
+  const endDrag = useCallback((id: string) => {
+    const n = byIdRef.current.get(id)
+    if (n) {
+      n.fx = null
+      n.fy = null
     }
-    g.simulation.alphaTarget(0)
+    dragSim.current?.alphaTarget(0)
+  }, [])
+
+  /* ── 누르기 · 끌기 · 확대 (포인터 이벤트 그대로 — 손짓 라이브러리 없이) ── */
+  const toLocal = (clientX: number, clientY: number): [number, number] => {
+    const rect = canvasRef.current!.getBoundingClientRect()
+    return [clientX - rect.left, clientY - rect.top]
+  }
+  const toGraph = (sx: number, sy: number): [number, number] => {
+    const t = view.current
+    return [(sx - t.x) / t.k, (sy - t.y) / t.k]
+  }
+  const hitTest = useCallback((sx: number, sy: number): string | null => {
+    const [gx, gy] = toGraph(sx, sy)
+    const slop = 4 / view.current.k
+    const list = rnodesRef.current
+    let best: string | null = null
+    let bestD = Infinity
+    for (let i = list.length - 1; i >= 0; i--) {
+      const n = list[i]
+      const d = Math.hypot(n.x - gx, n.y - gy)
+      if (d <= n.r + slop && d < bestD) {
+        best = n.id
+        bestD = d
+      }
+    }
+    return best
   }, [])
 
   const handleTap = useCallback(
@@ -721,204 +667,265 @@ export const ForceGraph = forwardRef<ForceGraphHandle, ForceGraphProps>(function
     [onSelect, onActivate]
   )
 
-  // 키보드 조작 — 포커스된 노드에서 Enter/Space로 선택, 선택된 노드에서 재입력 시 열기
   useEffect(() => {
-    if (!interactive) return
-    const layer = svgRef.current
-    if (!layer) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return
-      const id = (e.target as Element | null)?.closest?.('[data-node-id]')?.getAttribute('data-node-id')
-      if (!id) return
+    const canvas = canvasRef.current
+    if (!canvas || !interactive) return
+    const pointers = new Map<number, { x: number; y: number }>()
+    let mode: 'none' | 'pan' | 'node' | 'pinch' = 'none'
+    let nodeId: string | null = null
+    let dragging = false
+    let start = { x: 0, y: 0 }
+    let pinchStart = { d: 1, k: 1 }
+    let lastTapWasDrag = false
+
+    const down = (e: PointerEvent) => {
+      // 화면 가장자리에서 시작한 터치는 기기의 뒤로 가기 손짓에 맡겨요
+      if (e.pointerType === 'touch' && (e.clientX < EDGE_PX || e.clientX > window.innerWidth - EDGE_PX)) return
+      if (e.button !== 0 && e.pointerType === 'mouse') return
+      canvas.setPointerCapture(e.pointerId)
+      const [sx, sy] = toLocal(e.clientX, e.clientY)
+      pointers.set(e.pointerId, { x: sx, y: sy })
+      if (pointers.size === 2 && pinchOn) {
+        const [a, b] = [...pointers.values()]
+        pinchStart = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, k: view.current.k }
+        if (mode === 'node' && nodeId && dragging) endDrag(nodeId)
+        mode = 'pinch'
+        return
+      }
+      if (pointers.size > 1) return
+      cancelViewAnim()
+      start = { x: sx, y: sy }
+      dragging = false
+      nodeId = hitTest(sx, sy)
+      mode = nodeId ? 'node' : 'pan'
+    }
+    const move = (e: PointerEvent) => {
+      const [sx, sy] = toLocal(e.clientX, e.clientY)
+      if (!pointers.has(e.pointerId)) {
+        // 마우스를 올린 채 움직임 — 가리킨 노드 강조
+        if (e.pointerType !== 'mouse') return
+        const id = hitTest(sx, sy)
+        canvas.style.cursor = id ? 'pointer' : 'grab'
+        if (id !== hoverRef.current) {
+          hoverRef.current = id
+          requestDraw()
+        }
+        return
+      }
+      const prev = pointers.get(e.pointerId)!
+      pointers.set(e.pointerId, { x: sx, y: sy })
+      if (mode === 'pinch') {
+        if (pointers.size < 2) return
+        const [a, b] = [...pointers.values()]
+        const d = Math.hypot(a.x - b.x, a.y - b.y)
+        zoomAt(pinchStart.k * (d / pinchStart.d), (a.x + b.x) / 2, (a.y + b.y) / 2)
+        return
+      }
+      if (!dragging && Math.hypot(sx - start.x, sy - start.y) > 3) {
+        dragging = true
+        if (mode === 'node') startDrag()
+        canvas.style.cursor = 'grabbing'
+      }
+      if (!dragging) return
+      if (mode === 'pan') {
+        view.current = { ...view.current, x: view.current.x + (sx - prev.x), y: view.current.y + (sy - prev.y) }
+        requestDraw()
+      } else if (mode === 'node' && nodeId) {
+        const n = byIdRef.current.get(nodeId)
+        if (n) {
+          const [gx, gy] = toGraph(sx, sy)
+          n.fx = gx
+          n.fy = gy
+        }
+      }
+    }
+    const up = (e: PointerEvent) => {
+      if (!pointers.has(e.pointerId)) return
+      pointers.delete(e.pointerId)
+      if (mode === 'pinch') {
+        if (pointers.size === 0) mode = 'none'
+        lastTapWasDrag = true
+        return
+      }
+      if (pointers.size > 0) return
+      if (mode === 'node' && nodeId && dragging) endDrag(nodeId)
+      if (!dragging && e.type === 'pointerup') handleTap(nodeId)
+      lastTapWasDrag = dragging
+      mode = 'none'
+      nodeId = null
+      dragging = false
+      canvas.style.cursor = 'grab'
+    }
+    const leave = () => {
+      if (hoverRef.current) {
+        hoverRef.current = null
+        requestDraw()
+      }
+    }
+    const wheel = (e: WheelEvent) => {
       e.preventDefault()
-      handleTap(id)
+      const [sx, sy] = toLocal(e.clientX, e.clientY)
+      zoomAt(view.current.k * Math.exp(-e.deltaY * 0.0015), sx, sy)
     }
-    layer.addEventListener('keydown', onKeyDown)
-    return () => layer.removeEventListener('keydown', onKeyDown)
-  }, [interactive, handleTap])
-
-  // 빈 캔버스 더블클릭/더블탭 → 전체 보기 (노드 위 더블클릭은 선택→열기 흐름이 우선)
-  useEffect(() => {
-    if (!interactive) return
-    const svg = svgRef.current
-    if (!svg) return
-    const onDblClick = (e: MouseEvent) => {
-      // 직전 제스처가 드래그였다면 무시 — OS는 드래그 이동량과 무관하게 더블클릭을 합성함
-      if (draggedRef.current) return
-      const onNode = (e.target as Element | null)?.closest?.('[data-node-id]')
-      if (!onNode) fit(true)
+    // 빈 곳을 두 번 누르면 전체 보기 (끈 직후에 OS가 만드는 두 번 누르기는 무시)
+    const dbl = (e: MouseEvent) => {
+      if (lastTapWasDrag) return
+      const [sx, sy] = toLocal(e.clientX, e.clientY)
+      if (!hitTest(sx, sy)) fit(true)
     }
-    svg.addEventListener('dblclick', onDblClick)
-    return () => svg.removeEventListener('dblclick', onDblClick)
-  }, [interactive, fit])
+    canvas.addEventListener('pointerdown', down)
+    canvas.addEventListener('pointermove', move)
+    canvas.addEventListener('pointerup', up)
+    canvas.addEventListener('pointercancel', up)
+    canvas.addEventListener('pointerleave', leave)
+    canvas.addEventListener('wheel', wheel, { passive: false })
+    canvas.addEventListener('dblclick', dbl)
+    return () => {
+      canvas.removeEventListener('pointerdown', down)
+      canvas.removeEventListener('pointermove', move)
+      canvas.removeEventListener('pointerup', up)
+      canvas.removeEventListener('pointercancel', up)
+      canvas.removeEventListener('pointerleave', leave)
+      canvas.removeEventListener('wheel', wheel)
+      canvas.removeEventListener('dblclick', dbl)
+    }
+  }, [interactive, pinchOn, hitTest, handleTap, zoomAt, fit, requestDraw, startDrag, endDrag])
 
-  interface DragMemo {
-    mode: 'node' | 'pan'
-    nodeId: string | null
-    reheated: boolean
+  /* ── 키보드 ── */
+  const moveFocus = useCallback(
+    (dx: number, dy: number) => {
+      const list = rnodesRef.current
+      if (!list.length) return
+      const cur = keyFocusRef.current ? byIdRef.current.get(keyFocusRef.current) : null
+      if (!cur) {
+        const sel = propsRef.current.selectedId
+        const first = (sel && byIdRef.current.get(sel)) || list.reduce((a, b) => (b.degree > a.degree ? b : a))
+        setKeyFocus(first.id)
+        ensureVisible(first.id)
+        return
+      }
+      // 그 방향(±60°) 안에서 가장 가까운 노드
+      let best: RNode | null = null
+      let bestScore = Infinity
+      for (const n of list) {
+        if (n === cur) continue
+        const vx = n.x - cur.x
+        const vy = n.y - cur.y
+        const along = vx * dx + vy * dy
+        if (along <= 0) continue
+        const dist = Math.hypot(vx, vy)
+        if (along / dist < 0.5) continue
+        const score = dist * (2 - along / dist)
+        if (score < bestScore) {
+          bestScore = score
+          best = n
+        }
+      }
+      if (best) {
+        setKeyFocus(best.id)
+        ensureVisible(best.id)
+      }
+    },
+    [ensureVisible]
+  )
+
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const dir: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }
+    if (dir[e.key]) {
+      e.preventDefault()
+      moveFocus(...dir[e.key])
+    } else if ((e.key === 'Enter' || e.key === ' ') && keyFocusRef.current) {
+      e.preventDefault()
+      handleTap(keyFocusRef.current)
+    }
   }
 
-  useGesture(
-    {
-      onDrag: (state) => {
-        if (!propsRef.current.interactive) return
-        const {
-          first,
-          last,
-          tap,
-          movement: [mx, my],
-          delta: [dx, dy],
-          xy: [cx, cy],
-          event,
-        } = state
-        let memo = state.memo as DragMemo | undefined
-        if (first || !memo) {
-          const nodeId =
-            (event.target as Element | null)?.closest?.('[data-node-id]')?.getAttribute('data-node-id') ??
-            null
-          memo = { mode: nodeId ? 'node' : 'pan', nodeId, reheated: false }
-        }
-        // 제스처 종료 시 드래그 여부 기록 — 직후 도착하는 합성 dblclick의 fit 오발동 가드
-        if (last) draggedRef.current = !tap
-        if (last && tap) {
-          if (memo.mode === 'node' && memo.reheated) endNodeDrag(memo.nodeId!)
-          handleTap(memo.nodeId)
-          return memo
-        }
-        if (memo.mode === 'node' && memo.nodeId) {
-          if (!memo.reheated && (Math.abs(mx) > 2 || Math.abs(my) > 2)) {
-            startNodeDrag()
-            memo.reheated = true
-          }
-          if (memo.reheated) {
-            const [gx, gy] = localToGraph(...clientToLocal(cx, cy))
-            dragNode(memo.nodeId, gx, gy)
-          }
-          if (last && memo.reheated) endNodeDrag(memo.nodeId)
-        } else {
-          // 핀치 진행 중에는 팬을 억제 — 두 손가락 확대가 뷰를 함께 끌지 않도록
-          if (state.pinching) return memo
-          cancelAnim()
-          viewTransform.current.x += dx
-          viewTransform.current.y += dy
-          applyTransform()
-        }
-        return memo
-      },
-      onWheel: ({ event, delta: [, dy] }) => {
-        if (!propsRef.current.interactive) return
-        event.preventDefault()
-        const factor = Math.exp(-dy * 0.0015)
-        const [sx, sy] = clientToLocal(event.clientX, event.clientY)
-        zoomTo(viewTransform.current.k * factor, sx, sy)
-      },
-      onPinch: ({ offset: [k], origin: [ox, oy] }) => {
-        if (!propsRef.current.interactive) return
-        const [sx, sy] = clientToLocal(ox, oy)
-        zoomTo(k, sx, sy)
-      },
-    },
-    {
-      target: svgRef,
-      enabled: interactive,
-      eventOptions: { passive: false },
-      drag: { filterTaps: true, pointer: { touch: true } },
-      pinch: { scaleBounds: { min: MIN_K, max: MAX_K }, from: () => [viewTransform.current.k, 0] },
-    }
-  )
+  const focused = keyFocus ? byIdRef.current.get(keyFocus) : null
+  const liveText = useMemo(() => {
+    if (!focused) return ''
+    const chosen = focused.id === selectedId ? ' · 골랐어요. Enter로 열어요' : ''
+    return `${focused.label} — 연결 ${focused.degree}개${chosen}`
+  }, [focused, selectedId])
 
-  useEffect(
-    () => () => {
-      // 취소 후 반드시 null로 리셋 — StrictMode 재마운트에서 ref가 살아남아
-      // 스로틀 가드(!== null)가 영구히 잠기는 것을 방지
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
-      }
-      if (paintRafRef.current !== null) {
-        cancelAnimationFrame(paintRafRef.current)
-        paintRafRef.current = null
-      }
-    },
-    []
-  )
-
+  /* ── 밖으로 여는 조작 ── */
   useImperativeHandle(
     ref,
     (): ForceGraphHandle => ({
-      zoomIn: () => zoomTo(viewTransform.current.k * 1.3, sizeRef.current.width / 2, sizeRef.current.height / 2),
-      zoomOut: () => zoomTo(viewTransform.current.k / 1.3, sizeRef.current.width / 2, sizeRef.current.height / 2),
+      zoomIn: () => zoomAt(view.current.k * 1.3, sizeRef.current.width / 2, sizeRef.current.height / 2),
+      zoomOut: () => zoomAt(view.current.k / 1.3, sizeRef.current.width / 2, sizeRef.current.height / 2),
       fit,
       reset: () => {
         onSelect?.(null)
         fit(true)
       },
       focusNode: (id) => {
-        const sn = graphRef.current?.simNodeById.get(id)
-        if (!sn) return
-        const k = clamp(1.4, MIN_K, MAX_K)
-        animateTo({
-          x: sizeRef.current.width / 2 - sn.x * k,
-          y: sizeRef.current.height / 2 - sn.y * k,
-          k,
-        })
+        centerOn(id, clamp(Math.max(view.current.k, 1.2), MIN_K, MAX_K))
         onSelect?.(id)
       },
       exportPNG: async () => {
-        const target = exportRef.current
-        if (!target) return
-        const dataUrl = await toPng(target, {
-          pixelRatio: 2,
-          cacheBust: true,
-          backgroundColor: resolveCssColor('var(--background-primary)'),
-        })
+        const { width: w, height: h } = sizeRef.current
+        const scale = 2
+        const off = document.createElement('canvas')
+        off.width = w * scale
+        off.height = h * scale
+        const ctx = off.getContext('2d')
+        if (!ctx) throw new Error('canvas')
+        draw(ctx, w, h, scale, true)
+        const blob = await new Promise<Blob | null>((res) => off.toBlob(res, 'image/png'))
+        if (!blob) throw new Error('blob')
+        const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
-        a.href = dataUrl
+        a.href = url
         a.download = '지식그래프.png'
         a.click()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
       },
     }),
-    [zoomTo, fit, animateTo, onSelect]
+    [zoomAt, fit, centerOn, onSelect, draw]
   )
 
+  useEffect(
+    () => () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+      cancelViewAnim()
+      dragSim.current?.stop()
+    },
+    []
+  )
+
+  if (!interactive) {
+    return (
+      <div className={className} style={{ width, height }}>
+        <canvas ref={canvasRef} role="img" aria-label={label} className="block" style={{ width, height }} />
+      </div>
+    )
+  }
+
   return (
-    <div ref={exportRef} className={className} style={{ width, height }}>
-      <svg
-        ref={svgRef}
-        width={width}
-        height={height}
-        viewBox={`0 0 ${width} ${height}`}
-        className="block h-full w-full select-none"
-        style={{
-          touchAction: interactive ? 'none' : 'auto',
-          cursor: interactive ? 'grab' : 'default',
-          pointerEvents: interactive ? 'auto' : 'none',
-        }}
-      >
-        {/* 도트 그리드 — patternTransform이 뷰와 동기화되어 빈 영역에서도 이동감 제공 */}
-        {interactive && (
-          <>
-            <defs>
-              <pattern ref={patternRef} id={dotsId} width={22} height={22} patternUnits="userSpaceOnUse">
-                <circle cx={1.2} cy={1.2} r={1.2} className="fill-zinc-900/[0.05] dark:fill-white/[0.07]" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill={`url(#${dotsId})`} />
-          </>
-        )}
-        <g ref={viewRef}>
-          <GraphContent
-            nodes={nodes}
-            links={links}
-            colorMap={colorMap}
-            interactive={interactive}
-            nodeRefs={nodeRefs}
-            circleRefs={circleRefs}
-            labelRefs={labelRefs}
-            linkRefs={linkRefs}
-          />
-        </g>
-      </svg>
+    <div
+      className={className}
+      style={{ width, height }}
+      role="application"
+      aria-roledescription="그래프"
+      aria-label={`${label} — 화살표로 메모를 옮겨 다니고 Enter로 골라요`}
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      onFocus={(e) => {
+        if (e.target === e.currentTarget && !keyFocusRef.current) moveFocus(0, 0)
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setKeyFocus(null)
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="block select-none"
+        style={{ width, height, touchAction: 'none', cursor: 'grab' }}
+      />
+      <p className="mw-sr-only" aria-live="polite">
+        {liveText}
+      </p>
     </div>
   )
 })

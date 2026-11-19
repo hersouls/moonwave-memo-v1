@@ -4,7 +4,7 @@ import ForceGraph3D, {
   type NodeObject,
   type LinkObject,
 } from 'react-force-graph-3d'
-import type { GraphLink, GraphNode, LinkKind } from '@/hooks/useGraphData'
+import type { GraphLink, GraphNode, LinkKind } from '@/services/graph/types'
 import { resolveCssColor } from '@/utils/cssColor'
 import { useTheme } from '@/mw/theme'
 
