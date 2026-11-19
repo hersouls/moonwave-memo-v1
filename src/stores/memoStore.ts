@@ -22,6 +22,10 @@ const memoUpdateChains = new Map<number, Promise<void>>()
 // batchGenerateTags 중복 실행 가드 (팔레트/액션바 동시 트리거 시 AI 한도 이중 소모 방지)
 let batchTagsRunning = false
 
+/** 안내 메모 3개의 정해진 syncId · 시각 — 기기마다 만들어도 Firestore에서 한 벌로 모여요 (generateSyncId와 같은 꼴) */
+const WELCOME_IDS = ['1700000000000-welcome01', '1700000000000-welcome02', '1700000000000-welcome03'] as const
+const WELCOME_AT = '2026-01-01T00:00:00.000Z'
+
 interface MemoState {
   memos: Memo[]
   isLoading: boolean
@@ -30,7 +34,7 @@ interface MemoState {
   initialize: () => Promise<void>
   refreshFromDb: () => Promise<void>
 
-  addMemo: (data: { title: string; body: string; folderId: number | null; color?: MemoColor; ephemeral?: boolean; tags?: string[] }) => Promise<number | undefined>
+  addMemo: (data: { title: string; body: string; folderId: number | null; color?: MemoColor; ephemeral?: boolean; tags?: string[]; seed?: { syncId: string; at: string } }) => Promise<number | undefined>
   saveEphemeral: (id: number) => Promise<void>
   updateMemo: (id: number, updates: Partial<Memo>) => Promise<void>
   softDelete: (id: number) => Promise<Memo | undefined>
@@ -104,9 +108,11 @@ export const useMemoStore = create<MemoState>()(
             isStarred: false,
             color: data.color || 'white',
             isPinned: false,
-            syncId: generateSyncId(),
-            createdAt: now,
-            updatedAt: now,
+            // seed: 안내 메모처럼 기기마다 만드는 메모는 정해진 syncId · 오래된 시각을 써요 —
+            // 여러 기기의 사본이 Firestore에서 한 문서로 모이고, 클라우드에서 지운 안내가 되살아나지 않아요
+            syncId: data.seed?.syncId ?? generateSyncId(),
+            createdAt: data.seed?.at ?? now,
+            updatedAt: data.seed?.at ?? now,
             contextSnapshot: captureContext(),
             ...(data.ephemeral ? { ephemeralExpiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() } : {}),
           }
@@ -640,6 +646,7 @@ export const useMemoStore = create<MemoState>()(
         const addMemo = get().addMemo
 
         await addMemo({
+          seed: { syncId: WELCOME_IDS[0], at: WELCOME_AT },
           title: 'Memo에 오신 것을 환영해요!',
           body: `## Memo by Moonwave
 
@@ -681,6 +688,7 @@ export const useMemoStore = create<MemoState>()(
         })
 
         await addMemo({
+          seed: { syncId: WELCOME_IDS[1], at: WELCOME_AT },
           title: '마크다운 & 편집 가이드',
           body: `## 마크다운 문법
 
@@ -748,6 +756,7 @@ function hello() {
         })
 
         await addMemo({
+          seed: { syncId: WELCOME_IDS[2], at: WELCOME_AT },
           title: '활용 팁 & AI 기능',
           body: `## 활용 팁
 

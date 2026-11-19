@@ -133,6 +133,9 @@ async function resolveFolderName(memo: Memo): Promise<string | undefined> {
 
 function setActiveTarget(t: FileSyncTarget, displayName: string, watchRoot?: string | null): void {
   target = t
+  // 폴더가 (다시) 연결되면 빠진 메모가 없는지 실제 파일 목록으로 맞춰 봐요
+  scheduleReconcile(RECONCILE_START_MS, true)
+  startReconcileTimer()
   const store = useSyncFolderStore.getState()
   store.setFolderName(displayName)
   store.setStatus('idle')
@@ -229,6 +232,7 @@ export async function reconnectSyncFolder(): Promise<boolean> {
 
 /** Turn the feature off. Files on disk are the user's — they are NOT deleted (§10 rollback). */
 export async function disableSyncFolder(): Promise<void> {
+  stopReconcileTimer()
   stopWatching()
   stopMirrorFlush()
   for (const timer of writeTimers.values()) clearTimeout(timer)
@@ -261,7 +265,7 @@ function sameSet(a: string[], b: string[]): boolean {
 
 type WriteOutcome = 'written' | 'skipped' | 'error'
 
-async function writeMemoNow(memo: Memo): Promise<WriteOutcome> {
+async function writeMemoNow(memo: Memo, force = false): Promise<WriteOutcome> {
   if (!target || !memo.syncId) return 'skipped'
   const store = useSyncFolderStore.getState()
 
@@ -289,7 +293,8 @@ async function writeMemoNow(memo: Memo): Promise<WriteOutcome> {
     const existing = await getFileSyncRecord(memo.syncId)
     const oldFiles = existing?.files ?? (existing ? [existing.filePath] : [])
     // No-op skip: same content AND same file set → don't rewrite (prevents loops, §4.5).
-    if (existing && existing.contentHash === hash && sameSet(oldFiles, files)) return 'skipped'
+    // force: the reconcile pass found the file missing on disk although the record says it was written.
+    if (!force && existing && existing.contentHash === hash && sameSet(oldFiles, files)) return 'skipped'
 
     store.setStatus('writing')
 
@@ -328,6 +333,8 @@ async function writeMemoNow(memo: Memo): Promise<WriteOutcome> {
   } catch (err) {
     console.error('Sync folder write failed:', err)
     store.setStatus('error', '폴더에 저장하지 못했어요.')
+    // 주 폴더 쓰기는 재시도 큐가 없어요 — 잠시 뒤 맞춰 보기로 다시 써요(NAS 재연결 · 권한 복구 뒤)
+    scheduleReconcile(RECONCILE_RETRY_MS, false)
     return 'error'
   }
 }
@@ -596,6 +603,97 @@ export async function exportAllMemosToFolder(
   })
 
   return { written, skipped, failed }
+}
+
+// ─── Reconcile: 빠진 파일 맞춰 쓰기 ──────────────────────────────
+//
+// 주 폴더 쓰기가 실패하면(NAS가 잠깐 빠짐 · 권한을 다시 받아야 함) 그 메모는 다음에 고칠 때까지 파일이 없어요.
+// 2026-11 운영 점검에서 메모 43개가 그렇게 NAS · 검색에서 빠져 있었어요. 그래서 주기적으로 맞춰 봐요:
+//  - 가볍게(15분마다): 기록이 없거나 기록보다 메모가 새로우면 써요.
+//  - 꼼꼼히(연결될 때 · 6시간마다): 폴더의 실제 파일 목록과 대조해, 기록은 있는데 파일이 없는 메모도 다시 써요.
+// 전체 내보내기는 기록이 같으면 건너뛰어서 이 경우를 고치지 못해요.
+
+const RECONCILE_START_MS = 10_000
+const RECONCILE_RETRY_MS = 120_000
+const RECONCILE_EVERY_MS = 15 * 60_000
+const RECONCILE_VERIFY_EVERY_MS = 6 * 3600_000
+let reconcileTimer: ReturnType<typeof setTimeout> | null = null
+let reconcileInterval: ReturnType<typeof setInterval> | null = null
+let lastVerifyAt = 0
+let reconciling = false
+
+function scheduleReconcile(delay: number, verify: boolean): void {
+  if (reconcileTimer) clearTimeout(reconcileTimer)
+  reconcileTimer = setTimeout(() => {
+    reconcileTimer = null
+    void reconcileSyncFolder({ verify })
+  }, delay)
+}
+
+function startReconcileTimer(): void {
+  if (reconcileInterval) return
+  reconcileInterval = setInterval(() => {
+    void reconcileSyncFolder({ verify: Date.now() - lastVerifyAt >= RECONCILE_VERIFY_EVERY_MS })
+  }, RECONCILE_EVERY_MS)
+}
+
+function stopReconcileTimer(): void {
+  if (reconcileTimer) { clearTimeout(reconcileTimer); reconcileTimer = null }
+  if (reconcileInterval) { clearInterval(reconcileInterval); reconcileInterval = null }
+}
+
+const nfc = (p: string) => p.normalize('NFC')
+
+/**
+ * 폴더에 없거나 낡은 메모 파일을 다시 써요. verify면 폴더의 실제 파일 목록과 대조해요.
+ * 돌려주는 값: 쓴 수 · 실패한 수 · 살펴본 메모 수.
+ */
+export async function reconcileSyncFolder(
+  { verify = false }: { verify?: boolean } = {},
+): Promise<{ written: number; failed: number; checked: number }> {
+  const none = { written: 0, failed: 0, checked: 0 }
+  if (reconciling || !(await ensureReady()) || !target) return none
+  reconciling = true
+  try {
+    const memos = (await getActiveMemos()).filter((m) => !m.ephemeralExpiresAt && m.syncId)
+    let present: Set<string> | null = null
+    if (verify) {
+      try {
+        present = new Set((await target.listPaths()).map(nfc))
+        lastVerifyAt = Date.now()
+      } catch {
+        present = null // 목록을 못 읽으면 가볍게만 맞춰요
+      }
+    }
+    const todo: Array<{ memo: Memo; force: boolean }> = []
+    for (const memo of memos) {
+      const rec = await getFileSyncRecord(memo.syncId!)
+      const files = rec ? rec.files ?? [rec.filePath] : []
+      const missing = !!present && files.some((f) => !present!.has(nfc(f)))
+      const stale = !rec || (rec.lastWrittenAt ?? '') < (memo.updatedAt ?? '')
+      if (missing || stale) todo.push({ memo, force: missing })
+    }
+    if (!todo.length) return { ...none, checked: memos.length }
+    let written = 0
+    let failed = 0
+    await withLock(target.key, async () => {
+      if (present) await ensureAllFolderDirs()
+      for (const { memo, force } of todo) {
+        const outcome = await writeMemoNow(memo, force)
+        if (outcome === 'written') written++
+        else if (outcome === 'error') failed++
+        else if (outcome === 'skipped' && !force) {
+          // 내용은 같고 수정 시각만 앞섰어요 — 기록을 새로 해 두어 다음 맞춰 보기에서 다시 보지 않게
+          const rec = await getFileSyncRecord(memo.syncId!)
+          if (rec) await putFileSyncRecord({ ...rec, lastWrittenAt: nowISO() })
+        }
+      }
+    })
+    if (written) console.info(`Sync folder reconcile: ${written} written, ${failed} failed`)
+    return { written, failed, checked: memos.length }
+  } finally {
+    reconciling = false
+  }
 }
 
 // ─── Reverse sync: file watching → import (Phase 2 M2, §4.4) ──────
