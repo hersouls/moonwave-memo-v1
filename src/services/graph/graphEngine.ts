@@ -4,6 +4,7 @@ import { db } from '@/services/database'
 import { getOrComputeEmbedding, hasEmbeddingCapability } from '@/services/embeddingService'
 import type { Memo } from '@/lib/types'
 import { computeGraph } from './compute'
+import { layout3D, type Layout3DRequest, type Layout3DResponse } from './layout3d'
 import type { GraphMemoInput, GraphRequest, GraphResponse, GraphResult } from './types'
 
 /* 지식 그래프 엔진 — 화면 하나(대시보드 위젯)와 크게 보기가 같은 결과를 나눠 써요.
@@ -34,6 +35,9 @@ export interface GraphEngineState {
   computing: boolean
   semantic: SemanticState
   error: string | null
+  /** 3D 자리 — 3D 보기를 연 동안만 계산해요. graphSeq는 이 자리가 바탕으로 한 그래프 결과 */
+  layout3d: { graphSeq: number; pos: Map<string, [number, number, number]>; ms: number } | null
+  computing3d: boolean
 }
 
 let state: GraphEngineState = {
@@ -41,6 +45,8 @@ let state: GraphEngineState = {
   computing: false,
   semantic: { computing: false, progress: 0, capable: false, skipped: 0, ready: 0 },
   error: null,
+  layout3d: null,
+  computing3d: false,
 }
 const listeners = new Set<() => void>()
 function setState(patch: Partial<GraphEngineState>) {
@@ -59,12 +65,17 @@ function getWorker(): Worker | null {
   try {
     if (typeof Worker === 'undefined') throw new Error('no worker')
     worker = new Worker(new URL('../../workers/graph.worker.ts', import.meta.url), { type: 'module' })
-    worker.addEventListener('message', (e: MessageEvent<GraphResponse>) => onResult(e.data))
+    worker.addEventListener('message', (e: MessageEvent<GraphResponse | Layout3DResponse>) => {
+      const d = e.data
+      if ('type' in d && d.type === 'layout3d') on3D(d)
+      else onResult(d as GraphResponse)
+    })
     worker.addEventListener('error', () => {
       // 워커를 못 쓰는 환경이면 같은 계산을 화면 쪽에서 해요
       worker?.terminate()
       worker = null
       if (lastReq) runInline(lastReq)
+      if (last3D) run3DInline(last3D)
     })
   } catch {
     worker = null
@@ -80,6 +91,10 @@ function runInline(req: GraphRequest) {
       onResult({ seq: req.seq, error: err instanceof Error ? err.message : String(err) })
     }
   }, 0)
+}
+
+function run3DInline(req: Layout3DRequest) {
+  setTimeout(() => on3D(layout3D(req)), 0)
 }
 
 /* ── 입력 · 자리 · 임베딩 ── */
@@ -154,7 +169,58 @@ function onResult(res: GraphResponse) {
   }
   positions.clear()
   for (const n of res.result.nodes) positions.set(n.id, [n.x, n.y])
+  resultSeq = res.seq
   setState({ result: res.result, computing: !done, error: null })
+  if (want3D) post3D()
+}
+
+/* ── 3D 자리 (3D 보기를 연 동안만) ── */
+
+let want3D = false
+let seq3 = 0
+let resultSeq = 0
+let last3D: Layout3DRequest | null = null
+const positions3 = new Map<string, [number, number, number]>()
+/** 3D 요청 번호 → 그 요청이 바탕으로 한 그래프 결과 번호 */
+const graphSeqOf3 = new Map<number, number>()
+
+function post3D() {
+  const r = state.result
+  if (!r) return
+  const s = ++seq3
+  graphSeqOf3.set(s, resultSeq)
+  const req: Layout3DRequest = {
+    type: 'layout3d',
+    seq: s,
+    nodes: r.nodes.map((n) => [n.id, n.degree, n.community, n.group]),
+    links: r.links.map((l) => [l.source, l.target, l.kind, l.weight]),
+    prev: [...positions3].map(([id, [x, y, z]]) => [id, x, y, z]),
+  }
+  last3D = req
+  setState({ computing3d: true })
+  const w = getWorker()
+  if (w) w.postMessage(req)
+  else run3DInline(req)
+}
+
+function on3D(res: Layout3DResponse) {
+  if (res.seq !== seq3) return // 낡은 자리
+  const graphSeq = graphSeqOf3.get(res.seq) ?? 0
+  graphSeqOf3.clear()
+  if (!res.ids.length && state.result?.nodes.length) {
+    setState({ computing3d: false })
+    return
+  }
+  positions3.clear()
+  res.ids.forEach((id, i) => positions3.set(id, [res.pos[i * 3], res.pos[i * 3 + 1], res.pos[i * 3 + 2]]))
+  setState({ layout3d: { graphSeq, pos: new Map(positions3), ms: res.ms }, computing3d: false })
+}
+
+/** 3D 보기가 열려 있는 동안 true — 그래프가 바뀔 때마다 3D 자리도 다시 계산해요 */
+export function setWant3D(on: boolean) {
+  if (on === want3D) return
+  want3D = on
+  if (on && state.result && state.layout3d?.graphSeq !== resultSeq) post3D()
 }
 
 let timer: ReturnType<typeof setTimeout> | null = null

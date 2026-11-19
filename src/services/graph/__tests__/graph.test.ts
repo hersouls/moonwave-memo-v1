@@ -122,3 +122,35 @@ describe('한 번 계산', () => {
     }
   })
 })
+
+describe('3D 자리', () => {
+  it('모든 자리가 수이고, 혼자인 메모는 이어진 메모보다 바깥에 있어요', async () => {
+    const { layout3D } = await import('../layout3d')
+    const memos = [
+      memo('1', '가나다라', '[[마바사아]] [[자차카타]]'),
+      memo('2', '마바사아', '[[자차카타]]'),
+      memo('3', '자차카타'),
+      memo('4', '혼자 메모 하나'),
+      memo('5', '혼자 메모 둘'),
+    ]
+    const g = computeGraph({ seq: 1, memos, vectors: [], prev: [] })
+    const res = layout3D({
+      type: 'layout3d',
+      seq: 1,
+      nodes: g.nodes.map((n) => [n.id, n.degree, n.community, n.group]),
+      links: g.links.map((l) => [l.source, l.target, l.kind, l.weight]),
+      prev: [],
+    })
+    expect(res.ids).toHaveLength(5)
+    expect([...res.pos].every(Number.isFinite)).toBe(true)
+    const at = (id: string) => {
+      const i = res.ids.indexOf(id)
+      return [res.pos[i * 3], res.pos[i * 3 + 1], res.pos[i * 3 + 2]]
+    }
+    const c = ['1', '2', '3'].map(at).reduce((a, p) => a.map((v, k) => v + p[k] / 3), [0, 0, 0])
+    const dist = (id: string) => Math.hypot(...at(id).map((v, k) => v - c[k]))
+    const coreMax = Math.max(dist('1'), dist('2'), dist('3'))
+    expect(dist('4')).toBeGreaterThan(coreMax)
+    expect(dist('5')).toBeGreaterThan(coreMax)
+  })
+})

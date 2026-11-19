@@ -15,9 +15,11 @@ import { clsx } from 'clsx'
 import { DialogTitle } from '@headlessui/react'
 import { Dialog } from '@/components/ui/Dialog'
 import { useToastStore } from '@/stores/toastStore'
-import { rememberPositions, setSemanticWanted, useKnowledgeGraph } from '@/services/graph/graphEngine'
+import { rememberPositions, setSemanticWanted, setWant3D, useKnowledgeGraph } from '@/services/graph/graphEngine'
 import { KIND_ORDER, type GraphLink, type GraphNode, type GraphResult, type LinkKind } from '@/services/graph/types'
 import { ForceGraph, type ForceGraphHandle, type LabelMode } from './ForceGraph'
+import type { KnowledgeGraph3DHandle, Topic3D } from './KnowledgeGraph3D'
+import { useReducedMotion } from '@/mw/gestures'
 import { GROUP_COLORS, NONE_COLOR } from './graphColors'
 import { IcLineClose, IcLineDownload, IcLineExpand, IcLineExternalLink, IcLineEye, IcLineEyeHidden, IcLineFolder, IcLineLoading, IcLineSearch, IcLineShare, IcMwRotate, IcMwSparkles, IcMwTag, IcMwZoomIn, IcMwZoomOut } from '@/mw/icons'
 
@@ -64,6 +66,27 @@ interface KnowledgeGraphModalProps {
 
 type ColorBy = 'folder' | 'topic'
 
+const VIEW_KEY = 'memo.graph.view'
+function webglOK(): boolean {
+  try {
+    const c = document.createElement('canvas')
+    return !!(c.getContext('webgl2') || c.getContext('webgl'))
+  } catch {
+    return false
+  }
+}
+/** 처음 보기: 마지막에 고른 것, 없으면 넓은 화면(901px~)은 3D · 폰은 2D */
+function defaultIs3D(reduced: boolean): boolean {
+  try {
+    const saved = localStorage.getItem(VIEW_KEY)
+    if (saved === '3d') return webglOK()
+    if (saved === '2d') return false
+  } catch {
+    // 저장소를 못 쓰면 너비로만
+  }
+  return !reduced && window.matchMedia('(min-width: 901px)').matches && webglOK()
+}
+
 const LABEL_ORDER: LabelMode[] = ['auto', 'all', 'none']
 const LABEL_TEXT: Record<LabelMode, string> = { none: '라벨 없음', auto: '자동 라벨', all: '모든 라벨' }
 const KIND_TEXT: Record<LinkKind, string> = { wiki: '링크', mention: '언급', tag: '태그', semantic: 'AI 연결' }
@@ -84,8 +107,10 @@ function reasonText(l: GraphLink): string {
 export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupNames }: KnowledgeGraphModalProps) {
   const navigate = useNavigate()
   const toast = useToastStore((s) => s.showToast)
-  const { computing, semantic } = useKnowledgeGraph()
+  const { computing, semantic, layout3d, computing3d } = useKnowledgeGraph()
+  const reduced = useReducedMotion()
   const graphRef = useRef<ForceGraphHandle>(null)
+  const graph3DRef = useRef<KnowledgeGraph3DHandle>(null)
   const observerRef = useRef<ResizeObserver | null>(null)
 
   const [size, setSize] = useState({ width: 0, height: 0 })
@@ -98,7 +123,15 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
   const [kinds, setKinds] = useState<Set<LinkKind>>(ALL_KINDS)
   const [colorBy, setColorBy] = useState<ColorBy>('topic')
   const [localDepth, setLocalDepth] = useState<0 | 1 | 2>(0)
-  const [is3D, setIs3D] = useState(false)
+  const [is3D, setIs3DState] = useState(false)
+  const setIs3D = useCallback((next: boolean) => {
+    setIs3DState(next)
+    try {
+      localStorage.setItem(VIEW_KEY, next ? '3d' : '2d')
+    } catch {
+      // 기억하지 못해도 보기는 바뀌어요
+    }
+  }, [])
   const [Lazy3D, setLazy3D] = useState(() => make3DLazy())
   // 끌어 옮긴 자리 — 필터를 바꿔도 제자리에 있게
   const livePos = useRef(new Map<string, { x: number; y: number }>())
@@ -108,6 +141,12 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
     setSemanticWanted(open && kinds.has('semantic'))
     return () => setSemanticWanted(false)
   }, [open, kinds])
+
+  // 3D 자리는 3D 보기를 연 동안만 계산해요
+  useEffect(() => {
+    setWant3D(open && is3D)
+    return () => setWant3D(false)
+  }, [open, is3D])
 
   // 열 때마다 처음 상태로
   useEffect(() => {
@@ -119,7 +158,8 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
     setHideOrphans(false)
     setKinds(ALL_KINDS)
     setLocalDepth(0)
-    setIs3D(false)
+    setIs3DState(defaultIs3D(reduced))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   /* ── 보여 줄 연결 · 노드 ── */
@@ -233,6 +273,20 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
     return m
   }, [nodes3D, keyColor])
 
+  const topics3D = useMemo<Topic3D[] | null>(
+    () => (colorBy === 'topic' ? result.communities.slice(0, GROUP_COLORS.length).map((c) => ({ key: `t${c.id}`, label: c.label })) : null),
+    [colorBy, result.communities]
+  )
+
+  /** 2D든 3D든 지금 보기에서 그 메모로 가요 */
+  const focusNode = useCallback(
+    (id: string) => {
+      if (is3D) graph3DRef.current?.focusNode(id)
+      else graphRef.current?.focusNode(id)
+    },
+    [is3D]
+  )
+
   /* ── 고른 노드 ── */
   const selected = selectedId ? nodeById.get(selectedId) ?? null : null
   const neighbors = useMemo(() => {
@@ -272,9 +326,9 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
       e.preventDefault()
       const m = matches[matchIdxRef.current % matches.length]
       matchIdxRef.current++
-      graphRef.current?.focusNode(m.id)
+      focusNode(m.id)
     },
-    [matches]
+    [matches, focusNode]
   )
 
   // + / − 확대 · 축소, 0 전체 보기 (입력 칸에서는 그냥 글자)
@@ -284,15 +338,16 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
       if (e.ctrlKey || e.metaKey || e.altKey) return
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
-      if (e.key === '+' || e.key === '=') graphRef.current?.zoomIn()
-      else if (e.key === '-') graphRef.current?.zoomOut()
-      else if (e.key === '0') graphRef.current?.fit()
+      const g = is3D ? graph3DRef.current : graphRef.current
+      if (e.key === '+' || e.key === '=') g?.zoomIn()
+      else if (e.key === '-') g?.zoomOut()
+      else if (e.key === '0') g?.fit()
       else return
       e.preventDefault()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [open])
+  }, [open, is3D])
 
   // Esc · 바깥 누르기: 고른 것이 있으면 먼저 풀고, 없으면 닫기 (폰은 바로 닫아요 — 쓸어 닫기가 튕기지 않게)
   const handleDialogClose = useCallback(() => {
@@ -331,16 +386,17 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
   }, [])
 
   const handleExport = useCallback(async () => {
-    if (!graphRef.current) {
+    const g = is3D ? graph3DRef.current : graphRef.current
+    if (!g) {
       toast('그래프를 아직 준비하고 있어요. 잠시 후 다시 시도해 주세요', 'info')
       return
     }
     try {
-      await graphRef.current.exportPNG()
+      await g.exportPNG()
     } catch {
       toast('이미지를 저장하지 못했어요. 다시 시도해 주세요', 'error')
     }
-  }, [toast])
+  }, [toast, is3D])
 
   const toggleKind = (k: LinkKind) =>
     setKinds((prev) => {
@@ -404,7 +460,7 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
             <button
               aria-pressed={is3D}
               type="button"
-              onClick={() => setIs3D((v) => !v)}
+              onClick={() => setIs3D(!is3D)}
               title={is3D ? '2D 보기로 바꾸기' : '3D 보기로 바꾸기 (처음 한 번만 불러와요)'}
               className={`mw-select-chip mw-select-chip--${is3D ? 'on' : 'off'}`}
             >
@@ -412,8 +468,7 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
               <span className="hidden md:inline">{is3D ? '2D' : '3D'}</span>
             </button>
 
-            {/* 라벨 · 이미지 저장은 2D에서만 (3D는 둘러보기용) */}
-            {!is3D && (
+            {(
               <>
                 <button type="button" onClick={cycleLabel} title="라벨 표시 방식 바꾸기" className="mw-button mw-button--tertiary-subtle mw-button--medium">
                   <IcMwTag size={16} />
@@ -504,7 +559,14 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
             />
           )}
 
-          {size.width > 0 && display.nodes.length > 0 && is3D && (
+          {size.width > 0 && display.nodes.length > 0 && is3D && !layout3d && (
+            <div className="flex h-full items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400" aria-live="polite">
+              <IcLineLoading size={16} className="animate-spin" />
+              3D 자리를 계산하고 있어요
+            </div>
+          )}
+
+          {size.width > 0 && display.nodes.length > 0 && is3D && layout3d && (
             <Graph3DBoundary onRetry={() => setLazy3D(() => make3DLazy())}>
               <Suspense
                 fallback={
@@ -515,9 +577,11 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
                 }
               >
                 <Lazy3D
+                  ref={graph3DRef}
                   nodes={nodes3D}
                   links={display.links}
                   colorMap={colorMap3D}
+                  positions={layout3d.pos}
                   width={size.width}
                   height={size.height}
                   selectedId={selectedId}
@@ -525,6 +589,8 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
                   onActivate={handleActivate}
                   query={query}
                   highlightGroup={highlightKey}
+                  labelMode={labelMode}
+                  topics={topics3D}
                 />
               </Suspense>
             </Graph3DBoundary>
@@ -626,7 +692,7 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
                       <li key={node.id}>
                         <button
                           type="button"
-                          onClick={() => graphRef.current?.focusNode(node.id)}
+                          onClick={() => focusNode(node.id)}
                           className="flex min-h-11 w-full items-center gap-2 px-3.5 py-1.5 text-left hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
                         >
                           <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf(node) }} />
@@ -644,7 +710,7 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
           )}
 
           {/* 범례 — 누르면 그 묶음만 강조 */}
-          {legend.length > 0 && !is3D && !selected && (
+          {legend.length > 0 && !selected && (
             <div className="absolute bottom-3 left-3 z-[5] hidden max-w-[min(70%,44rem)] flex-wrap gap-1.5 rounded-xl border border-zinc-200 bg-white/90 p-2 shadow-sm backdrop-blur sm:flex dark:border-white/10 dark:bg-zinc-900/80">
               {legend.map((g) => {
                 const on = highlightKey === g.key
@@ -665,22 +731,33 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
             </div>
           )}
 
-          {/* 확대 · 축소 (2D) — 폰에서 고른 메모가 아래를 쓰는 동안은 숨겨요 */}
-          {!is3D && (
+          {/* 확대 · 축소 — 폰에서 고른 메모가 아래를 쓰는 동안은 숨겨요 */}
+          {(
             <div
               className={clsx(
                 'absolute bottom-3 right-3 z-[5] items-center gap-0.5 rounded-xl border border-zinc-200 bg-white/90 p-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-zinc-900/80',
                 selected ? 'hidden sm:flex' : 'flex'
               )}
             >
-              <button type="button" onClick={() => graphRef.current?.zoomOut()} aria-label="축소" className="mw-icon-button">
+              <button type="button" onClick={() => (is3D ? graph3DRef.current : graphRef.current)?.zoomOut()} aria-label="축소" className="mw-icon-button">
                 <IcMwZoomOut size={16} />
               </button>
-              <span className="w-11 text-center text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{zoomPct}%</span>
-              <button type="button" onClick={() => graphRef.current?.zoomIn()} aria-label="확대" className="mw-icon-button">
+              {!is3D && <span className="w-11 text-center text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{zoomPct}%</span>}
+              <button type="button" onClick={() => (is3D ? graph3DRef.current : graphRef.current)?.zoomIn()} aria-label="확대" className="mw-icon-button">
                 <IcMwZoomIn size={16} />
               </button>
-              <button type="button" onClick={() => graphRef.current?.reset()} aria-label="전체 보기" title="전체 보기" className="mw-icon-button">
+              <button
+                type="button"
+                onClick={() => {
+                  if (is3D) {
+                    setSelectedId(null)
+                    graph3DRef.current?.fit()
+                  } else graphRef.current?.reset()
+                }}
+                aria-label="전체 보기"
+                title="전체 보기"
+                className="mw-icon-button"
+              >
                 <IcLineExpand size={16} />
               </button>
             </div>
@@ -688,7 +765,7 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
 
           <p className="pointer-events-none absolute left-1/2 top-3 z-0 hidden -translate-x-1/2 text-xs text-zinc-400 lg:block dark:text-zinc-500">
             {is3D
-              ? '끌어 돌리기 · 휠 확대 · 오른쪽 끌어 옮기기 · 누르면 고르고 한 번 더 누르면 열기'
+              ? `끌어 돌리기 · 휠 확대 · 오른쪽 끌어 옮기기 · 누르면 고르고 한 번 더 누르면 열기${computing3d ? ' · 자리를 다시 계산하는 중' : ''}`
               : '끌어 옮기기 · 휠/두 손가락 확대 · 빈 곳 두 번 눌러 전체 보기 · 실선 [[링크]] · 점선 자동 연결'}
           </p>
         </div>
