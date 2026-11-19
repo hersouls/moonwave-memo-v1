@@ -465,12 +465,13 @@ export function KnowledgeGraphModal({ open, onClose, result, colorMap, groupName
               className={`mw-select-chip mw-select-chip--${is3D ? 'on' : 'off'}`}
             >
               <IcMwRotate size={16} />
-              <span className="hidden md:inline">{is3D ? '2D' : '3D'}</span>
+              {/* 켜짐 = 3D 보기. 폰 · 접는 폰에서도 글자가 보여야 찾을 수 있어요 */}
+              3D
             </button>
 
             {(
               <>
-                <button type="button" onClick={cycleLabel} title="라벨 표시 방식 바꾸기" className="mw-button mw-button--tertiary-subtle mw-button--medium">
+                <button type="button" onClick={cycleLabel} title="라벨 표시 방식 바꾸기" aria-label={`라벨: ${LABEL_TEXT[labelMode]}`} className="mw-button mw-button--tertiary-subtle mw-button--medium">
                   <IcMwTag size={16} />
                   <span className="hidden md:inline">{LABEL_TEXT[labelMode]}</span>
                 </button>
