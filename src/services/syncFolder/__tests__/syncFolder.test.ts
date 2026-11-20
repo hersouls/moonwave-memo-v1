@@ -29,6 +29,12 @@ describe('filename', () => {
     expect(sanitizeSegment('a/b:c*d?e"f<g>h|i')).toBe('a b c d e f g h i')
   })
 
+  it('drops invisible format characters (zero-width space, bidi marks, BOM)', () => {
+    expect(sanitizeSegment('\u200bBora Music')).toBe('Bora Music')
+    expect(sanitizeSegment('[개발]_\u200b1. EMR\u200e\ufeff')).toBe('[개발]_1. EMR')
+    expect(sanitizeSegment('\u200b\u200d', '제목-없음')).toBe('제목-없음')
+  })
+
   it('preserves hyphens (they are valid and the shortId separator)', () => {
     expect(sanitizeSegment('to-do list')).toBe('to-do list')
   })

@@ -4,7 +4,7 @@
  * Titles are free-form and frequently empty/duplicated, so a raw `제목.md` scheme
  * is unsafe on Windows/NAS. This module produces sanitized, collision-resistant,
  * stable filenames:
- *   - illegal chars (\ / : * ? " < > |) stripped
+ *   - illegal chars (\ / : * ? " < > |) and invisible format chars (U+200B …) stripped
  *   - Windows reserved device names (CON, PRN, ...) escaped
  *   - trailing dots/spaces removed
  *   - Unicode normalized to NFC (macOS produces NFD, Windows expects NFC)
@@ -20,6 +20,11 @@ const MAX_SEGMENT_LEN = 80
 // hyphens are valid and are the shortId separator; whitespace runs are collapsed
 // separately below. Raw control chars can't occur in a single-line title input.
 const INVALID_CHARS = /[\\/:*?"<>|]/g
+// Invisible format characters (zero-width space U+200B, joiners, bidi marks, BOM, soft hyphen …, Unicode
+// category Cf). A title pasted with one of them produced a name the folder write rejected every time, so the memo
+// never reached the sync folder (2026-11-20: 2 memos). No existing file name contains one, so stripping them renames
+// nothing that was written before.
+const FORMAT_CHARS = /\p{Cf}/gu
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
 // 'assets' is the reserved image directory; a folder/file literally named 'assets'
 // would collide with it AND be dropped by the Electron watcher's exclusion rule
@@ -28,7 +33,7 @@ const RESERVED_NAMES = /^assets$/i
 
 /** Sanitize a single path segment (a file base name or a directory name). */
 export function sanitizeSegment(name: string, fallback = '무제'): string {
-  let s = (name ?? '').normalize('NFC').replace(INVALID_CHARS, ' ')
+  let s = (name ?? '').normalize('NFC').replace(FORMAT_CHARS, '').replace(INVALID_CHARS, ' ')
   s = s.replace(/\s+/g, ' ').trim()
   // Windows forbids trailing dots and spaces; leading dots make the file hidden on
   // *nix/macOS and match the watcher's dotfile exclusion, so strip those too.
