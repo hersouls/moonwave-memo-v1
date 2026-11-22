@@ -15,7 +15,8 @@
 # beside the file (android.json, "file") names it. Earlier builds stay (the 설정 › 이력 receives them), listed newest first
 # in history.json beside it, here and on the release.
 #
-# Needs, on this Mac: JDK 21, the Android SDK (~/Library/Android/sdk, platform 36), and
+# Needs, on this Mac: JDK 21, the Android SDK (ANDROID_HOME, else ~/Library/Android/sdk; platform 36 — the nightly job
+# sets ANDROID_HOME to its own copy on the internal disk, see memo_apk_build.sh), and
 #   ~/Library/Application Support/Moonwave/memo-android.env   (mode 600, never printed)
 #     MEMO_APK_KEYSTORE, MEMO_APK_STORE_PASS, MEMO_APK_KEY_ALIAS   the release key "CN=Moonwave Memo"
 #     VITE_FIREBASE_*                                              the public web config Vercel builds with
@@ -34,6 +35,8 @@ SECRETS="${MEMO_ANDROID_ENV:-$HOME/Library/Application Support/Moonwave/memo-and
 OUT=release/android
 say() { print -r -- "[android] $*" }
 die() { print -r -- "[android] 실패: $*" >&2; exit 1 }
+# a network step (npm, GitHub) that fails is tried twice more, 20 s and then 40 s later, before the build gives up
+retry() { local n; for n in 1 2 3; do "$@" && return 0; (( n < 3 )) && sleep $(( n * 20 )); done; return 1 }
 
 PUBLISH=0; IF_CHANGED=0
 for a in "$@"; do case "$a" in --publish) PUBLISH=1 ;; --if-changed) IF_CHANGED=1 ;; *) die "모르는 옵션: $a" ;; esac; done
@@ -62,7 +65,10 @@ export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 21 2>/dev/null)}"
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 [[ -x "$JAVA_HOME/bin/java" ]] || die "JDK 21이 없어요"
 [[ -d "$ANDROID_HOME/platforms" ]] || die "Android SDK가 없어요: $ANDROID_HOME"
-BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" 2>/dev/null | sort -V | tail -1)"
+# an SDK on the external disk cannot be read by a LaunchAgent (macOS Removable Volumes privacy): ls is refused and every
+# check below would fail as if the APK were unsigned. The nightly job therefore builds with its own SDK on the internal disk.
+[[ -x "$BT/apksigner" && -x "$BT/aapt2" ]] || die "Android build-tools를 읽지 못했어요: $ANDROID_HOME/build-tools"
 
 VERSION=$(node -p "require('./package.json').version")
 CODE=$(git rev-list --count HEAD)          # one number per commit, always rising on master
@@ -71,7 +77,7 @@ say "Moonwave Memo $VERSION ($CODE) · ${SHA[1,7]}"
 # ── 1. the web build that goes inside the app, then into the native project
 if [[ ! -d node_modules || package-lock.json -nt node_modules/.package-lock.json ]]; then
   say "의존성 설치"
-  npx -y npm@11 ci --no-audit --no-fund >/dev/null 2>&1 || die "npm ci"
+  retry npx -y npm@11 ci --no-audit --no-fund >/dev/null 2>&1 || die "npm ci"
 fi
 step() { local name=$1; shift; say "$name"; local out; out=$("$@" 2>&1) || { print -r -- "$out" | tail -40 >&2; die "$name" }; }
 step "웹 빌드"            npm run build
@@ -129,12 +135,12 @@ NOTES="Moonwave Memo for Android $VERSION (빌드 $CODE, ${SHA[1,7]})
 이 릴리스는 빌드할 때마다 새 파일로 바뀌어요. 파일 이름은 memo_v버전_빌드한 날이고, android.json에 그 이름 · 버전 · 커밋 · sha256이 있어요.
 2026-10-10보다 앞선 설치본은 다른 키로 서명돼 있어서, 처음 한 번은 예전 앱을 지우고 설치해야 해요."
 if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
-  gh release edit "$TAG" -R "$REPO" --title "Moonwave Memo for Android" --notes "$NOTES" --latest=false >/dev/null || die "릴리스 설명 갱신"
+  retry gh release edit "$TAG" -R "$REPO" --title "Moonwave Memo for Android" --notes "$NOTES" --latest=false >/dev/null || die "릴리스 설명 갱신"
 else
-  gh release create "$TAG" -R "$REPO" --target "$SHA" --title "Moonwave Memo for Android" --notes "$NOTES" --latest=false >/dev/null || die "릴리스 만들기"
+  retry gh release create "$TAG" -R "$REPO" --target "$SHA" --title "Moonwave Memo for Android" --notes "$NOTES" --latest=false >/dev/null || die "릴리스 만들기"
 fi
 # the file first, then the record that names it (the web's download route follows the record), then the history that lists them all
-gh release upload "$TAG" -R "$REPO" "$OUT/$FILE" --clobber >/dev/null || die "APK 올리기"
-gh release upload "$TAG" -R "$REPO" "$OUT/history.json" --clobber >/dev/null || die "이력(history.json) 올리기"
-gh release upload "$TAG" -R "$REPO" "$OUT/android.json" --clobber >/dev/null || die "기록(android.json) 올리기"
+retry gh release upload "$TAG" -R "$REPO" "$OUT/$FILE" --clobber >/dev/null || die "APK 올리기"
+retry gh release upload "$TAG" -R "$REPO" "$OUT/history.json" --clobber >/dev/null || die "이력(history.json) 올리기"
+retry gh release upload "$TAG" -R "$REPO" "$OUT/android.json" --clobber >/dev/null || die "기록(android.json) 올리기"
 say "게시했어요: https://github.com/$REPO/releases/download/$TAG/$FILE"
