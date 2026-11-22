@@ -20,6 +20,21 @@ export const OPENS = {
       issues: { path: '/#/issues', label: '문제 보기', need: {}, may: {} },
     },
   },
+  apt: {
+    short: 'APT', host: 'apt.moonwave.kr', on: true,
+    opens: {
+      bill: { path: '/#/bill/{month}', label: '고지서 보기', need: { month: 'month' }, may: {} },
+      analysis: { path: '/#/analysis{?tab}', label: '분석 보기', need: {}, may: { tab: 'text' } },
+      bills: { path: '/#/bills', label: '고지서 목록 보기', need: {}, may: {} },
+      items: { path: '/#/items', label: '항목 추이 보기', need: {}, may: {} },
+      item: { path: '/#/item/{key}', label: '항목 보기', need: { key: 'text' }, may: {} },
+      usage: { path: '/#/usage', label: '사용량 보기', need: {}, may: {} },
+      trades: { path: '/#/trades', label: '실거래 보기', need: {}, may: {} },
+      quality: { path: '/#/quality', label: '점검 보기', need: {}, may: {} },
+      upload: { path: '/#/upload', label: '고지서 올리기', need: {}, may: {} },
+      settings: { path: '/#/settings', label: '설정 보기', need: {}, may: {} },
+    },
+  },
   asset: {
     short: 'Asset', host: 'asset.moonwave.kr', on: true,
     opens: {
@@ -49,6 +64,13 @@ export const OPENS = {
       partner: { path: '/partner', label: '파트너 화면 열기', need: {}, may: {} },
     },
   },
+  book: {
+    short: 'Book', host: 'book.moonwave.kr', on: true,
+    opens: {
+      read: { path: '/#/reader/{id}', label: '책 읽기', need: { id: 'id' }, may: {} },
+      write: { path: '/#/studio/{id}', label: '책 집필', need: { id: 'id' }, may: {} },
+    },
+  },
   bora: {
     short: 'Bora', host: 'bora.moonwave.kr', on: true,
     opens: {},
@@ -63,6 +85,7 @@ export const OPENS = {
       ux: { path: '/?ux={item}', label: '화면 점검 보기', need: { item: 'id' }, may: {} },
       rag: { path: '/?rag={item}', label: 'RAG 피드백 보기', need: { item: 'id' }, may: {} },
       security: { path: '/?security={item}{&view}', label: '보안 보기', need: { item: 'id' }, may: { view: 'text' } },
+      dev: { path: '/?dev={id}', label: '개발 요청 보기', need: { id: 'id' }, may: {} },
     },
   },
   calendar: {
@@ -97,6 +120,13 @@ export const OPENS = {
     short: 'Drop', host: 'drop.moonwave.kr', on: true,
     opens: {},
   },
+  edu: {
+    short: 'Edu', host: 'edu.moonwave.kr', on: true,
+    opens: {
+      learn: { path: '/learn/{topic}/{subtopic}', label: '개념 배우기 열기', need: { topic: 'id', subtopic: 'id' }, may: {} },
+      'wrong-note': { path: '/wrong-note', label: '오답 노트 열기', need: {}, may: {} },
+    },
+  },
   folder: {
     short: 'Folder', host: 'folder.moonwave.kr', on: true,
     opens: {},
@@ -111,12 +141,36 @@ export const OPENS = {
       exercise: { path: '/#/p/{person}/exercise{?week}', label: '운동 기록 보기', need: { person: 'id' }, may: { week: 'date' } },
     },
   },
+  hotel: {
+    short: 'Hotel', host: 'hotel.moonwave.kr', on: true,
+    opens: {},
+  },
+  image: {
+    short: 'Image', host: 'image.moonwave.kr', on: true,
+    opens: {
+      gallery: { path: '/#/gallery', label: '만든 그림 보기', need: {}, may: {} },
+      models: { path: '/#/models', label: '모델과 메모리 보기', need: {}, may: {} },
+      templates: { path: '/#/templates', label: '템플릿 고르기', need: {}, may: {} },
+    },
+  },
+  'ion-studio': {
+    short: 'ION Studio', host: 'ion-studio.moonwave.kr', on: true,
+    opens: {},
+  },
+  ipp: {
+    short: 'IPP', host: 'ipp.moonwave.kr', on: true,
+    opens: {},
+  },
   kpx: {
     short: 'KPX', host: 'kpx.moonwave.kr', on: true,
     opens: {},
   },
   kpxo: {
     short: 'KPXO', host: 'kpxo.moonwave.kr', on: true,
+    opens: {},
+  },
+  ktnetzero: {
+    short: 'NZG', host: 'ktnetzero-fo.moonwave.kr', on: true,
     opens: {},
   },
   mail: {
@@ -126,6 +180,8 @@ export const OPENS = {
       deliveries: { path: '/#/deliveries', label: '발송 관리 보기', need: {}, may: {} },
       drafts: { path: '/#/drafts', label: '임시보관함 보기', need: {}, may: {} },
       write: { path: '/#/write{?to,subject,drive}', label: '메일 쓰기', need: {}, may: { to: 'text', subject: 'text', drive: 'text' } },
+      folders: { path: '/#/folders', label: '폴더 보기', need: {}, may: {} },
+      search: { path: '/#/search{?q}', label: '메일 찾기', need: {}, may: { q: 'text' } },
     },
   },
   mca: {
@@ -157,6 +213,14 @@ export const OPENS = {
       track: { path: '/#/track/{id}{?t}', label: '곡 열기', need: { id: 'id' }, may: { t: 'number' } },
     },
   },
+  'music-public': {
+    short: 'Listen', host: 'listen.moonwave.kr', on: true,
+    opens: {},
+  },
+  netzero: {
+    short: 'NetZero', host: 'netzero.moonwave.kr', on: true,
+    opens: {},
+  },
   perosona: {
     short: 'Perosona', host: 'perosona.moonwave.kr', on: true,
     opens: {},
@@ -175,6 +239,29 @@ export const OPENS = {
     short: 'Position', host: 'position.moonwave.kr', on: true,
     opens: {},
   },
+  ppa: {
+    short: 'PPA', host: 'ppa.moonwave.kr', on: true,
+    opens: {},
+  },
+  ppt: {
+    short: 'PPT', host: 'ppt.moonwave.kr', on: true,
+    opens: {
+      deck: { path: '/#/deck/{id}', label: '발표 자료 열기', need: { id: 'id' }, may: {} },
+      notebook: { path: '/#/nb/{id}', label: '노트북 열기', need: { id: 'id' }, may: {} },
+    },
+  },
+  prd: {
+    short: 'ION PRD', host: 'prd.moonwave.kr', on: true,
+    opens: {},
+  },
+  'prd-ux': {
+    short: 'ION UX', host: 'ion-ux.moonwave.kr', on: true,
+    opens: {
+      check: { path: '/check', label: 'Prd 적용 점검 보기', need: {}, may: {} },
+      monitor: { path: '/monitor', label: '모니터링 · 조치 보기', need: {}, may: {} },
+      page: { path: '/g/{slug}', label: '가이드 쪽 보기', need: { slug: 'id' }, may: {} },
+    },
+  },
   rag: {
     short: 'RAG', host: 'rag.moonwave.kr', on: true,
     opens: {
@@ -185,6 +272,25 @@ export const OPENS = {
   security: {
     short: 'Security', host: 'security.moonwave.kr', on: true,
     opens: {},
+  },
+  smp: {
+    short: 'SMP', host: 'smp.moonwave.kr', on: true,
+    opens: {},
+  },
+  ta: {
+    short: 'TA', host: 'ta.moonwave.kr', on: true,
+    opens: {
+      records: { path: '/#/records', label: '사건 기록 보기', need: {}, may: {} },
+      timeline: { path: '/#/timeline', label: '사건 경과 보기', need: {}, may: {} },
+      search: { path: '/#/search?q={q}', label: '기록에서 찾기', need: { q: 'text' }, may: {} },
+    },
+  },
+  tide: {
+    short: 'Tide', host: 'tide.moonwave.kr', on: true,
+    opens: {
+      object: { path: '/#/object/{id}', label: '연결 보기', need: { id: 'id' }, may: {} },
+      graph: { path: '/#/graph/{id}', label: '연결망 보기', need: { id: 'id' }, may: {} },
+    },
   },
   trip: {
     short: 'Trip', host: 'trip.moonwave.kr', on: true,

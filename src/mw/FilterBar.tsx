@@ -221,7 +221,9 @@ export function FilterPanel({ open, onClose, fields, state, onFilter, onClear, r
   useEffect(() => {
     if (!open) return
     const target = focusKey ? panel.current?.querySelector<HTMLElement>(`[data-field="${focusKey}"] input, [data-field="${focusKey}"] select`) : null
-    ;(target ?? panel.current?.querySelector<HTMLElement>('input, select'))?.focus()
+    // preventScroll: the panel is still sliding in (below the screen on a phone) when this runs; a plain focus() makes the
+    // browser scroll the shell's overflow-hidden main to reach it, and the whole screen is left shifted up (blank below).
+    ;(target ?? panel.current?.querySelector<HTMLElement>('input, select'))?.focus({ preventScroll: true })
   }, [open, focusKey])
 
   return (

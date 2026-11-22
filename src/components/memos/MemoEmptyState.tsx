@@ -102,7 +102,7 @@ function DefaultEmptyState() {
         action={
           <button type="button"
             onClick={() => navigate('/memo/new')}
-            className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-3"
+            className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left mt-3"
           >
             <IcLineAdd size={16} />
             새 메모 쓰기

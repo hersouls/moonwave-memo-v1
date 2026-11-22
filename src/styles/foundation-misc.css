@@ -73,10 +73,7 @@
   margin-bottom: var(--space-16);
 }
 
-.empty-state__icon svg {
-  width: 28px;
-  height: 28px;
-}
+/* 아이콘은 부르는 곳이 준 크기(키트의 일곱 가지 가운데 하나)를 그대로 써요. 여기서 따로 정하지 않아요 */
 
 .empty-state__title {
   font-size: var(--empty-title-size);

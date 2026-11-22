@@ -75,11 +75,12 @@ export function CalendarMemoList({ memos, selectedDate }: CalendarMemoListProps)
                 ? '새 메모를 써서 오늘을 기록해 보세요.'
                 : '이 날짜에 쓴 메모가 없어요.'
             }
+            // 주 행동(새 메모)은 페이지 머리에 있어요. 빈 날의 안내 버튼은 Secondary예요: 한 화면에 진한 버튼은 하나
             action={
               isSelectedToday ? (
                 <button type="button"
                   onClick={() => navigate('/memo/new')}
-                  className="mw-button mw-button--primary mw-button--medium mw-button--icon-left mt-3"
+                  className="mw-button mw-button--secondary mw-button--medium mw-button--icon-left mt-3"
                 >
                   <IcLineEdit size={16} />
                   메모 쓰기

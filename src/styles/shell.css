@@ -42,7 +42,6 @@ button.mw-sheet__grab { min-height: var(--mw-touch); }
 .memo-chip-wrap { display: flex; flex-wrap: wrap; gap: var(--space-12) var(--chip-group-container-default-item-spacing); }
 
 /* 더보기 시트의 구역 이름과 개수 */
-.memo-sheet__section { padding: var(--space-12) var(--space-12) var(--space-4); font-size: var(--font-size-12); font-weight: var(--font-weight-semibold); color: var(--text-tertiary); }
 .memo-sheet__count { margin-left: auto; font-size: var(--font-size-13); font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
 .memo-sheet__dot { width: var(--space-12); height: var(--space-12); border-radius: var(--radius-circle); }
 

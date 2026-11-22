@@ -489,6 +489,21 @@ body {
   border-left: var(--border-width-1) solid var(--border-secondary);
 }
 
+/* 추억 돌아보기: 묶음 이름 · 줄 모두 카드 안쪽 여백을 지키고, 줄은 1px 선으로만 나눠요(한 겹) */
+.memo-lane__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-12) var(--space-20) var(--space-8);
+}
+.memo-lane__group { border-top: var(--border-width-1) solid var(--border-secondary); }
+.memo-lane__item {
+  display: block;
+  min-width: 0;
+  padding: var(--space-12) var(--space-20);
+  border-top: var(--border-width-1) solid var(--border-secondary);
+}
+
 /* ========================================
    캘린더
    ======================================== */

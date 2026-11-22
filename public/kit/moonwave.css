@@ -1,4 +1,4 @@
-/*! Moonwave UX 1.10.0 · all in one
+/*! Moonwave UX 1.10.8 · all in one
  *  tokens + type + components + app layer
  *  https://ux.moonwave.kr
  */
@@ -12186,6 +12186,231 @@
   margin-top: var(--space-8);
 }
 
+/* ── Ask ── */
+/* Ask — Moonwave UX extra component (묻기, 키트 1.10.1) */
+
+/* 서비스 안의 묻기 화면 하나예요(키트의 React 부품 Ask, 규격 ai/ask). 모든 서비스가 같은 모양이에요.
+   - 페이지 머리: 묻기 · 한 줄 설명 · 새 대화 · 지난 대화(오른쪽 패널, 폰에서는 전체 화면)
+   - 첫 화면(mw-ask__welcome): 가운데에 AI 표시 · 인사말 · 예시 질문 · 모델 상태 · Bot으로 가는 줄
+   - 대화(mw-ask__talk): 질문 제목 · 진행 표시 · 답 · 출처 · 도구 · 이어서 물어보기, 아래에 걸린 시간
+   - 입력란: 넓은 화면은 대화 아래 가운데에 붙어 있고, 900px 이하에서는 하단 탭 위(mw-app-action--bar)예요.
+   글은 읽는 폭(--mw-reading-max) 안에 가운데로 둬요. */
+
+/* AI 화면이라 agent 모드(data-mode="agent")예요: 바탕이 한 단계 내려가고 입력란 · 칩 · 카드가 흰 면이에요 */
+.mw-ask {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 100%;
+  background: var(--background-primary);
+  color: var(--text-primary);
+}
+
+.mw-ask__welcome,
+.mw-ask__talk,
+.mw-ask__bottom {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--mw-reading-max);
+  margin-inline: auto;
+}
+
+.mw-ask__welcome {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-16);
+  padding: var(--space-32) 0 var(--space-24);
+  text-align: center;
+}
+
+.mw-ask__orb {
+  display: grid;
+  place-items: center;
+  width: var(--size-56);
+  height: var(--size-56);
+  border-radius: var(--radius-circle);
+  background: linear-gradient(135deg, var(--mw-wavie-peach), var(--mw-wavie-lavender) 45%, var(--mw-wavie-blue));
+  color: var(--static-white);
+}
+
+.mw-ask__hello {
+  margin: 0;
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-default-148);
+}
+
+.mw-ask__examples {
+  justify-content: center;
+  text-align: left;
+}
+
+.mw-ask__model {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+}
+
+.mw-ask__model-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--radius-6);
+  background: var(--fill-secondary-default);
+  color: var(--text-primary);
+}
+
+.mw-ask__model-name--wait {
+  color: var(--text-secondary);
+}
+
+.mw-ask__wider {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+}
+
+.mw-ask__wider a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--mw-touch);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 대화 */
+.mw-ask__talk {
+  display: grid;
+  gap: var(--space-40);
+  padding: var(--space-8) 0 var(--space-24);
+}
+
+.mw-ask__turn {
+  display: grid;
+  gap: var(--space-16);
+  min-width: 0;
+  scroll-margin-top: var(--space-16);
+}
+
+.mw-ask__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+}
+
+.mw-ask__failed {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-12);
+}
+
+.mw-ask__sources {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-8);
+}
+
+.mw-ask__source-list {
+  display: grid;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mw-ask__source-list li {
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--font-size-14);
+}
+
+.mw-ask__source-list a {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mw-ask__source-list small {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+}
+
+/* 입력란: 넓은 화면은 대화 아래에 붙어 있어요 */
+.mw-ask__bottom {
+  position: sticky;
+  bottom: var(--space-16);
+  margin-top: auto;
+  padding-top: var(--space-8);
+}
+
+.mw-ask__dock > .mw-ask__composer {
+  width: 100%;
+}
+
+/* 지난 대화 */
+.mw-ask__threads {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mw-ask__thread {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  border-bottom: var(--border-width-1) solid var(--border-secondary);
+}
+
+.mw-ask__thread:last-child {
+  border-bottom: 0;
+}
+
+.mw-ask__thread-open {
+  display: grid;
+  flex: 1;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--size-56);
+  padding: var(--space-8) 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-15);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mw-ask__thread-open small {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+}
+
+.mw-ask__thread--current .mw-ask__thread-open {
+  font-weight: var(--font-weight-bold);
+}
+
+.mw-ask__thread-open:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-2);
+  border-radius: var(--radius-8);
+}
+
+.mw-ask__none {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 /* ── Breadcrumb ── */
 /* Breadcrumb — Moonwave UX extra component */
 
@@ -12302,6 +12527,415 @@
   font-size: var(--body-small-bold-font-size);
   line-height: var(--body-small-bold-line-height);
   letter-spacing: var(--body-small-bold-letter-spacing);
+}
+
+/* ── Chart ── */
+/* Chart — Moonwave UX extra component (키트 1.10.4)
+
+   React로 그리는 차트(src/mw/charts)의 모양이에요. 카드는 Data Visual의 틀(mw-data-visual: 제목 줄, 차트 · 표 전환,
+   그림, 표)을 그대로 쓰고, 여기에는 그 안의 그림만 있어요: 가는 실선 눈금, 물러난 축, 2px 선, 표면색 고리를 두른 점,
+   둥근 막대 끝, 글자는 글자 토큰(계열 색을 입지 않아요). 색은 모두 시각화 토큰(--mw-viz*, --mw-cat-*, --mw-seq-*,
+   --mw-div-*)이라 테마를 따라가요. 기기나 설정의 움직임 줄이기(<html data-mw-motion="reduce">)에서는 그리는 움직임 없이
+   결과만 보여요. */
+
+.mw-chart,
+.mw-chart-card {
+  /* 막대 · 범위의 바탕 길: 표면에 가장 가까운, 그래도 읽히는 단계 */
+  --mw-chart-track: var(--mw-seq-0);
+}
+
+[data-theme='dark'] .mw-chart,
+[data-theme='dark'] .mw-chart-card {
+  --mw-chart-track: var(--mw-seq-1);
+}
+
+/* ── 카드: Data Visual의 틀에 차트 카드가 더하는 것 ── */
+
+.mw-chart-card {
+  min-width: 0;
+}
+
+.mw-chart-card--bare {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.mw-chart-card__head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* 제목 쪽은 200px을 지켜요. 좁은 카드에서는 고르는 것들이 아래로 내려가요(요약 줄을 몇 글자로 줄이지 않아요) */
+.mw-chart-card__titles {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.mw-chart-card .mw-chart-card__title {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mw-chart-card__summary,
+.mw-chart-card__stamp {
+  margin: var(--space-4) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+  line-height: var(--line-height-reading-130);
+}
+
+.mw-chart-card__stamp {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 카드보다 넓어지지 않아요: 폰에서 고르는 것이 많으면(선택지 넷과 차트 · 표) 다음 줄로 내려가요 */
+.mw-chart-card__actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  max-width: 100%;
+}
+
+.mw-chart-card__actions > .mw-text-button {
+  min-width: var(--mw-touch);
+  min-height: var(--mw-touch);
+}
+
+.mw-chart-card .mw-data-visual__view {
+  grid-auto-flow: column;
+  gap: var(--space-4);
+  margin-left: 0;
+}
+
+.mw-chart-card__legend {
+  margin-bottom: calc(var(--space-8) * -1);
+}
+
+.mw-chart-card__body {
+  min-width: 0;
+  transition: opacity var(--motion-duration-medium) var(--mw-ease);
+}
+
+.mw-chart-card__body--stale {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.mw-chart-card__skeleton {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-8);
+}
+
+.mw-chart-card__foot {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-height-default-148);
+}
+
+@media (max-width: 600px) {
+  /* 제목 아래로 내려간 고르는 것들은 제목과 같은 자리에서 시작해요 */
+  .mw-chart-card__actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ── 그림 ── */
+
+.mw-chart {
+  position: relative;
+  min-width: 0;
+}
+
+.mw-chart__plot {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.mw-chart__svg {
+  display: block;
+  overflow: visible;
+  font-family: inherit;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mw-chart__svg:focus {
+  outline: none;
+}
+
+.mw-chart__svg:focus-visible {
+  outline: var(--border-width-2) solid var(--mw-focus);
+  outline-offset: var(--space-4);
+  border-radius: var(--radius-6);
+}
+
+.mw-chart__svg text {
+  fill: var(--text-tertiary);
+  font-size: var(--font-size-12);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* 축과 눈금: 가는 실선, 표면에서 한 단계 */
+
+.mw-chart__grid { stroke: var(--border-secondary); stroke-width: 1; shape-rendering: crispEdges; }
+.mw-chart__baseline { stroke: var(--border-primary); stroke-width: 1; shape-rendering: crispEdges; }
+.mw-chart__ref { stroke: var(--text-disabled); stroke-width: 1; stroke-dasharray: 3 3; shape-rendering: crispEdges; }
+
+.mw-chart__svg .mw-chart__ref-label,
+.mw-chart__svg .mw-chart__end-label,
+.mw-chart__svg .mw-chart__end-value,
+.mw-chart__svg .mw-chart__bar-label,
+.mw-chart__svg .mw-chart__node-label {
+  paint-order: stroke;
+  stroke: var(--surface-primary);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.mw-chart__svg .mw-chart__ref-label { fill: var(--text-tertiary); font-size: var(--font-size-12); font-weight: var(--font-weight-medium); }
+.mw-chart__svg .mw-chart__end-label { fill: var(--text-secondary); font-weight: var(--font-weight-semibold); }
+.mw-chart__svg .mw-chart__end-value { fill: var(--text-primary); font-size: var(--font-size-13); font-weight: var(--font-weight-bold); }
+.mw-chart__svg .mw-chart__bar-label { fill: var(--text-secondary); font-weight: var(--font-weight-semibold); }
+.mw-chart__svg .mw-chart__bar-label--strong { fill: var(--text-primary); font-weight: var(--font-weight-bold); }
+.mw-chart__svg .mw-chart__axis-title { fill: var(--text-tertiary); font-size: var(--font-size-12); font-weight: var(--font-weight-medium); }
+.mw-chart__svg .mw-chart__cat-label { fill: var(--text-secondary); font-size: var(--font-size-13); font-weight: var(--font-weight-medium); }
+.mw-chart__band rect { fill: var(--background-secondary); opacity: 0.7; }
+.mw-chart__leader { fill: none; stroke: var(--text-disabled); stroke-width: 1; }
+
+/* 표식 */
+
+.mw-chart__line-path { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.mw-chart__line-path--dashed { stroke-dasharray: 5 4; stroke-width: 1.75; }
+.mw-chart__line-path--incomplete { stroke-dasharray: 3 4; opacity: 0.85; }
+.mw-chart__area { fill-opacity: var(--mw-viz-area-alpha); stroke: none; }
+.mw-chart__dot { stroke: var(--surface-primary); stroke-width: 2px; paint-order: stroke; }
+.mw-chart__marker { stroke: var(--surface-primary); stroke-width: 3.5px; paint-order: stroke; stroke-linejoin: round; }
+.mw-chart__crosshair { stroke: var(--text-tertiary); stroke-width: 1; shape-rendering: crispEdges; pointer-events: none; }
+.mw-chart__bar { transition: opacity var(--motion-duration-short) var(--mw-ease), filter var(--motion-duration-short) var(--mw-ease); }
+.mw-chart__hover-band { fill: var(--background-secondary); pointer-events: none; }
+.mw-chart__hatch-line { stroke: var(--surface-primary); opacity: 0.55; }
+.mw-chart__hatch-dot { fill: var(--surface-primary); opacity: 0.7; }
+.mw-chart__cell { transition: opacity var(--motion-duration-short) var(--mw-ease); }
+.mw-chart__cell--active,
+.mw-chart__tile--active rect.mw-chart__tile-fill { stroke: var(--text-primary); stroke-width: 2px; paint-order: fill; }
+.mw-chart__svg--has-active .mw-chart__cell:not(.mw-chart__cell--active) { opacity: 0.88; }
+.mw-chart__link { fill: none; transition: stroke-opacity var(--motion-duration-short) var(--mw-ease); }
+.mw-chart__hit { fill: transparent; }
+.mw-chart__hit--pickable,
+.mw-chart__svg [data-pickable='true'] { cursor: pointer; }
+
+/* 풍선 설명: 닿은 한 점에만, 뒤집힌 색으로 */
+
+.mw-chart__tip {
+  position: absolute;
+  z-index: 30;
+  max-width: min(320px, 100%);
+  padding: var(--space-8) var(--space-12) var(--space-12);
+  border-radius: var(--radius-8);
+  background: var(--surface-inverse);
+  box-shadow: var(--shadow-3);
+  color: var(--text-inverse);
+  font-size: var(--font-size-13);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--line-height-default-148);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.mw-chart__tip-t { margin-bottom: var(--space-4); font-size: var(--font-size-12); font-weight: var(--font-weight-semibold); opacity: 0.72; }
+.mw-chart__tip-r { display: grid; grid-template-columns: var(--size-12) auto 1fr; align-items: center; column-gap: var(--space-8); }
+.mw-chart__tip-r + .mw-chart__tip-r { margin-top: var(--space-2); }
+.mw-chart__tip-r b { font-weight: var(--font-weight-bold); text-align: right; }
+.mw-chart__tip-r .mw-chart__tip-l { overflow: hidden; font-size: var(--font-size-13); text-overflow: ellipsis; opacity: 0.72; }
+.mw-chart__tip-r--dim { opacity: 0.55; }
+.mw-chart__tip-sub { font-weight: var(--font-weight-medium); opacity: 0.72; }
+.mw-chart__tip-note { margin-top: var(--space-4); font-size: var(--font-size-12); white-space: normal; opacity: 0.72; }
+.mw-chart__tip .mw-chart__key { display: block; }
+
+/* 범례: 색 견본 + 이름. 견본은 그림과 같은 모양(막대는 네모와 무늬, 선은 선, 표식은 그 모양)이에요 */
+
+.mw-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-16);
+  margin: 0 0 var(--space-12);
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+}
+
+.mw-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--size-24);
+  line-height: var(--line-height-reading-130);
+}
+
+/* 숨길 수 있는 계열: 견본 옆의 키트 글자 버튼이 항목 전체를 누르는 자리로 덮어요(44px 이상) */
+.mw-chart__legend-item--toggle {
+  position: relative;
+  min-height: var(--mw-touch);
+}
+
+.mw-chart__legend-button.mw-text-button {
+  position: static;
+  justify-content: flex-start;
+  gap: var(--space-8);
+  min-width: var(--mw-touch);
+  min-height: var(--mw-touch);
+  padding-right: 0;
+  padding-left: 0;
+  color: inherit;
+}
+
+.mw-chart__legend-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.mw-chart__legend-item--off { color: var(--text-disabled); }
+.mw-chart__legend-item--off .mw-chart__key { opacity: 0.3; }
+.mw-chart__legend-item--off .mw-chart__legend-label { text-decoration: line-through; }
+.mw-chart__legend-value { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: var(--font-weight-semibold); }
+.mw-chart__key { flex: none; overflow: visible; }
+
+/* 크기 · 갈림 범례 */
+
+.mw-chart__scale { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-8); margin-top: var(--space-12); color: var(--text-tertiary); font-size: var(--font-size-12); }
+.mw-chart__ramp { display: inline-flex; gap: var(--space-2); }
+.mw-chart__ramp i { width: var(--space-12); height: var(--size-12); border-radius: var(--radius-2); }
+.mw-chart__scale-zero { display: inline-block; width: var(--size-12); height: var(--size-12); border-radius: var(--radius-2); }
+.mw-chart__scale-note { margin-left: auto; }
+
+/* 도넛과 가운데 글 */
+
+.mw-chart__donut-wrap { display: flex; align-items: center; gap: var(--space-32); }
+.mw-chart__donut-wrap--stacked { flex-direction: column; align-items: stretch; gap: var(--space-16); }
+.mw-chart__donut-svg-wrap { position: relative; flex: none; margin: 0 auto; }
+
+.mw-chart__donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.mw-chart__center-label { max-width: 100%; overflow: hidden; color: var(--text-tertiary); font-size: var(--font-size-13); font-weight: var(--font-weight-medium); line-height: var(--line-height-default-148); text-overflow: ellipsis; white-space: nowrap; }
+.mw-chart__center-value { color: var(--text-primary); font-size: var(--font-size-20); font-weight: var(--font-weight-bold); letter-spacing: var(--letter-spacing-tight); line-height: var(--line-height-default-148); white-space: nowrap; }
+.mw-chart__center-sub { color: var(--text-tertiary); font-size: var(--font-size-12); font-variant-numeric: tabular-nums; }
+
+.mw-chart__donut-list { display: grid; flex: 1; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; list-style: none; }
+
+.mw-chart__donut-item {
+  display: grid;
+  grid-template-columns: var(--size-12) minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: var(--space-8);
+  margin: 0 calc(var(--space-8) * -1);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-4);
+  font-size: var(--font-size-14);
+  cursor: default;
+}
+
+.mw-chart__donut-item--active { background: var(--background-secondary); }
+.mw-chart__donut-label { overflow: hidden; color: var(--text-secondary); text-overflow: ellipsis; white-space: nowrap; }
+.mw-chart__donut-value { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: var(--font-weight-semibold); text-align: right; }
+.mw-chart__donut-share { min-width: var(--mw-touch); color: var(--text-tertiary); font-size: var(--font-size-13); font-variant-numeric: tabular-nums; text-align: right; }
+.mw-chart__arc { transition: transform var(--motion-duration-medium) var(--mw-ease), opacity var(--motion-duration-short) var(--mw-ease); }
+
+/* 미터 */
+
+.mw-chart--meter { display: grid; gap: var(--space-8); }
+.mw-chart__meter-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-12); font-size: var(--font-size-14); }
+.mw-chart__meter-label { min-width: 0; overflow: hidden; color: var(--text-secondary); font-weight: var(--font-weight-medium); text-overflow: ellipsis; white-space: nowrap; }
+.mw-chart__meter-value { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: var(--font-weight-bold); white-space: nowrap; }
+.mw-chart__meter-target { color: var(--text-tertiary); font-weight: var(--font-weight-medium); }
+.mw-chart__meter-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); min-height: var(--size-20); color: var(--text-tertiary); font-size: var(--font-size-13); }
+.mw-chart__meter-tag { gap: var(--space-4); vertical-align: middle; white-space: nowrap; }
+.mw-chart__meter-tag svg { flex: none; }
+
+/* 작은 선 */
+
+.mw-chart__spark { display: block; overflow: visible; }
+.mw-chart--spark { width: 100%; }
+
+/* 표: 키트의 Table. 줄 높이 56px(patterns/data-display: 40 · 56 · 72), 머리는 스크롤해도 제자리 */
+
+.mw-chart__table { overflow-y: auto; }
+
+.mw-chart__table .mw-table__header,
+.mw-chart__table .mw-table__row-header,
+.mw-chart__table .mw-table__cell {
+  height: var(--size-56);
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+.mw-chart__table thead .mw-table__header { position: sticky; top: 0; z-index: 1; }
+.mw-chart__table-center { text-align: center; }
+.mw-chart__empty { align-content: center; }
+
+/* 처음 한 번 그리는 움직임. 막대는 차례(--mw-chart-order, 그리는 쪽이 줄마다 적어요)대로 조금씩 늦게 자라요 */
+
+.mw-chart__grow-y,
+.mw-chart__grow-x {
+  --mw-chart-order: 0;
+}
+
+.mw-chart__draw { stroke-dasharray: 1; stroke-dashoffset: 0; animation: mw-chart-draw var(--motion-duration-long) var(--mw-ease) both; }
+.mw-chart__fade,
+.mw-chart__cells-in { animation: mw-chart-fade var(--motion-duration-long) var(--mw-ease) both; }
+.mw-chart__grow-y { transform-box: fill-box; transform-origin: 50% 100%; animation: mw-chart-grow-y var(--motion-duration-long) var(--mw-ease) both; animation-delay: calc(min(var(--mw-chart-order), 24) * 16ms); }
+.mw-chart__grow-y--neg { transform-origin: 50% 0%; }
+.mw-chart__grow-x { transform-box: fill-box; transform-origin: 0% 50%; animation: mw-chart-grow-x var(--motion-duration-long) var(--mw-ease) both; animation-delay: calc(min(var(--mw-chart-order), 24) * 16ms); }
+.mw-chart__grow-x--neg { transform-origin: 100% 50%; }
+.mw-chart__pop { transform-box: fill-box; transform-origin: 50% 50%; animation: mw-chart-pop var(--motion-duration-long) var(--mw-ease) both; }
+
+@keyframes mw-chart-draw { from { stroke-dashoffset: 1; } }
+@keyframes mw-chart-fade { from { opacity: 0; } }
+@keyframes mw-chart-grow-y { from { transform: scaleY(0); } }
+@keyframes mw-chart-grow-x { from { transform: scaleX(0); } }
+@keyframes mw-chart-pop { from { opacity: 0; transform: scale(0.94) rotate(-8deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-chart *,
+  .mw-chart-card * { animation: none; transition: none; }
+}
+
+[data-mw-motion='reduce'] .mw-chart *,
+[data-mw-motion='reduce'] .mw-chart-card * { animation: none; transition: none; }
+
+/* 강제 색상: 표식은 보이는 테두리를, 글자는 시스템 색을 */
+
+@media (forced-colors: active) {
+  .mw-chart__svg path,
+  .mw-chart__svg rect:not(.mw-chart__hit),
+  .mw-chart__svg circle { stroke: CanvasText; }
+  .mw-chart__tip { border: var(--border-width-1) solid CanvasText; }
+}
+
+@media (max-width: 900px) {
+  .mw-chart__legend { gap: var(--space-2) var(--space-12); }
+  .mw-chart__donut-item { font-size: var(--font-size-13); }
 }
 
 /* ── ContextPanel ── */
@@ -14528,7 +15162,9 @@
 .mw-data-visual .mw-data-visual__view {
   display: inline-grid;
   flex: none;
+  grid-auto-flow: column;
   grid-auto-columns: auto;
+  gap: var(--space-4);
   width: auto;
   margin-left: auto;
 }
@@ -21194,9 +21830,14 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 [data-theme="dark"] .mw-helper-text--error { color: color-mix(in srgb, var(--text-feedback-critical) 75%, var(--text-primary)); }
 
 /* 글자를 받는 칸의 최소 너비 — 원본의 320px은 넓은 화면에서 칸이 너무 좁아지지 않게 하는 값이에요. 360px 폰에서는 옆에 버튼
-   하나만 붙어도 칸이 줄지 못해 버튼 밑으로 들어갔어요(Memo, 2026-10-10). 폰(600px 이하)에서는 놓인 자리의 너비를 따라요. */
+   하나만 붙어도 칸이 줄지 못해 버튼 밑으로 들어갔어요(Memo, 2026-10-10). 폰(600px 이하)에서는 놓인 자리의 너비를 따라요.
+   칸 아래 도움말 줄도 같은 320px이 남아 있어서, 도움말이 붙은 칸이 카드 안쪽(294px)보다 넓게 버티고 카드 밖으로 나갔어요
+   (Mail 설정의 서명, Galaxy S26 360px, 2026-10-24). 원본이 최소 너비를 준 다른 부품(드롭다운 320 · 라디오 줄 360 · 목록 줄
+   360 · 목록 제목 240 · 200 · 상단 내비게이션 360)도 폰에서는 놓인 자리를 따라요. 점검: layout/box-spill. */
 @media (max-width: 600px) {
-  .mw-textfield, .mw-textarea, .mw-search--type-outline { min-width: 0; }
+  .mw-textfield, .mw-textarea, .mw-search--type-outline, .mw-helper-text, .mw-dropdown, .mw-radiobutton-item,
+  .mw-list-item--text, .mw-list-title, .mw-list-product-title, .mw-list-product-tags,
+  .mw-top-navigation, .mw-top-navigation--scrolling-on { min-width: 0; }
 }
 
 /* Bottom Sheet의 겹침 순서 — 원본은 50이에요. 앱 뼈대의 하단 탭(60) · 폰에서 아래에 고정한 주 행동(mw-app-action, 55) ·
@@ -21267,6 +21908,10 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 :where(.mw-root) :where(button, input, select, textarea) { font: inherit; color: inherit; letter-spacing: inherit; }
 :where(.mw-root) :where(button) { cursor: pointer; }
 :where(.mw-root) :where(h1, h2, h3, h4, p, figure, dl, dd) { margin: 0; }
+/* 줄을 고르게 끊어요(키트 1.10.7): 제목은 줄 길이를 맞추고(balance), 본문은 마지막 줄에 한 낱말만 남지 않게 해요(pretty).
+   낱말 안에서 끊지 않는 것(keep-all)은 그대로예요. 지원하지 않는 브라우저는 지금처럼 끊어요. */
+:where(.mw-root) :where(h1, h2, h3, h4) { text-wrap: balance; }
+:where(.mw-root) :where(p, li, dd, figcaption, blockquote) { text-wrap: pretty; }
 :where(.mw-root) :where(ul, ol) { margin: 0; padding: 0; list-style: none; }
 :where(.mw-root) :where(a) { color: inherit; }
 /* 글자를 받는 칸은 감싸는 상자가 포커스를 보여 주므로 뺐어요 (moonwave-components.css의 보정 참고) */
@@ -21297,9 +21942,12 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-mark--72 { width: 72px; height: 72px; border-radius: 18px; }
 [data-theme="dark"] .mw-mark { box-shadow: 0 0 0 var(--border-width-1) var(--border-secondary); }
 
-/* ── 키커: 영문 대문자 머리말. 화면마다 하나만 써요. ── */
+/* ── 키커: 영문 대문자 머리말. 두 곳에만 써요(키트 1.10.7, identity/kicker): 로그인 카드의 `PRIVATE BY DESIGN`과 서비스 첫 화면
+   히어로의 `MOONWAVE · 서비스 이름`. 화면마다 하나예요. 문구를 지어 넣지 않아요. 제목 위에 얹는 분류 · 날짜 · 순번은
+   키커가 아니라 윗줄(mw-overline)이에요: 우리말 그대로, 대문자도 넓은 자간도 없어요. ── */
 .mw-kicker { display: block; font-size: var(--mw-font-size-11); line-height: 1.4; font-weight: var(--font-weight-bold); letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); }
 .mw-kicker--accent { color: var(--text-accent-primary); }
+.mw-overline { display: block; font-size: var(--font-size-13); line-height: var(--line-height-default-148); font-weight: var(--font-weight-medium); color: var(--text-secondary); }
 .mw-kicker--signal::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--mw-signal); margin-right: var(--space-8); vertical-align: 0.12em; }
 
 /* ── 앱 셸 ── */
@@ -21367,7 +22015,7 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 /* 상세 서랍(데이터 뷰): 머리에 이전 · 다음 단추와 "3 / 12"가 서요. 목록은 패널 옆에 그대로 남아요. */
 .mw-app-panel__nav { flex: none; display: inline-flex; align-items: center; gap: var(--space-2); }
 .mw-app-panel__pos { min-width: 3.5em; color: var(--text-secondary); font-size: var(--font-size-13); text-align: center; font-variant-numeric: tabular-nums; }
-.mw-app-panel__body { flex: 1; overflow-y: auto; padding: var(--space-20); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-20); align-content: start; }
+.mw-app-panel__body { flex: 1; overflow-y: auto; padding: var(--space-20); display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; gap: var(--space-20); align-content: start; }
 .mw-app-panel__foot { flex: none; display: flex; gap: var(--space-8); justify-content: flex-end; padding: var(--space-12) var(--space-20) calc(var(--space-12) + env(safe-area-inset-bottom)); border-top: var(--border-width-1) solid var(--border-secondary); background: var(--surface-primary); }
 
 /* 좁은 화면의 주 행동: 엄지가 닿는 아래쪽에 고정해요. 본문(mw-app-main) 안에 두고, FAB이나 버튼 하나를 넣어요.
@@ -21390,9 +22038,17 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 /* 손잡이는 누르는 버튼이에요(닫기, 높이 바꾸기): 누르는 영역이 44px이에요. 보이는 막대는 40 × 5px 그대로예요 */
 .mw-sheet__grab { flex: none; width: 100%; min-height: var(--mw-touch); padding: 0; display: grid; place-items: center; border: 0; background: none; }
 .mw-sheet__grab i { width: 40px; height: 5px; border-radius: 3px; background: var(--border-secondary); }
-.mw-sheet__body { overflow-y: auto; padding: var(--space-8) var(--space-16) var(--space-20); display: grid; gap: var(--space-4); }
+/* 시트와 패널의 본문은 줄마다 내용만큼 높아요(grid-auto-rows: max-content, 키트 1.10.6). 높이가 정해진 그리드는 내용이
+   넘칠 때 줄을 칸의 최소 높이(44px)까지 눌러서, 두 줄짜리 항목의 글이 다음 항목 위로 겹쳤어요(Admin 더보기, Galaxy Z Fold7
+   접은 화면 412px, 2026-11-05). 줄은 그대로 두고 본문이 스크롤돼요. 점검: layout/box-spill(열린 더보기 시트). */
+.mw-sheet__body { overflow-y: auto; padding: var(--space-8) var(--space-16) var(--space-20); display: grid; grid-auto-rows: max-content; gap: var(--space-4); }
 .mw-sheet__item { display: flex; align-items: center; gap: 14px; min-height: var(--mw-touch); padding: var(--space-12); border: 0; border-radius: var(--radius-12); background: none; text-align: left; text-decoration: none; }
 .mw-sheet__item:active, .mw-sheet__item[aria-current='page'] { background: var(--background-secondary); }
+/* 묶음 이름: 더보기의 항목이 일곱 개를 넘으면 사이드바와 같은 묶음 이름으로 나눠요(키트 1.10.7, patterns/app-shell#more).
+   묶음은 <section aria-labelledby>이고 이름은 <h3 class="mw-sheet__label">이에요. */
+.mw-sheet__group { display: grid; grid-auto-rows: max-content; gap: var(--space-4); }
+.mw-sheet__group + .mw-sheet__group { margin-top: var(--space-12); padding-top: var(--space-12); border-top: var(--border-width-1) solid var(--border-secondary); }
+.mw-sheet__label { padding: 0 var(--space-12) var(--space-4); font-size: var(--font-size-12); line-height: var(--line-height-default-148); font-weight: var(--font-weight-semibold); color: var(--text-tertiary); }
 
 /* 당겨서 새로 고침: 내용 맨 위에서 아래로 당기면 내려오는 동그라미예요. 본문(mw-app-main) 안에 두고, 움직임은 키트의 PullRefresh가 줘요. */
 .mw-pull { --mw-pull: 0; position: absolute; top: var(--mw-top-h); left: 50%; z-index: 15; width: var(--space-40); height: var(--space-40); margin-left: calc(var(--space-40) / -2); display: grid; place-items: center; border-radius: var(--radius-circle); background: var(--surface-floating); box-shadow: var(--shadow-2); color: var(--text-accent-primary); opacity: 0; visibility: hidden; pointer-events: none; }
@@ -21469,9 +22125,11 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-state--partial i { background: var(--mw-warn); }
 .mw-state--down { color: var(--tag-status-text-critical); }
 .mw-state--down i { background: var(--mw-critical); }
-.mw-live { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--mw-ok); box-shadow: 0 0 0 0 color-mix(in srgb, var(--mw-ok) 50%, transparent); }
+/* 상태 점: 가만히 있어요. 상태가 바뀐 순간(처음 보일 때, 끊겼을 때, 다시 이어졌을 때)에만 한 번 퍼져요(키트 1.10.7).
+   전에는 2.4초마다 끝없이 퍼졌어요: 바뀐 것이 없는데 움직이는 것은 살아 있는 척이에요(foundations/motion). */
+.mw-live { --mw-live-ring: color-mix(in srgb, var(--mw-ok) 50%, transparent); width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--mw-ok); }
 .mw-live--off { background: var(--mw-idle); }
-.mw-live--down { background: var(--mw-critical); }
+.mw-live--down { --mw-live-ring: color-mix(in srgb, var(--mw-critical) 50%, transparent); background: var(--mw-critical); }
 
 .mw-glyph { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--radius-12); background: var(--mw-accent-soft); color: var(--text-accent-primary); font-size: var(--font-size-16); font-weight: var(--font-weight-bold); letter-spacing: -0.03em; }
 .mw-glyph--56 { width: 56px; height: 56px; border-radius: var(--radius-16); font-size: var(--font-size-22); }
@@ -21498,30 +22156,50 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 .mw-icon-button:hover { background: var(--background-secondary); color: var(--text-primary); }
 .mw-icon-button svg { width: 20px; height: 20px; }
 
-/* ── 히어로: 밤 캔버스 위의 달과 고리. 서비스 첫 화면에 하나만 둬요. ── */
+/* ── 히어로 (키트 1.10.8): 서비스 첫 화면의 '오늘' 요약이에요. 서비스 첫 화면에 하나만 둬요.
+   그림을 얹지 않아요: 그 서비스가 지금 말할 한 가지(제목)와 그 근거(한 줄 · 링 · 숫자)가 주인공이에요. 전에는 밤 캔버스
+   위에 달과 고리를 그렸는데, 모든 서비스의 첫 화면에 같은 그림이 붙어 벽지처럼 보였어요(2026-11-22, 소유자: "너무 올드하고
+   촌스러워"). 면은 테마를 따르고, 오른쪽 위 모서리에서 달빛 파랑이 아주 옅게 들어와요.
+   짜임: 글(첫 칸: 키커 · 제목 h1과 둘째 줄 em · 한 줄 p · 행동 __actions), 곁(__aside: 진행 링 mw-ring이나 주 행동),
+   아래 숫자 줄(__foot > mw-stat-strip, 서너 개). 곁과 숫자 줄은 없어도 돼요.
+   --mw-hero-v는 점검(identity/hero)이 이 판의 히어로인지 읽는 표시예요. 밤 캔버스 토큰(--mw-hero-*)은 그대로 남아요. ── */
 .mw-hero {
-  --mw-hero-moon: radial-gradient(circle at 29% 25%, #e5eef0, #9bbbd0 38%, #3e6383 68%, #0d1c31 100%);
-  --mw-hero-ring: rgba(184, 225, 235, 0.45);
-  position: relative; isolation: isolate; overflow: hidden; min-height: 228px; padding: 36px 44px; margin-bottom: var(--space-24);
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-24);
-  border-radius: var(--radius-16); background: var(--mw-hero-gradient); color: var(--mw-hero-ink);
+  --mw-hero-v: 2;
+  position: relative; isolation: isolate; overflow: hidden; margin-bottom: var(--space-24);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-24) var(--space-32);
+  padding: var(--space-32) var(--space-40); border-radius: var(--radius-16);
+  border: var(--border-width-1) solid var(--border-secondary); background: var(--surface-primary); color: var(--text-primary);
+  box-shadow: var(--shadow-1);
 }
+/* 달빛: 그림이 아니라 빛이에요. 오른쪽 위 모서리에서 강조색이 아주 옅게 번져요(글자 대비는 그대로예요) */
 .mw-hero::before {
-  content: ''; position: absolute; z-index: -1; width: 270px; aspect-ratio: 1; right: 12%; top: -62px; border-radius: 50%; background: var(--mw-hero-moon);
-  box-shadow: inset -22px -24px 36px rgba(5, 15, 30, 0.55), 0 0 70px rgba(143, 200, 223, 0.2);
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(110% 150% at 100% 0%, color-mix(in srgb, var(--mw-accent) 13%, transparent) 0, color-mix(in srgb, var(--mw-accent) 5%, transparent) 38%, transparent 66%);
 }
-.mw-hero::after {
-  content: ''; position: absolute; z-index: -1; width: 420px; height: 118px; right: 4%; top: 72px; border-radius: 50%;
-  border: var(--border-width-2) solid var(--mw-hero-ring); transform: rotate(-23deg) rotateX(69deg); box-shadow: 0 0 24px rgba(169, 220, 233, 0.15);
-}
-.mw-hero .mw-kicker { margin-bottom: var(--space-12); color: var(--mw-hero-kicker); }
-.mw-hero h1 { font-size: clamp(30px, 3vw, 42px); line-height: 1.15; font-weight: var(--font-weight-bold); letter-spacing: -0.045em; }
-.mw-hero p { max-width: 560px; margin-top: var(--space-12); font-size: var(--font-size-15); line-height: var(--line-height-reading-158); color: var(--mw-hero-muted); }
+.mw-hero > :first-child { min-width: 0; }
+.mw-hero .mw-kicker { margin-bottom: var(--space-12); color: var(--text-tertiary); }
+.mw-hero :is(h1, h2) { font-size: clamp(28px, 2.6vw, 36px); line-height: 1.25; font-weight: var(--font-weight-bold); letter-spacing: -0.03em; }
+/* 제목의 둘째 줄: 한 단계 낮은 글자색이에요. 강조색은 화면에 한 곳(주 행동)뿐이라 쓰지 않아요 */
+.mw-hero :is(h1, h2) em { display: block; font-style: normal; color: var(--text-secondary); }
+.mw-hero p { max-width: 560px; margin-top: var(--space-12); font-size: var(--font-size-15); line-height: var(--line-height-reading-158); color: var(--text-secondary); }
 .mw-hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-20); }
-.mw-hero__button { display: inline-flex; align-items: center; gap: var(--space-4); min-height: var(--mw-touch); padding: 0 var(--space-16); border-radius: var(--radius-8); border: var(--border-width-1) solid rgba(210, 236, 241, 0.55); background: rgba(207, 234, 239, 0.11); color: var(--mw-hero-ink); font-size: var(--font-size-15); font-weight: var(--font-weight-semibold); text-decoration: none; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-.mw-hero__button:hover { background: rgba(207, 234, 239, 0.22); }
-.mw-hero__button--solid { background: var(--mw-hero-ink); border-color: transparent; color: var(--mw-night); }
-.mw-hero__button--solid:hover { background: var(--mw-wavie-cyan); }
+.mw-hero__button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-4); min-height: var(--mw-touch); padding: 0 var(--space-16); border-radius: var(--radius-8);
+  border: var(--border-width-1) solid var(--border-primary); background: var(--surface-primary); color: var(--text-primary); font-size: var(--font-size-15); font-weight: var(--font-weight-semibold); text-decoration: none; }
+.mw-hero__button:hover { background: var(--background-secondary); }
+.mw-hero__button--solid { border-color: transparent; background: var(--mw-accent-fill); color: var(--mw-on-accent); }
+.mw-hero__button--solid:hover { background: var(--mw-accent-pressed); }
+.mw-hero__aside { display: flex; align-items: center; gap: var(--space-16); }
+.mw-hero__foot { grid-column: 1 / -1; padding-top: var(--space-24); border-top: var(--border-width-1) solid var(--border-secondary); }
+.mw-hero__foot .mw-stat-strip__value { gap: var(--space-2); }
+
+/* 진행 링: 오늘 얼마나 했는지 하나를 링으로 보여요. <div class="mw-ring" role="progressbar" aria-valuenow aria-label style="--mw-ring: 80">
+   안에 숫자(__value)와 이름(__label). 링 하나에 한 가지만 담아요 */
+.mw-ring { --mw-ring: 0; position: relative; display: grid; place-items: center; align-content: center; width: 112px; aspect-ratio: 1; flex: none; text-align: center; }
+.mw-ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(var(--mw-accent) calc(var(--mw-ring) * 1%), var(--background-secondary) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 8px), var(--static-black) calc(100% - 7px)); mask: radial-gradient(farthest-side, transparent calc(100% - 8px), var(--static-black) calc(100% - 7px)); }
+.mw-ring__value { position: relative; font-size: var(--font-size-24); font-weight: var(--font-weight-bold); line-height: 1.2; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.mw-ring__label { position: relative; font-size: var(--font-size-12); color: var(--text-tertiary); }
 
 /* ── 안내와 빈 화면 ── */
 .mw-notice { display: flex; align-items: flex-start; gap: 10px; padding: 14px var(--space-16); border-radius: var(--radius-12); background: var(--background-secondary); font-size: var(--font-size-14); line-height: var(--line-height-reading-158); color: var(--text-secondary); }
@@ -21610,14 +22288,23 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
   .mw-stat { padding: var(--space-16); }
   .mw-stat__value { margin-top: 6px; font-size: var(--font-size-24); }
   .mw-stat__foot { font-size: var(--font-size-12); }
-  .mw-hero { min-height: 190px; padding: 26px 22px; }
-  .mw-hero::before { width: 190px; right: -35px; top: -28px; opacity: 0.6; }
-  .mw-hero::after { width: 280px; right: -84px; top: 55px; opacity: 0.65; }
-  .mw-hero h1 { font-size: var(--mw-font-size-28); }
-  .mw-hero p { max-width: 260px; font-size: var(--font-size-14); }
+  .mw-hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-20); padding: var(--space-24) var(--space-20); }
+  .mw-hero :is(h1, h2) { font-size: var(--mw-font-size-28); }
+  .mw-hero p { font-size: var(--font-size-14); }
+  .mw-hero__aside { justify-content: space-between; }
+  .mw-hero__foot { padding-top: var(--space-20); }
+  .mw-ring { width: 92px; }
+  .mw-ring__value { font-size: var(--font-size-20); }
   .mw-kbd { display: none; }
 }
 /* 폰 */
+/* 폰: 히어로 안의 숫자 줄은 세 칸이 한 줄로 남아요(아이콘은 빼요) */
+@media (max-width: 600px) {
+  .mw-hero__foot .mw-stat-strip { flex-direction: row; flex-wrap: nowrap; gap: var(--space-8); }
+  .mw-hero__foot .mw-stat-strip__item { flex: 1 1 0; }
+  .mw-hero__foot .mw-stat-strip__icon { display: none; }
+  .mw-hero__foot .mw-stat-strip__value { font-size: var(--font-size-20); }
+}
 @media (max-width: 600px) {
   /* 패널은 아래에서 올라오는 시트가 돼요 */
   .mw-app-panel { top: auto; width: 100%; height: 92dvh; padding-right: 0; border-left: 0; border-radius: var(--mw-radius-sheet) var(--mw-radius-sheet) 0 0; transform: translateY(105%); transition-duration: var(--mw-duration-sheet), 0s; transition-timing-function: var(--mw-ease-sheet), linear; transition-delay: 0s, var(--mw-duration-sheet); }
@@ -21732,12 +22419,12 @@ a.mw-button, a.mw-text-button { text-decoration: none; }
 
 /* ── 움직임 ── */
 @media (prefers-reduced-motion: no-preference) {
-  .mw-live:not(.mw-live--off):not(.mw-live--down) { animation: mw-pulse 2.4s infinite; }
-  .mw-hero::before { animation: mw-float 12s ease-in-out infinite alternate; }
+  .mw-live:not(.mw-live--off) { animation: mw-pulse 1.6s var(--mw-ease) 1; }
+  .mw-live.mw-live--down:not(.mw-live--off) { animation-name: mw-pulse-again; }
   .mw-pull--busy .mw-pull__ring { animation: mw-turn 0.8s linear infinite; }
 }
-@keyframes mw-pulse { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-@keyframes mw-float { to { transform: translateY(15px); } }
+@keyframes mw-pulse { from { box-shadow: 0 0 0 0 var(--mw-live-ring); } 70% { box-shadow: 0 0 0 8px transparent; } to { box-shadow: 0 0 0 0 transparent; } }
+@keyframes mw-pulse-again { from { box-shadow: 0 0 0 0 var(--mw-live-ring); } 70% { box-shadow: 0 0 0 8px transparent; } to { box-shadow: 0 0 0 0 transparent; } }
 @keyframes mw-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .mw-root *, .mw-root *::before, .mw-root *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

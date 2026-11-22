@@ -79,60 +79,78 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   return (
     <Sheet open={open} onClose={onClose} label="더보기">
+      {/* 항목이 일곱 개를 넘어서 사이드바와 같은 묶음 이름으로 나눠요(patterns/app-shell#more, 키트 mw-sheet__group).
+          만들기는 넓은 화면에서 페이지 머리의 버튼이라 사이드바에 없는 묶음이에요 */}
       <div className="mw-sheet__body">
-        <div className="memo-sheet__section">만들기</div>
-        <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openVoiceModal())}>
-          <span className="mw-sheet__icon"><IcLineMic size={24} /></span><span><b>음성 메모</b><small>말한 것을 글로 받아 적어요</small></span>
-        </button>
-        <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openImageOCRModal())}>
-          <span className="mw-sheet__icon"><IcLineCamera size={24} /></span><span><b>사진에서 글자</b><small>사진 속 글자를 메모로 옮겨요</small></span>
-        </button>
-        <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openTemplateModal())}>
-          <span className="mw-sheet__icon"><IcLineDocumentAlt size={24} /></span><span><b>템플릿</b><small>정해 둔 틀로 시작해요</small></span>
-        </button>
-        {brainDump && (
-          <button type="button" className="mw-sheet__item" onClick={pick(() => navigate('/memo/new?ephemeral=true'))}>
-            <span className="mw-sheet__icon"><IcMwFlame size={24} /></span><span><b>브레인 덤프</b><small>한 시간 뒤에 사라지는 메모예요</small></span>
+        <section className="mw-sheet__group" aria-labelledby="more-group-create">
+          <h3 className="mw-sheet__label" id="more-group-create">만들기</h3>
+          <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openVoiceModal())}>
+            <span className="mw-sheet__icon"><IcLineMic size={24} /></span><span><b>음성 메모</b><small>말한 것을 글로 받아 적어요</small></span>
           </button>
+          <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openImageOCRModal())}>
+            <span className="mw-sheet__icon"><IcLineCamera size={24} /></span><span><b>사진에서 글자</b><small>사진 속 글자를 메모로 옮겨요</small></span>
+          </button>
+          <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openTemplateModal())}>
+            <span className="mw-sheet__icon"><IcLineDocumentAlt size={24} /></span><span><b>템플릿</b><small>정해 둔 틀로 시작해요</small></span>
+          </button>
+          {brainDump && (
+            <button type="button" className="mw-sheet__item" onClick={pick(() => navigate('/memo/new?ephemeral=true'))}>
+              <span className="mw-sheet__icon"><IcMwFlame size={24} /></span><span><b>브레인 덤프</b><small>한 시간 뒤에 사라지는 메모예요</small></span>
+            </button>
+          )}
+        </section>
+
+        <section className="mw-sheet__group" aria-labelledby="more-group-browse">
+          <h3 className="mw-sheet__label" id="more-group-browse">둘러보기</h3>
+          <button type="button" className="mw-sheet__item" aria-current={page('starred')} onClick={pick(go.starred)}>
+            <span className="mw-sheet__icon"><IcMwStar size={24} /></span><span><b>중요</b></span><span className="memo-sheet__count">{starredCount}</span>
+          </button>
+        </section>
+
+        {(userFolders.length > 0 || trashFolder) && (
+          <section className="mw-sheet__group" aria-labelledby="more-group-folders">
+            <h3 className="mw-sheet__label" id="more-group-folders">폴더</h3>
+            {userFolders.map((folder) => (
+              <button key={folder.id} type="button" className="mw-sheet__item" aria-current={page(`folder:${folder.id}`)} onClick={pick(() => go.folder(folder.id!))}>
+                <span className="mw-sheet__icon"><i className="memo-sheet__dot" style={{ backgroundColor: folder.color }} /></span>
+                <span><b>{folder.name}</b></span><span className="memo-sheet__count">{folderCounts.get(folder.id!) || 0}</span>
+              </button>
+            ))}
+            {trashFolder && (
+              <button type="button" className="mw-sheet__item" aria-current={page(`folder:${trashFolder.id}`)} onClick={pick(() => go.folder(trashFolder.id!))}>
+                <span className="mw-sheet__icon"><IcLineTrash size={24} /></span><span><b>휴지통</b></span><span className="memo-sheet__count">{deletedCount}</span>
+              </button>
+            )}
+          </section>
         )}
 
-        <div className="memo-sheet__section">메모</div>
-        <button type="button" className="mw-sheet__item" aria-current={page('starred')} onClick={pick(go.starred)}>
-          <span className="mw-sheet__icon"><IcMwStar size={24} /></span><span><b>중요</b></span><span className="memo-sheet__count">{starredCount}</span>
-        </button>
-        {userFolders.map((folder) => (
-          <button key={folder.id} type="button" className="mw-sheet__item" aria-current={page(`folder:${folder.id}`)} onClick={pick(() => go.folder(folder.id!))}>
-            <span className="mw-sheet__icon"><i className="memo-sheet__dot" style={{ backgroundColor: folder.color }} /></span>
-            <span><b>{folder.name}</b></span><span className="memo-sheet__count">{folderCounts.get(folder.id!) || 0}</span>
-          </button>
-        ))}
-        {trashFolder && (
-          <button type="button" className="mw-sheet__item" aria-current={page(`folder:${trashFolder.id}`)} onClick={pick(() => go.folder(trashFolder.id!))}>
-            <span className="mw-sheet__icon"><IcLineTrash size={24} /></span><span><b>휴지통</b></span><span className="memo-sheet__count">{deletedCount}</span>
-          </button>
-        )}
         {allTags.length > 0 && (
-          <button type="button" className="mw-sheet__item" aria-expanded={showTags} aria-current={!showTags && current.startsWith('tag:') ? 'page' : undefined} onClick={() => setShowTags((v) => !v)}>
-            <span className="mw-sheet__icon"><IcMwTag size={24} /></span>
-            <span><b>태그</b><small>{showTags ? '눌러서 접어요' : '눌러서 펼쳐요'}</small></span><span className="memo-sheet__count">{allTags.length}</span>
-          </button>
+          <section className="mw-sheet__group" aria-labelledby="more-group-tags">
+            <h3 className="mw-sheet__label" id="more-group-tags">태그</h3>
+            <button type="button" className="mw-sheet__item" aria-expanded={showTags} aria-current={!showTags && current.startsWith('tag:') ? 'page' : undefined} onClick={() => setShowTags((v) => !v)}>
+              <span className="mw-sheet__icon"><IcMwTag size={24} /></span>
+              <span><b>모든 태그</b><small>{showTags ? '눌러서 접어요' : '눌러서 펼쳐요'}</small></span><span className="memo-sheet__count">{allTags.length}</span>
+            </button>
+            {showTags && allTags.map((tag) => (
+              <button key={tag} type="button" className="mw-sheet__item" aria-current={page(`tag:${tag}`)} onClick={pick(() => go.tag(tag))}>
+                <span className="mw-sheet__icon"><IcMwTag size={24} /></span><span><b>{tag}</b></span><span className="memo-sheet__count">{tagCounts.get(tag) || 0}</span>
+              </button>
+            ))}
+          </section>
         )}
-        {showTags && allTags.map((tag) => (
-          <button key={tag} type="button" className="mw-sheet__item" aria-current={page(`tag:${tag}`)} onClick={pick(() => go.tag(tag))}>
-            <span className="mw-sheet__icon"><IcMwTag size={24} /></span><span><b>{tag}</b></span><span className="memo-sheet__count">{tagCounts.get(tag) || 0}</span>
-          </button>
-        ))}
 
-        <div className="memo-sheet__section">관리</div>
-        <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openFAQModal())}>
-          <span className="mw-sheet__icon"><IcLineQuestion size={24} /></span><span><b>도움말</b></span>
-        </button>
-        <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openSettingsModal())}>
-          <span className="mw-sheet__icon"><IcLineSetting size={24} /></span><span><b>설정</b></span>
-        </button>
-        <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openTermsModal())}>
-          <span className="mw-sheet__icon"><IcLineDocument size={24} /></span><span><b>약관</b></span>
-        </button>
+        <section className="mw-sheet__group" aria-labelledby="more-group-manage">
+          <h3 className="mw-sheet__label" id="more-group-manage">관리</h3>
+          <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openFAQModal())}>
+            <span className="mw-sheet__icon"><IcLineQuestion size={24} /></span><span><b>도움말</b></span>
+          </button>
+          <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openSettingsModal())}>
+            <span className="mw-sheet__icon"><IcLineSetting size={24} /></span><span><b>설정</b></span>
+          </button>
+          <button type="button" className="mw-sheet__item" onClick={pick(() => ui().openTermsModal())}>
+            <span className="mw-sheet__icon"><IcLineDocument size={24} /></span><span><b>약관</b></span>
+          </button>
+        </section>
       </div>
     </Sheet>
   )
